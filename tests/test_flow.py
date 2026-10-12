@@ -1,5 +1,6 @@
 """Flow tests against a scripted fake app; no emulator required."""
 
+import logging
 from datetime import date
 from xml.sax.saxutils import quoteattr
 
@@ -339,6 +340,34 @@ def test_prepare_reports_logged_out_app():
 
     with pytest.raises(AppNotReadyError, match="logged in"):
         Booker(app, Config(boot_timeout=1)).prepare()
+
+
+def test_select_date_switches_to_next_month(caplog):
+    day_31 = "31, Thứ Bảy, 31 tháng 10, 2026"
+    day_nov_1 = "1, Chủ Nhật, 1 tháng 11, 2026"
+    app = FakeApp(
+        screens={
+            "october": [
+                node("Tháng sau", (490, 180, 530, 220)),
+                node(day_31, (381, 344, 455, 402)),
+            ],
+            "november": [
+                node("Tháng trước", (450, 180, 490, 220)),
+                node(day_nov_1, (35, 344, 109, 402)),
+            ],
+            "slots": [],
+        },
+        taps_to={("october", "Tháng sau"): "november", ("november", day_nov_1): "slots"},
+        backs_to={},
+        screen="october",
+    )
+    booker = Booker(app, Config())
+    caplog.set_level(logging.DEBUG, logger="court_booker")
+
+    booker.select_date(booker.snapshot(), date(2026, 11, 1))
+
+    assert app.taps == ["Tháng sau", day_nov_1]
+    assert f"Date 2026-11-01 not shown; first day listed: {day_31!r}" in caplog.text
 
 
 class OpeningBooker(Booker):

@@ -240,7 +240,13 @@ class Booker:
                 self.tap(found[0])
                 logger.info("Selected date %s", target.isoformat())
                 return
-            shown = self._shown_month(self.last_screen)
+            first_day = self.last_screen.find(self.any_day)
+            logger.debug(
+                "Date %s not shown; first day listed: %r",
+                target.isoformat(),
+                first_day.desc if first_day else None,
+            )
+            shown = None if first_day is None else month_index_from_label(first_day.desc)
             forward = attempt % 2 == 0 if shown is None else shown < target_month
             self._switch_month(self.last_screen, forward)
             current = None
@@ -401,10 +407,6 @@ class Booker:
                 return screen
             previous = boxes
             time.sleep(_POLL_INTERVAL)
-
-    def _shown_month(self, screen: Screen) -> int | None:
-        day = screen.find(self.any_day)
-        return None if day is None else month_index_from_label(day.desc)
 
     def _switch_month(self, screen: Screen, forward: bool) -> None:
         button = screen.find(self.next_month if forward else self.prev_month)

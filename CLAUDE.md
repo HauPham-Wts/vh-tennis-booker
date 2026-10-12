@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Last updated: 2026-10-09.
+Last updated: 2026-10-10.
 
 ## Commands
 
@@ -32,7 +32,7 @@ real bookings with it on (verified 2026-10-08). Bypassing any app check is out o
 will not be done. On-device automation (an Android app using AccessibilityService) is also
 out of scope.
 
-## Current state: 0.3.0 released
+## Current state: 0.4.0 released
 
 - Repo: `github.com/servedbyhau/vh-tennis-booker` (private), local path `D:\VH-Booker\vh-tennis-booker`
 - Python package `court_booker` (src layout), CLI `court-booker` / `python -m court_booker`
@@ -46,7 +46,13 @@ out of scope.
   real slots (rounds took 6-9 s; the PC clock was 0.87 s slow, corrected by NTP).
 - 0.3.0 (spec: `docs/specs/0.3.0-fast-rounds.md`) was released on 2026-10-09 after a timed
   dry run on MuMu at 540x1600: round 1 reached the accepted terms in 5.9 s (8.7 s with 0.2.0).
-  The final "Xác nhận" tap of the new flow is first exercised by the 06:00 run on 2026-10-10.
+  The first real 06:00 run with it (2026-10-10) booked both slots: round 1 took 7.3 s (booked
+  at 06:00:07.2, 0.2.0 needed 11.0 s), round 2 4.5 s (06:00:11.7, 0.2.0: 7.1 s). Rounds used
+  41-43 device commands including polls while the app loads; no closed-hours popup, no re-taps.
+- 0.4.0 code (failure screen log) ran the 06:00 task on 2026-10-11 and 2026-10-12 and booked
+  both slots each day: rounds 10.5 s + 4.3 s (11/10) and 7.0 s + 4.3 s (12/10). On 11/10 the
+  court list appeared 2.3 s after "Tiếp tục", so the 2 s re-tap fired once (92 commands in
+  round 1); the booking still succeeded.
 - The scheduled task has no `--dry-run`; it books for real. For a scheduled test, add
   `--dry-run` to the task arguments by hand (`schedule install` overwrites it).
 
@@ -62,9 +68,12 @@ out of scope.
   (imported lazily so tests do not need it). `runner.run_booking`: `Booker.prepare()`,
   `wait_until(start - LOCATE_AHEAD)`, `Booker.locate_entry()`, `wait_until(start)`, then one
   round per slot; a `BookingError` (or any exception) fails that round only. Results are
-  appended to a caller-owned list; the debug log counts device commands per round.
+  appended to a caller-owned list; the debug log counts device commands per round. When a
+  round, `prepare()` or `locate_entry()` fails, `log_last_screen` writes `Booker.last_screen`
+  to the debug log, so a failure seen once at 06:00 can be fixed from the log alone.
 - `screen.Screen` parses one `dump_hierarchy` into `Node`s (label, visible bounds, clickable);
   `screen.Match` (desc / prefix / contains / full-match pattern / clickable) is applied locally.
+  `Screen.describe()` gives one log line per labelled or clickable node (bounds, label).
 - `flow.Booker` builds `Match`es from `config.labels` in `__init__`. The device is only used
   through `snapshot()` (one dump), `tap()`/`tap_point()` (`device.click(x, y)`), `press_back()`
   and `_scroll()`; each increments `commands`. `wait_for(find, timeout, screen=None)` reads the
@@ -106,21 +115,33 @@ the next round starts.
   is wait + info + click.
 - App/server time: calendar 0.14 s after "Sân Tennis", slot list ~2.1 s after the date tap,
   court list 1.5-2.0 s, details 0.5 s, confirmation 0.14 s.
+- Calendar at 540x1600 (failure log, 2026-10-10): two non-clickable nodes labelled
+  `"Chọn năm"` at `[22,160][170,229]` and `[177,160][285,229]`, then a day grid from y=344;
+  no node labelled "Tháng sau"/"Tháng trước" and no clickable unlabelled node near the
+  `next_month_xy` fallback point. How the app shows next-month days is unknown until 30/10.
 - Day label format: `"2, Thứ Sáu, 2 tháng 10, 2026"`. Slot: `"09:00 - 10:00"`;
   full slot: `"18:00 - 19:00\nHết chỗ"`. Bookable range: today to today + 2.
-- Consent checkbox has no label and `checkable=false`: it is the clickable View
-  `[35,740][79,784]` left of caption `"Tôi đã hiểu và đồng ý với "` `[79,739][313,772]`.
-  Located via `caption.left(clickable=True)` plus a same-row check; fallback hierarchy scan.
+- Consent checkbox has no label and `checkable=false`: it is the clickable View left of the
+  caption `"Tôi đã hiểu và đồng ý với "`, found in the dump as the smallest clickable node
+  level with the caption (`geometry.is_checkbox_beside`).
 - "Xác nhận" is disabled until the checkbox is ticked; used to verify the tick.
 - Flutter builds lazily: off-screen slots are absent from the tree and dump bounds are clipped
   to what is shown. 13 slots (06-12, 14-21); at 540x1600 all fit without scrolling. On shorter
   screens the code swipes until the slot is mostly visible above the sticky "Tiếp tục" button.
 - Slot selection is not exposed in the tree (no `selected`/`checked`); "Tiếp tục" is always
-  clickable. Courts can be "Hết chỗ" (e.g. "S9 - Sân tennis
-Hết chỗ").
+  clickable. Courts can be "Hết chỗ" (e.g. `"S9 - Sân tennis\nHết chỗ"`).
 - Consent checkbox at 540x1600: `[35,1323][79,1367]` (seen shifted to x=43 once), so it is
   located per run, never stored.
 - Success is verified by waiting for the confirmation screen to disappear.
+- Outside 06:00-21:00, tapping "Sân Tennis" opens a dialog "Thông báo": "Ban quản lý BQL Grand
+  Park chỉ nhận đăng ký Sân Tennis từ 06:00 đến 21:00 mỗi ngày" with a "Đóng" button; it hides
+  the utilities list. The 06:00:00.0 tap of 0.3.0 did not trigger it on 2026-10-10.
+- Each apartment may book 8 slots per month (1 hour = 1 slot). Once they are used, tapping
+  "Tiếp tục" on the calendar opens a dialog "Thông báo": "Căn hộ đã hết hạn mức đăng ký tiện
+  ích cho phép." with a "Đóng" button (seen 2026-10-10); the round then fails after the
+  re-taps with "Tapped 'Tiếp tục' but the next screen did not appear".
+- The MuMu clock follows the PC clock (+15 ms measured); the NTP offset of the PC varies
+  (+0.035 to +0.144 s).
 
 ## Environment
 
@@ -135,10 +156,12 @@ user must not need to be awake. Priority is unattended, scheduled, fastest-possi
 
 - Target date is always today + `days_ahead` (default 2); no specific `--date`.
 - No stop button / cancellation token; Ctrl+C prints the summary instead.
-- UI, backend and desktop packaging are **deferred** until unattended booking works.
+- UI, backend and desktop packaging come last (phase 4 of the roadmap), after robustness and
+  performance.
 - Each run waits on the utilities list ("Sân Tennis", screen 2) before the start time, so only
   the booking taps happen after 06:00.
-- Trigger is Windows Task Scheduler at 05:45 (time-based, not logon). The script itself starts
+- Trigger is Windows Task Scheduler at `wake_at` (default 05:45; 05:50 on the dev machine,
+  where preparing takes under a minute), time-based, not logon. The script itself starts
   MuMu, connects ADB and restarts the app. MuMu and the app are left open after the run.
 
 **ADB strategy:** reuse a running ADB server if present → user-configured adb path →
@@ -149,15 +172,42 @@ instance 0); `control -v 0 launch` starts it. MuMu ships its own `adb.exe` in th
 
 ## Roadmap
 
-| Version | Scope |
-|---|---|
-| 0.2.0 Unattended | Start MuMu; ADB auto-connect; prepare app on screen 2; `--at` timed start with NTP offset; opening retry; keep awake; log file; Telegram summary; Task Scheduler install with wake; tests |
-| 0.3.0 Fast rounds | MuMu 540x1600; one dump per screen, taps by coordinates, entry located before the start, command count (released 2026-10-09) |
-| 0.4.0 Hardening | Based on real 06:00 runs with 0.3.0: health check before the start time, `schedule install --dry-run`, failure handling |
-| later | Several MuMu instances with separate accounts in parallel (one account cannot log in twice) |
+The 0.x versions go through four phases: (1) it runs, (2) it handles every situation,
+(3) it is fast, (4) it has a user-friendly UI, toward 1.0.0. Speed came early (0.3.0) because
+it decides the 06:00 race. There is no 0.3.1: its candidate fixes were judged to have no impact.
 
-Deferred (previous plan, revisit after 0.3.0): FastAPI backend with WebSocket progress, React +
-TypeScript UI, Tauri desktop shell with PyInstaller sidecar, installer and release automation.
+| Phase | Version | Scope |
+|---|---|---|
+| 1 Runs | 0.1.0 | Label-based booking flow (released) |
+| 1 Runs | 0.2.0 Unattended | Start MuMu, ADB auto-connect, timed start with NTP offset, opening retry, keep awake, log file, Telegram summary, Task Scheduler with wake (released) |
+| 3 Fast | 0.3.0 Fast rounds | MuMu 540x1600, one dump per screen, taps by coordinates, entry located before the start, command count (released 2026-10-09, verified at 06:00 on 2026-10-10) |
+| 2 Every situation | 0.4.0 Hardening | Failure screen log; the situations below are fixed as the logs show them (released 2026-10-12) |
+| 3 Fast | 0.5.0 | Tuning from the log files; several MuMu instances with separate accounts in parallel (one account cannot log in twice) |
+| 4 UI | 0.6.0+ | FastAPI backend with WebSocket progress, run history stored by the app, React + TypeScript UI, Tauri desktop shell with PyInstaller sidecar, installer and release automation |
+
+0.4.0 situations ("done" = handled, or at least reported clearly in the log file). Decided on
+2026-10-10: 0.4.0 fixes failures as they show up in the log; no health check before 06:00,
+no fallback slots or courts (other users book within seconds, a missed slot is lost), no
+Telegram setup (the optional code stays) and no run history file until the app stores it.
+
+| Area | Situation | Today |
+|---|---|---|
+| App | Logged out | Fails early (exit 4) |
+| App | Closed-hours dialog after a too-early tap | Not handled (not seen so far) |
+| App | Update prompt, other dialogs, network error | Not handled |
+| App | App crash or freeze during a round | Not handled |
+| App | Slow server at 06:00 | Re-tap after 2 s |
+| Booking | New date not open yet | Calendar reloaded for `open_retry_seconds` |
+| Booking | Slot fully booked | Round fails; no fallback slot (by decision) |
+| Booking | Court fully booked | Round fails; no fallback court (by decision) |
+| Booking | Slot taken by someone else at "Xác nhận" | Not handled |
+| Booking | Target date in the next month | Code exists; untested since 0.3.0. Only testable on the last two days of a month (30/10 → 1/11, 31/10 → 2/11): the calendar does not switch to a month without bookable days |
+| Booking | Booking limit per account | 8 slots per apartment per month; not handled by decision (users track their own quota), the log shows the dialog |
+| Device | MuMu not running / frozen | Started automatically / not handled |
+| Device | ADB lost during a run | Not handled |
+| Device | Wrong MuMu resolution | Works but scrolls; no warning |
+| Device | PC woke late, clock drift | Runs at once if under 10 min late; NTP offset |
+| Reporting | Every failure reported | Log file (by decision); Telegram optional, not configured |
 
 ## Working conventions
 
@@ -176,7 +226,10 @@ TypeScript UI, Tauri desktop shell with PyInstaller sidecar, installer and relea
 
 ## Next step
 
-Work happens on `release/0.3.1`. Read the first 06:00 run with 0.3.0 (`logs/court-booker-2026-10-10.log`: round times, device
-commands per round, the final confirmation), then start 0.4.0 Hardening. Ruled out on 2026-10-09: opening the calendar
-before 06:00, two slots in one booking, pre-recorded coordinates (no faster than reading the
-screen, which is needed anyway to know it appeared).
+0.4.0 is released. Read the log after each 06:00 run and fix what fails, one branch per
+problem; a fix after the release (e.g. the next-month case) ships as 0.4.1. The UI phase is
+planned next. Make sure a failure leaves enough in the log to fix it from one run: the
+next-month case only occurs twice a month (first on 2026-10-30). Ruled out on 2026-10-09:
+opening the calendar before 06:00, two slots in one booking, pre-recorded coordinates (no
+faster than reading the screen, which is needed anyway to know it appeared). Ruled out on
+2026-10-10: health check, fallback slots and courts, Telegram setup, run history file.

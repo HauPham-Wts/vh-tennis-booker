@@ -32,6 +32,18 @@ class RoundResult:
     seconds: float
 
 
+def log_last_screen(booker: Booker) -> None:
+    """Log every element of the last screen ``booker`` read, to diagnose a failure.
+
+    A failure that happens only at the opening time, or only on the last days of a
+    month, can then be fixed from the log of a single run.
+    """
+    lines = booker.last_screen.describe()
+    logger.debug("Last screen read (%d elements):", len(lines))
+    for line in lines:
+        logger.debug("  %s", line)
+
+
 def connect_device(config: Config) -> Any:
     """Start the emulator if configured and return a uiautomator2 device."""
     import uiautomator2  # deferred so tests do not require the dependency
@@ -70,12 +82,15 @@ def run_booking(
     """
     results = [] if results is None else results
     booker = Booker(device, config)
-    booker.prepare()
-
-    if start is not None:
-        wait_until(start - LOCATE_AHEAD, offset)
-        booker.locate_entry()
-        wait_until(start, offset)
+    try:
+        booker.prepare()
+        if start is not None:
+            wait_until(start - LOCATE_AHEAD, offset)
+            booker.locate_entry()
+            wait_until(start, offset)
+    except Exception:  # the caller logs the error itself
+        log_last_screen(booker)
+        raise
     target = (start or datetime.now()).date() + timedelta(days=config.days_ahead)
     logger.info(
         "Target date %s, slots: %s%s",
@@ -92,9 +107,11 @@ def run_booking(
             booker.book(slot, target, dry_run=dry_run)
         except BookingError as exc:
             logger.error("%s", exc)
+            log_last_screen(booker)
             results.append(RoundResult(slot, False, str(exc), time.perf_counter() - started))
         except Exception as exc:  # keep later rounds running on device glitches
             logger.exception("Unexpected error")
+            log_last_screen(booker)
             results.append(RoundResult(slot, False, repr(exc), time.perf_counter() - started))
         else:
             detail = "dry run passed" if dry_run else "booked"

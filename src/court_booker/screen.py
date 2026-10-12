@@ -92,3 +92,17 @@ class Screen:
     def find_all(self, match: Match) -> list[Node]:
         """Return every element that satisfies ``match``."""
         return [node for node in self.nodes if match(node)]
+
+    def describe(self) -> list[str]:
+        """Return one log line per labelled or clickable element, in document order.
+
+        Unlabelled clickable elements are kept because some buttons, such as the
+        month arrows of the calendar, may have no label.
+        """
+        lines = []
+        for node in self.nodes:
+            if node.desc or node.clickable:
+                left, top, right, bottom = node.box
+                flag = " clickable" if node.clickable else ""
+                lines.append(f"[{left},{top}][{right},{bottom}]{flag} {node.desc!r}")
+        return lines

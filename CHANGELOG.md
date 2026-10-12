@@ -6,6 +6,15 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-12
+
+### Added
+- When a round or the preparation fails, the debug log lists every labelled or clickable
+  element of the last screen read, with its bounds, so a failure seen once at 06:00 can be
+  fixed from the log alone.
+- While the target date is missing from the calendar, the debug log shows the first day
+  listed, which tells whether the month switch went the right way.
+
 ## [0.3.0] - 2026-10-09
 
 ### Changed
