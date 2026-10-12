@@ -32,7 +32,7 @@ real bookings with it on (verified 2026-10-08). Bypassing any app check is out o
 will not be done. On-device automation (an Android app using AccessibilityService) is also
 out of scope.
 
-## Current state: 0.3.0 released
+## Current state: 0.4.0 released
 
 - Repo: `github.com/servedbyhau/vh-tennis-booker` (private), local path `D:\VH-Booker\vh-tennis-booker`
 - Python package `court_booker` (src layout), CLI `court-booker` / `python -m court_booker`
@@ -49,6 +49,10 @@ out of scope.
   The first real 06:00 run with it (2026-10-10) booked both slots: round 1 took 7.3 s (booked
   at 06:00:07.2, 0.2.0 needed 11.0 s), round 2 4.5 s (06:00:11.7, 0.2.0: 7.1 s). Rounds used
   41-43 device commands including polls while the app loads; no closed-hours popup, no re-taps.
+- 0.4.0 code (failure screen log) ran the 06:00 task on 2026-10-11 and 2026-10-12 and booked
+  both slots each day: rounds 10.5 s + 4.3 s (11/10) and 7.0 s + 4.3 s (12/10). On 11/10 the
+  court list appeared 2.3 s after "Tiếp tục", so the 2 s re-tap fired once (92 commands in
+  round 1); the booking still succeeded.
 - The scheduled task has no `--dry-run`; it books for real. For a scheduled test, add
   `--dry-run` to the task arguments by hand (`schedule install` overwrites it).
 
@@ -177,7 +181,7 @@ it decides the 06:00 race. There is no 0.3.1: its candidate fixes were judged to
 | 1 Runs | 0.1.0 | Label-based booking flow (released) |
 | 1 Runs | 0.2.0 Unattended | Start MuMu, ADB auto-connect, timed start with NTP offset, opening retry, keep awake, log file, Telegram summary, Task Scheduler with wake (released) |
 | 3 Fast | 0.3.0 Fast rounds | MuMu 540x1600, one dump per screen, taps by coordinates, entry located before the start, command count (released 2026-10-09, verified at 06:00 on 2026-10-10) |
-| 2 Every situation | **0.4.0 Hardening** | The situations below |
+| 2 Every situation | 0.4.0 Hardening | Failure screen log; the situations below are fixed as the logs show them (released 2026-10-12) |
 | 3 Fast | 0.5.0 | Tuning from the log files; several MuMu instances with separate accounts in parallel (one account cannot log in twice) |
 | 4 UI | 0.6.0+ | FastAPI backend with WebSocket progress, run history stored by the app, React + TypeScript UI, Tauri desktop shell with PyInstaller sidecar, installer and release automation |
 
@@ -222,8 +226,9 @@ Telegram setup (the optional code stays) and no run history file until the app s
 
 ## Next step
 
-Work happens on `release/0.4.0`. Read the log after each 06:00 run and fix what fails, one
-branch per problem. Make sure a failure leaves enough in the log to fix it from one run: the
+0.4.0 is released. Read the log after each 06:00 run and fix what fails, one branch per
+problem; a fix after the release (e.g. the next-month case) ships as 0.4.1. The UI phase is
+planned next. Make sure a failure leaves enough in the log to fix it from one run: the
 next-month case only occurs twice a month (first on 2026-10-30). Ruled out on 2026-10-09:
 opening the calendar before 06:00, two slots in one booking, pre-recorded coordinates (no
 faster than reading the screen, which is needed anyway to know it appeared). Ruled out on
