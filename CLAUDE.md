@@ -72,6 +72,15 @@ out of scope.
   appended to a caller-owned list; the debug log counts device commands per round. When a
   round, `prepare()` or `locate_entry()` fails, `log_last_screen` writes `Booker.last_screen`
   to the debug log, so a failure seen once at 06:00 can be fixed from the log alone.
+- `events.py`: progress events beside the log lines (spec part 2). `EventKind` values are
+  stable strings (future database values and message keys); `Reporter` stamps the time and
+  hands an `Event` to a sink, swallowing sink errors so reporting never costs a booking. Sinks:
+  `LogSink` (one debug line `Event <kind> key=value ...`), `MemorySink` (tests), `MultiSink`,
+  `NullSink`. The CLI emits `run_started` (trigger `scheduled`/`dry_run`/`manual`),
+  `device_ready` and `run_finished` (status `ok`/`partial`/`failed`/`interrupted`) on every
+  path; `run_booking` emits `app_ready`, `waiting`, `booking_started`, `slot_started`,
+  `slot_booked`/`slot_failed`; `Booker` emits `calendar_opened`, `date_selected`,
+  `slot_selected`, `court_selected`, `terms_accepted`. Reporting sends no device command.
 - `screen.Screen` parses one `dump_hierarchy` into `Node`s (label, visible bounds, clickable);
   `screen.Match` (desc / prefix / contains / full-match pattern / clickable) is applied locally.
   `Screen.describe()` gives one log line per labelled or clickable node (bounds, label).
