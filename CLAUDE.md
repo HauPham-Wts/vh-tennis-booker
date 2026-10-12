@@ -49,6 +49,10 @@ out of scope.
   The first real 06:00 run with it (2026-10-10) booked both slots: round 1 took 7.3 s (booked
   at 06:00:07.2, 0.2.0 needed 11.0 s), round 2 4.5 s (06:00:11.7, 0.2.0: 7.1 s). Rounds used
   41-43 device commands including polls while the app loads; no closed-hours popup, no re-taps.
+- 0.4.0 code (failure screen log) ran the 06:00 task on 2026-10-11 and 2026-10-12 and booked
+  both slots each day: rounds 10.5 s + 4.3 s (11/10) and 7.0 s + 4.3 s (12/10). On 11/10 the
+  court list appeared 2.3 s after "Tiếp tục", so the 2 s re-tap fired once (92 commands in
+  round 1); the booking still succeeded.
 - The scheduled task has no `--dry-run`; it books for real. For a scheduled test, add
   `--dry-run` to the task arguments by hand (`schedule install` overwrites it).
 
