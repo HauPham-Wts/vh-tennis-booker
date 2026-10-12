@@ -61,3 +61,22 @@ If the booking flow changed, also run `court-booker --dry-run --verbose` against
    ```
 6. Create a GitHub release from the tag using the changelog entry, then delete the
    release branch.
+7. Move the runner folder to the new tag (see below):
+   ```bash
+   python tools/setup_runner.py vX.Y.Z
+   ```
+
+## Runner folder
+
+The daily scheduled task books for real, so it never runs the development checkout. It runs
+`../runner`, a git worktree checked out at a release tag, with its own virtual environment;
+it still reads `config.toml` and writes `logs/` in the development folder.
+
+```bash
+python tools/setup_runner.py v0.4.0 --schedule   # first time: create it and point the task at it
+python tools/setup_runner.py vX.Y.Z              # after a release: move it to the new tag
+```
+
+The log of each run names the Python and code folder it used. A fix that must reach the
+06:00 run before the next release goes out as a patch release (`vX.Y.Z+1`) and then moves
+the runner.

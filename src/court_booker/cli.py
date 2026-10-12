@@ -98,6 +98,8 @@ def main(argv: list[str] | None = None) -> int:
             log_dir = Path(args.config).resolve().parent / config.log_dir
             logger.debug("Logging to %s", add_file_handler(log_dir))
         logger.info("court-booker %s", __version__)
+        # Shows whether the scheduled task ran the runner folder or a development checkout.
+        logger.debug("Python %s, code in %s", sys.executable, Path(__file__).resolve().parent)
         start_text = config.start_at if args.scheduled else args.at
         start = resolve_start(start_text, datetime.now()) if start_text else None
         with keep_awake():

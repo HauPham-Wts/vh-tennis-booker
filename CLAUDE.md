@@ -15,7 +15,8 @@ python -m pytest tests/test_flow.py -k slot          # single file / single test
 python -m ruff check . && python -m ruff format .    # CI runs `ruff format --check .`
 python -m court_booker --dry-run --verbose           # real run against the emulator
 python -m court_booker --at 06:00 --dry-run          # timed run
-python -m court_booker schedule install              # daily task (status, remove)
+python tools/setup_runner.py v0.4.0 --schedule       # runner folder + daily task (CONTRIBUTING)
+python -m court_booker schedule status               # task details (install, remove)
 python tools/inspect_screen.py --near "Tôi đã hiểu"  # dump nodes level with a label
 ```
 
@@ -59,8 +60,8 @@ out of scope.
 ## Code architecture
 
 - `cli.py` parses args (or dispatches `schedule ...` to `schedule.main`), applies overrides onto
-  `Config`, adds the log file, resolves the start time, measures the NTP offset, and inside
-  `power.keep_awake()` calls `runner.connect_device` then `runner.run_booking`. Errors map to
+  `Config`, adds the log file (and logs the Python and code folder it runs from), resolves
+  the start time, measures the NTP offset, and inside `power.keep_awake()` calls `runner.connect_device` then `runner.run_booking`. Errors map to
   exit codes (`RequestError` 2, `DeviceError` 3, `AppNotReadyError` 4, Ctrl+C 130); the summary
   is logged and optionally sent with `notify.send_telegram` on every path.
 - `runner.connect_device`: `emulator.MuMu.ensure_started` (MuMuManager `info`/`control launch`),
@@ -146,6 +147,9 @@ the next round starts.
 ## Environment
 
 - Windows 11, Python 3.14, Git; Python `Scripts` folder not on PATH (use `python -m ...`)
+- Runner folder `D:\VH-Booker\runner` at `v0.4.0` since 2026-10-12; the task runs its
+  `.venv\Scripts\pythonw.exe` with `Start In` the development folder (src layout, so the
+  development code is not imported)
 - MuMu Player (instance 0 serves ADB on `127.0.0.1:16384`); adb is found and connected
   automatically (`device = "auto"`)
 
@@ -224,8 +228,9 @@ Telegram setup (the optional code stays) and no run history file until the app s
   from it and PR'd into it (merge commit, never squash), one PR at a time, not stacked. One
   PR `release/X.Y.Z` → `main` when stable, then tag `vX.Y.Z` (see `CONTRIBUTING.md`). The
   user opens and merges PRs on GitHub (no `gh` CLI): give a compare link, title and description.
-- The scheduled task runs the checked-out code (editable install): leave the working tree on
-  a tested branch overnight.
+- The scheduled task runs the runner folder `D:\VH-Booker\runner` (git worktree at the last
+  release tag, own `.venv`) with the development `config.toml` and `logs/`; move it with
+  `tools/setup_runner.py` after each release. The development folder may stay on any branch.
 - Never commit `config.toml`, screenshots or UI dumps (may contain personal data).
 
 ## Next step
