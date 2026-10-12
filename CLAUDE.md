@@ -175,6 +175,8 @@ instance 0); `control -v 0 launch` starts it. MuMu ships its own `adb.exe` in th
 The 0.x versions go through four phases: (1) it runs, (2) it handles every situation,
 (3) it is fast, (4) it has a user-friendly UI, toward 1.0.0. Speed came early (0.3.0) because
 it decides the 06:00 race. There is no 0.3.1: its candidate fixes were judged to have no impact.
+On 2026-10-12 the UI phase moved ahead of the remaining speed work: 0.4.0 waits for failures
+in the logs, and the core books reliably.
 
 | Phase | Version | Scope |
 |---|---|---|
@@ -182,8 +184,10 @@ it decides the 06:00 race. There is no 0.3.1: its candidate fixes were judged to
 | 1 Runs | 0.2.0 Unattended | Start MuMu, ADB auto-connect, timed start with NTP offset, opening retry, keep awake, log file, Telegram summary, Task Scheduler with wake (released) |
 | 3 Fast | 0.3.0 Fast rounds | MuMu 540x1600, one dump per screen, taps by coordinates, entry located before the start, command count (released 2026-10-09, verified at 06:00 on 2026-10-10) |
 | 2 Every situation | 0.4.0 Hardening | Failure screen log; the situations below are fixed as the logs show them (released 2026-10-12) |
-| 3 Fast | 0.5.0 | Tuning from the log files; several MuMu instances with separate accounts in parallel (one account cannot log in twice) |
-| 4 UI | 0.6.0+ | FastAPI backend with WebSocket progress, run history stored by the app, React + TypeScript UI, Tauri desktop shell with PyInstaller sidecar, installer and release automation |
+| 4 UI | **0.5.0 Backend** | Separate run folder, engine events, data folder, SQLite history and activity, run lock, device setup and Auto setup, FastAPI backend (spec: `docs/specs/0.5.0-desktop-app.md`) |
+| 4 UI | 0.6.0 UI | React + TypeScript screens in the "Vé giấy" design, Vietnamese and English |
+| 4 UI | 0.7.0 Desktop app | Tauri shell with PyInstaller sidecar, installer, release automation |
+| 3 Fast | Later | Tuning from the log files; several MuMu instances with separate accounts in parallel (one account cannot log in twice) |
 
 0.4.0 situations ("done" = handled, or at least reported clearly in the log file). Decided on
 2026-10-10: 0.4.0 fixes failures as they show up in the log; no health check before 06:00,
