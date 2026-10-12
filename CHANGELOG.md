@@ -15,6 +15,11 @@ uses [Semantic Versioning](https://semver.org/).
   fields (run started with its trigger, device and app ready, waiting, each slot's steps and
   result, run finished with its status). For now they appear in the debug log; they are the
   base for the history database and the live view of the app.
+- The app's data folder, `%LOCALAPPDATA%\CourtBooker` (or `COURT_BOOKER_HOME`), for its
+  config, history database, logs and run lock.
+- The config can be saved: it is checked first (slot format, court, day, wake time before
+  start time, timeouts) and written safely, so a bad edit never reaches the file a run
+  reads. A default config is created when none exists. New dependency: `tomli-w`.
 
 ### Fixed
 - `tools/inspect_screen.py` connects to MuMu 12 instance 0 (`127.0.0.1:16384`) by default
