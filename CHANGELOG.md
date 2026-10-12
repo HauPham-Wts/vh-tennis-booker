@@ -12,6 +12,10 @@ uses [Semantic Versioning](https://semver.org/).
   books. Configuration and logs stay in the development folder.
 - The debug log names the Python and the code folder each run uses.
 
+### Fixed
+- `tools/inspect_screen.py` connects to MuMu 12 instance 0 (`127.0.0.1:16384`) by default
+  instead of the MuMu 6 port.
+
 ## [0.4.0] - 2026-10-12
 
 ### Added
