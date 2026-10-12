@@ -1,6 +1,8 @@
 """CLI exit codes with the device layer replaced by fakes."""
 
+import sys
 from datetime import datetime
+from pathlib import Path
 
 import court_booker.cli as cli
 from court_booker.errors import EmulatorError
@@ -96,3 +98,11 @@ def test_summary_is_sent_to_telegram_even_on_device_error(monkeypatch, tmp_path)
     monkeypatch.setattr(cli, "connect_device", connect)
     assert cli.main(["--config", str(path)]) == cli.EXIT_DEVICE
     assert sent == ["court-booker: 0/0 ok\nError: MuMu did not start"]
+
+
+def test_log_names_the_python_and_code_folder(monkeypatch, tmp_path):
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)])
+
+    text = next((tmp_path / "logs").glob("court-booker-*.log")).read_text(encoding="utf-8")
+    assert f"Python {sys.executable}, code in " in text
+    assert str(Path(cli.__file__).resolve().parent) in text
