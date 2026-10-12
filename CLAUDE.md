@@ -156,8 +156,8 @@ user must not need to be awake. Priority is unattended, scheduled, fastest-possi
 
 - Target date is always today + `days_ahead` (default 2); no specific `--date`.
 - No stop button / cancellation token; Ctrl+C prints the summary instead.
-- UI, backend and desktop packaging come last (phase 4 of the roadmap), after robustness and
-  performance.
+- UI, backend and desktop packaging are phase 4 of the roadmap; started on 2026-10-12 as
+  0.5.0 to 0.7.0 (`docs/specs/0.5.0-desktop-app.md`).
 - Each run waits on the utilities list ("Sân Tennis", screen 2) before the start time, so only
   the booking taps happen after 06:00.
 - Trigger is Windows Task Scheduler at `wake_at` (default 05:45; 05:50 on the dev machine,
@@ -230,10 +230,10 @@ Telegram setup (the optional code stays) and no run history file until the app s
 
 ## Next step
 
-0.4.0 is released. Read the log after each 06:00 run and fix what fails, one branch per
-problem; a fix after the release (e.g. the next-month case) ships as 0.4.1. The UI phase is
-planned next. Make sure a failure leaves enough in the log to fix it from one run: the
-next-month case only occurs twice a month (first on 2026-10-30). Ruled out on 2026-10-09:
-opening the calendar before 06:00, two slots in one booking, pre-recorded coordinates (no
-faster than reading the screen, which is needed anyway to know it appeared). Ruled out on
-2026-10-10: health check, fallback slots and courts, Telegram setup, run history file.
+Work happens on `release/0.5.0`, following `docs/specs/0.5.0-desktop-app.md`: one part at a
+time (one branch, several small commits, one pull request), each part merged before the next.
+Write code only when the user asks for it. Keep reading the 06:00 logs; a booking fix ships
+as 0.4.1 from `main`. The next-month case first occurs on 2026-10-30. Ruled out on 2026-10-09:
+opening the calendar before 06:00, two slots in one booking, pre-recorded coordinates. Ruled
+out on 2026-10-10: health check, fallback slots and courts, Telegram setup, run history file
+(history now comes with the app's database).
