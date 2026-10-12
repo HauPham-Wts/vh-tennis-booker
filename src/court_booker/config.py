@@ -84,11 +84,14 @@ class ConfigError(RequestError, ValueError):
 
 def load_config(path: str | Path | None) -> Config:
     """Return the default configuration overridden by ``path`` if it exists."""
-    config = Config()
     if path is None or not Path(path).exists():
-        return config
+        return Config()
+    return config_from_dict(tomllib.loads(Path(path).read_text(encoding="utf-8")))
 
-    data: dict[str, Any] = tomllib.loads(Path(path).read_text(encoding="utf-8"))
+
+def config_from_dict(data: dict[str, Any]) -> Config:
+    """Return the default configuration overridden by ``data``, a parsed TOML document."""
+    config = Config()
     known_keys = {f.name for f in fields(Config)} - {"labels"}
 
     for key, value in data.items():
