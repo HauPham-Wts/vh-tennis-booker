@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import os
 import re
 import sys
 from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Any
+
+import tomli_w
 
 from court_booker.clock import parse_time
 from court_booker.errors import RequestError
@@ -107,6 +110,45 @@ def config_from_dict(data: dict[str, Any]) -> Config:
         else:
             raise ConfigError(f"Unknown configuration key: {key!r}")
     return config
+
+
+def config_to_dict(config: Config) -> dict[str, Any]:
+    """Return ``config`` as a TOML document: every key, with the labels as a table."""
+    data: dict[str, Any] = {}
+    for item in fields(Config):
+        if item.name != "labels":
+            value = getattr(config, item.name)
+            data[item.name] = list(value) if isinstance(value, tuple) else value
+    data["labels"] = {
+        ("continue" if item.name == "continue_" else item.name): getattr(config.labels, item.name)
+        for item in fields(Labels)
+    }
+    return data
+
+
+def save_config(config: Config, path: str | Path) -> None:
+    """Validate ``config`` and write it to ``path`` as TOML.
+
+    The text goes to a temporary file that then replaces ``path``, so a run reading the
+    file at that moment sees the old or the new version, never half of one. Comments of
+    an existing file are not kept.
+    """
+    problems = validate_config(config)
+    if problems:
+        raise ConfigError("; ".join(problems))
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary = target.with_name(target.name + ".tmp")
+    temporary.write_text(tomli_w.dumps(config_to_dict(config)), encoding="utf-8")
+    os.replace(temporary, target)
+
+
+def ensure_config(path: str | Path) -> Path:
+    """Write the default config to ``path`` unless a file is already there."""
+    target = Path(path)
+    if not target.exists():
+        save_config(Config(), target)
+    return target
 
 
 def validate_config(config: Config) -> list[str]:
