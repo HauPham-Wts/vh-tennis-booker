@@ -21,7 +21,9 @@ def parse_bounds(text: str) -> tuple[int, int, int, int] | None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--device", default="127.0.0.1:7555")
+    parser.add_argument(
+        "--device", default="127.0.0.1:16384", help="ADB serial (default: MuMu 12 instance 0)"
+    )
     parser.add_argument("--near", help="text whose row should be listed")
     parser.add_argument("--out", default="dump.xml")
     args = parser.parse_args()
