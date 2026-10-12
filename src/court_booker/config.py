@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import re
 import sys
 from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Any
 
+from court_booker.clock import parse_time
 from court_booker.errors import RequestError
 
 if sys.version_info >= (3, 11):
@@ -15,6 +17,9 @@ else:  # pragma: no cover
     import tomli as tomllib
 
 DEFAULT_MUMU_MANAGER = "C:/Program Files/Netease/MuMuPlayer/nx_main/MuMuManager.exe"
+MAX_DAYS_AHEAD = 2
+"""The app books from today to today + 2."""
+_SLOT_PATTERN = re.compile(r"\d{2}:\d{2} - \d{2}:\d{2}")
 
 
 @dataclass
@@ -102,6 +107,44 @@ def config_from_dict(data: dict[str, Any]) -> Config:
         else:
             raise ConfigError(f"Unknown configuration key: {key!r}")
     return config
+
+
+def validate_config(config: Config) -> list[str]:
+    """Return what is wrong with ``config`` for booking, or an empty list.
+
+    Used before saving, so a bad edit never reaches the file the 06:00 run reads.
+    """
+    problems = []
+    if not config.slots:
+        problems.append("choose at least one slot")
+    for slot in config.slots:
+        if not isinstance(slot, str) or not _SLOT_PATTERN.fullmatch(slot):
+            problems.append(f"slot {slot!r} must look like '18:00 - 19:00'")
+    if len(set(config.slots)) != len(config.slots):
+        problems.append("a slot is listed twice")
+    if not config.court.strip():
+        problems.append("court is empty")
+    if not 0 <= config.days_ahead <= MAX_DAYS_AHEAD:
+        problems.append(f"days_ahead must be 0 to {MAX_DAYS_AHEAD}")
+    times = {}
+    for name in ("wake_at", "start_at"):
+        try:
+            times[name] = parse_time(getattr(config, name), name)
+        except RequestError as exc:
+            problems.append(str(exc))
+    if len(times) == 2 and times["wake_at"] >= times["start_at"]:
+        problems.append("wake_at must be before start_at")
+    for name in ("timeout", "boot_timeout"):
+        if getattr(config, name) <= 0:
+            problems.append(f"{name} must be positive")
+    for name in ("open_retry_seconds", "max_swipes"):
+        if getattr(config, name) < 0:
+            problems.append(f"{name} must not be negative")
+    for name in ("next_month_xy", "prev_month_xy"):
+        point = getattr(config, name)
+        if len(point) != 2 or not all(0 <= value <= 1 for value in point):
+            problems.append(f"{name} must be two screen ratios between 0 and 1")
+    return problems
 
 
 def _apply_labels(labels: Labels, values: dict[str, str]) -> None:
