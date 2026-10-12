@@ -6,6 +6,12 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- `tools/setup_runner.py` sets up the runner folder: a git worktree at a release tag with its
+  own virtual environment, which the daily scheduled task runs, so work in progress never
+  books. Configuration and logs stay in the development folder.
+- The debug log names the Python and the code folder each run uses.
+
 ## [0.4.0] - 2026-10-12
 
 ### Added
