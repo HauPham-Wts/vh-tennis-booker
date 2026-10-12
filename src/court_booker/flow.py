@@ -24,6 +24,7 @@ from court_booker.errors import (
     NavigationError,
     SlotUnavailableError,
 )
+from court_booker.events import EventKind, Reporter
 from court_booker.geometry import (
     ANY_SLOT_PATTERN,
     DAY_PATTERN,
@@ -56,9 +57,11 @@ _MIN_VISIBLE_RATIO = 0.6
 class Booker:
     """Drive one booking round per call to :meth:`book`."""
 
-    def __init__(self, device: Any, config: Config) -> None:
+    def __init__(self, device: Any, config: Config, report: Reporter | None = None) -> None:
         self.device = device
         self.config = config
+        self.report = Reporter() if report is None else report
+        """Receives the steps of each round; reporting sends no device commands."""
         self.commands = 0
         """Device commands sent so far; each is a round trip to the emulator."""
         self.last_screen = Screen([])
@@ -134,6 +137,7 @@ class Booker:
         _, screen = self.tap_and_advance(
             screen, self.court, self.config.court, self._finder(self.continue_button)
         )
+        self.report(EventKind.COURT_SELECTED, court=self.config.court)
         point, _ = self.tap_and_advance(
             screen, self.continue_button, labels.continue_, self.locate_checkbox
         )
@@ -156,6 +160,7 @@ class Booker:
             _, screen = self.tap_and_advance(
                 screen, self.utility, self.config.labels.utility, self._find_calendar
             )
+            self.report(EventKind.CALENDAR_OPENED, attempt=attempt)
             try:
                 self.select_date(screen, target)
                 return self.select_slot(slot)
@@ -239,6 +244,7 @@ class Booker:
             if found is not None:
                 self.tap(found[0])
                 logger.info("Selected date %s", target.isoformat())
+                self.report(EventKind.DATE_SELECTED, date=target.isoformat())
                 return
             first_day = self.last_screen.find(self.any_day)
             logger.debug(
@@ -277,6 +283,7 @@ class Booker:
                 if position == "visible":
                     self.tap(node)
                     logger.info("Selected slot %s (%d swipe(s))", slot, swipes)
+                    self.report(EventKind.SLOT_SELECTED, slot=slot, swipes=swipes)
                     return screen
                 down = position == "below"
             if swipes >= self.config.max_swipes or time.monotonic() >= deadline:
@@ -324,6 +331,7 @@ class Booker:
                 raise NavigationError("Checkbox tapped but the confirm button stayed disabled")
             point = self.locate_checkbox(self.last_screen) or point
         logger.info("Accepted terms")
+        self.report(EventKind.TERMS_ACCEPTED)
 
         if dry_run:
             logger.info("Dry run: skipping final confirmation")

@@ -11,6 +11,10 @@ uses [Semantic Versioning](https://semver.org/).
   own virtual environment, which the daily scheduled task runs, so work in progress never
   books. Configuration and logs stay in the development folder.
 - The debug log names the Python and the code folder each run uses.
+- Run events: besides its log lines, the engine reports each step as an event with fixed
+  fields (run started with its trigger, device and app ready, waiting, each slot's steps and
+  result, run finished with its status). For now they appear in the debug log; they are the
+  base for the history database and the live view of the app.
 
 ### Fixed
 - `tools/inspect_screen.py` connects to MuMu 12 instance 0 (`127.0.0.1:16384`) by default

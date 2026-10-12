@@ -1,5 +1,6 @@
 """CLI exit codes with the device layer replaced by fakes."""
 
+import argparse
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -106,3 +107,46 @@ def test_log_names_the_python_and_code_folder(monkeypatch, tmp_path):
     text = next((tmp_path / "logs").glob("court-booker-*.log")).read_text(encoding="utf-8")
     assert f"Python {sys.executable}, code in " in text
     assert str(Path(cli.__file__).resolve().parent) in text
+
+
+def read_log(tmp_path):
+    return next((tmp_path / "logs").glob("court-booker-*.log")).read_text(encoding="utf-8")
+
+
+def test_run_events_reach_the_log(monkeypatch, tmp_path):
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)], args=["--dry-run"])
+
+    text = read_log(tmp_path)
+    assert "Event run_started trigger='dry_run' dry_run=True" in text
+    assert "Event device_ready" in text
+    assert "Event run_finished status='ok' booked=1 total=1 error=None" in text
+
+
+def test_run_finished_is_reported_on_a_device_error(monkeypatch, tmp_path):
+    def connect(config):
+        raise EmulatorError("MuMu did not start")
+
+    run_cli(monkeypatch, tmp_path, connect=connect)
+
+    assert "Event run_finished status='failed' booked=0 total=0" in read_log(tmp_path)
+
+
+def test_run_trigger():
+    def args(scheduled=False, dry_run=False):
+        return argparse.Namespace(scheduled=scheduled, dry_run=dry_run)
+
+    assert cli.run_trigger(args(scheduled=True, dry_run=True)) == "scheduled"
+    assert cli.run_trigger(args(dry_run=True)) == "dry_run"
+    assert cli.run_trigger(args()) == "manual"
+
+
+def test_run_status():
+    ok = RoundResult("18:00 - 19:00", True, "booked", 7.0)
+    failed = RoundResult("19:00 - 20:00", False, "Hết chỗ", 1.0)
+
+    assert cli.run_status([ok, ok], None, interrupted=False) == "ok"
+    assert cli.run_status([ok, failed], None, interrupted=False) == "partial"
+    assert cli.run_status([ok], "adb lost", interrupted=False) == "partial"
+    assert cli.run_status([failed], None, interrupted=False) == "failed"
+    assert cli.run_status([], "MuMu did not start", interrupted=False) == "failed"
+    assert cli.run_status([ok], "interrupted", interrupted=True) == "interrupted"

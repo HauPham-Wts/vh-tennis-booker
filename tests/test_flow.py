@@ -14,6 +14,7 @@ from court_booker.errors import (
     ElementNotFoundError,
     SlotUnavailableError,
 )
+from court_booker.events import EventKind, MemorySink, Reporter
 from court_booker.flow import Booker
 from court_booker.screen import Screen
 
@@ -210,6 +211,30 @@ def test_book_reads_each_screen_once_and_taps_by_coordinates():
     assert app.screen == "ticket"
     # 8 taps plus one read per screen: start, calendar, slots, courts, details,
     # confirmation, enabled confirm button, ticket.
+    assert booker.commands == 16
+
+
+def test_book_reports_each_step_without_extra_commands():
+    app = booking_app()
+    sink = MemorySink()
+    booker = Booker(app, Config(), Reporter(sink))
+
+    booker.book("11:00 - 12:00", TARGET)
+
+    assert sink.kinds == [
+        EventKind.CALENDAR_OPENED,
+        EventKind.DATE_SELECTED,
+        EventKind.SLOT_SELECTED,
+        EventKind.COURT_SELECTED,
+        EventKind.TERMS_ACCEPTED,
+    ]
+    assert [event.data for event in sink.events] == [
+        {"attempt": 1},
+        {"date": "2026-10-11"},
+        {"slot": "11:00 - 12:00", "swipes": 0},
+        {"court": "S10 - Sân tennis"},
+        {},
+    ]
     assert booker.commands == 16
 
 

@@ -8,13 +8,14 @@ import pytest
 import court_booker.runner as runner
 from court_booker.config import Config
 from court_booker.errors import AppNotReadyError, SlotUnavailableError
+from court_booker.events import EventKind, MemorySink, Reporter
 from court_booker.screen import Node, Screen
 
 FULL_SLOT = Node("18:00 - 19:00\nHết chỗ", (38, 1178, 263, 1262), True)
 
 
 class FakeBooker:
-    def __init__(self, device, config):
+    def __init__(self, device, config, report=None):
         self.booked = []
         self.events = []
         self.commands = 0
@@ -52,8 +53,8 @@ def test_failed_round_does_not_stop_later_rounds(monkeypatch):
 def test_entry_is_located_just_before_the_start_time(monkeypatch):
     bookers = []
 
-    def make_booker(device, config):
-        bookers.append(FakeBooker(device, config))
+    def make_booker(device, config, report=None):
+        bookers.append(FakeBooker(device, config, report))
         return bookers[-1]
 
     monkeypatch.setattr(runner, "Booker", make_booker)
@@ -95,3 +96,42 @@ def test_failed_preparation_logs_the_last_screen(monkeypatch, caplog):
         runner.run_booking(FakeDevice(), Config(slots=["19:00 - 20:00"]))
 
     assert "Last screen read (1 elements):" in caplog.text
+
+
+def test_events_follow_the_run(monkeypatch):
+    monkeypatch.setattr(runner, "Booker", FakeBooker)
+    sink = MemorySink()
+    config = Config(slots=["18:00 - 19:00", "19:00 - 20:00"], days_ahead=2)
+
+    runner.run_booking(FakeDevice(), config, dry_run=True, report=Reporter(sink))
+
+    assert sink.kinds == [
+        EventKind.APP_READY,
+        EventKind.BOOKING_STARTED,
+        EventKind.SLOT_STARTED,
+        EventKind.SLOT_FAILED,
+        EventKind.SLOT_STARTED,
+        EventKind.SLOT_BOOKED,
+    ]
+    started, failed, booked = sink.events[1], sink.events[3], sink.events[5]
+    assert started.data["slots"] == ["18:00 - 19:00", "19:00 - 20:00"]
+    assert started.data["dry_run"] is True
+    assert sink.events[2].data == {"slot": "18:00 - 19:00", "round": 1, "rounds": 2}
+    assert failed.data["reason"] == "Slot 18:00 - 19:00 is fully booked"
+    assert booked.data["slot"] == "19:00 - 20:00"
+    assert booked.data["commands"] == 0
+
+
+def test_timed_run_reports_the_wait(monkeypatch):
+    monkeypatch.setattr(runner, "Booker", FakeBooker)
+    monkeypatch.setattr(runner, "wait_until", lambda target, offset: None)
+    sink = MemorySink()
+    start = datetime(2026, 10, 13, 6, 0)
+
+    runner.run_booking(
+        FakeDevice(), Config(slots=["19:00 - 20:00"]), start=start, report=Reporter(sink)
+    )
+
+    assert sink.kinds[:3] == [EventKind.APP_READY, EventKind.WAITING, EventKind.BOOKING_STARTED]
+    assert sink.events[1].data == {"until": "2026-10-13T06:00:00"}
+    assert sink.events[2].data["date"] == "2026-10-15"

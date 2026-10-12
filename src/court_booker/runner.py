@@ -14,6 +14,7 @@ from court_booker.clock import wait_until
 from court_booker.config import Config
 from court_booker.emulator import MuMu
 from court_booker.errors import BookingError, DeviceConnectionError
+from court_booker.events import EventKind, Reporter
 from court_booker.flow import Booker
 
 logger = logging.getLogger(__name__)
@@ -73,18 +74,23 @@ def run_booking(
     start: datetime | None = None,
     offset: float = 0.0,
     results: list[RoundResult] | None = None,
+    report: Reporter | None = None,
 ) -> list[RoundResult]:
     """Prepare the app, wait for ``start`` if given, then book every configured slot.
 
     ``offset`` corrects the local clock (see :func:`clock.ntp_offset`). The target
     date is ``days_ahead`` after the start date. Results are appended to
-    ``results`` as rounds finish, so an interrupted caller still sees them.
+    ``results`` as rounds finish, so an interrupted caller still sees them; progress
+    goes to ``report`` as events.
     """
     results = [] if results is None else results
-    booker = Booker(device, config)
+    report = Reporter() if report is None else report
+    booker = Booker(device, config, report)
     try:
         booker.prepare()
+        report(EventKind.APP_READY)
         if start is not None:
+            report(EventKind.WAITING, until=start.isoformat(timespec="seconds"))
             wait_until(start - LOCATE_AHEAD, offset)
             booker.locate_entry()
             wait_until(start, offset)
@@ -98,9 +104,16 @@ def run_booking(
         ", ".join(config.slots),
         " (dry run)" if dry_run else "",
     )
+    report(
+        EventKind.BOOKING_STARTED,
+        date=target.isoformat(),
+        slots=list(config.slots),
+        dry_run=dry_run,
+    )
 
     for index, slot in enumerate(config.slots, start=1):
         logger.info("Round %d/%d: %s", index, len(config.slots), slot)
+        report(EventKind.SLOT_STARTED, slot=slot, round=index, rounds=len(config.slots))
         started = time.perf_counter()
         commands = booker.commands
         try:
@@ -108,13 +121,31 @@ def run_booking(
         except BookingError as exc:
             logger.error("%s", exc)
             log_last_screen(booker)
-            results.append(RoundResult(slot, False, str(exc), time.perf_counter() - started))
+            ok, detail = False, str(exc)
         except Exception as exc:  # keep later rounds running on device glitches
             logger.exception("Unexpected error")
             log_last_screen(booker)
-            results.append(RoundResult(slot, False, repr(exc), time.perf_counter() - started))
+            ok, detail = False, repr(exc)
         else:
-            detail = "dry run passed" if dry_run else "booked"
-            results.append(RoundResult(slot, True, detail, time.perf_counter() - started))
-        logger.debug("Round %d used %d device commands", index, booker.commands - commands)
+            ok, detail = True, "dry run passed" if dry_run else "booked"
+        seconds = time.perf_counter() - started
+        used = booker.commands - commands
+        results.append(RoundResult(slot, ok, detail, seconds))
+        logger.debug("Round %d used %d device commands", index, used)
+        if ok:
+            report(
+                EventKind.SLOT_BOOKED,
+                slot=slot,
+                seconds=round(seconds, 1),
+                commands=used,
+                dry_run=dry_run,
+            )
+        else:
+            report(
+                EventKind.SLOT_FAILED,
+                slot=slot,
+                reason=detail,
+                seconds=round(seconds, 1),
+                commands=used,
+            )
     return results

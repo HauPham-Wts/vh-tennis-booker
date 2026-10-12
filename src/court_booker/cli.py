@@ -12,6 +12,7 @@ from court_booker import __version__, schedule
 from court_booker.clock import ntp_offset, resolve_start
 from court_booker.config import Config, load_config
 from court_booker.errors import AppNotReadyError, CourtBookerError, DeviceError, RequestError
+from court_booker.events import EventKind, LogSink, Reporter
 from court_booker.logging_setup import LOGGER_NAME, add_file_handler, configure_logging
 from court_booker.notify import format_summary, send_telegram
 from court_booker.power import keep_awake
@@ -82,12 +83,31 @@ def exit_code(error: CourtBookerError) -> int:
     return EXIT_ROUND_FAILED
 
 
+def run_trigger(args: argparse.Namespace) -> str:
+    """Return what started the run: ``scheduled``, ``dry_run`` or ``manual``."""
+    if args.scheduled:
+        return "scheduled"
+    return "dry_run" if args.dry_run else "manual"
+
+
+def run_status(results: list[RoundResult], error: str | None, interrupted: bool) -> str:
+    """Return ``ok``, ``partial``, ``failed`` or ``interrupted`` for a finished run."""
+    if interrupted:
+        return "interrupted"
+    booked = sum(result.ok for result in results)
+    if results and booked == len(results) and error is None:
+        return "ok"
+    return "partial" if booked else "failed"
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     if argv[:1] == ["schedule"]:
         return schedule.main(argv[1:])
     args = build_parser().parse_args(argv)
     configure_logging(verbose=args.verbose)
+    report = Reporter(LogSink())
+    started = False
     results: list[RoundResult] = []
     config: Config | None = None
     error: str | None = None
@@ -102,12 +122,22 @@ def main(argv: list[str] | None = None) -> int:
         logger.debug("Python %s, code in %s", sys.executable, Path(__file__).resolve().parent)
         start_text = config.start_at if args.scheduled else args.at
         start = resolve_start(start_text, datetime.now()) if start_text else None
+        report(
+            EventKind.RUN_STARTED,
+            trigger=run_trigger(args),
+            dry_run=args.dry_run,
+            slots=list(config.slots),
+            start=None if start is None else start.isoformat(timespec="seconds"),
+            version=__version__,
+        )
+        started = True
         with keep_awake():
             offset = 0.0
             if start is not None and config.ntp_server:
                 offset = ntp_offset(config.ntp_server) or 0.0
                 logger.info("Clock offset %+.3f s", offset)
             device = connect_device(config)
+            report(EventKind.DEVICE_READY)
             run_booking(
                 device,
                 config,
@@ -115,6 +145,7 @@ def main(argv: list[str] | None = None) -> int:
                 start=start,
                 offset=offset,
                 results=results,
+                report=report,
             )
         code = EXIT_OK if all(result.ok for result in results) else EXIT_ROUND_FAILED
     except KeyboardInterrupt:
@@ -128,6 +159,14 @@ def main(argv: list[str] | None = None) -> int:
         error, code = repr(exc), EXIT_ROUND_FAILED
 
     print_summary(results)
+    if started:
+        report(
+            EventKind.RUN_FINISHED,
+            status=run_status(results, error, code == EXIT_INTERRUPTED),
+            booked=sum(result.ok for result in results),
+            total=len(results),
+            error=error,
+        )
     if config is not None and config.telegram_token and config.telegram_chat_id:
         text = format_summary(results, error, dry_run=args.dry_run)
         send_telegram(config.telegram_token, config.telegram_chat_id, text)
