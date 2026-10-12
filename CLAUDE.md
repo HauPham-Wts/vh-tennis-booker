@@ -101,6 +101,14 @@ out of scope.
 - `config.load_config` rejects unknown keys (`ConfigError`); the TOML key `continue` maps to
   `Labels.continue_`; keys ending in `_xy` become tuples. New config fields must be added to
   the dataclass and `config.example.toml`. A relative `log_dir` resolves against the config file.
+  `config_from_dict` builds a config from parsed TOML; `validate_config` lists problems (slot
+  format and duplicates, empty court, `days_ahead` 0-2, `wake_at` before `start_at`, positive
+  timeouts, `_xy` ratios); `save_config` validates, then writes with `tomli-w` through a
+  temporary file and `os.replace` (comments are not kept); `ensure_config` writes the defaults
+  once. Loading does not validate, so an existing config never stops the 06:00 run.
+- `paths.data_folder()`: the app's data folder, `%LOCALAPPDATA%\CourtBooker` (override with
+  `COURT_BOOKER_HOME`), holding `config.toml`, `booker.db`, `logs/` and `run.lock`. The CLI
+  does not use it yet; the backend and database will.
 - Tests use hand-written fakes (`tests/test_flow.py`: `FakeApp`, a scripted app that serves
   hierarchy XML per screen and switches screens on taps and Back; `OpeningBooker`) and a fake
   `flow.time` clock so timeouts pass instantly. A full round must cost 16 commands. `tests/conftest.py` puts
