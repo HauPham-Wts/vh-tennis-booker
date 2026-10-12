@@ -15,7 +15,7 @@ FULL_SLOT = Node("18:00 - 19:00\nHết chỗ", (38, 1178, 263, 1262), True)
 
 
 class FakeBooker:
-    def __init__(self, device, config):
+    def __init__(self, device, config, report=None):
         self.booked = []
         self.events = []
         self.commands = 0
@@ -53,8 +53,8 @@ def test_failed_round_does_not_stop_later_rounds(monkeypatch):
 def test_entry_is_located_just_before_the_start_time(monkeypatch):
     bookers = []
 
-    def make_booker(device, config):
-        bookers.append(FakeBooker(device, config))
+    def make_booker(device, config, report=None):
+        bookers.append(FakeBooker(device, config, report))
         return bookers[-1]
 
     monkeypatch.setattr(runner, "Booker", make_booker)

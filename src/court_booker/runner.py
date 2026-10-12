@@ -85,7 +85,7 @@ def run_booking(
     """
     results = [] if results is None else results
     report = Reporter() if report is None else report
-    booker = Booker(device, config)
+    booker = Booker(device, config, report)
     try:
         booker.prepare()
         report(EventKind.APP_READY)
