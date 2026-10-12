@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-12
+
 ### Added
 - When a round or the preparation fails, the debug log lists every labelled or clickable
   element of the last screen read, with its bounds, so a failure seen once at 06:00 can be
