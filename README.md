@@ -149,7 +149,9 @@ src/court_booker/
 ├── geometry.py         pure helpers for bounds and dates
 └── logging_setup.py    console and file logging with step timing
 tools/inspect_screen.py UI hierarchy dump
+tools/setup_runner.py   runner folder for the daily task on a development machine
 tests/                  unit tests with fake devices, adb, clocks and schtasks
+docs/specs/             one design spec per version
 ```
 
 ## Development
@@ -160,7 +162,9 @@ pre-commit install
 pytest
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions and the release process.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions and the release process. On a
+development machine the daily task runs a separate runner folder, so work in progress never
+books (see "Runner folder" there).
 
 ## License
 
