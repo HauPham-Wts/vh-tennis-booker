@@ -136,8 +136,7 @@ _SETUP_KINDS = frozenset({EventKind.SETUP_STARTED, EventKind.SETUP_ITEM, EventKi
 def category(event: Event) -> str:
     """Return the activity log filter of ``event``.
 
-    One of ``step``, ``slot``, ``setup``, ``settings`` or ``error``; the schedule adds
-    ``schedule``.
+    One of ``step``, ``slot``, ``setup``, ``settings``, ``schedule`` or ``error``.
     """
     if event.kind is EventKind.SLOT_FAILED:
         return "error"
@@ -147,6 +146,8 @@ def category(event: Event) -> str:
         return "setup"
     if event.kind is EventKind.SETTINGS_SAVED:
         return "settings"
+    if event.kind in (EventKind.SCHEDULE_ENABLED, EventKind.SCHEDULE_DISABLED):
+        return "schedule"
     return "slot" if event.kind in _SLOT_KINDS else "step"
 
 
