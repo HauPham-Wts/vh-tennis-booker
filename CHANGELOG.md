@@ -40,6 +40,9 @@ uses [Semantic Versioning](https://semver.org/).
   8765) with a health route, its OpenAPI schema at `/api/openapi.json` and engine errors
   answered as JSON with a stable code. It needs the new `app` extra
   (`pip install -e ".[app]"`); scheduled runs do not load it.
+- Backend history routes, read-only: `GET /api/runs` (newest first, filters by play month
+  and trigger, paging), `GET /api/runs/{id}` (slots, steps and log lines) and
+  `GET /api/events` (the activity log by category).
 
 ### Fixed
 - `tools/inspect_screen.py` connects to MuMu 12 instance 0 (`127.0.0.1:16384`) by default
