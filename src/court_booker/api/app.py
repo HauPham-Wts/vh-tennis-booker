@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from court_booker import __version__
+from court_booker.api.context import AppContext
 
 
 class Health(BaseModel):
@@ -15,8 +16,8 @@ class Health(BaseModel):
     version: str
 
 
-def create_app() -> FastAPI:
-    """Return the backend; its OpenAPI schema is served at ``/api/openapi.json``."""
+def create_app(context: AppContext) -> FastAPI:
+    """Return the backend for ``context``; its OpenAPI schema is at ``/api/openapi.json``."""
     app = FastAPI(
         title="Court Booker",
         version=__version__,
@@ -24,6 +25,7 @@ def create_app() -> FastAPI:
         docs_url="/api/docs",
         redoc_url=None,
     )
+    app.state.context = context
 
     @app.get("/api/health", response_model=Health, tags=["app"])
     def health() -> Health:

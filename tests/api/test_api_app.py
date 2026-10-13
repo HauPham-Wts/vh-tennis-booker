@@ -1,16 +1,7 @@
 """Tests for the backend application."""
 
-import pytest
-from fastapi.testclient import TestClient
-
 from court_booker import __version__
-from court_booker.api.app import create_app
-
-
-@pytest.fixture
-def client():
-    with TestClient(create_app()) as client:
-        yield client
+from court_booker.api.context import Context
 
 
 def test_health_reports_the_version(client):
@@ -25,3 +16,14 @@ def test_the_openapi_schema_is_served_under_api(client):
 
     assert schema["info"]["title"] == "Court Booker"
     assert "/api/health" in schema["paths"]
+
+
+def test_routes_get_the_context(app, client, context):
+    @app.get("/api/test-context")
+    def read(context: Context) -> dict:
+        return {"config": str(context.config_path), "days": context.config().days_ahead}
+
+    assert client.get("/api/test-context").json() == {
+        "config": str(context.config_path),
+        "days": 2,
+    }
