@@ -72,3 +72,29 @@ def test_an_unknown_run_is_not_found(client):
 
     assert response.status_code == 404
     assert response.json() == {"error": "not_found", "detail": "No run 42"}
+
+
+def test_activity_is_listed_newest_first_by_category(client, database, record_run):
+    run_id = record_run(database, slots=[("18:00 - 19:00", False)])
+
+    everything = client.get("/api/events").json()
+    errors = client.get("/api/events", params={"category": "error"}).json()
+
+    assert everything[0]["kind"] == "run_finished"
+    assert {step["run_id"] for step in everything} == {run_id}
+    assert [(step["kind"], step["data"]["reason"]) for step in errors] == [
+        ("slot_failed", "fully booked")
+    ]
+
+
+def test_activity_pages_back(client, database, record_run):
+    record_run(database)
+    (newest,) = client.get("/api/events", params={"limit": 1}).json()
+
+    (older,) = client.get("/api/events", params={"limit": 1, "before": newest["id"]}).json()
+
+    assert older["id"] < newest["id"]
+
+
+def test_an_unknown_category_is_refused(client):
+    assert client.get("/api/events", params={"category": "misc"}).status_code == 422

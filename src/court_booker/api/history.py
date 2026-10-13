@@ -105,3 +105,17 @@ def get_run(db: HistoryDb, run_id: int) -> dict[str, Any]:
     if run is None:
         raise NotFoundError(f"No run {run_id}")
     return run
+
+
+Category = Literal["step", "slot", "setup", "schedule", "settings", "error"]
+
+
+@router.get("/events", response_model=list[Step])
+def list_events(
+    db: HistoryDb,
+    category: Optional[Category] = None,
+    before: Optional[int] = None,
+    limit: Annotated[int, Query(ge=1, le=500)] = history_read.DEFAULT_LIMIT,
+) -> list[dict[str, Any]]:
+    """List activity log steps newest first, of runs and of the app; ``before`` pages back."""
+    return history_read.list_events(db, category=category, before=before, limit=limit)
