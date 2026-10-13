@@ -1,10 +1,15 @@
 """Tests for the history database."""
 
+import logging
 import sqlite3
+from datetime import datetime, timedelta
 
 import pytest
 
 from court_booker import history
+from court_booker.events import EventKind, Reporter
+
+START = datetime(2026, 10, 13, 5, 50, 3, 257000)
 
 
 @pytest.fixture
@@ -12,6 +17,49 @@ def connection(tmp_path):
     connection = history.connect(tmp_path / "booker.db")
     yield connection
     connection.close()
+
+
+def ticking_clock():
+    """Return a clock that moves one second per call."""
+    moments = (START + timedelta(seconds=step) for step in range(1000))
+    return lambda: next(moments)
+
+
+def play_run(report):
+    """Report a two-slot scheduled run where the second slot is fully booked."""
+    report(
+        EventKind.RUN_STARTED,
+        trigger="scheduled",
+        dry_run=False,
+        slots=["18:00 - 19:00", "19:00 - 20:00"],
+        start="2026-10-13T06:00:00",
+        version="0.5.0",
+    )
+    report(EventKind.DEVICE_READY)
+    report(EventKind.APP_READY)
+    report(
+        EventKind.BOOKING_STARTED,
+        date="2026-10-15",
+        court="S6 - Sân tennis",
+        slots=["18:00 - 19:00", "19:00 - 20:00"],
+        dry_run=False,
+    )
+    report(EventKind.SLOT_STARTED, slot="18:00 - 19:00", round=1, rounds=2)
+    report(EventKind.SLOT_BOOKED, slot="18:00 - 19:00", seconds=7.8, commands=51, dry_run=False)
+    report(EventKind.SLOT_STARTED, slot="19:00 - 20:00", round=2, rounds=2)
+    report(
+        EventKind.SLOT_FAILED,
+        slot="19:00 - 20:00",
+        reason="Slot 19:00 - 20:00 is fully booked",
+        seconds=2.1,
+        commands=12,
+    )
+    report(EventKind.RUN_FINISHED, status="partial", booked=1, total=2, error=None)
+
+
+def rows(connection, sql):
+    connection.row_factory = sqlite3.Row
+    return [dict(row) for row in connection.execute(sql)]
 
 
 def tables(connection):
@@ -46,3 +94,69 @@ def test_slots_need_an_existing_run(connection):
             "INSERT INTO run_slots (run_id, slot, ok, finished_at, seconds, commands)"
             " VALUES (99, '18:00 - 19:00', 1, '2026-10-13T06:00:07', 7.0, 16)"
         )
+
+
+def test_a_run_and_its_slots_are_recorded(connection):
+    store = history.History(connection)
+
+    play_run(Reporter(store, clock=ticking_clock()))
+
+    assert rows(connection, "SELECT * FROM runs") == [
+        {
+            "id": store.run_id,
+            "trigger": "scheduled",
+            "dry_run": 0,
+            "version": "0.5.0",
+            "started_at": "2026-10-13T05:50:03.257",
+            "finished_at": "2026-10-13T05:50:11.257",
+            "play_date": "2026-10-15",
+            "court": "S6 - Sân tennis",
+            "status": "partial",
+            "error": None,
+        }
+    ]
+    assert rows(connection, "SELECT * FROM run_slots") == [
+        {
+            "id": 1,
+            "run_id": store.run_id,
+            "slot": "18:00 - 19:00",
+            "ok": 1,
+            "reason": None,
+            "finished_at": "2026-10-13T05:50:08.257",
+            "seconds": 7.8,
+            "commands": 51,
+        },
+        {
+            "id": 2,
+            "run_id": store.run_id,
+            "slot": "19:00 - 20:00",
+            "ok": 0,
+            "reason": "Slot 19:00 - 20:00 is fully booked",
+            "finished_at": "2026-10-13T05:50:10.257",
+            "seconds": 2.1,
+            "commands": 12,
+        },
+    ]
+
+
+def test_a_run_stays_running_until_it_finishes(connection):
+    report = Reporter(history.History(connection), clock=ticking_clock())
+
+    report(EventKind.RUN_STARTED, trigger="dry_run", dry_run=True, version="0.5.0")
+
+    assert rows(connection, "SELECT status, finished_at FROM runs") == [
+        {"status": "running", "finished_at": None}
+    ]
+
+
+def test_a_database_error_turns_history_off_once(connection, caplog):
+    caplog.set_level(logging.WARNING, logger="court_booker")
+    store = history.History(connection)
+    report = Reporter(store, clock=ticking_clock())
+    connection.close()
+
+    play_run(report)
+
+    assert store.failed
+    assert caplog.text.count("History database failed") == 1
+    assert "Event sink failed" not in caplog.text

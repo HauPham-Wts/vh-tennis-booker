@@ -9,7 +9,12 @@ from __future__ import annotations
 
 import logging
 import sqlite3
+import time
+from datetime import datetime
 from pathlib import Path
+from typing import Callable
+
+from court_booker.events import Event, EventKind
 
 logger = logging.getLogger(__name__)
 
@@ -95,3 +100,82 @@ def connect(path: Path) -> sqlite3.Connection:
         connection.close()
         raise
     return connection
+
+
+def _stamp(moment: datetime) -> str:
+    return moment.isoformat(timespec="milliseconds")
+
+
+class History:
+    """Write the runs of this process to the history database; an event sink.
+
+    Writing must never cost a booking: after the first database error, history stops for
+    the rest of the process and the error is logged once.
+    """
+
+    def __init__(self, connection: sqlite3.Connection) -> None:
+        self.connection = connection
+        self.run_id: int | None = None
+        self.failed = False
+        self.writes = 0
+        self.seconds = 0.0
+
+    def emit(self, event: Event) -> None:
+        """Record ``event`` in the run tables."""
+        self._write(lambda db: self._record_run(db, event))
+
+    def close(self) -> None:
+        """Close the database, logging what writing to it cost."""
+        logger.debug("History: %d writes in %.1f ms", self.writes, self.seconds * 1000)
+        self.connection.close()
+
+    def _write(self, write: Callable[[sqlite3.Connection], None]) -> None:
+        """Run ``write`` in one transaction, unless an earlier write failed."""
+        if self.failed:
+            return
+        started = time.perf_counter()
+        try:
+            with self.connection:
+                write(self.connection)
+        except sqlite3.Error:
+            self.failed = True
+            logger.warning("History database failed; history is off for this run", exc_info=True)
+        finally:
+            self.writes += 1
+            self.seconds += time.perf_counter() - started
+
+    def _record_run(self, db: sqlite3.Connection, event: Event) -> None:
+        kind, data, stamp = event.kind, event.data, _stamp(event.time)
+        if kind is EventKind.RUN_STARTED:
+            cursor = db.execute(
+                "INSERT INTO runs (trigger, dry_run, version, started_at, status)"
+                " VALUES (?, ?, ?, ?, 'running')",
+                (data["trigger"], data["dry_run"], data["version"], stamp),
+            )
+            self.run_id = cursor.lastrowid
+        elif self.run_id is None:
+            return
+        elif kind is EventKind.BOOKING_STARTED:
+            db.execute(
+                "UPDATE runs SET play_date = ?, court = ? WHERE id = ?",
+                (data["date"], data.get("court"), self.run_id),
+            )
+        elif kind in (EventKind.SLOT_BOOKED, EventKind.SLOT_FAILED):
+            db.execute(
+                "INSERT INTO run_slots (run_id, slot, ok, reason, finished_at, seconds, commands)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (
+                    self.run_id,
+                    data["slot"],
+                    kind is EventKind.SLOT_BOOKED,
+                    data.get("reason"),
+                    stamp,
+                    data["seconds"],
+                    data["commands"],
+                ),
+            )
+        elif kind is EventKind.RUN_FINISHED:
+            db.execute(
+                "UPDATE runs SET finished_at = ?, status = ?, error = ? WHERE id = ?",
+                (stamp, data["status"], data.get("error"), self.run_id),
+            )
