@@ -63,7 +63,8 @@ If the booking flow changed, also run `court-booker --dry-run --verbose` against
    ```
 6. Create a GitHub release from the tag using the changelog entry, then delete the
    release branch.
-7. Move the runner folder to the new tag (see below):
+7. Once a dry run of the release passes on the emulator, move the runner folder to the new
+   tag (see below); until then the daily task keeps the previous release:
    ```bash
    python tools/setup_runner.py vX.Y.Z
    ```
@@ -77,6 +78,7 @@ it still reads `config.toml` and writes `logs/` in the development folder.
 ```bash
 python tools/setup_runner.py v0.4.0 --schedule   # first time: create it and point the task at it
 python tools/setup_runner.py vX.Y.Z              # after a release: move it to the new tag
+python tools/setup_runner.py v0.4.0              # move it back if the new release fails
 ```
 
 The log of each run names the Python and code folder it used. A fix that must reach the
