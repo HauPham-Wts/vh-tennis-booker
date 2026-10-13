@@ -4,10 +4,11 @@
 # time.
 import subprocess
 import sys
+import threading
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
 from court_booker.api.context import Context
@@ -18,6 +19,8 @@ router = APIRouter(prefix="/api", tags=["runs"])
 
 # Keep a console window from opening for the dry run.
 _NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+_starting = threading.Lock()
+"""Two requests at once must not both find no run and both start one."""
 
 
 def launch(config_path: Path) -> "subprocess.Popen[bytes]":
@@ -45,17 +48,23 @@ class DryRunStarted(BaseModel):
 
 
 @router.post("/runs/dry-run", status_code=202, response_model=DryRunStarted)
-def start_dry_run(context: Context) -> DryRunStarted:
+def start_dry_run(context: Context, request: Request) -> DryRunStarted:
     """Start a dry run of the saved settings; it stops before "Xác nhận".
 
     Refused (400 ``bad_request``) from the wake time to 5 minutes after the start time and
-    (409 ``lock_held``) while a run holds the lock. The dry run checks both again itself.
+    (409 ``lock_held``) while a run holds the lock, or while the dry run started last is
+    still running (it may not hold the lock yet). The dry run checks again itself.
     """
     config = context.config()
     now = datetime.now()
     check_quiet_time(now, config.wake_at, config.start_at, "dry run")
-    holder = RunLock(context.data.lock).running_holder()
-    if holder is not None:
-        raise LockHeldError(f"Another run is in progress: {holder.describe()}")
-    process = launch(context.config_path.resolve())
+    with _starting:
+        last = getattr(request.app.state, "dry_run", None)
+        if last is not None and last.poll() is None:
+            raise LockHeldError(f"Another run is in progress: dry run (pid {last.pid})")
+        holder = RunLock(context.data.lock).running_holder()
+        if holder is not None:
+            raise LockHeldError(f"Another run is in progress: {holder.describe()}")
+        process = launch(context.config_path.resolve())
+        request.app.state.dry_run = process
     return DryRunStarted(pid=process.pid, started_at=now.isoformat(timespec="seconds"))

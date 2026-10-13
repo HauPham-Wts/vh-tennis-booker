@@ -21,14 +21,30 @@ class At(datetime):
 
 
 class FakeProcess:
+    """A dry run process that runs until ``finish`` is called."""
+
     pid = 4321
+
+    def __init__(self):
+        self.code = None
+
+    def poll(self):
+        return self.code
+
+    def finish(self):
+        self.code = 0
 
 
 @pytest.fixture
 def launched(monkeypatch):
     """Record dry run launches instead of starting processes; the time is 14:00."""
     calls = []
-    monkeypatch.setattr(runs, "launch", lambda path: calls.append(path) or FakeProcess())
+
+    def launch(path):
+        calls.append(path)
+        return FakeProcess()
+
+    monkeypatch.setattr(runs, "launch", launch)
     monkeypatch.setattr(runs, "datetime", At)
     return calls
 
@@ -39,6 +55,19 @@ def test_a_dry_run_starts_in_its_own_process(client, context, launched):
     assert response.status_code == 202
     assert response.json() == {"pid": 4321, "started_at": "2026-10-13T14:00:00"}
     assert launched == [context.config_path.resolve()]
+
+
+def test_a_second_dry_run_waits_for_the_first_to_end(app, client, launched):
+    client.post("/api/runs/dry-run")
+
+    while_running = client.post("/api/runs/dry-run")
+    app.state.dry_run.finish()
+    after = client.post("/api/runs/dry-run")
+
+    assert while_running.status_code == 409
+    assert while_running.json()["detail"].endswith("dry run (pid 4321)")
+    assert after.status_code == 202
+    assert len(launched) == 2
 
 
 def test_no_dry_run_while_a_run_holds_the_lock(client, context, launched):
