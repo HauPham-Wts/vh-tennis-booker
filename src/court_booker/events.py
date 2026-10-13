@@ -39,6 +39,10 @@ class EventKind(str, Enum):
     LOCK_CLEARED = "lock_cleared"
     LOCK_WAITING = "lock_waiting"
     LOCK_TAKEN_OVER = "lock_taken_over"
+    # Auto setup, outside any run.
+    SETUP_STARTED = "setup_started"
+    SETUP_ITEM = "setup_item"
+    SETUP_FINISHED = "setup_finished"
 
 
 @dataclass(frozen=True)

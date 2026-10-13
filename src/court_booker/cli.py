@@ -11,6 +11,7 @@ from pathlib import Path
 from court_booker import __version__, schedule
 from court_booker.clock import ntp_offset, resolve_start
 from court_booker.config import Config, load_config
+from court_booker.device_setup import Check, Status, Tools, auto_setup, find_tools, run_checks
 from court_booker.errors import (
     AppNotReadyError,
     CourtBookerError,
@@ -112,19 +113,87 @@ def run_status(results: list[RoundResult], error: str | None, interrupted: bool)
     return "partial" if booked else "failed"
 
 
-def check_dry_run_time(now: datetime, config: Config) -> None:
-    """Refuse a dry run while the scheduled run keeps the emulator to itself."""
+def check_quiet_time(now: datetime, config: Config, task: str) -> None:
+    """Refuse ``task`` (a dry run, auto setup) while the scheduled run owns the emulator."""
     begin, end = schedule_window(now.date(), config.wake_at, config.start_at)
     if begin <= now < end:
         raise RequestError(
-            f"No dry run from {begin:%H:%M} to {end:%H:%M}: the scheduled run uses the emulator"
+            f"No {task} from {begin:%H:%M} to {end:%H:%M}: the scheduled run uses the emulator"
         )
+
+
+def setup_main(argv: list[str]) -> int:
+    """Run ``court-booker setup``: check the PC and MuMu; ``--auto`` fixes what it can."""
+    parser = argparse.ArgumentParser(
+        prog="court-booker setup",
+        description="Check the PC and the emulator for booking; --auto fixes what it can.",
+    )
+    parser.add_argument(
+        "--config", default="config.toml", help="config file (default: %(default)s)"
+    )
+    parser.add_argument("--auto", action="store_true", help="fix every item that can be fixed")
+    parser.add_argument(
+        "--restart-mumu",
+        action="store_true",
+        help="with --auto, restart a running MuMu to apply its new screen",
+    )
+    args = parser.parse_args(argv)
+    configure_logging()
+    try:
+        config = load_config(args.config)
+        tools = find_tools(config)
+        results = run_auto_setup(args, config, tools) if args.auto else run_checks(config, tools)
+    except CourtBookerError as exc:
+        logger.error("%s", exc)
+        return exit_code(exc)
+    for result in results:
+        print(f"{result.status.value:8} {result.item:15} {result.detail}")
+    done = all(result.status in (Status.OK, Status.FIXED) for result in results)
+    return EXIT_OK if done else EXIT_ROUND_FAILED
+
+
+def run_auto_setup(args: argparse.Namespace, config: Config, tools: Tools) -> list[Check]:
+    """Take the run lock and run auto setup, recording each item in the history."""
+    check_quiet_time(datetime.now(), config, "auto setup")
+    if config.log_dir:
+        logger.debug(
+            "Logging to %s", add_file_handler(Path(args.config).resolve().parent / config.log_dir)
+        )
+    folder = data_folder()
+    history = open_history(folder.database)
+    report = Reporter(LogSink() if history is None else MultiSink(LogSink(), history))
+    lock = RunLock(folder.lock, report)
+    results: list[Check] = []
+    error: str | None = None
+    report(EventKind.SETUP_STARTED, restart_mumu=args.restart_mumu, version=__version__)
+    try:
+        lock.acquire("setup")
+        results = auto_setup(config, Path(args.config), tools, restart_mumu=args.restart_mumu)
+    except CourtBookerError as exc:
+        error = str(exc)
+        raise
+    finally:
+        for result in results:
+            report(
+                EventKind.SETUP_ITEM,
+                item=result.item,
+                status=result.status.value,
+                detail=result.detail,
+            )
+        left = [r.item for r in results if r.status not in (Status.OK, Status.FIXED)]
+        report(EventKind.SETUP_FINISHED, left=left, error=error)
+        lock.release()
+        if history is not None:
+            close_history(history)
+    return results
 
 
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     if argv[:1] == ["schedule"]:
         return schedule.main(argv[1:])
+    if argv[:1] == ["setup"]:
+        return setup_main(argv[1:])
     args = build_parser().parse_args(argv)
     configure_logging(verbose=args.verbose)
     trigger = run_trigger(args)
@@ -150,7 +219,7 @@ def main(argv: list[str] | None = None) -> int:
         logger.debug("Python %s, code in %s", sys.executable, Path(__file__).resolve().parent)
         now = datetime.now()
         if trigger == "dry_run":
-            check_dry_run_time(now, config)
+            check_quiet_time(now, config, "dry run")
         start_text = config.start_at if args.scheduled else args.at
         start = resolve_start(start_text, now) if start_text else None
         report(

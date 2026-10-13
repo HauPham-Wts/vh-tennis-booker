@@ -130,17 +130,20 @@ def _stamp(moment: datetime) -> str:
 
 
 _SLOT_KINDS = frozenset({EventKind.SLOT_STARTED, EventKind.SLOT_BOOKED})
+_SETUP_KINDS = frozenset({EventKind.SETUP_STARTED, EventKind.SETUP_ITEM, EventKind.SETUP_FINISHED})
 
 
 def category(event: Event) -> str:
-    """Return the activity log filter ``event`` belongs to: ``step``, ``slot`` or ``error``.
+    """Return the activity log filter of ``event``: ``step``, ``slot``, ``setup`` or ``error``.
 
-    The app adds ``setup``, ``schedule`` and ``settings`` with its own events.
+    The app adds ``schedule`` and ``settings`` with its own events.
     """
     if event.kind is EventKind.SLOT_FAILED:
         return "error"
     if event.kind is EventKind.RUN_FINISHED and event.data.get("error"):
         return "error"
+    if event.kind in _SETUP_KINDS:
+        return "setup"
     return "slot" if event.kind in _SLOT_KINDS else "step"
 
 
