@@ -2,7 +2,7 @@
 
 import subprocess
 import xml.etree.ElementTree as ET
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 import pytest
@@ -114,3 +114,15 @@ def test_installed_without_schtasks_raises():
 
     with pytest.raises(ScheduleError, match="could not run"):
         schedule.installed(run)
+
+
+def test_the_next_start_is_today_until_it_passes():
+    assert schedule.next_start(datetime(2026, 10, 13, 5, 59), "06:00") == datetime(
+        2026, 10, 13, 6, 0
+    )
+    assert schedule.next_start(datetime(2026, 10, 13, 6, 0), "06:00") == datetime(
+        2026, 10, 14, 6, 0
+    )
+    assert schedule.next_start(datetime(2026, 10, 31, 18, 0), "06:00") == datetime(
+        2026, 11, 1, 6, 0
+    )
