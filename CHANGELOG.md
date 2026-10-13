@@ -43,6 +43,10 @@ uses [Semantic Versioning](https://semver.org/).
 - Backend history routes, read-only: `GET /api/runs` (newest first, filters by play month
   and trigger, paging), `GET /api/runs/{id}` (slots, steps and log lines) and
   `GET /api/events` (the activity log by category).
+- Backend settings routes: `GET /api/settings` and `PUT /api/settings`. Saving checks
+  every value first and lists each problem; the Telegram keys are neither shown nor
+  changed; a save is recorded in the activity log. Invalid requests answer with the list
+  of invalid values.
 
 ### Fixed
 - `tools/inspect_screen.py` connects to MuMu 12 instance 0 (`127.0.0.1:16384`) by default
