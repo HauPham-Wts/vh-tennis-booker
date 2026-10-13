@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import sqlite3
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -12,9 +13,11 @@ from court_booker import __version__, schedule
 from court_booker.clock import ntp_offset, resolve_start
 from court_booker.config import Config, load_config
 from court_booker.errors import AppNotReadyError, CourtBookerError, DeviceError, RequestError
-from court_booker.events import EventKind, LogSink, Reporter
+from court_booker.events import EventKind, LogSink, MultiSink, Reporter
+from court_booker.history import History, connect
 from court_booker.logging_setup import LOGGER_NAME, add_file_handler, configure_logging
 from court_booker.notify import format_summary, send_telegram
+from court_booker.paths import data_folder
 from court_booker.power import keep_awake
 from court_booker.runner import RoundResult, connect_device, run_booking
 
@@ -100,6 +103,27 @@ def run_status(results: list[RoundResult], error: str | None, interrupted: bool)
     return "partial" if booked else "failed"
 
 
+def open_history() -> History | None:
+    """Open the history database and keep the package's log lines in it.
+
+    Returns ``None`` if it cannot be opened: the run still books, it is only not recorded.
+    """
+    path = data_folder().database
+    try:
+        history = History(connect(path))
+    except (OSError, sqlite3.Error):
+        logger.warning("History database %s unavailable; run not recorded", path, exc_info=True)
+        return None
+    logger.debug("History in %s", path)
+    logging.getLogger(LOGGER_NAME).addHandler(history.handler)
+    return history
+
+
+def close_history(history: History) -> None:
+    logging.getLogger(LOGGER_NAME).removeHandler(history.handler)
+    history.close()
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     if argv[:1] == ["schedule"]:
@@ -107,6 +131,7 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     configure_logging(verbose=args.verbose)
     report = Reporter(LogSink())
+    history: History | None = None
     started = False
     results: list[RoundResult] = []
     config: Config | None = None
@@ -117,6 +142,10 @@ def main(argv: list[str] | None = None) -> int:
             # Relative to the config file, since a scheduled task may start elsewhere.
             log_dir = Path(args.config).resolve().parent / config.log_dir
             logger.debug("Logging to %s", add_file_handler(log_dir))
+        # Opened after the log file, so a database that cannot be opened is in the log.
+        history = open_history()
+        if history is not None:
+            report = Reporter(MultiSink(LogSink(), history))
         logger.info("court-booker %s", __version__)
         # Shows whether the scheduled task ran the runner folder or a development checkout.
         logger.debug("Python %s, code in %s", sys.executable, Path(__file__).resolve().parent)
@@ -170,4 +199,6 @@ def main(argv: list[str] | None = None) -> int:
     if config is not None and config.telegram_token and config.telegram_chat_id:
         text = format_summary(results, error, dry_run=args.dry_run)
         send_telegram(config.telegram_token, config.telegram_chat_id, text)
+    if history is not None:
+        close_history(history)
     return code

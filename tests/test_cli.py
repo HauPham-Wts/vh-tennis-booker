@@ -1,12 +1,15 @@
 """CLI exit codes with the device layer replaced by fakes."""
 
 import argparse
+import logging
+import sqlite3
 import sys
 from datetime import datetime
 from pathlib import Path
 
 import court_booker.cli as cli
 from court_booker.errors import EmulatorError
+from court_booker.history import HistoryHandler
 from court_booker.runner import RoundResult
 
 
@@ -129,6 +132,36 @@ def test_run_finished_is_reported_on_a_device_error(monkeypatch, tmp_path):
     run_cli(monkeypatch, tmp_path, connect=connect)
 
     assert "Event run_finished status='failed' booked=0 total=0" in read_log(tmp_path)
+
+
+def test_a_run_is_recorded_in_the_history(monkeypatch, tmp_path, data_home):
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)], args=["--dry-run"])
+
+    connection = sqlite3.connect(data_home / "booker.db")
+    ((run_id, trigger, status),) = connection.execute("SELECT id, trigger, status FROM runs")
+    kinds = [kind for (kind,) in connection.execute("SELECT kind FROM events ORDER BY id")]
+    query = "SELECT message FROM log_lines WHERE run_id = ?"
+    lines = [line for (line,) in connection.execute(query, (run_id,))]
+    connection.close()
+    assert (trigger, status) == ("dry_run", "ok")
+    assert kinds == ["run_started", "device_ready", "run_finished"]
+    assert f"court-booker {cli.__version__}" in lines
+    assert "Summary" in lines
+
+
+def test_the_history_stops_listening_after_the_run(monkeypatch, tmp_path):
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)])
+
+    handlers = logging.getLogger("court_booker").handlers
+    assert not any(isinstance(handler, HistoryHandler) for handler in handlers)
+
+
+def test_a_run_books_without_the_history(monkeypatch, tmp_path, data_home):
+    data_home.parent.mkdir(parents=True, exist_ok=True)
+    data_home.write_text("not a folder", encoding="utf-8")
+
+    assert run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)]) == cli.EXIT_OK
+    assert "run not recorded" in read_log(tmp_path)
 
 
 def test_run_trigger():
