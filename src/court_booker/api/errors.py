@@ -15,6 +15,10 @@ from court_booker.errors import (
 )
 
 
+class NotFoundError(CourtBookerError):
+    """The record asked for does not exist."""
+
+
 class Problem(BaseModel):
     """An error: ``error`` is a stable code, ``detail`` the English message for the log."""
 
@@ -23,6 +27,7 @@ class Problem(BaseModel):
 
 
 _STATUSES: tuple[tuple[type[CourtBookerError], int, str], ...] = (
+    (NotFoundError, 404, "not_found"),
     (LockHeldError, 409, "lock_held"),
     (RequestError, 400, "bad_request"),
     (DeviceError, 503, "device"),

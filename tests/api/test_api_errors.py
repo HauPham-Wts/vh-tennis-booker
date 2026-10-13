@@ -2,6 +2,7 @@
 
 import pytest
 
+from court_booker.api.errors import NotFoundError
 from court_booker.config import ConfigError
 from court_booker.errors import (
     AppNotReadyError,
@@ -32,3 +33,11 @@ def test_engine_errors_become_problems(app, client, error, status, code):
 
     assert response.status_code == status
     assert response.json() == {"error": code, "detail": str(error)}
+
+
+def test_a_missing_record_is_not_found(app, client):
+    @app.get("/api/test-missing")
+    def fail() -> None:
+        raise NotFoundError("No run 42")
+
+    assert client.get("/api/test-missing").status_code == 404

@@ -11,6 +11,7 @@ from pydantic import BaseModel
 
 from court_booker import history_read
 from court_booker.api.context import Context
+from court_booker.api.errors import NotFoundError
 
 router = APIRouter(prefix="/api", tags=["history"])
 
@@ -46,6 +47,45 @@ class RunSummary(BaseModel):
     total: int
 
 
+class SlotResult(BaseModel):
+    """The result of one slot of a run."""
+
+    slot: str
+    ok: bool
+    reason: Optional[str]
+    finished_at: str
+    seconds: float
+    commands: int
+
+
+class Step(BaseModel):
+    """One step of the activity log; ``kind`` is the message key, ``data`` its values."""
+
+    id: int
+    run_id: Optional[int]
+    time: str
+    category: str
+    kind: str
+    data: dict[str, Any]
+
+
+class LogLine(BaseModel):
+    """One technical log line."""
+
+    id: int
+    time: str
+    level: str
+    message: str
+
+
+class RunDetail(RunSummary):
+    """One run in full, for its History page."""
+
+    slots: list[SlotResult]
+    steps: list[Step]
+    log_lines: list[LogLine]
+
+
 @router.get("/runs", response_model=list[RunSummary])
 def list_runs(
     db: HistoryDb,
@@ -56,3 +96,12 @@ def list_runs(
 ) -> list[dict[str, Any]]:
     """List runs newest first; ``month`` filters on the play date, ``before`` pages back."""
     return history_read.list_runs(db, month=month, trigger=trigger, before=before, limit=limit)
+
+
+@router.get("/runs/{run_id}", response_model=RunDetail)
+def get_run(db: HistoryDb, run_id: int) -> dict[str, Any]:
+    """Show one run with its slots, its steps and its technical log lines."""
+    run = history_read.get_run(db, run_id)
+    if run is None:
+        raise NotFoundError(f"No run {run_id}")
+    return run

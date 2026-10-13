@@ -40,3 +40,35 @@ def test_runs_filter_and_page(client, database, record_run):
 )
 def test_bad_run_filters_are_refused(client, params):
     assert client.get("/api/runs", params=params).status_code == 422
+
+
+def test_one_run_in_full(client, database, record_run):
+    run_id = record_run(database, slots=[("18:00 - 19:00", True)])
+
+    run = client.get(f"/api/runs/{run_id}").json()
+
+    assert run["slots"] == [
+        {
+            "slot": "18:00 - 19:00",
+            "ok": True,
+            "reason": None,
+            "finished_at": run["slots"][0]["finished_at"],
+            "seconds": 7.8,
+            "commands": 51,
+        }
+    ]
+    assert [step["kind"] for step in run["steps"]] == [
+        "run_started",
+        "booking_started",
+        "slot_started",
+        "slot_booked",
+        "run_finished",
+    ]
+    assert run["log_lines"] == []
+
+
+def test_an_unknown_run_is_not_found(client):
+    response = client.get("/api/runs/42")
+
+    assert response.status_code == 404
+    assert response.json() == {"error": "not_found", "detail": "No run 42"}
