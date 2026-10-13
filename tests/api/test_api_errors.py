@@ -41,3 +41,12 @@ def test_a_missing_record_is_not_found(app, client):
         raise NotFoundError("No run 42")
 
     assert client.get("/api/test-missing").status_code == 404
+
+
+def test_an_invalid_request_lists_its_problems(client):
+    response = client.get("/api/runs", params={"month": "October", "limit": 0})
+
+    body = response.json()
+    assert response.status_code == 422
+    assert body["error"] == "invalid_request"
+    assert [problem.split(":")[0] for problem in body["problems"]] == ["month", "limit"]
