@@ -20,6 +20,11 @@ uses [Semantic Versioning](https://semver.org/).
 - The config can be saved: it is checked first (slot format, court, day, wake time before
   start time, timeouts) and written safely, so a bad edit never reaches the file a run
   reads. A default config is created when none exists. New dependency: `tomli-w`.
+- History database: every run (scheduled, dry run or manual) is recorded in `booker.db` in
+  the data folder: the run with its trigger, play date, court and status, the result of each
+  slot, every step, and the technical log lines. A database error only turns history off
+  for that run; the booking goes on. Writing takes about 0.13 ms per row.
+- The booking started event names the court.
 
 ### Fixed
 - `tools/inspect_screen.py` connects to MuMu 12 instance 0 (`127.0.0.1:16384`) by default

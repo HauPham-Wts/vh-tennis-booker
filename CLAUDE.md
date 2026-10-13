@@ -81,6 +81,16 @@ out of scope.
   path; `run_booking` emits `app_ready`, `waiting`, `booking_started`, `slot_started`,
   `slot_booked`/`slot_failed`; `Booker` emits `calendar_opened`, `date_selected`,
   `slot_selected`, `court_selected`, `terms_accepted`. Reporting sends no device command.
+- `history.py`: the history database `booker.db` in the data folder (spec part 4; stdlib
+  `sqlite3`, `MIGRATIONS` counted in `PRAGMA user_version`, WAL, 0.5 s busy timeout).
+  `History` is an event sink: `run_started` inserts a `runs` row (`running`), `booking_started`
+  adds the play date and court, `slot_booked`/`slot_failed` insert `run_slots`,
+  `run_finished` sets the status; every event is also an `events` row (category `step`, `slot`
+  or `error`, kind, JSON data). `History.handler` copies log records into `log_lines`, holding
+  lines logged before `run_started` until the run exists. The first `sqlite3.Error` turns
+  history off for the process (logged once), so the database never costs a booking. The CLI
+  opens it after the log file (`open_history`) and closes it last; `History: N writes in X ms`
+  is logged on close (about 0.13 ms per write).
 - `screen.Screen` parses one `dump_hierarchy` into `Node`s (label, visible bounds, clickable);
   `screen.Match` (desc / prefix / contains / full-match pattern / clickable) is applied locally.
   `Screen.describe()` gives one log line per labelled or clickable node (bounds, label).
@@ -108,11 +118,12 @@ out of scope.
   once. Loading does not validate, so an existing config never stops the 06:00 run.
 - `paths.data_folder()`: the app's data folder, `%LOCALAPPDATA%\CourtBooker` (override with
   `COURT_BOOKER_HOME`), holding `config.toml`, `booker.db`, `logs/` and `run.lock`. The CLI
-  does not use it yet; the backend and database will.
+  writes only `booker.db` there; its config and logs stay beside `--config` until the app.
 - Tests use hand-written fakes (`tests/test_flow.py`: `FakeApp`, a scripted app that serves
   hierarchy XML per screen and switches screens on taps and Back; `OpeningBooker`) and a fake
   `flow.time` clock so timeouts pass instantly. A full round must cost 16 commands. `tests/conftest.py` puts
-  `src/` on `sys.path`.
+  `src/` on `sys.path` and points `COURT_BOOKER_HOME` at a temporary folder for every test
+  (fixture `data_home`), so tests never write the real history.
 
 ## Booking flow (app screens)
 
