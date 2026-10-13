@@ -34,6 +34,13 @@ MuMu Player emulator, using only the app's user interface.
   within about a millisecond of the start time, and the calendar is reloaded until the new
   date is listed.
 - **Reporting.** Daily log files, exit codes per failure type and an optional Telegram summary.
+- **History.** Every run, each slot's result and every step is recorded in a SQLite database,
+  without slowing the booking down (about 0.13 ms per write).
+- **One run at a time.** A run lock keeps two runs off the emulator; the scheduled run takes
+  over from any other run two minutes before the start time.
+- **Device setup.** One command checks the PC and the emulator and fixes what it can.
+- **Backend.** A local FastAPI app serves the history, settings, setup, schedule and a live
+  feed for the coming desktop app.
 
 ## How it works
 
