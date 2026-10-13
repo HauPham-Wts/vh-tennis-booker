@@ -12,11 +12,12 @@ import logging
 import os
 import time
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Callable, Protocol
 
 from court_booker import processes
+from court_booker.clock import parse_time
 from court_booker.errors import LockHeldError
 from court_booker.events import EventKind, Reporter
 
@@ -24,6 +25,8 @@ logger = logging.getLogger(__name__)
 
 TAKE_OVER_AHEAD = timedelta(minutes=2)
 """The scheduled run stops a run still holding the lock this long before the start time."""
+SCHEDULE_AFTER = timedelta(minutes=5)
+"""How long after the start time the scheduled run keeps the emulator to itself."""
 
 _ATTEMPTS = 3
 """Tries to take the lock when others clear or release it at the same moment."""
@@ -62,6 +65,17 @@ class Holder:
 
 UNREADABLE = Holder(pid=-1, process_started=0.0, trigger="unknown", since="")
 """Stands for a lock file whose content cannot be read."""
+
+
+def schedule_window(day: date, wake_at: str, start_at: str) -> tuple[datetime, datetime]:
+    """Return when the scheduled run keeps the emulator to itself on ``day``.
+
+    It runs from the wake time to :data:`SCHEDULE_AFTER` past the start time; no dry run
+    may start then.
+    """
+    begin = datetime.combine(day, parse_time(wake_at, "wake time"))
+    end = datetime.combine(day, parse_time(start_at, "start time")) + SCHEDULE_AFTER
+    return begin, end
 
 
 class RunLock:

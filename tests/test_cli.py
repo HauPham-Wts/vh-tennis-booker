@@ -28,9 +28,11 @@ def fake_run(outcomes):
     return run_booking
 
 
-def run_cli(monkeypatch, tmp_path, outcomes=(), connect=lambda config: object(), args=()):
+def run_cli(monkeypatch, tmp_path, outcomes=(), connect=lambda config: object(), args=(), now=None):
+    """Run the CLI with a fake device; the time is 05:40 unless ``now`` gives a class."""
     monkeypatch.setattr(cli, "connect_device", connect)
     monkeypatch.setattr(cli, "run_booking", fake_run(outcomes))
+    monkeypatch.setattr(cli, "datetime", now or FixedDatetime)
     return cli.main(["--config", str(tmp_path / "missing.toml"), *args])
 
 
@@ -90,7 +92,7 @@ def test_scheduled_uses_config_start_and_clock_offset(monkeypatch, tmp_path):
 class FixedDatetime(datetime):
     @classmethod
     def now(cls, tz=None):
-        return datetime(2026, 10, 8, 5, 45)
+        return datetime(2026, 10, 8, 5, 40)  # before the default wake time, 05:45
 
 
 def test_summary_is_sent_to_telegram_even_on_device_error(monkeypatch, tmp_path):
@@ -205,6 +207,42 @@ def test_the_scheduled_run_may_take_the_lock_over_before_the_start(monkeypatch, 
     run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)], args=["--scheduled"])
 
     assert calls == [("scheduled", datetime(2026, 10, 8, 5, 58))]
+
+
+def at(hour, minute):
+    """Return a datetime class whose ``now`` is 2026-10-08 at ``hour:minute``."""
+
+    class Fixed(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2026, 10, 8, hour, minute)
+
+    return Fixed
+
+
+def test_no_dry_run_while_the_scheduled_run_uses_the_emulator(monkeypatch, tmp_path, data_home):
+    def connect(config):
+        raise AssertionError("must not touch the device")
+
+    code = run_cli(monkeypatch, tmp_path, connect=connect, args=["--dry-run"], now=at(5, 55))
+
+    assert code == cli.EXIT_BAD_REQUEST
+    assert "No dry run from 05:45 to 06:05: the scheduled run uses the emulator" in read_log(
+        tmp_path
+    )
+    assert not (data_home / "run.lock").exists()
+
+
+def test_a_dry_run_may_start_once_the_scheduled_run_is_over(monkeypatch, tmp_path):
+    outcomes = [("18:00 - 19:00", True)]
+
+    assert run_cli(monkeypatch, tmp_path, outcomes, args=["--dry-run"], now=at(6, 5)) == 0
+
+
+def test_a_manual_run_is_not_held_to_the_window(monkeypatch, tmp_path):
+    outcomes = [("18:00 - 19:00", True)]
+
+    assert run_cli(monkeypatch, tmp_path, outcomes, now=at(5, 55)) == cli.EXIT_OK
 
 
 def test_run_trigger():

@@ -7,7 +7,7 @@ import pytest
 
 from court_booker.errors import LockHeldError
 from court_booker.events import EventKind, MemorySink, Reporter
-from court_booker.lock import UNREADABLE, Holder, RunLock
+from court_booker.lock import UNREADABLE, Holder, RunLock, schedule_window
 
 NOW = datetime(2026, 10, 13, 10, 43, 10)
 
@@ -251,6 +251,13 @@ def test_a_lock_that_cannot_be_written_does_not_stop_the_run(tmp_path, machine, 
 
     assert lock.held is None
     assert caplog.text.count("unavailable; running without it") == 2
+
+
+def test_the_schedule_window_runs_from_wake_to_five_minutes_after_the_start():
+    begin, end = schedule_window(WAKE.date(), "05:50", "06:00")
+
+    assert begin == WAKE
+    assert end == datetime(2026, 10, 14, 6, 5)
 
 
 def test_an_unreadable_lock_is_cleared(tmp_path, machine):
