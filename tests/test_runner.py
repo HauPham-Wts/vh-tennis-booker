@@ -114,6 +114,7 @@ def test_events_follow_the_run(monkeypatch):
         EventKind.SLOT_BOOKED,
     ]
     started, failed, booked = sink.events[1], sink.events[3], sink.events[5]
+    assert started.data["court"] == config.court
     assert started.data["slots"] == ["18:00 - 19:00", "19:00 - 20:00"]
     assert started.data["dry_run"] is True
     assert sink.events[2].data == {"slot": "18:00 - 19:00", "round": 1, "rounds": 2}

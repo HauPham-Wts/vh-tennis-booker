@@ -107,6 +107,7 @@ def run_booking(
     report(
         EventKind.BOOKING_STARTED,
         date=target.isoformat(),
+        court=config.court,
         slots=list(config.slots),
         dry_run=dry_run,
     )
