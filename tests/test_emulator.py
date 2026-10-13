@@ -84,6 +84,61 @@ def test_missing_manager_explains_the_setting(tmp_path):
         mumu.is_started()
 
 
+class SettingManager:
+    """Answers ``setting`` like MuMuManager: JSON of the asked keys; records every call."""
+
+    def __init__(self, values):
+        self.values = dict(values)
+        self.calls = []
+
+    def run(self, argv):
+        self.calls.append(argv[1:])
+        args = argv[4:]
+        if "-val" in args:
+            pairs = zip(args[1::4], args[3::4])
+            self.values.update(pairs)
+            output = ""
+        else:
+            output = json.dumps({key: self.values[key] for key in args[1::2]})
+        return subprocess.CompletedProcess(argv, 0, stdout=output, stderr="")
+
+
+def test_settings_are_read_by_key(manager_path):
+    fake = SettingManager({"resolution_width": "540.000000", "resolution_dpi": "220.000000"})
+
+    values = MuMu(manager_path, run=fake.run).settings("resolution_width", "resolution_dpi")
+
+    assert values == {"resolution_width": "540.000000", "resolution_dpi": "220.000000"}
+    assert fake.calls == [["setting", "-v", "0", "-k", "resolution_width", "-k", "resolution_dpi"]]
+
+
+def test_settings_are_written_as_key_value_pairs(manager_path):
+    fake = SettingManager({})
+
+    MuMu(manager_path, run=fake.run).change_settings({"resolution_mode": "custom", "x": "1"})
+
+    assert fake.calls == [
+        ["setting", "-v", "0", "-k", "resolution_mode", "-val", "custom", "-k", "x", "-val", "1"]
+    ]
+    assert fake.values == {"resolution_mode": "custom", "x": "1"}
+
+
+def test_unreadable_settings_raise(manager_path):
+    def run(argv):
+        return subprocess.CompletedProcess(argv, 0, stdout="no json", stderr="")
+
+    with pytest.raises(EmulatorError, match="setting"):
+        MuMu(manager_path, run=run).settings("resolution_dpi")
+
+
+def test_restart_asks_mumu(manager_path):
+    fake = FakeManager(started=True)
+
+    make(manager_path, fake).restart()
+
+    assert fake.calls == ["control"]
+
+
 def test_failed_command_raises(manager_path):
     def run(argv):
         return subprocess.CompletedProcess(argv, 1, stdout="", stderr="no such player")

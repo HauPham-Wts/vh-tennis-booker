@@ -6,7 +6,7 @@ import json
 import logging
 import subprocess
 import time
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any, Callable
 
@@ -80,6 +80,27 @@ class MuMu:
     def launch(self) -> None:
         """Ask MuMu to start the instance; returns before Android has booted."""
         self._call("control", "launch")
+
+    def restart(self) -> None:
+        """Ask MuMu to restart the instance; returns before Android has booted."""
+        self._call("control", "restart")
+
+    def settings(self, *keys: str) -> dict[str, str]:
+        """Return the instance settings named ``keys``; readable while the instance is off."""
+        output = self._call("setting", *[arg for key in keys for arg in ("-k", key)])
+        try:
+            data = json.loads(output)
+        except ValueError as exc:
+            raise EmulatorError(f"Unexpected output from MuMuManager setting: {output!r}") from exc
+        if not isinstance(data, dict):
+            raise EmulatorError(f"Unexpected output from MuMuManager setting: {output!r}")
+        return {str(key): str(value) for key, value in data.items()}
+
+    def change_settings(self, values: Mapping[str, str]) -> None:
+        """Write instance settings; screen settings apply when the instance starts next."""
+        self._call(
+            "setting", *[arg for key, value in values.items() for arg in ("-k", key, "-val", value)]
+        )
 
     def ensure_started(self, timeout: float) -> None:
         """Launch the instance unless running, then wait until Android has booted."""
