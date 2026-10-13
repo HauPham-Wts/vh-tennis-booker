@@ -118,7 +118,13 @@ out of scope.
   `invalid_settings` with `problems`, file untouched), and only when something changed
   saves it (comments are lost) and records `settings_saved` with the changed keys.
   `api/activity.record` writes such app events (no run) to the history; a database error
-  is only logged.
+  is only logged. The backend opens the history with `open_store` (no log capture: its
+  log lines would mix requests).
+- `lock.check_quiet_time` refuses a dry run or auto setup from `wake_at` to start + 5 min.
+  `device_setup.run_auto_setup` is auto setup as one task (quiet time, run lock trigger
+  `setup`, `setup_*` events); `court-booker setup --auto` and `POST /api/setup/auto`
+  (`{"restart_mumu": bool}`; 400 in the quiet time, 409 while a run holds the lock) both
+  call it. `GET /api/setup` returns the checks as `SetupItem`s (item, status, detail).
 - `Booker.prepare` first turns off Android animations (`ANIMATION_SCALES` set to 0 in one
   `shell` command, as Accessibility > Remove animations); a failure is logged and ignored.
 - `runner.connect_device`: `emulator.MuMu.ensure_started` (MuMuManager `info`/`control launch`),
