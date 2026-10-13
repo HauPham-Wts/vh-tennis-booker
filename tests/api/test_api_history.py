@@ -1,0 +1,42 @@
+"""Tests for the history and activity routes."""
+
+import pytest
+
+
+@pytest.fixture
+def database(context):
+    return context.data.database
+
+
+def test_no_runs_yet(client):
+    assert client.get("/api/runs").json() == []
+
+
+def test_runs_are_listed_newest_first(client, database, record_run):
+    first = record_run(database, slots=[("18:00 - 19:00", True), ("19:00 - 20:00", False)])
+    second = record_run(database, trigger="dry_run")
+
+    runs = client.get("/api/runs").json()
+
+    assert [run["id"] for run in runs] == [second, first]
+    assert runs[1]["booked"] == 1
+    assert runs[1]["total"] == 2
+    assert runs[1]["play_date"] == "2026-10-15"
+
+
+def test_runs_filter_and_page(client, database, record_run):
+    ids = [record_run(database, date=f"2026-10-{day}") for day in (13, 14, 15)]
+    record_run(database, date="2026-11-01")
+
+    october = client.get("/api/runs", params={"month": "2026-10", "limit": 2}).json()
+    older = client.get("/api/runs", params={"month": "2026-10", "before": october[-1]["id"]})
+
+    assert [run["id"] for run in october] == [ids[2], ids[1]]
+    assert [run["id"] for run in older.json()] == [ids[0]]
+
+
+@pytest.mark.parametrize(
+    "params", [{"month": "October"}, {"trigger": "nightly"}, {"limit": 0}, {"limit": 501}]
+)
+def test_bad_run_filters_are_refused(client, params):
+    assert client.get("/api/runs", params=params).status_code == 422

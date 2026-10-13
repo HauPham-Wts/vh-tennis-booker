@@ -27,11 +27,14 @@ def open_read_only(path: Path) -> sqlite3.Connection:
     """Open the history at ``path`` for reading; rows come back as ``sqlite3.Row``.
 
     A missing database is created first (empty, migrated), so a new install reads no runs
-    instead of failing.
+    instead of failing. The connection may be used from another thread than the one that
+    opened it (the backend's worker threads); it only reads.
     """
     if not path.exists():
         connect(path).close()
-    connection = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
+    connection = sqlite3.connect(
+        f"{path.resolve().as_uri()}?mode=ro", uri=True, check_same_thread=False
+    )
     connection.row_factory = sqlite3.Row
     return connection
 

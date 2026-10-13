@@ -1,0 +1,58 @@
+"""History and activity routes: what the runs did, read-only."""
+
+# No `from __future__ import annotations`: FastAPI and Pydantic read these annotations at
+# run time, where Python 3.9 has no `X | None`, so `Optional` is used instead.
+import sqlite3
+from collections.abc import Iterator
+from typing import Annotated, Any, Literal, Optional
+
+from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel
+
+from court_booker import history_read
+from court_booker.api.context import Context
+
+router = APIRouter(prefix="/api", tags=["history"])
+
+Trigger = Literal["scheduled", "dry_run", "manual"]
+
+
+def history_db(context: Context) -> Iterator[sqlite3.Connection]:
+    """Open the history read-only for one request."""
+    connection = history_read.open_read_only(context.data.database)
+    try:
+        yield connection
+    finally:
+        connection.close()
+
+
+HistoryDb = Annotated[sqlite3.Connection, Depends(history_db)]
+
+
+class RunSummary(BaseModel):
+    """One run as the History list shows it."""
+
+    id: int
+    trigger: str
+    dry_run: bool
+    version: str
+    started_at: str
+    finished_at: Optional[str]
+    play_date: Optional[str]
+    court: Optional[str]
+    status: str
+    error: Optional[str]
+    booked: int
+    total: int
+
+
+@router.get("/runs", response_model=list[RunSummary])
+def list_runs(
+    db: HistoryDb,
+    month: Annotated[Optional[str], Query(pattern=r"^\d{4}-\d{2}$")] = None,
+    trigger: Optional[Trigger] = None,
+    before: Optional[int] = None,
+    limit: Annotated[int, Query(ge=1, le=500)] = history_read.DEFAULT_LIMIT,
+) -> list[dict[str, Any]]:
+    """List runs newest first; ``month`` filters on the play date, ``before`` pages back."""
+    return history_read.list_runs(db, month=month, trigger=trigger, before=before, limit=limit)
