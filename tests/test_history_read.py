@@ -112,3 +112,12 @@ def test_activity_pages_back(path, read, record_run):
     older = history_read.list_events(read(), before=newest[0]["id"], limit=1)
 
     assert older[0]["id"] == newest[0]["id"] - 1
+
+
+def test_a_passed_dry_run_is_found(path, read, record_run):
+    record_run(path, trigger="dry_run", status="failed")
+    record_run(path, trigger="scheduled", status="ok")
+    assert not history_read.dry_run_passed(read())
+
+    record_run(path, trigger="dry_run", status="ok")
+    assert history_read.dry_run_passed(read())
