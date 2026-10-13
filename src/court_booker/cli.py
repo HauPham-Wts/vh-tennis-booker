@@ -8,10 +8,10 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from court_booker import __version__, schedule
+from court_booker import __version__, device_setup, schedule
 from court_booker.clock import ntp_offset, resolve_start
 from court_booker.config import Config, load_config
-from court_booker.device_setup import Check, Status, Tools, auto_setup, find_tools, run_checks
+from court_booker.device_setup import Check, Status, Tools, find_tools, run_checks
 from court_booker.errors import (
     AppNotReadyError,
     CourtBookerError,
@@ -144,8 +144,9 @@ def setup_main(argv: list[str]) -> int:
 
 
 def run_auto_setup(args: argparse.Namespace, config: Config, tools: Tools) -> list[Check]:
-    """Take the run lock and run auto setup, recording each item in the history."""
-    check_quiet_time(datetime.now(), config.wake_at, config.start_at, "auto setup")
+    """Run auto setup with its log file and its history, like a run."""
+    now = datetime.now()
+    check_quiet_time(now, config.wake_at, config.start_at, "auto setup")
     if config.log_dir:
         logger.debug(
             "Logging to %s", add_file_handler(Path(args.config).resolve().parent / config.log_dir)
@@ -153,30 +154,19 @@ def run_auto_setup(args: argparse.Namespace, config: Config, tools: Tools) -> li
     folder = data_folder()
     history = open_history(folder.database)
     report = Reporter(LogSink() if history is None else MultiSink(LogSink(), history))
-    lock = RunLock(folder.lock, report)
-    results: list[Check] = []
-    error: str | None = None
-    report(EventKind.SETUP_STARTED, restart_mumu=args.restart_mumu, version=__version__)
     try:
-        lock.acquire("setup")
-        results = auto_setup(config, Path(args.config), tools, restart_mumu=args.restart_mumu)
-    except CourtBookerError as exc:
-        error = str(exc)
-        raise
+        return device_setup.run_auto_setup(
+            config,
+            Path(args.config),
+            tools,
+            folder.lock,
+            report,
+            restart_mumu=args.restart_mumu,
+            now=now,
+        )
     finally:
-        for result in results:
-            report(
-                EventKind.SETUP_ITEM,
-                item=result.item,
-                status=result.status.value,
-                detail=result.detail,
-            )
-        left = [r.item for r in results if r.status not in (Status.OK, Status.FIXED)]
-        report(EventKind.SETUP_FINISHED, left=left, error=error)
-        lock.release()
         if history is not None:
             close_history(history)
-    return results
 
 
 def serve(argv: list[str]) -> int:

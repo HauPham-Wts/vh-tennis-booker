@@ -2,6 +2,7 @@
 
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -9,7 +10,8 @@ import pytest
 from court_booker import device_setup
 from court_booker.config import Config, load_config
 from court_booker.device_setup import Status, Tools
-from court_booker.errors import DeviceConnectionError
+from court_booker.errors import DeviceConnectionError, RequestError
+from court_booker.events import EventKind, MemorySink, Reporter
 
 
 def install_mumu(folder, layout=("nx_main", "MuMuManager.exe")):
@@ -309,3 +311,48 @@ def test_wake_timers_refused_by_windows_need_the_user(tmp_path):
     wake = results[2]
     assert wake.status is Status.USER
     assert "Access denied." in wake.detail
+
+
+def test_run_auto_setup_holds_the_lock_and_reports_each_item(tmp_path):
+    tools = tools_for(tmp_path)
+    sink = MemorySink()
+    lock_path = tmp_path / "run.lock"
+    seen = []
+
+    def run(argv):
+        seen.append(lock_path.exists())
+        return FakePowercfg().run(argv)
+
+    results = device_setup.run_auto_setup(
+        config_for(tools),
+        tmp_path / "c.toml",
+        tools,
+        lock_path,
+        Reporter(sink),
+        now=datetime(2026, 10, 13, 14, 0),
+        run=run,
+    )
+
+    assert len(results) == 4
+    assert all(seen)  # powercfg ran while the lock was held
+    assert not lock_path.exists()
+    assert sink.kinds == [
+        EventKind.SETUP_STARTED,
+        *[EventKind.SETUP_ITEM] * 4,
+        EventKind.SETUP_FINISHED,
+    ]
+    assert sink.events[-1].data == {"left": [], "error": None}
+
+
+def test_run_auto_setup_waits_for_the_scheduled_run(tmp_path):
+    tools = tools_for(tmp_path)
+
+    with pytest.raises(RequestError, match="No auto setup from 05:45 to 06:05"):
+        device_setup.run_auto_setup(
+            config_for(tools),
+            tmp_path / "c.toml",
+            tools,
+            tmp_path / "run.lock",
+            Reporter(MemorySink()),
+            now=datetime(2026, 10, 14, 5, 50),
+        )
