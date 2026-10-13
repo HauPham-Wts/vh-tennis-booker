@@ -45,6 +45,8 @@ class EventKind(str, Enum):
     SETUP_FINISHED = "setup_finished"
     # The app, outside any run.
     SETTINGS_SAVED = "settings_saved"
+    SCHEDULE_ENABLED = "schedule_enabled"
+    SCHEDULE_DISABLED = "schedule_disabled"
 
 
 @dataclass(frozen=True)

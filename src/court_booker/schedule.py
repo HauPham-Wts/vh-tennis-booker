@@ -8,7 +8,7 @@ import logging
 import os
 import sys
 import tempfile
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from xml.sax.saxutils import escape
 
@@ -61,6 +61,12 @@ _TASK_XML = """<?xml version="1.0" encoding="UTF-16"?>
   </Actions>
 </Task>
 """
+
+
+def next_start(now: datetime, start_at: str) -> datetime:
+    """Return the next booking start: today at ``start_at`` if still ahead, else tomorrow."""
+    start = datetime.combine(now.date(), parse_time(start_at, "start_at"))
+    return start if start > now else start + timedelta(days=1)
 
 
 def windowless_python(executable: Path) -> Path:
@@ -125,6 +131,15 @@ def install(
 def remove(run: Run = run_command) -> None:
     """Delete the scheduled task."""
     _schtasks(run, "/Delete", "/TN", TASK_NAME, "/F")
+
+
+def installed(run: Run = run_command) -> bool:
+    """Return whether the daily task exists."""
+    try:
+        result = run(["schtasks", "/Query", "/TN", TASK_NAME])
+    except OSError as exc:
+        raise ScheduleError(f"schtasks could not run: {exc}") from exc
+    return result.returncode == 0
 
 
 def status(run: Run = run_command) -> str:

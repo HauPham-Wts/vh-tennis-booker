@@ -184,10 +184,12 @@ def test_app_events_have_their_own_categories(connection):
 
     report(EventKind.SETUP_ITEM, item="wake_timers", status="fixed", detail="enabled")
     report(EventKind.SETTINGS_SAVED, changed=["slots"])
+    report(EventKind.SCHEDULE_ENABLED, wake_at="05:50", start_at="06:00")
 
     assert rows(connection, "SELECT run_id, category FROM events ORDER BY id") == [
         {"run_id": None, "category": "setup"},
         {"run_id": None, "category": "settings"},
+        {"run_id": None, "category": "schedule"},
     ]
 
 

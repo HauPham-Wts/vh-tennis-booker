@@ -130,6 +130,12 @@ def list_events(
     return [_event(row) for row in rows]
 
 
+def dry_run_passed(db: sqlite3.Connection) -> bool:
+    """Return whether any dry run went through every slot; scheduling requires one."""
+    row = db.execute("SELECT 1 FROM runs WHERE trigger = 'dry_run' AND status = 'ok' LIMIT 1")
+    return row.fetchone() is not None
+
+
 def _run(row: sqlite3.Row) -> dict[str, Any]:
     run = dict(row)
     run["dry_run"] = bool(run["dry_run"])

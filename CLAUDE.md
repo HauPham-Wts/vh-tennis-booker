@@ -125,6 +125,14 @@ out of scope.
   `setup`, `setup_*` events); `court-booker setup --auto` and `POST /api/setup/auto`
   (`{"restart_mumu": bool}`; 400 in the quiet time, 409 while a run holds the lock) both
   call it. `GET /api/setup` returns the checks as `SetupItem`s (item, status, detail).
+- `api/schedule.py`: `GET /api/schedule` (`enabled` from `schedule.installed`, wake and
+  start time, `next_start` from `schedule.next_start`, `next_play_date`, `dry_run_passed`
+  from `history_read.dry_run_passed`); `PUT /api/schedule {"enabled": bool}` installs the
+  task again on every switch-on (needs a passed dry run: 409 `dry_run_required`; wake before
+  start: 400) or removes it, recording `schedule_enabled` / `schedule_disabled` (category
+  `schedule`). `ScheduleError` answers 503 `schedule`. The task runs the backend's Python:
+  never switch it on from a development backend (it would leave the runner folder); only
+  `GET` was tried on the dev machine.
 - `Booker.prepare` first turns off Android animations (`ANIMATION_SCALES` set to 0 in one
   `shell` command, as Accessibility > Remove animations); a failure is logged and ignored.
 - `runner.connect_device`: `emulator.MuMu.ensure_started` (MuMuManager `info`/`control launch`),

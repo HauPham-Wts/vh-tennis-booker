@@ -14,11 +14,16 @@ from court_booker.errors import (
     DeviceError,
     LockHeldError,
     RequestError,
+    ScheduleError,
 )
 
 
 class NotFoundError(CourtBookerError):
     """The record asked for does not exist."""
+
+
+class DryRunRequiredError(CourtBookerError):
+    """The schedule cannot be switched on before a dry run has passed."""
 
 
 class InvalidSettingsError(CourtBookerError):
@@ -43,9 +48,11 @@ class Problem(BaseModel):
 _STATUSES: tuple[tuple[type[CourtBookerError], int, str], ...] = (
     (NotFoundError, 404, "not_found"),
     (LockHeldError, 409, "lock_held"),
+    (DryRunRequiredError, 409, "dry_run_required"),
     (RequestError, 400, "bad_request"),
     (DeviceError, 503, "device"),
     (AppNotReadyError, 503, "app_not_ready"),
+    (ScheduleError, 503, "schedule"),
 )
 """First match wins: HTTP status and code per error class."""
 
