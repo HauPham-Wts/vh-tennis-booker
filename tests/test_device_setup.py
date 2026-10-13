@@ -48,6 +48,56 @@ def test_registry_folders_are_paths():
     assert all(isinstance(folder, Path) for folder in device_setup.installed_folders())
 
 
+class FakeMuMu:
+    """A MuMu instance with settings, a running state and an installed package list."""
+
+    def __init__(self, settings=None, started=True, packages=("com.vinhomes.resident",)):
+        self.values = dict(
+            settings
+            or {
+                "resolution_width": "540.000000",
+                "resolution_height": "1600.000000",
+                "resolution_dpi": "220.000000",
+            }
+        )
+        self.started = started
+        self.packages = packages
+        self.changed = []
+        self.restarts = 0
+
+    def settings(self, *keys):
+        return {key: self.values[key] for key in keys if key in self.values}
+
+    def change_settings(self, values):
+        self.changed.append(dict(values))
+
+    def is_started(self):
+        return self.started
+
+    def restart(self):
+        self.restarts += 1
+
+    def adb_serial(self):
+        return "127.0.0.1:16384"
+
+
+def screen(width, height, dpi):
+    return {
+        "resolution_width": f"{width}.000000",
+        "resolution_height": f"{height}.000000",
+        "resolution_dpi": f"{dpi}.000000",
+    }
+
+
+def test_screen_check():
+    assert device_setup.check_screen(FakeMuMu()).status is Status.OK
+    wrong = device_setup.check_screen(FakeMuMu(screen(540, 960, 240)))
+    assert wrong.status is Status.FIXABLE
+    assert "540x960 at 240 DPI" in wrong.detail
+    assert device_setup.check_screen(None).status is Status.UNKNOWN
+    assert device_setup.check_screen(FakeMuMu({"resolution_width": "x"})).status is Status.UNKNOWN
+
+
 def test_mumu_check(tmp_path):
     manager = install_mumu(tmp_path)
 

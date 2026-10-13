@@ -17,10 +17,24 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
+from court_booker.emulator import MuMu
+from court_booker.errors import EmulatorError
+
 logger = logging.getLogger(__name__)
 
 # Item keys are stable: the app uses them as message keys.
 MUMU_INSTALLED = "mumu_installed"
+MUMU_SCREEN = "mumu_screen"
+
+SCREEN = {"resolution_width": 540, "resolution_height": 1600, "resolution_dpi": 220}
+"""The screen the booking flow is tuned for (spec 0.3.0): all slots fit without scrolling."""
+SCREEN_SETTINGS = {
+    "resolution_mode": "custom",
+    "resolution_width.custom": "540",
+    "resolution_height.custom": "1600",
+    "resolution_dpi.custom": "220",
+}
+"""The MuMu settings that give :data:`SCREEN`."""
 
 _MANAGER_LAYOUTS = (Path("nx_main") / "MuMuManager.exe", Path("shell") / "MuMuManager.exe")
 """Where MuMuManager.exe sits in an install folder (MuMu Player 12 and older)."""
@@ -118,3 +132,21 @@ def check_mumu(manager: Path | None, configured: str) -> Check:
             f"MuMu found at {manager}; the config has {configured or 'no path'}",
         )
     return Check(MUMU_INSTALLED, Status.OK, f"MuMu at {manager}")
+
+
+def check_screen(mumu: MuMu | None) -> Check:
+    """Check that the MuMu instance uses :data:`SCREEN`; readable while MuMu is off."""
+    if mumu is None:
+        return Check(MUMU_SCREEN, Status.UNKNOWN, "MuMu not found")
+    try:
+        values = mumu.settings(*SCREEN)
+        actual = {key: round(float(values[key])) for key in SCREEN}
+    except (EmulatorError, KeyError, ValueError) as exc:
+        return Check(MUMU_SCREEN, Status.UNKNOWN, f"Could not read the MuMu screen: {exc}")
+    shown = (
+        f"{actual['resolution_width']}x{actual['resolution_height']}"
+        f" at {actual['resolution_dpi']} DPI"
+    )
+    if actual == SCREEN:
+        return Check(MUMU_SCREEN, Status.OK, f"Screen {shown}")
+    return Check(MUMU_SCREEN, Status.FIXABLE, f"Screen {shown}; booking needs 540x1600 at 220 DPI")
