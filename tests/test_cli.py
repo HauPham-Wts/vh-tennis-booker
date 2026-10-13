@@ -1,6 +1,7 @@
 """CLI exit codes with the device layer replaced by fakes."""
 
 import argparse
+import json
 import logging
 import sqlite3
 import sys
@@ -8,8 +9,10 @@ from datetime import datetime
 from pathlib import Path
 
 import court_booker.cli as cli
+from court_booker import processes
 from court_booker.errors import EmulatorError
 from court_booker.history import HistoryHandler
+from court_booker.lock import Holder
 from court_booker.runner import RoundResult
 
 
@@ -25,9 +28,11 @@ def fake_run(outcomes):
     return run_booking
 
 
-def run_cli(monkeypatch, tmp_path, outcomes=(), connect=lambda config: object(), args=()):
+def run_cli(monkeypatch, tmp_path, outcomes=(), connect=lambda config: object(), args=(), now=None):
+    """Run the CLI with a fake device; the time is 05:40 unless ``now`` gives a class."""
     monkeypatch.setattr(cli, "connect_device", connect)
     monkeypatch.setattr(cli, "run_booking", fake_run(outcomes))
+    monkeypatch.setattr(cli, "datetime", now or FixedDatetime)
     return cli.main(["--config", str(tmp_path / "missing.toml"), *args])
 
 
@@ -87,7 +92,7 @@ def test_scheduled_uses_config_start_and_clock_offset(monkeypatch, tmp_path):
 class FixedDatetime(datetime):
     @classmethod
     def now(cls, tz=None):
-        return datetime(2026, 10, 8, 5, 45)
+        return datetime(2026, 10, 8, 5, 40)  # before the default wake time, 05:45
 
 
 def test_summary_is_sent_to_telegram_even_on_device_error(monkeypatch, tmp_path):
@@ -162,6 +167,95 @@ def test_a_run_books_without_the_history(monkeypatch, tmp_path, data_home):
 
     assert run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)]) == cli.EXIT_OK
     assert "run not recorded" in read_log(tmp_path)
+
+
+def test_a_run_waits_for_no_one_and_releases_the_lock(monkeypatch, tmp_path, data_home):
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)])
+
+    assert "Run lock taken: manual run" in read_log(tmp_path)
+    assert not (data_home / "run.lock").exists()
+
+
+def test_a_run_is_refused_while_another_holds_the_lock(monkeypatch, tmp_path, data_home):
+    pid, started = processes.current()  # a process that is surely running
+    holder = Holder(pid, started, "dry_run", "2026-10-13T10:43:10")
+    data_home.mkdir(parents=True)
+    (data_home / "run.lock").write_text(json.dumps(vars(holder)), encoding="utf-8")
+
+    def connect(config):
+        raise AssertionError("must not touch the device")
+
+    code = run_cli(monkeypatch, tmp_path, connect=connect, args=["--dry-run"])
+
+    assert code == cli.EXIT_BUSY
+    assert f"Another run is in progress: dry_run run (pid {pid}) since 10:43:10" in read_log(
+        tmp_path
+    )
+    assert (data_home / "run.lock").exists()
+
+
+def test_a_run_stopped_midway_ends_up_interrupted(monkeypatch, tmp_path, data_home):
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)])
+    connection = sqlite3.connect(data_home / "booker.db")
+    with connection:
+        connection.execute("UPDATE runs SET status = 'running'")  # as if the PC lost power
+
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)])
+
+    statuses = [status for (status,) in connection.execute("SELECT status FROM runs ORDER BY id")]
+    connection.close()
+    assert statuses == ["interrupted", "ok"]
+
+
+def test_the_scheduled_run_may_take_the_lock_over_before_the_start(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr(
+        cli.RunLock,
+        "acquire_for_schedule",
+        lambda self, trigger, take_over_at: calls.append((trigger, take_over_at)),
+    )
+    monkeypatch.setattr(cli, "datetime", FixedDatetime)
+    monkeypatch.setattr(cli, "ntp_offset", lambda server: 0.0)
+
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)], args=["--scheduled"])
+
+    assert calls == [("scheduled", datetime(2026, 10, 8, 5, 58))]
+
+
+def at(hour, minute):
+    """Return a datetime class whose ``now`` is 2026-10-08 at ``hour:minute``."""
+
+    class Fixed(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2026, 10, 8, hour, minute)
+
+    return Fixed
+
+
+def test_no_dry_run_while_the_scheduled_run_uses_the_emulator(monkeypatch, tmp_path, data_home):
+    def connect(config):
+        raise AssertionError("must not touch the device")
+
+    code = run_cli(monkeypatch, tmp_path, connect=connect, args=["--dry-run"], now=at(5, 55))
+
+    assert code == cli.EXIT_BAD_REQUEST
+    assert "No dry run from 05:45 to 06:05: the scheduled run uses the emulator" in read_log(
+        tmp_path
+    )
+    assert not (data_home / "run.lock").exists()
+
+
+def test_a_dry_run_may_start_once_the_scheduled_run_is_over(monkeypatch, tmp_path):
+    outcomes = [("18:00 - 19:00", True)]
+
+    assert run_cli(monkeypatch, tmp_path, outcomes, args=["--dry-run"], now=at(6, 5)) == 0
+
+
+def test_a_manual_run_is_not_held_to_the_window(monkeypatch, tmp_path):
+    outcomes = [("18:00 - 19:00", True)]
+
+    assert run_cli(monkeypatch, tmp_path, outcomes, now=at(5, 55)) == cli.EXIT_OK
 
 
 def test_run_trigger():

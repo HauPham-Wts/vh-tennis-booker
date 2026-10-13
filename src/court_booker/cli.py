@@ -12,9 +12,16 @@ from pathlib import Path
 from court_booker import __version__, schedule
 from court_booker.clock import ntp_offset, resolve_start
 from court_booker.config import Config, load_config
-from court_booker.errors import AppNotReadyError, CourtBookerError, DeviceError, RequestError
+from court_booker.errors import (
+    AppNotReadyError,
+    CourtBookerError,
+    DeviceError,
+    LockHeldError,
+    RequestError,
+)
 from court_booker.events import EventKind, LogSink, MultiSink, Reporter
 from court_booker.history import History, connect
+from court_booker.lock import TAKE_OVER_AHEAD, RunLock, schedule_window
 from court_booker.logging_setup import LOGGER_NAME, add_file_handler, configure_logging
 from court_booker.notify import format_summary, send_telegram
 from court_booker.paths import data_folder
@@ -28,6 +35,7 @@ EXIT_ROUND_FAILED = 1
 EXIT_BAD_REQUEST = 2
 EXIT_DEVICE = 3
 EXIT_APP_NOT_READY = 4
+EXIT_BUSY = 5
 EXIT_INTERRUPTED = 130
 
 
@@ -83,6 +91,8 @@ def exit_code(error: CourtBookerError) -> int:
         return EXIT_DEVICE
     if isinstance(error, AppNotReadyError):
         return EXIT_APP_NOT_READY
+    if isinstance(error, LockHeldError):
+        return EXIT_BUSY
     return EXIT_ROUND_FAILED
 
 
@@ -101,6 +111,15 @@ def run_status(results: list[RoundResult], error: str | None, interrupted: bool)
     if results and booked == len(results) and error is None:
         return "ok"
     return "partial" if booked else "failed"
+
+
+def check_dry_run_time(now: datetime, config: Config) -> None:
+    """Refuse a dry run while the scheduled run keeps the emulator to itself."""
+    begin, end = schedule_window(now.date(), config.wake_at, config.start_at)
+    if begin <= now < end:
+        raise RequestError(
+            f"No dry run from {begin:%H:%M} to {end:%H:%M}: the scheduled run uses the emulator"
+        )
 
 
 def open_history() -> History | None:
@@ -130,8 +149,10 @@ def main(argv: list[str] | None = None) -> int:
         return schedule.main(argv[1:])
     args = build_parser().parse_args(argv)
     configure_logging(verbose=args.verbose)
+    trigger = run_trigger(args)
     report = Reporter(LogSink())
     history: History | None = None
+    lock: RunLock | None = None
     started = False
     results: list[RoundResult] = []
     config: Config | None = None
@@ -149,18 +170,29 @@ def main(argv: list[str] | None = None) -> int:
         logger.info("court-booker %s", __version__)
         # Shows whether the scheduled task ran the runner folder or a development checkout.
         logger.debug("Python %s, code in %s", sys.executable, Path(__file__).resolve().parent)
+        now = datetime.now()
+        if trigger == "dry_run":
+            check_dry_run_time(now, config)
         start_text = config.start_at if args.scheduled else args.at
-        start = resolve_start(start_text, datetime.now()) if start_text else None
+        start = resolve_start(start_text, now) if start_text else None
         report(
             EventKind.RUN_STARTED,
-            trigger=run_trigger(args),
+            trigger=trigger,
             dry_run=args.dry_run,
             slots=list(config.slots),
             start=None if start is None else start.isoformat(timespec="seconds"),
             version=__version__,
         )
         started = True
+        lock = RunLock(data_folder().lock, report)
         with keep_awake():
+            # Inside keep_awake: a PC woken for the scheduled run must not sleep while it waits.
+            if args.scheduled and start is not None:
+                lock.acquire_for_schedule(trigger, start - TAKE_OVER_AHEAD)
+            else:
+                lock.acquire(trigger)
+            if history is not None and lock.held is not None:
+                history.interrupt_stale_runs()
             offset = 0.0
             if start is not None and config.ntp_server:
                 offset = ntp_offset(config.ntp_server) or 0.0
@@ -199,6 +231,8 @@ def main(argv: list[str] | None = None) -> int:
     if config is not None and config.telegram_token and config.telegram_chat_id:
         text = format_summary(results, error, dry_run=args.dry_run)
         send_telegram(config.telegram_token, config.telegram_chat_id, text)
+    if lock is not None:
+        lock.release()
     if history is not None:
         close_history(history)
     return code
