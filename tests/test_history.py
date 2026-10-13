@@ -190,6 +190,78 @@ def test_a_run_that_ends_with_an_error_is_an_error_step(connection):
     ]
 
 
+@pytest.fixture
+def capture(connection):
+    """Return a history whose handler listens to a test logger, and that logger."""
+    store = history.History(connection)
+    log = logging.getLogger("court_booker.tests.history")
+    log.setLevel(logging.DEBUG)
+    log.addHandler(store.handler)
+    yield store, log
+    log.removeHandler(store.handler)
+
+
+def log_lines(connection):
+    return rows(connection, "SELECT run_id, level, message FROM log_lines ORDER BY id")
+
+
+def test_lines_before_the_run_are_stored_with_it(connection, capture):
+    store, log = capture
+    report = Reporter(store, clock=ticking_clock())
+
+    log.info("court-booker 0.5.0")
+    assert log_lines(connection) == []
+    report(EventKind.RUN_STARTED, trigger="manual", dry_run=False, version="0.5.0")
+    log.debug("Connected to 127.0.0.1:16384")
+
+    assert log_lines(connection) == [
+        {"run_id": store.run_id, "level": "INFO", "message": "court-booker 0.5.0"},
+        {"run_id": store.run_id, "level": "DEBUG", "message": "Connected to 127.0.0.1:16384"},
+    ]
+
+
+def test_lines_without_a_run_are_stored_on_close(connection, capture):
+    store, log = capture
+
+    log.error("Unknown config key: 'unknown'")
+    log.removeHandler(store.handler)
+    store.handler.close()
+
+    assert log_lines(connection) == [
+        {"run_id": None, "level": "ERROR", "message": "Unknown config key: 'unknown'"}
+    ]
+
+
+def test_a_line_keeps_its_traceback_and_time(connection, capture):
+    store, log = capture
+    Reporter(store, clock=ticking_clock())(
+        EventKind.RUN_STARTED, trigger="manual", dry_run=False, version="0.5.0"
+    )
+
+    try:
+        raise OSError("adb lost")
+    except OSError:
+        log.exception("Unexpected error")
+
+    ((time, message),) = connection.execute("SELECT time, message FROM log_lines").fetchall()
+    assert message.startswith("Unexpected error\nTraceback")
+    assert message.endswith("OSError: adb lost")
+    assert datetime.fromisoformat(time) <= datetime.now()
+
+
+def test_logging_goes_on_when_the_database_fails(connection, capture):
+    store, log = capture
+    Reporter(store, clock=ticking_clock())(
+        EventKind.RUN_STARTED, trigger="manual", dry_run=False, version="0.5.0"
+    )
+    connection.close()
+
+    log.info("Tapped 'Sân Tennis'")
+    log.info("Selected date 2026-10-15")
+
+    assert store.failed
+
+
 def test_a_database_error_turns_history_off_once(connection, caplog):
     caplog.set_level(logging.WARNING, logger="court_booker")
     store = history.History(connection)

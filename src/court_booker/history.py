@@ -135,6 +135,8 @@ class History:
         self.failed = False
         self.writes = 0
         self.seconds = 0.0
+        # Added to a logger by the caller, so that logger's lines are kept with the run.
+        self.handler = HistoryHandler(self)
 
     def emit(self, event: Event) -> None:
         """Record ``event`` in the run tables and as a step of the activity log."""
@@ -154,9 +156,23 @@ class History:
 
         self._write(write)
 
+    def add_log_lines(self, lines: list[tuple[str, str, str]]) -> None:
+        """Store log lines given as ``(time, level, message)`` with the current run."""
+        run_id = self.run_id
+        self._write(
+            lambda db: db.executemany(
+                "INSERT INTO log_lines (run_id, time, level, message) VALUES (?, ?, ?, ?)",
+                [(run_id, *line) for line in lines],
+            )
+        )
+
     def close(self) -> None:
-        """Close the database, logging what writing to it cost."""
+        """Store the held log lines and close the database, logging what writing cost.
+
+        Remove :attr:`handler` from its logger first.
+        """
         logger.debug("History: %d writes in %.1f ms", self.writes, self.seconds * 1000)
+        self.handler.close()
         self.connection.close()
 
     def _write(self, write: Callable[[sqlite3.Connection], None]) -> None:
@@ -209,3 +225,37 @@ class History:
                 "UPDATE runs SET finished_at = ?, status = ?, error = ? WHERE id = ?",
                 (stamp, data["status"], data.get("error"), self.run_id),
             )
+
+
+class HistoryHandler(logging.Handler):
+    """Copy log records into ``log_lines``, the technical layer of the activity log.
+
+    Lines logged before the run starts (the version, the Python in use) are held back and
+    stored with the run once it starts; if no run starts, they are stored without one when
+    the handler closes.
+    """
+
+    def __init__(self, history: History) -> None:
+        super().__init__(logging.DEBUG)
+        self.history = history
+        self.setFormatter(logging.Formatter("%(message)s"))
+        self._held: list[tuple[str, str, str]] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            moment = datetime.fromtimestamp(record.created)
+            self._held.append((_stamp(moment), record.levelname, self.format(record)))
+            if self.history.run_id is not None:
+                self.flush()
+        except Exception:  # a logging handler must not raise into the booking code
+            self.handleError(record)
+
+    def flush(self) -> None:
+        """Store the held lines."""
+        if self._held:
+            lines, self._held = self._held, []
+            self.history.add_log_lines(lines)
+
+    def close(self) -> None:
+        self.flush()
+        super().close()
