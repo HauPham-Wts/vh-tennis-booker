@@ -99,6 +99,34 @@ def get_run(db: sqlite3.Connection, run_id: int) -> dict[str, Any] | None:
     return run
 
 
+def list_events(
+    db: sqlite3.Connection,
+    *,
+    category: str | None = None,
+    before: int | None = None,
+    limit: int = DEFAULT_LIMIT,
+) -> list[dict[str, Any]]:
+    """Return activity log steps newest first, of runs and of the app (``run_id`` empty).
+
+    ``category`` keeps one filter (``step``, ``slot``, ``setup``, ``error``...); ``before``
+    (a step id) returns the page after the one that ended with that step.
+    """
+    where, params = [], []
+    if category:
+        where.append("category = ?")
+        params.append(category)
+    if before is not None:
+        where.append("id < ?")
+        params.append(before)
+    condition = f" WHERE {' AND '.join(where)}" if where else ""
+    rows = db.execute(
+        f"SELECT id, run_id, time, category, kind, data FROM events{condition}"
+        " ORDER BY id DESC LIMIT ?",
+        [*params, limit],
+    )
+    return [_event(row) for row in rows]
+
+
 def _run(row: sqlite3.Row) -> dict[str, Any]:
     run = dict(row)
     run["dry_run"] = bool(run["dry_run"])

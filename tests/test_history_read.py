@@ -125,3 +125,24 @@ def test_one_run_comes_with_slots_steps_and_log_lines(path, read):
 
 def test_an_unknown_run_is_none(path, read):
     assert history_read.get_run(read(), 42) is None
+
+
+def test_activity_comes_newest_first_and_filters_by_category(path, read):
+    record_run(path, slots=[("18:00 - 19:00", False)])
+
+    steps = history_read.list_events(read())
+    errors = history_read.list_events(read(), category="error")
+
+    assert steps[0]["kind"] == "run_finished"
+    assert steps[-1]["kind"] == "run_started"
+    assert [step["kind"] for step in errors] == ["slot_failed"]
+    assert errors[0]["data"]["reason"] == "fully booked"
+
+
+def test_activity_pages_back(path, read):
+    record_run(path)
+    newest = history_read.list_events(read(), limit=1)
+
+    older = history_read.list_events(read(), before=newest[0]["id"], limit=1)
+
+    assert older[0]["id"] == newest[0]["id"] - 1
