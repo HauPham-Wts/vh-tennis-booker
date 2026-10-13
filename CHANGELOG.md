@@ -52,6 +52,9 @@ uses [Semantic Versioning](https://semver.org/).
 - Backend schedule routes: `GET /api/schedule` (on or off, the next booking and its play
   date) and `PUT /api/schedule`, which switches the daily task on only once a dry run has
   passed, and records each switch in the activity log.
+- `POST /api/runs/dry-run` starts a dry run of the saved settings in its own process, as
+  the scheduled task does; it is refused around the scheduled run and while another run
+  (or the dry run started just before) is going.
 
 ### Fixed
 - `tools/inspect_screen.py` connects to MuMu 12 instance 0 (`127.0.0.1:16384`) by default

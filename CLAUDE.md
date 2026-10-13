@@ -133,6 +133,13 @@ out of scope.
   `schedule`). `ScheduleError` answers 503 `schedule`. The task runs the backend's Python:
   never switch it on from a development backend (it would leave the runner folder); only
   `GET` was tried on the dev machine.
+- `api/runs.py`: `POST /api/runs/dry-run` answers 202 `{pid, started_at}` and starts
+  `python -m court_booker --dry-run --config <config>` with `launch` (own process, no
+  window, output discarded: the run writes its history and log file). Refused with 400 in
+  the quiet time and 409 while `RunLock.running_holder()` (a peek that never clears) names
+  a running holder or while the process it started last (`app.state.dry_run`) still runs:
+  a fresh dry run does not hold the lock for its first milliseconds. A `threading.Lock`
+  keeps two requests from both starting one. Verified 2026-10-13 on MuMu (started from off).
 - `Booker.prepare` first turns off Android animations (`ANIMATION_SCALES` set to 0 in one
   `shell` command, as Accessibility > Remove animations); a failure is logged and ignored.
 - `runner.connect_device`: `emulator.MuMu.ensure_started` (MuMuManager `info`/`control launch`),

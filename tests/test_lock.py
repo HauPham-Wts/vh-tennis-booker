@@ -267,6 +267,19 @@ def test_quiet_time_refuses_a_task_inside_the_window():
         check_quiet_time(datetime(2026, 10, 14, 5, 50), "05:50", "06:00", "dry run")
 
 
+def test_the_running_holder_is_told_without_touching_the_lock(tmp_path, machine):
+    path = tmp_path / "run.lock"
+    viewer = lock_for(path, machine, 300)
+    assert viewer.running_holder() is None
+
+    lock_for(path, machine, 100).acquire("dry_run")
+    assert viewer.running_holder().pid == 100
+
+    machine.running.discard((100, 1000.0))
+    assert viewer.running_holder() is None
+    assert path.exists()  # a stale lock is only cleared by the next run
+
+
 def test_an_unreadable_lock_is_cleared(tmp_path, machine):
     path = tmp_path / "run.lock"
     path.write_text("{", encoding="utf-8")
