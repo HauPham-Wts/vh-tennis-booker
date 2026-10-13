@@ -118,13 +118,20 @@ Test the whole chain first with `court-booker --at <in 3 minutes> --dry-run` and
 closed. Each run is logged to `logs/court-booker-YYYY-MM-DD.log`; set `telegram_token` and
 `telegram_chat_id` to receive the summary on your phone.
 
+Every run is also recorded in the history database `booker.db` in the data folder,
+`%LOCALAPPDATA%\CourtBooker` (set `COURT_BOOKER_HOME` to move it), beside the run lock
+`run.lock`. Only one run drives the emulator at a time: a second dry run or manual run is
+refused, and the scheduled run waits for another run, then stops it two minutes before the
+start time. No dry run starts from `wake_at` to 5 minutes after `start_at`.
+
 | Exit code | Meaning |
 |---|---|
 | 0 | every round succeeded |
 | 1 | a round failed |
-| 2 | bad arguments or config, or the start time has passed |
+| 2 | bad arguments or config, the start time has passed, or a dry run around the scheduled run |
 | 3 | emulator or ADB error |
 | 4 | the app did not reach its home screen (e.g. logged out) |
+| 5 | another run holds the run lock |
 | 130 | interrupted with Ctrl+C |
 
 If `court-booker` is not on `PATH`, use `python -m court_booker` instead.
