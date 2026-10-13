@@ -61,9 +61,21 @@ out of scope.
 
 - `cli.py` parses args (or dispatches `schedule ...` to `schedule.main`), applies overrides onto
   `Config`, adds the log file (and logs the Python and code folder it runs from), resolves
-  the start time, measures the NTP offset, and inside `power.keep_awake()` calls `runner.connect_device` then `runner.run_booking`. Errors map to
-  exit codes (`RequestError` 2, `DeviceError` 3, `AppNotReadyError` 4, Ctrl+C 130); the summary
-  is logged and optionally sent with `notify.send_telegram` on every path.
+  the start time, measures the NTP offset, and inside `power.keep_awake()` takes the run lock,
+  then calls `runner.connect_device` and `runner.run_booking`. Errors map to exit codes
+  (`RequestError` 2, `DeviceError` 3, `AppNotReadyError` 4, `LockHeldError` 5, Ctrl+C 130);
+  the summary is logged and optionally sent with `notify.send_telegram` on every path. A dry
+  run is refused (exit 2) from `wake_at` to 5 minutes after `start_at`.
+- `lock.py`: the run lock `run.lock` in the data folder (spec part 5), a JSON `Holder` (pid,
+  process start time, trigger, since) published with `os.link` so it is created atomically and
+  never read half-written. `RunLock.acquire` raises `LockHeldError` while a running process
+  holds it; `acquire_for_schedule` (scheduled runs) waits and, at `start - TAKE_OVER_AHEAD`
+  (2 min), stops the holder and takes the lock. A lock whose holder is gone (or unreadable) is
+  removed and logged; a lock file that cannot be written lets the run go on without it.
+  Events `lock_cleared`, `lock_waiting`, `lock_taken_over`. After taking the lock the CLI
+  calls `History.interrupt_stale_runs`, so runs left `running` become `interrupted`.
+  `processes.py` names a process by pid and start time (`GetProcessTimes` via ctypes on
+  Windows), so a later process that reuses a pid is never taken for the holder or stopped.
 - `runner.connect_device`: `emulator.MuMu.ensure_started` (MuMuManager `info`/`control launch`),
   `adb.find_adb` + `adb.resolve_device` (prefers the serial MuMu reports), `uiautomator2.connect`
   (imported lazily so tests do not need it). `runner.run_booking`: `Booker.prepare()`,
@@ -171,6 +183,11 @@ the next round starts.
   re-taps with "Tapped 'Tiếp tục' but the next screen did not appear".
 - The MuMu clock follows the PC clock (+15 ms measured); the NTP offset of the PC varies
   (+0.035 to +0.144 s).
+- MuMu froze twice on 2026-10-13 during dry runs (11:13, and 11:58 right after a restart),
+  both times around the court list and booking details screens: `MuMuNxDevice` showed "Not
+  responding", `dumpsys window` and app starts hung, and `MuMuManager control shutdown`
+  did not end it; the user restarted MuMu by hand. A run then hangs inside uiautomator2
+  calls (the 0.4.0 table's "MuMu frozen" case, not handled).
 
 ## Environment
 
@@ -180,6 +197,8 @@ the next round starts.
   development code is not imported)
 - MuMu Player (instance 0 serves ADB on `127.0.0.1:16384`); adb is found and connected
   automatically (`device = "auto"`)
+- `python` is the Python install manager's launcher: it starts the interpreter as a child
+  process, so the pid `Start-Process python` returns is not the pid in `run.lock`
 
 ## Product goal and decisions (2026-10-07)
 
