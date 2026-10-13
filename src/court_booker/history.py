@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Callable
 
 from court_booker.events import Event, EventKind
+from court_booker.logging_setup import LOGGER_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +102,27 @@ def connect(path: Path) -> sqlite3.Connection:
         connection.close()
         raise
     return connection
+
+
+def open_history(path: Path) -> History | None:
+    """Open the history database at ``path`` and keep the package's log lines in it.
+
+    Returns ``None`` if it cannot be opened: a run still books, it is only not recorded.
+    """
+    try:
+        history = History(connect(path))
+    except (OSError, sqlite3.Error):
+        logger.warning("History database %s unavailable; run not recorded", path, exc_info=True)
+        return None
+    logger.debug("History in %s", path)
+    logging.getLogger(LOGGER_NAME).addHandler(history.handler)
+    return history
+
+
+def close_history(history: History) -> None:
+    """Stop keeping log lines and close the database opened by :func:`open_history`."""
+    logging.getLogger(LOGGER_NAME).removeHandler(history.handler)
+    history.close()
 
 
 def _stamp(moment: datetime) -> str:

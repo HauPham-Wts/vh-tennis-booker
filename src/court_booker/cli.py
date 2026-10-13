@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import logging
-import sqlite3
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -20,7 +19,7 @@ from court_booker.errors import (
     RequestError,
 )
 from court_booker.events import EventKind, LogSink, MultiSink, Reporter
-from court_booker.history import History, connect
+from court_booker.history import History, close_history, open_history
 from court_booker.lock import TAKE_OVER_AHEAD, RunLock, schedule_window
 from court_booker.logging_setup import LOGGER_NAME, add_file_handler, configure_logging
 from court_booker.notify import format_summary, send_telegram
@@ -122,27 +121,6 @@ def check_dry_run_time(now: datetime, config: Config) -> None:
         )
 
 
-def open_history() -> History | None:
-    """Open the history database and keep the package's log lines in it.
-
-    Returns ``None`` if it cannot be opened: the run still books, it is only not recorded.
-    """
-    path = data_folder().database
-    try:
-        history = History(connect(path))
-    except (OSError, sqlite3.Error):
-        logger.warning("History database %s unavailable; run not recorded", path, exc_info=True)
-        return None
-    logger.debug("History in %s", path)
-    logging.getLogger(LOGGER_NAME).addHandler(history.handler)
-    return history
-
-
-def close_history(history: History) -> None:
-    logging.getLogger(LOGGER_NAME).removeHandler(history.handler)
-    history.close()
-
-
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     if argv[:1] == ["schedule"]:
@@ -164,7 +142,7 @@ def main(argv: list[str] | None = None) -> int:
             log_dir = Path(args.config).resolve().parent / config.log_dir
             logger.debug("Logging to %s", add_file_handler(log_dir))
         # Opened after the log file, so a database that cannot be opened is in the log.
-        history = open_history()
+        history = open_history(data_folder().database)
         if history is not None:
             report = Reporter(MultiSink(LogSink(), history))
         logger.info("court-booker %s", __version__)
