@@ -96,9 +96,14 @@ class RunLock:
     def acquire(self, trigger: str) -> None:
         """Take the lock for a run started by ``trigger``.
 
-        Raises ``LockHeldError`` if another run holds it.
+        Raises ``LockHeldError`` if another run holds it. A lock file that cannot be written
+        (a broken data folder) does not stop the run: it goes on without the lock.
         """
-        holder = self._take(trigger)
+        try:
+            holder = self._take(trigger)
+        except OSError:
+            logger.warning("Run lock %s unavailable; running without it", self.path, exc_info=True)
+            return
         if holder is not None:
             raise LockHeldError(f"Another run is in progress: {self._describe(holder)}")
 
@@ -108,8 +113,28 @@ class RunLock:
         """Take the lock for the scheduled run, which must not miss the start time.
 
         While another run holds the lock, wait for it; if it still holds the lock at
-        ``take_over_at``, stop it and take the lock. Never raises ``LockHeldError``.
+        ``take_over_at``, stop it and take the lock. Never raises: the booking goes first.
         """
+        try:
+            self._wait_or_take_over(trigger, take_over_at, sleep)
+        except OSError:
+            logger.warning("Run lock %s unavailable; running without it", self.path, exc_info=True)
+
+    def release(self) -> None:
+        """Give the lock back, unless another run has taken it over meanwhile."""
+        if self.held is None:
+            return
+        try:
+            self._remove_if(self.held)
+        except OSError:
+            logger.warning("Could not remove the run lock %s", self.path, exc_info=True)
+        else:
+            logger.debug("Run lock released")
+        self.held = None
+
+    def _wait_or_take_over(
+        self, trigger: str, take_over_at: datetime, sleep: Callable[[float], None]
+    ) -> None:
         holder = self._take(trigger)
         if holder is None:
             return
@@ -121,13 +146,6 @@ class RunLock:
             if holder is None:
                 return
         self._take_over(holder, trigger, sleep)
-
-    def release(self) -> None:
-        """Give the lock back, unless another run has taken it over meanwhile."""
-        if self.held is not None:
-            self._remove_if(self.held)
-            logger.debug("Run lock released")
-            self.held = None
 
     def _take(self, trigger: str) -> Holder | None:
         """Take the lock, clearing one whose holder is gone; return a running holder."""

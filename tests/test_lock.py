@@ -238,6 +238,21 @@ def test_the_scheduled_run_takes_the_lock_of_a_run_it_cannot_stop(tmp_path, mach
     assert "still running; taking its lock anyway" in caplog.text
 
 
+def test_a_lock_that_cannot_be_written_does_not_stop_the_run(tmp_path, machine, caplog):
+    (tmp_path / "home").write_text("not a folder", encoding="utf-8")
+    path = tmp_path / "home" / "run.lock"
+    lock = lock_for(path, machine, 100)
+    clock = FakeTime(WAKE)
+    scheduled = scheduled_lock(path, machine, clock, MemorySink())
+
+    lock.acquire("dry_run")
+    scheduled.acquire_for_schedule("scheduled", TAKE_OVER, sleep=clock.sleep)
+    lock.release()
+
+    assert lock.held is None
+    assert caplog.text.count("unavailable; running without it") == 2
+
+
 def test_an_unreadable_lock_is_cleared(tmp_path, machine):
     path = tmp_path / "run.lock"
     path.write_text("{", encoding="utf-8")
