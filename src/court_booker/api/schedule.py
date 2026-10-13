@@ -8,7 +8,12 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from court_booker import history_read, schedule
+from court_booker.api.activity import record
 from court_booker.api.context import AppContext, Context
+from court_booker.api.errors import DryRunRequiredError
+from court_booker.clock import parse_time
+from court_booker.errors import RequestError
+from court_booker.events import EventKind
 
 router = APIRouter(prefix="/api", tags=["schedule"])
 
@@ -49,4 +54,36 @@ def schedule_state(context: AppContext) -> ScheduleState:
 @router.get("/schedule", response_model=ScheduleState)
 def read_schedule(context: Context) -> ScheduleState:
     """Show whether the daily booking is on, and the next one."""
+    return schedule_state(context)
+
+
+class ScheduleSwitch(BaseModel):
+    """Switch the daily booking on or off."""
+
+    enabled: bool
+
+
+@router.put("/schedule", response_model=ScheduleState)
+def switch_schedule(context: Context, switch: ScheduleSwitch) -> ScheduleState:
+    """Switch the daily booking on or off.
+
+    Switching on needs a passed dry run (409 ``dry_run_required``) and a wake time before
+    the start time (400 ``bad_request``). It installs the task again each time, so a new
+    wake time applies. The task runs the Python of this backend; in development, the
+    runner folder keeps its task through ``tools/setup_runner.py`` instead.
+    """
+    state = schedule_state(context)
+    config = context.config()
+    if switch.enabled:
+        if not state.dry_run_passed:
+            raise DryRunRequiredError("Pass a dry run before switching the schedule on")
+        if parse_time(config.wake_at, "wake_at") >= parse_time(config.start_at, "start_at"):
+            raise RequestError(f"wake_at {config.wake_at} must be before {config.start_at}")
+        schedule.install(context.config_path.resolve(), config.wake_at)
+        record(
+            context, EventKind.SCHEDULE_ENABLED, wake_at=config.wake_at, start_at=config.start_at
+        )
+    elif state.enabled:
+        schedule.remove()
+        record(context, EventKind.SCHEDULE_DISABLED)
     return schedule_state(context)
