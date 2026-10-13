@@ -1,9 +1,16 @@
 """Tests for the Overview status."""
 
 import json
+from datetime import datetime
 
-from court_booker import processes
+import pytest
+
+from court_booker import __version__, processes, schedule
+from court_booker.api import schedule as schedule_routes
 from court_booker.api import status
+from court_booker.api.activity import record
+from court_booker.config import Config, save_config
+from court_booker.events import EventKind
 from court_booker.lock import Holder
 
 
@@ -46,3 +53,43 @@ def test_a_starting_dry_run_runs(context):
         "pid": 4321,
         "since": None,
     }
+
+
+@pytest.fixture
+def evening(monkeypatch, context):
+    """Task Scheduler says the task is on; the time is the evening of 2026-10-13."""
+    monkeypatch.setattr(schedule, "installed", lambda run=None: True)
+    monkeypatch.setattr(schedule_routes, "datetime", Evening)
+    save_config(Config(wake_at="05:50", start_at="06:00"), context.config_path)
+
+
+class Evening(datetime):
+    @classmethod
+    def now(cls, tz=None):
+        return datetime(2026, 10, 13, 18, 0)
+
+
+def test_status_on_a_new_install(client, evening):
+    body = client.get("/api/status").json()
+
+    assert body["version"] == __version__
+    assert body["running"] is None
+    assert body["last_run"] is None
+    assert body["setup"] is None
+    assert body["schedule"]["next_start"] == "2026-10-14T06:00"
+
+
+def test_status_shows_the_last_run_and_setup(client, context, evening, record_run):
+    record_run(context.data.database, slots=[("18:00 - 19:00", True)])
+    record(context, EventKind.SETUP_FINISHED, left=["app_installed"], error=None)
+
+    body = client.get("/api/status").json()
+
+    assert (body["last_run"]["status"], body["last_run"]["booked"]) == ("ok", 1)
+    assert body["setup"]["left"] == ["app_installed"]
+
+
+def test_status_shows_the_run_going_on(client, context, evening):
+    pid = hold_lock(context, trigger="dry_run")
+
+    assert client.get("/api/status").json()["running"]["pid"] == pid

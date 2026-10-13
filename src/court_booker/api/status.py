@@ -4,10 +4,16 @@
 # time.
 from typing import Any, Optional
 
+from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
-from court_booker.api.context import AppContext
+from court_booker import __version__, history_read
+from court_booker.api.context import AppContext, Context
+from court_booker.api.history import RunSummary
+from court_booker.api.schedule import ScheduleState, schedule_state
 from court_booker.lock import RunLock
+
+router = APIRouter(prefix="/api", tags=["status"])
 
 
 class Running(BaseModel):
@@ -30,3 +36,39 @@ def running(context: AppContext, dry_run: Any = None) -> Optional[Running]:
     if dry_run is not None and dry_run.poll() is None:
         return Running(trigger="dry_run", pid=dry_run.pid, since=None)
     return None
+
+
+class SetupSummary(BaseModel):
+    """When auto setup last ran, and the items it left for the user."""
+
+    checked_at: str
+    left: list[str]
+
+
+class Status(BaseModel):
+    """Everything the Overview shows, in one call."""
+
+    version: str
+    running: Optional[Running]
+    schedule: ScheduleState
+    last_run: Optional[RunSummary]
+    setup: Optional[SetupSummary]
+    """Empty until auto setup has run once."""
+
+
+@router.get("/status", response_model=Status)
+def read_status(context: Context, request: Request) -> Status:
+    """Show what runs now, the schedule and next booking, the last run and the last setup."""
+    connection = history_read.open_read_only(context.data.database)
+    try:
+        last = history_read.list_runs(connection, limit=1)
+        setup = history_read.last_setup(connection)
+    finally:
+        connection.close()
+    return Status(
+        version=__version__,
+        running=running(context, getattr(request.app.state, "dry_run", None)),
+        schedule=schedule_state(context),
+        last_run=RunSummary(**last[0]) if last else None,
+        setup=SetupSummary(**setup) if setup else None,
+    )
