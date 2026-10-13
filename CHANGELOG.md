@@ -30,6 +30,12 @@ uses [Semantic Versioning](https://semver.org/).
   the lock 2 minutes before the start time, stops it and goes on. A lock left by a run that
   is gone is removed, and that run is marked as interrupted in the history.
 - No dry run may start from the wake time to 5 minutes after the start time (exit code 2).
+- `court-booker setup` checks the PC and the emulator: MuMu installed, its screen at
+  540x1600 and 220 DPI, wake timers allowed plugged in and on battery, the Vinhomes app
+  installed. `setup --auto` fixes what it can (saves the MuMu path, sets the screen,
+  restarting a running MuMu only with `--restart-mumu`, allows wake timers) and records each
+  item in the history. It takes the run lock and does not start around the scheduled run.
+- Each run turns off Android animations before opening the app.
 
 ### Fixed
 - `tools/inspect_screen.py` connects to MuMu 12 instance 0 (`127.0.0.1:16384`) by default

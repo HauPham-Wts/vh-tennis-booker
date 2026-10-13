@@ -10,6 +10,7 @@ from pathlib import Path
 
 import court_booker.cli as cli
 from court_booker import processes
+from court_booker.device_setup import Check, Status
 from court_booker.errors import EmulatorError
 from court_booker.history import HistoryHandler
 from court_booker.lock import Holder
@@ -256,6 +257,73 @@ def test_a_manual_run_is_not_held_to_the_window(monkeypatch, tmp_path):
     outcomes = [("18:00 - 19:00", True)]
 
     assert run_cli(monkeypatch, tmp_path, outcomes, now=at(5, 55)) == cli.EXIT_OK
+
+
+CHECKS = [
+    Check("mumu_installed", Status.OK, "MuMu at C:/MuMu/MuMuManager.exe"),
+    Check("app_installed", Status.USER, "com.vinhomes.resident is not installed in MuMu"),
+]
+
+
+def run_setup(monkeypatch, tmp_path, args=(), now=None, results=None):
+    """Run ``court-booker setup`` with fake checks; returns the exit code and auto setup calls."""
+    calls = []
+
+    def fake_auto_setup(config, config_path, tools, *, restart_mumu=False):
+        calls.append(restart_mumu)
+        return results or [Check("wake_timers", Status.FIXED, "enabled")]
+
+    monkeypatch.setattr(cli, "datetime", now or FixedDatetime)
+    monkeypatch.setattr(cli, "find_tools", lambda config: None)
+    monkeypatch.setattr(cli, "run_checks", lambda config, tools: CHECKS)
+    monkeypatch.setattr(cli, "auto_setup", fake_auto_setup)
+    code = cli.main(["setup", "--config", str(tmp_path / "missing.toml"), *args])
+    return code, calls
+
+
+def test_setup_prints_every_item(monkeypatch, tmp_path, capsys):
+    code, calls = run_setup(monkeypatch, tmp_path)
+
+    out = capsys.readouterr().out
+    assert code == 1  # the app still has to be installed by the user
+    assert "ok       mumu_installed  MuMu at C:/MuMu/MuMuManager.exe" in out
+    assert "user     app_installed   com.vinhomes.resident is not installed" in out
+    assert calls == []
+
+
+def test_auto_setup_is_recorded_as_setup_steps(monkeypatch, tmp_path, data_home):
+    code, calls = run_setup(monkeypatch, tmp_path, ["--auto", "--restart-mumu"])
+
+    connection = sqlite3.connect(data_home / "booker.db")
+    steps = connection.execute("SELECT run_id, category, kind FROM events ORDER BY id").fetchall()
+    connection.close()
+    assert code == cli.EXIT_OK
+    assert calls == [True]
+    assert steps == [
+        (None, "setup", "setup_started"),
+        (None, "setup", "setup_item"),
+        (None, "setup", "setup_finished"),
+    ]
+    assert not (data_home / "run.lock").exists()
+
+
+def test_auto_setup_waits_for_no_run(monkeypatch, tmp_path, data_home):
+    pid, started = processes.current()
+    data_home.mkdir(parents=True)
+    holder = Holder(pid, started, "dry_run", "2026-10-13T10:43:10")
+    (data_home / "run.lock").write_text(json.dumps(vars(holder)), encoding="utf-8")
+
+    code, calls = run_setup(monkeypatch, tmp_path, ["--auto"])
+
+    assert code == cli.EXIT_BUSY
+    assert calls == []
+
+
+def test_no_auto_setup_while_the_scheduled_run_uses_the_emulator(monkeypatch, tmp_path):
+    code, calls = run_setup(monkeypatch, tmp_path, ["--auto"], now=at(5, 50))
+
+    assert code == cli.EXIT_BAD_REQUEST
+    assert calls == []
 
 
 def test_run_trigger():

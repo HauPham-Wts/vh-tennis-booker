@@ -17,6 +17,7 @@ python -m court_booker --dry-run --verbose           # real run against the emul
 python -m court_booker --at 06:00 --dry-run          # timed run
 python tools/setup_runner.py v0.4.0 --schedule       # runner folder + daily task (CONTRIBUTING)
 python -m court_booker schedule status               # task details (install, remove)
+python -m court_booker setup                         # device setup checks (--auto fixes)
 python tools/inspect_screen.py --near "Tôi đã hiểu"  # dump nodes level with a label
 ```
 
@@ -76,6 +77,21 @@ out of scope.
   calls `History.interrupt_stale_runs`, so runs left `running` become `interrupted`.
   `processes.py` names a process by pid and start time (`GetProcessTimes` via ctypes on
   Windows), so a later process that reuses a pid is never taken for the holder or stopped.
+- `device_setup.py` (spec part 6, the "Thiết lập máy" tab): `run_checks` returns one `Check`
+  (item, `Status`, detail) per item: `mumu_installed` (config path, uninstall registry, usual
+  folders), `mumu_screen` (`MuMu.settings`, readable while MuMu is off), `wake_timers`
+  (`powercfg /query SCHEME_CURRENT SUB_SLEEP RTCWAKE`, AC and DC hex values read by
+  position), `app_installed` (`adb shell pm path`, `unknown` while MuMu is off). Statuses
+  `ok`, `fixed`, `fixable`, `user` (install or log in by hand), `unknown`; item keys and
+  statuses are stable message keys. `auto_setup` fixes `fixable` items: saves the MuMu path
+  (`save_config`, drops comments), writes `SCREEN_SETTINGS` (a running MuMu only with
+  `restart_mumu`, then `control restart`), enables wake timers (`powercfg /set...valueindex`,
+  `/setactive`). Being logged in is shown by the dry run (exit 4), not checked here.
+  `court-booker setup` prints the checks; `--auto` refuses from `wake_at` to start + 5 min,
+  takes the run lock (trigger `setup`) and records `setup_started`, one `setup_item` per item
+  and `setup_finished` as history events of category `setup` without a run.
+- `Booker.prepare` first turns off Android animations (`ANIMATION_SCALES` set to 0 in one
+  `shell` command, as Accessibility > Remove animations); a failure is logged and ignored.
 - `runner.connect_device`: `emulator.MuMu.ensure_started` (MuMuManager `info`/`control launch`),
   `adb.find_adb` + `adb.resolve_device` (prefers the serial MuMu reports), `uiautomator2.connect`
   (imported lazily so tests do not need it). `runner.run_booking`: `Booker.prepare()`,
@@ -196,7 +212,9 @@ the next round starts.
   `.venv\Scripts\pythonw.exe` with `Start In` the development folder (src layout, so the
   development code is not imported)
 - MuMu Player (instance 0 serves ADB on `127.0.0.1:16384`); adb is found and connected
-  automatically (`device = "auto"`)
+  automatically (`device = "auto"`). Installed in `C:\Program Files\Netease\MuMuPlayer`
+  (uninstall key `MuMuPlayerGlobal`), renderer Vulkan; Android animations were already off
+  (removed in MuMu's Android settings on 2026-10-12)
 - `python` is the Python install manager's launcher: it starts the interpreter as a child
   process, so the pid `Start-Process python` returns is not the pid in `run.lock`
 

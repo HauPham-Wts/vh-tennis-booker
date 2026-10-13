@@ -6,7 +6,7 @@ query. Elements are found by accessibility label in that dump and tapped at thei
 coordinates, so waiting for the next screen and locating the next element are the
 same query: a step costs one dump per poll plus one tap. No coordinates are kept
 across screens. ``device`` is a :class:`uiautomator2.Device` or a test double with
-``dump_hierarchy``, ``click``, ``press``, ``swipe`` and the app calls.
+``dump_hierarchy``, ``click``, ``press``, ``swipe``, ``shell`` and the app calls.
 """
 
 from __future__ import annotations
@@ -52,6 +52,12 @@ _SETTLE_TIMEOUT = 1.0
 _SWIPE_SECONDS = 0.25
 _MIN_VISIBLE_RATIO = 0.6
 """A slot clipped to less than this share of a full slot's height is scrolled into view."""
+ANIMATION_SCALES = (
+    "window_animation_scale",
+    "transition_animation_scale",
+    "animator_duration_scale",
+)
+"""Android settings that Accessibility > Remove animations sets to 0."""
 
 
 class Booker:
@@ -84,6 +90,21 @@ class Booker:
 
     # Public API -------------------------------------------------------------
 
+    def disable_animations(self) -> None:
+        """Turn off Android animations, as Accessibility > Remove animations does.
+
+        Screens then change without transitions, so the next one can be read sooner. The
+        settings stay until changed, and a failure only costs that speed-up.
+        """
+        command = "; ".join(f"settings put global {name} 0" for name in ANIMATION_SCALES)
+        self.commands += 1
+        try:
+            self.device.shell(command)
+        except Exception:  # uiautomator2 raises several unrelated types
+            logger.warning("Could not turn off animations", exc_info=True)
+            return
+        logger.debug("Animations off")
+
     def prepare(self) -> None:
         """Open the app and stop on the utilities list, ready for the first round.
 
@@ -91,6 +112,7 @@ class Booker:
         expired session from the previous day cannot get in the way.
         """
         package = self.config.package
+        self.disable_animations()
         if self.config.restart_app:
             logger.info("Restarting %s", package)
             self.device.app_stop(package)

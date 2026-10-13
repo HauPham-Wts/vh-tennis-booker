@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Callable
 
 from court_booker.events import Event, EventKind
+from court_booker.logging_setup import LOGGER_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -103,22 +104,46 @@ def connect(path: Path) -> sqlite3.Connection:
     return connection
 
 
+def open_history(path: Path) -> History | None:
+    """Open the history database at ``path`` and keep the package's log lines in it.
+
+    Returns ``None`` if it cannot be opened: a run still books, it is only not recorded.
+    """
+    try:
+        history = History(connect(path))
+    except (OSError, sqlite3.Error):
+        logger.warning("History database %s unavailable; run not recorded", path, exc_info=True)
+        return None
+    logger.debug("History in %s", path)
+    logging.getLogger(LOGGER_NAME).addHandler(history.handler)
+    return history
+
+
+def close_history(history: History) -> None:
+    """Stop keeping log lines and close the database opened by :func:`open_history`."""
+    logging.getLogger(LOGGER_NAME).removeHandler(history.handler)
+    history.close()
+
+
 def _stamp(moment: datetime) -> str:
     return moment.isoformat(timespec="milliseconds")
 
 
 _SLOT_KINDS = frozenset({EventKind.SLOT_STARTED, EventKind.SLOT_BOOKED})
+_SETUP_KINDS = frozenset({EventKind.SETUP_STARTED, EventKind.SETUP_ITEM, EventKind.SETUP_FINISHED})
 
 
 def category(event: Event) -> str:
-    """Return the activity log filter ``event`` belongs to: ``step``, ``slot`` or ``error``.
+    """Return the activity log filter of ``event``: ``step``, ``slot``, ``setup`` or ``error``.
 
-    The app adds ``setup``, ``schedule`` and ``settings`` with its own events.
+    The app adds ``schedule`` and ``settings`` with its own events.
     """
     if event.kind is EventKind.SLOT_FAILED:
         return "error"
     if event.kind is EventKind.RUN_FINISHED and event.data.get("error"):
         return "error"
+    if event.kind in _SETUP_KINDS:
+        return "setup"
     return "slot" if event.kind in _SLOT_KINDS else "step"
 
 

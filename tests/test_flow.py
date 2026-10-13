@@ -69,6 +69,7 @@ class FakeApp:
         self.calls = []
         self.swipes = 0
         self.swipe_args = []
+        self.shells = []
 
     def go(self, target):
         name, delay = (target, 0) if isinstance(target, str) else target
@@ -138,6 +139,9 @@ class FakeApp:
 
     def app_current(self):
         return {"package": self.current}
+
+    def shell(self, command):
+        self.shells.append(command)
 
 
 def booking_app(screen="utilities", courts=COURTS, via_venue=False, slot_delay=0):
@@ -357,6 +361,32 @@ def test_prepare_keeps_running_app_without_restart():
 
     assert app.calls == []
     assert app.taps == []
+
+
+def test_prepare_turns_animations_off_first():
+    app = booking_app(screen="loading")
+
+    Booker(app, Config()).prepare()
+
+    assert app.shells == [
+        "settings put global window_animation_scale 0; "
+        "settings put global transition_animation_scale 0; "
+        "settings put global animator_duration_scale 0"
+    ]
+
+
+def test_animations_that_stay_on_do_not_stop_the_run(caplog):
+    class NoShellApp(FakeApp):
+        def shell(self, command):
+            raise RuntimeError("adb shell timeout")
+
+    base = booking_app(screen="loading")
+    app = NoShellApp(base.screens, base.taps_to, base.backs_to, "loading", base.launches_to)
+
+    Booker(app, Config()).prepare()
+
+    assert app.screen == "utilities"
+    assert "Could not turn off animations" in caplog.text
 
 
 def test_prepare_reports_logged_out_app():
