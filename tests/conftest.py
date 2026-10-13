@@ -8,6 +8,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 
 @pytest.fixture(autouse=True)
+def data_home(tmp_path, monkeypatch):
+    """Point the data folder at a temporary one, so tests never touch the real history."""
+    home = tmp_path / "home"
+    monkeypatch.setenv("COURT_BOOKER_HOME", str(home))
+    return home
+
+
+@pytest.fixture(autouse=True)
 def restore_package_logger():
     """Undo ``configure_logging`` after each test.
 
