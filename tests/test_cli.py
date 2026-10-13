@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 
 import court_booker.cli as cli
-from court_booker import processes
+from court_booker import device_setup, processes
 from court_booker.device_setup import Check, Status
 from court_booker.errors import EmulatorError
 from court_booker.history import HistoryHandler
@@ -271,14 +271,14 @@ def run_setup(monkeypatch, tmp_path, args=(), now=None, results=None):
     """Run ``court-booker setup`` with fake checks; returns the exit code and auto setup calls."""
     calls = []
 
-    def fake_auto_setup(config, config_path, tools, *, restart_mumu=False):
+    def fake_auto_setup(config, config_path, tools, *, restart_mumu=False, run=None):
         calls.append(restart_mumu)
         return results or [Check("wake_timers", Status.FIXED, "enabled")]
 
     monkeypatch.setattr(cli, "datetime", now or FixedDatetime)
     monkeypatch.setattr(cli, "find_tools", lambda config: None)
     monkeypatch.setattr(cli, "run_checks", lambda config, tools: CHECKS)
-    monkeypatch.setattr(cli, "auto_setup", fake_auto_setup)
+    monkeypatch.setattr(device_setup, "auto_setup", fake_auto_setup)
     code = cli.main(["setup", "--config", str(tmp_path / "missing.toml"), *args])
     return code, calls
 

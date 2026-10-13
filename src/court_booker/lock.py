@@ -18,7 +18,7 @@ from typing import Any, Callable, Protocol
 
 from court_booker import processes
 from court_booker.clock import parse_time
-from court_booker.errors import LockHeldError
+from court_booker.errors import LockHeldError, RequestError
 from court_booker.events import EventKind, Reporter
 
 logger = logging.getLogger(__name__)
@@ -76,6 +76,15 @@ def schedule_window(day: date, wake_at: str, start_at: str) -> tuple[datetime, d
     begin = datetime.combine(day, parse_time(wake_at, "wake time"))
     end = datetime.combine(day, parse_time(start_at, "start time")) + SCHEDULE_AFTER
     return begin, end
+
+
+def check_quiet_time(now: datetime, wake_at: str, start_at: str, task: str) -> None:
+    """Refuse ``task`` (a dry run, auto setup) while the scheduled run owns the emulator."""
+    begin, end = schedule_window(now.date(), wake_at, start_at)
+    if begin <= now < end:
+        raise RequestError(
+            f"No {task} from {begin:%H:%M} to {end:%H:%M}: the scheduled run uses the emulator"
+        )
 
 
 class RunLock:

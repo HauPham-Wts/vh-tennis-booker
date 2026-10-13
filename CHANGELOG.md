@@ -47,6 +47,8 @@ uses [Semantic Versioning](https://semver.org/).
   every value first and lists each problem; the Telegram keys are neither shown nor
   changed; a save is recorded in the activity log. Invalid requests answer with the list
   of invalid values.
+- Backend setup routes: `GET /api/setup` (the device checks) and `POST /api/setup/auto`
+  (auto setup, with the same lock, quiet time and activity log as `setup --auto`).
 
 ### Fixed
 - `tools/inspect_screen.py` connects to MuMu 12 instance 0 (`127.0.0.1:16384`) by default

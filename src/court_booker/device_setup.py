@@ -16,13 +16,17 @@ import subprocess
 import sys
 from collections.abc import Iterable
 from dataclasses import dataclass, replace
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
 
+from court_booker import __version__
 from court_booker.adb import AUTO, Adb, find_adb, resolve_device
 from court_booker.config import Config, ConfigError, save_config
 from court_booker.emulator import MuMu, Run, run_command
-from court_booker.errors import AdbNotFoundError, DeviceError, EmulatorError
+from court_booker.errors import AdbNotFoundError, CourtBookerError, DeviceError, EmulatorError
+from court_booker.events import EventKind, Reporter
+from court_booker.lock import RunLock, check_quiet_time
 
 logger = logging.getLogger(__name__)
 
@@ -264,6 +268,47 @@ def auto_setup(
                 check = _allow_wake_timers(run)
         logger.info("Setup %s: %s (%s)", check.item, check.status.value, check.detail)
         results.append(check)
+    return results
+
+
+def run_auto_setup(
+    config: Config,
+    config_path: Path,
+    tools: Tools,
+    lock_path: Path,
+    report: Reporter,
+    *,
+    restart_mumu: bool = False,
+    now: datetime | None = None,
+    run: Run = run_command,
+) -> list[Check]:
+    """Run auto setup as one task, as the command line and the app both do.
+
+    It is refused from the wake time to 5 minutes after the start time, holds the run lock
+    while it works (so no run uses MuMu meanwhile) and reports each item to ``report``.
+    """
+    check_quiet_time(now or datetime.now(), config.wake_at, config.start_at, "auto setup")
+    lock = RunLock(lock_path, report)
+    results: list[Check] = []
+    error: str | None = None
+    report(EventKind.SETUP_STARTED, restart_mumu=restart_mumu, version=__version__)
+    try:
+        lock.acquire("setup")
+        results = auto_setup(config, config_path, tools, restart_mumu=restart_mumu, run=run)
+    except CourtBookerError as exc:
+        error = str(exc)
+        raise
+    finally:
+        for result in results:
+            report(
+                EventKind.SETUP_ITEM,
+                item=result.item,
+                status=result.status.value,
+                detail=result.detail,
+            )
+        left = [r.item for r in results if r.status not in (Status.OK, Status.FIXED)]
+        report(EventKind.SETUP_FINISHED, left=left, error=error)
+        lock.release()
     return results
 
 
