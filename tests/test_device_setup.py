@@ -1,5 +1,6 @@
 """Tests for the device setup checks and auto setup, with fake tools."""
 
+import subprocess
 import sys
 from pathlib import Path
 
@@ -96,6 +97,60 @@ def test_screen_check():
     assert "540x960 at 240 DPI" in wrong.detail
     assert device_setup.check_screen(None).status is Status.UNKNOWN
     assert device_setup.check_screen(FakeMuMu({"resolution_width": "x"})).status is Status.UNKNOWN
+
+
+POWERCFG = """Power Scheme GUID: bfe96730-c015-4cfa-b549-ec3c64ca0e05  (Ultimate Performance)
+  Subgroup GUID: 238c9fa8-0aad-41ed-83f4-97be242c8f20  (Sleep)
+    GUID Alias: SUB_SLEEP
+    Power Setting GUID: bd3b718a-0680-4d9d-8ab2-e1d2b4ac806d  (Allow wake timers)
+      GUID Alias: RTCWAKE
+      Possible Setting Index: 000
+      Possible Setting Friendly Name: Disable
+      Possible Setting Index: 001
+      Possible Setting Friendly Name: Enable
+      Possible Setting Index: 002
+      Possible Setting Friendly Name: Important Wake Timers Only
+    Current AC Power Setting Index: 0x{ac:08x}
+    Current DC Power Setting Index: 0x{dc:08x}
+"""
+
+
+class FakePowercfg:
+    """Answers ``powercfg /query`` and records ``/set...valueindex`` and ``/setactive``."""
+
+    def __init__(self, ac=1, dc=1, returncode=0):
+        self.ac, self.dc = ac, dc
+        self.returncode = returncode
+        self.calls = []
+
+    def run(self, argv):
+        self.calls.append(argv[1:])
+        if argv[1] == "/setacvalueindex":
+            self.ac = int(argv[-1])
+        elif argv[1] == "/setdcvalueindex":
+            self.dc = int(argv[-1])
+        output = POWERCFG.format(ac=self.ac, dc=self.dc) if argv[1] == "/query" else ""
+        return subprocess.CompletedProcess(argv, self.returncode, stdout=output, stderr="")
+
+
+def test_wake_timer_values_are_read_by_position():
+    assert device_setup.wake_timer_indexes(POWERCFG.format(ac=1, dc=2)) == (1, 2)
+    assert device_setup.wake_timer_indexes("Invalid Parameters") is None
+
+
+def test_wake_timer_check():
+    assert device_setup.check_wake_timers(FakePowercfg().run).status is Status.OK
+    battery_off = device_setup.check_wake_timers(FakePowercfg(dc=0).run)
+    assert battery_off.status is Status.FIXABLE
+    assert battery_off.detail == "Wake timers enabled plugged in, disabled on battery"
+    assert device_setup.check_wake_timers(FakePowercfg(returncode=1).run).status is Status.UNKNOWN
+
+
+def test_wake_timer_check_without_powercfg():
+    def missing(argv):
+        raise FileNotFoundError("powercfg")
+
+    assert device_setup.check_wake_timers(missing).status is Status.UNKNOWN
 
 
 def test_mumu_check(tmp_path):

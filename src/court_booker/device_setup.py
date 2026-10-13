@@ -11,13 +11,15 @@ from __future__ import annotations
 
 import itertools
 import logging
+import re
+import subprocess
 import sys
 from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
-from court_booker.emulator import MuMu
+from court_booker.emulator import MuMu, Run, run_command
 from court_booker.errors import EmulatorError
 
 logger = logging.getLogger(__name__)
@@ -25,6 +27,7 @@ logger = logging.getLogger(__name__)
 # Item keys are stable: the app uses them as message keys.
 MUMU_INSTALLED = "mumu_installed"
 MUMU_SCREEN = "mumu_screen"
+WAKE_TIMERS = "wake_timers"
 
 SCREEN = {"resolution_width": 540, "resolution_height": 1600, "resolution_dpi": 220}
 """The screen the booking flow is tuned for (spec 0.3.0): all slots fit without scrolling."""
@@ -35,6 +38,11 @@ SCREEN_SETTINGS = {
     "resolution_dpi.custom": "220",
 }
 """The MuMu settings that give :data:`SCREEN`."""
+
+WAKE_SETTING = ("SCHEME_CURRENT", "SUB_SLEEP", "RTCWAKE")
+"""``powercfg`` names of "Allow wake timers" in the active power plan."""
+WAKE_ENABLED = 1
+_WAKE_NAMES = {0: "disabled", 1: "enabled", 2: "important only"}
 
 _MANAGER_LAYOUTS = (Path("nx_main") / "MuMuManager.exe", Path("shell") / "MuMuManager.exe")
 """Where MuMuManager.exe sits in an install folder (MuMu Player 12 and older)."""
@@ -150,3 +158,34 @@ def check_screen(mumu: MuMu | None) -> Check:
     if actual == SCREEN:
         return Check(MUMU_SCREEN, Status.OK, f"Screen {shown}")
     return Check(MUMU_SCREEN, Status.FIXABLE, f"Screen {shown}; booking needs 540x1600 at 220 DPI")
+
+
+def wake_timer_indexes(output: str) -> tuple[int, int] | None:
+    """Return the plugged-in and on-battery values of "Allow wake timers".
+
+    ``output`` is ``powercfg /query``'s. Its labels follow the Windows language, so the two
+    hexadecimal values are read by position: plugged in (AC), then on battery (DC).
+    """
+    values = re.findall(r"0x([0-9a-fA-F]{8})", output)
+    if len(values) < 2:
+        return None
+    return int(values[-2], 16), int(values[-1], 16)
+
+
+def check_wake_timers(run: Run = run_command) -> Check:
+    """Check that wake timers may wake the PC, plugged in and on battery."""
+    try:
+        result = run(["powercfg", "/query", *WAKE_SETTING])
+    except (OSError, subprocess.SubprocessError) as exc:
+        return Check(WAKE_TIMERS, Status.UNKNOWN, f"powercfg could not run: {exc}")
+    indexes = wake_timer_indexes(result.stdout) if result.returncode == 0 else None
+    if indexes is None:
+        return Check(WAKE_TIMERS, Status.UNKNOWN, "powercfg did not report wake timers")
+    plugged, battery = indexes
+    detail = (
+        f"Wake timers {_WAKE_NAMES.get(plugged, plugged)} plugged in,"
+        f" {_WAKE_NAMES.get(battery, battery)} on battery"
+    )
+    if plugged == battery == WAKE_ENABLED:
+        return Check(WAKE_TIMERS, Status.OK, detail)
+    return Check(WAKE_TIMERS, Status.FIXABLE, detail)
