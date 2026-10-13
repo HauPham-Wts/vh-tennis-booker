@@ -1,5 +1,6 @@
 """Tests for the history database."""
 
+import json
 import logging
 import sqlite3
 from datetime import datetime, timedelta
@@ -146,6 +147,46 @@ def test_a_run_stays_running_until_it_finishes(connection):
 
     assert rows(connection, "SELECT status, finished_at FROM runs") == [
         {"status": "running", "finished_at": None}
+    ]
+
+
+def test_every_event_becomes_an_activity_step(connection):
+    store = history.History(connection)
+
+    play_run(Reporter(store, clock=ticking_clock()))
+
+    steps = rows(connection, "SELECT run_id, category, kind FROM events ORDER BY id")
+    assert {step["run_id"] for step in steps} == {store.run_id}
+    assert [(step["category"], step["kind"]) for step in steps] == [
+        ("step", "run_started"),
+        ("step", "device_ready"),
+        ("step", "app_ready"),
+        ("step", "booking_started"),
+        ("slot", "slot_started"),
+        ("slot", "slot_booked"),
+        ("slot", "slot_started"),
+        ("error", "slot_failed"),
+        ("step", "run_finished"),
+    ]
+
+
+def test_step_data_is_kept_as_json(connection):
+    play_run(Reporter(history.History(connection), clock=ticking_clock()))
+
+    query = "SELECT data FROM events WHERE kind = 'booking_started'"
+    (data,) = connection.execute(query).fetchone()
+    assert '"court": "S6 - Sân tennis"' in data
+    assert json.loads(data)["slots"] == ["18:00 - 19:00", "19:00 - 20:00"]
+
+
+def test_a_run_that_ends_with_an_error_is_an_error_step(connection):
+    report = Reporter(history.History(connection), clock=ticking_clock())
+
+    report(EventKind.RUN_STARTED, trigger="scheduled", dry_run=False, version="0.5.0")
+    report(EventKind.RUN_FINISHED, status="failed", booked=0, total=0, error="adb lost")
+
+    assert rows(connection, "SELECT category FROM events WHERE kind = 'run_finished'") == [
+        {"category": "error"}
     ]
 
 

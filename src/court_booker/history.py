@@ -7,6 +7,7 @@ only reads it. Times are local ISO strings, the same clock as the log files.
 
 from __future__ import annotations
 
+import json
 import logging
 import sqlite3
 import time
@@ -106,6 +107,21 @@ def _stamp(moment: datetime) -> str:
     return moment.isoformat(timespec="milliseconds")
 
 
+_SLOT_KINDS = frozenset({EventKind.SLOT_STARTED, EventKind.SLOT_BOOKED})
+
+
+def category(event: Event) -> str:
+    """Return the activity log filter ``event`` belongs to: ``step``, ``slot`` or ``error``.
+
+    The app adds ``setup``, ``schedule`` and ``settings`` with its own events.
+    """
+    if event.kind is EventKind.SLOT_FAILED:
+        return "error"
+    if event.kind is EventKind.RUN_FINISHED and event.data.get("error"):
+        return "error"
+    return "slot" if event.kind in _SLOT_KINDS else "step"
+
+
 class History:
     """Write the runs of this process to the history database; an event sink.
 
@@ -121,8 +137,22 @@ class History:
         self.seconds = 0.0
 
     def emit(self, event: Event) -> None:
-        """Record ``event`` in the run tables."""
-        self._write(lambda db: self._record_run(db, event))
+        """Record ``event`` in the run tables and as a step of the activity log."""
+
+        def write(db: sqlite3.Connection) -> None:
+            self._record_run(db, event)
+            db.execute(
+                "INSERT INTO events (run_id, time, category, kind, data) VALUES (?, ?, ?, ?, ?)",
+                (
+                    self.run_id,
+                    _stamp(event.time),
+                    category(event),
+                    event.kind.value,
+                    json.dumps(event.data, ensure_ascii=False),
+                ),
+            )
+
+        self._write(write)
 
     def close(self) -> None:
         """Close the database, logging what writing to it cost."""
