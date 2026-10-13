@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-13
+
 ### Added
 - `tools/setup_runner.py` sets up the runner folder: a git worktree at a release tag with its
   own virtual environment, which the daily scheduled task runs, so work in progress never
