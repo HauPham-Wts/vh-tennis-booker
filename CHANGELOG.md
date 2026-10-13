@@ -6,6 +6,67 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-13
+
+### Added
+- `tools/setup_runner.py` sets up the runner folder: a git worktree at a release tag with its
+  own virtual environment, which the daily scheduled task runs, so work in progress never
+  books. Configuration and logs stay in the development folder.
+- The debug log names the Python and the code folder each run uses.
+- Run events: besides its log lines, the engine reports each step as an event with fixed
+  fields (run started with its trigger, device and app ready, waiting, each slot's steps and
+  result, run finished with its status). For now they appear in the debug log; they are the
+  base for the history database and the live view of the app.
+- The app's data folder, `%LOCALAPPDATA%\CourtBooker` (or `COURT_BOOKER_HOME`), for its
+  config, history database, logs and run lock.
+- The config can be saved: it is checked first (slot format, court, day, wake time before
+  start time, timeouts) and written safely, so a bad edit never reaches the file a run
+  reads. A default config is created when none exists. New dependency: `tomli-w`.
+- History database: every run (scheduled, dry run or manual) is recorded in `booker.db` in
+  the data folder: the run with its trigger, play date, court and status, the result of each
+  slot, every step, and the technical log lines. A database error only turns history off
+  for that run; the booking goes on. Writing takes about 0.13 ms per row.
+- The booking started event names the court.
+- Run lock: only one run drives the emulator at a time. A second dry run or manual run is
+  refused with exit code 5. The scheduled run waits for another run and, if it still holds
+  the lock 2 minutes before the start time, stops it and goes on. A lock left by a run that
+  is gone is removed, and that run is marked as interrupted in the history.
+- No dry run may start from the wake time to 5 minutes after the start time (exit code 2).
+- `court-booker setup` checks the PC and the emulator: MuMu installed, its screen at
+  540x1600 and 220 DPI, wake timers allowed plugged in and on battery, the Vinhomes app
+  installed. `setup --auto` fixes what it can (saves the MuMu path, sets the screen,
+  restarting a running MuMu only with `--restart-mumu`, allows wake timers) and records each
+  item in the history. It takes the run lock and does not start around the scheduled run.
+- Each run turns off Android animations before opening the app.
+- The desktop app's backend: `court-booker serve` runs a FastAPI app on 127.0.0.1 (port
+  8765) with a health route, its OpenAPI schema at `/api/openapi.json` and engine errors
+  answered as JSON with a stable code. It needs the new `app` extra
+  (`pip install -e ".[app]"`); scheduled runs do not load it.
+- Backend history routes, read-only: `GET /api/runs` (newest first, filters by play month
+  and trigger, paging), `GET /api/runs/{id}` (slots, steps and log lines) and
+  `GET /api/events` (the activity log by category).
+- Backend settings routes: `GET /api/settings` and `PUT /api/settings`. Saving checks
+  every value first and lists each problem; the Telegram keys are neither shown nor
+  changed; a save is recorded in the activity log. Invalid requests answer with the list
+  of invalid values.
+- Backend setup routes: `GET /api/setup` (the device checks) and `POST /api/setup/auto`
+  (auto setup, with the same lock, quiet time and activity log as `setup --auto`).
+- Backend schedule routes: `GET /api/schedule` (on or off, the next booking and its play
+  date) and `PUT /api/schedule`, which switches the daily task on only once a dry run has
+  passed, and records each switch in the activity log.
+- `POST /api/runs/dry-run` starts a dry run of the saved settings in its own process, as
+  the scheduled task does; it is refused around the scheduled run and while another run
+  (or the dry run started just before) is going.
+- `GET /api/status`: the Overview in one call (the run going on, the schedule and next
+  booking, the last run, the last auto setup).
+- `WS /api/live`: the live feed pushes each new step of a run or of the app as it is
+  written; a client can resume after the last step it saw. New dependency in the `app`
+  extra: `websockets`.
+
+### Fixed
+- `tools/inspect_screen.py` connects to MuMu 12 instance 0 (`127.0.0.1:16384`) by default
+  instead of the MuMu 6 port.
+
 ## [0.4.0] - 2026-10-12
 
 ### Added

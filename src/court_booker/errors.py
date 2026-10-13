@@ -71,5 +71,9 @@ class AppNotReadyError(CourtBookerError):
     """The app did not reach its home or utilities screen, e.g. after a logout."""
 
 
+class LockHeldError(CourtBookerError):
+    """Another run holds the run lock; nothing was sent to the device."""
+
+
 class ScheduleError(CourtBookerError):
     """``schtasks`` could not create, delete or query the scheduled task."""

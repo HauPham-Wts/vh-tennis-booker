@@ -1,8 +1,5 @@
 {
   "permissions": {
-    "deny": [
-      "Bash(adb:*)",
-      "Bash(court-booker:*)"
-    ]
+    "deny": []
   }
 }

@@ -126,3 +126,11 @@ def test_find_adb_missing_explains_fix(tmp_path):
         find_adb("", [tmp_path], which=lambda name: None)
     with pytest.raises(AdbNotFoundError, match="does not exist"):
         find_adb(str(tmp_path / "nope.exe"))
+
+
+def test_shell_runs_on_the_given_device():
+    fake = FakeAdb(attached=["127.0.0.1:16384"])
+
+    fake.adb().shell("127.0.0.1:16384", "pm", "path", "com.vinhomes.resident")
+
+    assert fake.calls == ["-s 127.0.0.1:16384 shell pm path com.vinhomes.resident"]

@@ -6,7 +6,7 @@ query. Elements are found by accessibility label in that dump and tapped at thei
 coordinates, so waiting for the next screen and locating the next element are the
 same query: a step costs one dump per poll plus one tap. No coordinates are kept
 across screens. ``device`` is a :class:`uiautomator2.Device` or a test double with
-``dump_hierarchy``, ``click``, ``press``, ``swipe`` and the app calls.
+``dump_hierarchy``, ``click``, ``press``, ``swipe``, ``shell`` and the app calls.
 """
 
 from __future__ import annotations
@@ -24,6 +24,7 @@ from court_booker.errors import (
     NavigationError,
     SlotUnavailableError,
 )
+from court_booker.events import EventKind, Reporter
 from court_booker.geometry import (
     ANY_SLOT_PATTERN,
     DAY_PATTERN,
@@ -51,14 +52,22 @@ _SETTLE_TIMEOUT = 1.0
 _SWIPE_SECONDS = 0.25
 _MIN_VISIBLE_RATIO = 0.6
 """A slot clipped to less than this share of a full slot's height is scrolled into view."""
+ANIMATION_SCALES = (
+    "window_animation_scale",
+    "transition_animation_scale",
+    "animator_duration_scale",
+)
+"""Android settings that Accessibility > Remove animations sets to 0."""
 
 
 class Booker:
     """Drive one booking round per call to :meth:`book`."""
 
-    def __init__(self, device: Any, config: Config) -> None:
+    def __init__(self, device: Any, config: Config, report: Reporter | None = None) -> None:
         self.device = device
         self.config = config
+        self.report = Reporter() if report is None else report
+        """Receives the steps of each round; reporting sends no device commands."""
         self.commands = 0
         """Device commands sent so far; each is a round trip to the emulator."""
         self.last_screen = Screen([])
@@ -81,6 +90,21 @@ class Booker:
 
     # Public API -------------------------------------------------------------
 
+    def disable_animations(self) -> None:
+        """Turn off Android animations, as Accessibility > Remove animations does.
+
+        Screens then change without transitions, so the next one can be read sooner. The
+        settings stay until changed, and a failure only costs that speed-up.
+        """
+        command = "; ".join(f"settings put global {name} 0" for name in ANIMATION_SCALES)
+        self.commands += 1
+        try:
+            self.device.shell(command)
+        except Exception:  # uiautomator2 raises several unrelated types
+            logger.warning("Could not turn off animations", exc_info=True)
+            return
+        logger.debug("Animations off")
+
     def prepare(self) -> None:
         """Open the app and stop on the utilities list, ready for the first round.
 
@@ -88,6 +112,7 @@ class Booker:
         expired session from the previous day cannot get in the way.
         """
         package = self.config.package
+        self.disable_animations()
         if self.config.restart_app:
             logger.info("Restarting %s", package)
             self.device.app_stop(package)
@@ -134,6 +159,7 @@ class Booker:
         _, screen = self.tap_and_advance(
             screen, self.court, self.config.court, self._finder(self.continue_button)
         )
+        self.report(EventKind.COURT_SELECTED, court=self.config.court)
         point, _ = self.tap_and_advance(
             screen, self.continue_button, labels.continue_, self.locate_checkbox
         )
@@ -156,6 +182,7 @@ class Booker:
             _, screen = self.tap_and_advance(
                 screen, self.utility, self.config.labels.utility, self._find_calendar
             )
+            self.report(EventKind.CALENDAR_OPENED, attempt=attempt)
             try:
                 self.select_date(screen, target)
                 return self.select_slot(slot)
@@ -239,6 +266,7 @@ class Booker:
             if found is not None:
                 self.tap(found[0])
                 logger.info("Selected date %s", target.isoformat())
+                self.report(EventKind.DATE_SELECTED, date=target.isoformat())
                 return
             first_day = self.last_screen.find(self.any_day)
             logger.debug(
@@ -277,6 +305,7 @@ class Booker:
                 if position == "visible":
                     self.tap(node)
                     logger.info("Selected slot %s (%d swipe(s))", slot, swipes)
+                    self.report(EventKind.SLOT_SELECTED, slot=slot, swipes=swipes)
                     return screen
                 down = position == "below"
             if swipes >= self.config.max_swipes or time.monotonic() >= deadline:
@@ -324,6 +353,7 @@ class Booker:
                 raise NavigationError("Checkbox tapped but the confirm button stayed disabled")
             point = self.locate_checkbox(self.last_screen) or point
         logger.info("Accepted terms")
+        self.report(EventKind.TERMS_ACCEPTED)
 
         if dry_run:
             logger.info("Dry run: skipping final confirmation")

@@ -14,6 +14,7 @@ from court_booker.errors import (
     ElementNotFoundError,
     SlotUnavailableError,
 )
+from court_booker.events import EventKind, MemorySink, Reporter
 from court_booker.flow import Booker
 from court_booker.screen import Screen
 
@@ -68,6 +69,7 @@ class FakeApp:
         self.calls = []
         self.swipes = 0
         self.swipe_args = []
+        self.shells = []
 
     def go(self, target):
         name, delay = (target, 0) if isinstance(target, str) else target
@@ -137,6 +139,9 @@ class FakeApp:
 
     def app_current(self):
         return {"package": self.current}
+
+    def shell(self, command):
+        self.shells.append(command)
 
 
 def booking_app(screen="utilities", courts=COURTS, via_venue=False, slot_delay=0):
@@ -210,6 +215,30 @@ def test_book_reads_each_screen_once_and_taps_by_coordinates():
     assert app.screen == "ticket"
     # 8 taps plus one read per screen: start, calendar, slots, courts, details,
     # confirmation, enabled confirm button, ticket.
+    assert booker.commands == 16
+
+
+def test_book_reports_each_step_without_extra_commands():
+    app = booking_app()
+    sink = MemorySink()
+    booker = Booker(app, Config(), Reporter(sink))
+
+    booker.book("11:00 - 12:00", TARGET)
+
+    assert sink.kinds == [
+        EventKind.CALENDAR_OPENED,
+        EventKind.DATE_SELECTED,
+        EventKind.SLOT_SELECTED,
+        EventKind.COURT_SELECTED,
+        EventKind.TERMS_ACCEPTED,
+    ]
+    assert [event.data for event in sink.events] == [
+        {"attempt": 1},
+        {"date": "2026-10-11"},
+        {"slot": "11:00 - 12:00", "swipes": 0},
+        {"court": "S10 - Sân tennis"},
+        {},
+    ]
     assert booker.commands == 16
 
 
@@ -332,6 +361,32 @@ def test_prepare_keeps_running_app_without_restart():
 
     assert app.calls == []
     assert app.taps == []
+
+
+def test_prepare_turns_animations_off_first():
+    app = booking_app(screen="loading")
+
+    Booker(app, Config()).prepare()
+
+    assert app.shells == [
+        "settings put global window_animation_scale 0; "
+        "settings put global transition_animation_scale 0; "
+        "settings put global animator_duration_scale 0"
+    ]
+
+
+def test_animations_that_stay_on_do_not_stop_the_run(caplog):
+    class NoShellApp(FakeApp):
+        def shell(self, command):
+            raise RuntimeError("adb shell timeout")
+
+    base = booking_app(screen="loading")
+    app = NoShellApp(base.screens, base.taps_to, base.backs_to, "loading", base.launches_to)
+
+    Booker(app, Config()).prepare()
+
+    assert app.screen == "utilities"
+    assert "Could not turn off animations" in caplog.text
 
 
 def test_prepare_reports_logged_out_app():

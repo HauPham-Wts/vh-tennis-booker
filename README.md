@@ -34,6 +34,13 @@ MuMu Player emulator, using only the app's user interface.
   within about a millisecond of the start time, and the calendar is reloaded until the new
   date is listed.
 - **Reporting.** Daily log files, exit codes per failure type and an optional Telegram summary.
+- **History.** Every run, each slot's result and every step is recorded in a SQLite database,
+  without slowing the booking down (about 0.13 ms per write).
+- **One run at a time.** A run lock keeps two runs off the emulator; the scheduled run takes
+  over from any other run two minutes before the start time.
+- **Device setup.** One command checks the PC and the emulator and fixes what it can.
+- **Backend.** A local FastAPI app serves the history, settings, setup, schedule and a live
+  feed for the coming desktop app.
 
 ## How it works
 
@@ -91,26 +98,40 @@ court-booker schedule remove    # delete the task
 
 One-time Windows setup:
 
+```bash
+court-booker setup                  # check MuMu, its screen, wake timers and the app
+court-booker setup --auto           # fix what can be fixed
+court-booker setup --auto --restart-mumu   # also restart a running MuMu to apply its screen
+```
+
+`setup --auto` finds MuMu, gives it a custom resolution of **540x1600** (220 DPI), so the
+whole slot list fits without scrolling, and allows wake timers plugged in and on battery.
+It does not run from `wake_at` to 5 minutes after `start_at`. The rest is up to you:
+
+- Install MuMu Player and the Vinhomes app, and keep the app logged in inside MuMu
+  (a dry run fails with exit code 4 when it is not).
 - Leave the PC on or in **Sleep**; a shut-down PC cannot be woken.
-- Keep it plugged in and enable *Power Options → Sleep → Allow wake timers*.
+- Keep it plugged in.
 - Stay signed in to Windows (a locked screen is fine); MuMu needs the desktop session.
-- Keep the Vinhomes app logged in inside MuMu.
-- Give MuMu a custom resolution of **540x1600** (220 DPI), so the whole slot list fits
-  without scrolling (*Settings → Display*, or
-  `MuMuManager.exe setting -v 0 -k resolution_mode -val custom -k resolution_width.custom -val 540 -k resolution_height.custom -val 1600 -k resolution_dpi.custom -val 220`,
-  then restart MuMu).
 
 Test the whole chain first with `court-booker --at <in 3 minutes> --dry-run` and MuMu
 closed. Each run is logged to `logs/court-booker-YYYY-MM-DD.log`; set `telegram_token` and
 `telegram_chat_id` to receive the summary on your phone.
 
+Every run is also recorded in the history database `booker.db` in the data folder,
+`%LOCALAPPDATA%\CourtBooker` (set `COURT_BOOKER_HOME` to move it), beside the run lock
+`run.lock`. Only one run drives the emulator at a time: a second dry run or manual run is
+refused, and the scheduled run waits for another run, then stops it two minutes before the
+start time. No dry run starts from `wake_at` to 5 minutes after `start_at`.
+
 | Exit code | Meaning |
 |---|---|
 | 0 | every round succeeded |
 | 1 | a round failed |
-| 2 | bad arguments or config, or the start time has passed |
+| 2 | bad arguments or config, the start time has passed, or a dry run around the scheduled run |
 | 3 | emulator or ADB error |
 | 4 | the app did not reach its home screen (e.g. logged out) |
+| 5 | another run holds the run lock |
 | 130 | interrupted with Ctrl+C |
 
 If `court-booker` is not on `PATH`, use `python -m court_booker` instead.
@@ -123,6 +144,20 @@ Sample output:
 11:12:07.402 +1.39s INFO    Selected slot 14:00 - 15:00 (0 swipe(s))
 11:12:09.118 +1.72s INFO    Accepted terms
 ```
+
+### Backend
+
+The backend of the coming desktop app needs the `app` extra:
+
+```bash
+pip install -e ".[app]"
+court-booker serve --config config.toml   # http://127.0.0.1:8765, docs at /api/docs
+```
+
+It listens on 127.0.0.1 only and serves the runs and activity log, the settings, device
+setup, the daily schedule (switched on only after a dry run passed), dry runs, an overview,
+and a live feed of new steps over a WebSocket (`/api/live`). Errors are JSON with a stable
+`error` code. Scheduled runs never load it.
 
 To inspect a screen whose elements cannot be found:
 
@@ -144,23 +179,35 @@ src/court_booker/
 ├── power.py            keep Windows awake during a run
 ├── notify.py           Telegram summary
 ├── schedule.py         Windows scheduled task
-├── config.py           defaults and config.toml loading
+├── config.py           defaults, config.toml loading, checking and saving
+├── paths.py            the data folder
+├── events.py           progress events and their sinks
+├── history.py          history database: schema, migrations, event sink
+├── history_read.py     read-only queries for the backend
+├── lock.py             run lock and the quiet time around the scheduled run
+├── processes.py        process identity by pid and start time
+├── device_setup.py     device setup checks and auto setup
 ├── errors.py           exception hierarchy
 ├── geometry.py         pure helpers for bounds and dates
-└── logging_setup.py    console and file logging with step timing
+├── logging_setup.py    console and file logging with step timing
+└── api/                FastAPI backend: app, errors, one module per route group
 tools/inspect_screen.py UI hierarchy dump
+tools/setup_runner.py   runner folder for the daily task on a development machine
 tests/                  unit tests with fake devices, adb, clocks and schtasks
+docs/specs/             one design spec per version
 ```
 
 ## Development
 
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[dev,app]"
 pre-commit install
 pytest
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions and the release process.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions and the release process. On a
+development machine the daily task runs a separate runner folder, so work in progress never
+books (see "Runner folder" there).
 
 ## License
 

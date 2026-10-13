@@ -9,13 +9,16 @@ Last updated: 2026-10-10.
 The Python `Scripts` folder is not on PATH on the dev machine, so prefix tools with `python -m`.
 
 ```bash
-python -m pip install -e ".[dev]"                    # install package + pytest, ruff, pre-commit
+python -m pip install -e ".[dev,app]"                # package + tests/lint tools + backend
 python -m pytest                                     # all tests (no emulator needed)
 python -m pytest tests/test_flow.py -k slot          # single file / single test
 python -m ruff check . && python -m ruff format .    # CI runs `ruff format --check .`
 python -m court_booker --dry-run --verbose           # real run against the emulator
 python -m court_booker --at 06:00 --dry-run          # timed run
-python -m court_booker schedule install              # daily task (status, remove)
+python tools/setup_runner.py v0.4.0 --schedule       # runner folder + daily task (CONTRIBUTING)
+python -m court_booker schedule status               # task details (install, remove)
+python -m court_booker setup                         # device setup checks (--auto fixes)
+python -m court_booker serve --config config.toml    # backend on 127.0.0.1:8765 (/api/docs)
 python tools/inspect_screen.py --near "Tôi đã hiểu"  # dump nodes level with a label
 ```
 
@@ -32,7 +35,7 @@ real bookings with it on (verified 2026-10-08). Bypassing any app check is out o
 will not be done. On-device automation (an Android app using AccessibilityService) is also
 out of scope.
 
-## Current state: 0.4.0 released
+## Current state: 0.5.0 released, the 06:00 task still on 0.4.0
 
 - Repo: `github.com/servedbyhau/vh-tennis-booker` (private), local path `D:\VH-Booker\vh-tennis-booker`
 - Python package `court_booker` (src layout), CLI `court-booker` / `python -m court_booker`
@@ -53,16 +56,108 @@ out of scope.
   both slots each day: rounds 10.5 s + 4.3 s (11/10) and 7.0 s + 4.3 s (12/10). On 11/10 the
   court list appeared 2.3 s after "Tiếp tục", so the 2 s re-tap fired once (92 commands in
   round 1); the booking still succeeded.
+- 0.5.0 (spec: `docs/specs/0.5.0-desktop-app.md`, parts 1-8, PRs #34-#48 and the release
+  PRs) was released on 2026-10-13 with 287 tests: run events, data folder, history database,
+  run lock, device setup, FastAPI backend. Dry runs on MuMu wrote correct history. The runner
+  stays at v0.4.0 until a dry run of v0.5.0 passes on 2026-10-14 (after 21:00 the app refuses
+  bookings); then `tools/setup_runner.py v0.5.0` moves it, and the first real 06:00 run on
+  0.5.0 is the spec's last check (its history rows).
 - The scheduled task has no `--dry-run`; it books for real. For a scheduled test, add
   `--dry-run` to the task arguments by hand (`schedule install` overwrites it).
 
 ## Code architecture
 
 - `cli.py` parses args (or dispatches `schedule ...` to `schedule.main`), applies overrides onto
-  `Config`, adds the log file, resolves the start time, measures the NTP offset, and inside
-  `power.keep_awake()` calls `runner.connect_device` then `runner.run_booking`. Errors map to
-  exit codes (`RequestError` 2, `DeviceError` 3, `AppNotReadyError` 4, Ctrl+C 130); the summary
-  is logged and optionally sent with `notify.send_telegram` on every path.
+  `Config`, adds the log file (and logs the Python and code folder it runs from), resolves
+  the start time, measures the NTP offset, and inside `power.keep_awake()` takes the run lock,
+  then calls `runner.connect_device` and `runner.run_booking`. Errors map to exit codes
+  (`RequestError` 2, `DeviceError` 3, `AppNotReadyError` 4, `LockHeldError` 5, Ctrl+C 130);
+  the summary is logged and optionally sent with `notify.send_telegram` on every path. A dry
+  run is refused (exit 2) from `wake_at` to 5 minutes after `start_at`.
+- `lock.py`: the run lock `run.lock` in the data folder (spec part 5), a JSON `Holder` (pid,
+  process start time, trigger, since) published with `os.link` so it is created atomically and
+  never read half-written. `RunLock.acquire` raises `LockHeldError` while a running process
+  holds it; `acquire_for_schedule` (scheduled runs) waits and, at `start - TAKE_OVER_AHEAD`
+  (2 min), stops the holder and takes the lock. A lock whose holder is gone (or unreadable) is
+  removed and logged; a lock file that cannot be written lets the run go on without it.
+  Events `lock_cleared`, `lock_waiting`, `lock_taken_over`. After taking the lock the CLI
+  calls `History.interrupt_stale_runs`, so runs left `running` become `interrupted`.
+  `processes.py` names a process by pid and start time (`GetProcessTimes` via ctypes on
+  Windows), so a later process that reuses a pid is never taken for the holder or stopped.
+- `device_setup.py` (spec part 6, the "Thiết lập máy" tab): `run_checks` returns one `Check`
+  (item, `Status`, detail) per item: `mumu_installed` (config path, uninstall registry, usual
+  folders), `mumu_screen` (`MuMu.settings`, readable while MuMu is off), `wake_timers`
+  (`powercfg /query SCHEME_CURRENT SUB_SLEEP RTCWAKE`, AC and DC hex values read by
+  position), `app_installed` (`adb shell pm path`, `unknown` while MuMu is off). Statuses
+  `ok`, `fixed`, `fixable`, `user` (install or log in by hand), `unknown`; item keys and
+  statuses are stable message keys. `auto_setup` fixes `fixable` items: saves the MuMu path
+  (`save_config`, drops comments), writes `SCREEN_SETTINGS` (a running MuMu only with
+  `restart_mumu`, then `control restart`), enables wake timers (`powercfg /set...valueindex`,
+  `/setactive`). Being logged in is shown by the dry run (exit 4), not checked here.
+  `court-booker setup` prints the checks; `--auto` refuses from `wake_at` to start + 5 min,
+  takes the run lock (trigger `setup`) and records `setup_started`, one `setup_item` per item
+  and `setup_finished` as history events of category `setup` without a run.
+- `api/` (spec part 7, needs the `app` extra: FastAPI, Uvicorn): `create_app(AppContext)`
+  builds the backend; `AppContext` holds the config path and the `DataFolder`, and routes
+  receive it as a `Context` parameter (`Annotated` with `Depends(get_context)`).
+  `CourtBookerError`s become `Problem` JSON (`error` code, `detail`): `LockHeldError` 409
+  `lock_held`, `RequestError` 400 `bad_request`, `DeviceError` 503 `device`,
+  `AppNotReadyError` 503 `app_not_ready`, others 500 `engine`. OpenAPI at
+  `/api/openapi.json` (for the 0.6.0 TypeScript types), docs at `/api/docs`.
+  `court-booker serve` (`api/server.py`) listens on 127.0.0.1 only (no login yet), default
+  port 8765, config from `--config` or the data folder (created with defaults). `cli.serve`
+  imports the backend lazily, so a run never loads FastAPI. Backend tests live in
+  `tests/api/` and are skipped without FastAPI. Route modules (`api/history.py` ...) skip
+  `from __future__ import annotations` and use `Optional`: FastAPI and Pydantic evaluate
+  annotations at run time, where Python 3.9 has no `X | None`.
+- `history_read.py` reads the history for the app through `open_read_only` (`mode=ro` URI,
+  `check_same_thread=False`, creates an empty database first): `list_runs` (newest first,
+  `booked`/`total` slot counts, `month` on the play date, `trigger`, `before` id paging),
+  `get_run` (slots, steps with parsed JSON `data`, log lines) and `list_events` (newest
+  first, `category`, `before`). Routes: `GET /api/runs`, `GET /api/runs/{id}` (404
+  `not_found` via `api.errors.NotFoundError`), `GET /api/events`. Tests share the
+  `record_run` fixture of `tests/conftest.py`, which writes runs through the history sink.
+- Invalid request values answer 422 `invalid_request` with `problems` (one line per value).
+  `api/settings.py`: `GET /api/settings` returns `settings_of(config)` (TOML keys, labels
+  with `continue`, without the `HIDDEN` Telegram keys); `PUT /api/settings` takes the full
+  `Settings` (extra keys refused), merges it into the config, runs `validate_config` (422
+  `invalid_settings` with `problems`, file untouched), and only when something changed
+  saves it (comments are lost) and records `settings_saved` with the changed keys.
+  `api/activity.record` writes such app events (no run) to the history; a database error
+  is only logged. The backend opens the history with `open_store` (no log capture: its
+  log lines would mix requests).
+- `lock.check_quiet_time` refuses a dry run or auto setup from `wake_at` to start + 5 min.
+  `device_setup.run_auto_setup` is auto setup as one task (quiet time, run lock trigger
+  `setup`, `setup_*` events); `court-booker setup --auto` and `POST /api/setup/auto`
+  (`{"restart_mumu": bool}`; 400 in the quiet time, 409 while a run holds the lock) both
+  call it. `GET /api/setup` returns the checks as `SetupItem`s (item, status, detail).
+- `api/schedule.py`: `GET /api/schedule` (`enabled` from `schedule.installed`, wake and
+  start time, `next_start` from `schedule.next_start`, `next_play_date`, `dry_run_passed`
+  from `history_read.dry_run_passed`); `PUT /api/schedule {"enabled": bool}` installs the
+  task again on every switch-on (needs a passed dry run: 409 `dry_run_required`; wake before
+  start: 400) or removes it, recording `schedule_enabled` / `schedule_disabled` (category
+  `schedule`). `ScheduleError` answers 503 `schedule`. The task runs the backend's Python:
+  never switch it on from a development backend (it would leave the runner folder); only
+  `GET` was tried on the dev machine.
+- `api/runs.py`: `POST /api/runs/dry-run` answers 202 `{pid, started_at}` and starts
+  `python -m court_booker --dry-run --config <config>` with `launch` (own process, no
+  window, output discarded: the run writes its history and log file). Refused with 400 in
+  the quiet time and 409 while `RunLock.running_holder()` (a peek that never clears) names
+  a running holder or while the process it started last (`app.state.dry_run`) still runs:
+  a fresh dry run does not hold the lock for its first milliseconds. A `threading.Lock`
+  keeps two requests from both starting one. Verified 2026-10-13 on MuMu (started from off).
+- `api/status.py`: `GET /api/status` gives the Overview in one call: `version`, `running`
+  (lock holder, or the dry run the backend just started), `schedule` (as `GET
+  /api/schedule`), `last_run` (newest run) and `setup` (`history_read.last_setup`: time and
+  items left by the last auto setup; empty until it ran), so the page never calls MuMu.
+- `api/live.py`: `WS /api/live` pushes each new activity step as `{"type": "step", "step":
+  ...}`, reading `history_read.events_after` every `POLL_SECONDS` (0.25 s) from a cursor
+  fixed before `accept` (the newest step, or `?after=<id>` to resume); a task awaiting
+  `websocket.receive` ends the loop when the client closes. Uvicorn needs the `websockets`
+  package (in the `app` extra) to serve it; `TestClient` does not, so only a real server
+  shows a missing one. Verified 2026-10-13 with a real client: steps arrive within 0.5 s.
+- `Booker.prepare` first turns off Android animations (`ANIMATION_SCALES` set to 0 in one
+  `shell` command, as Accessibility > Remove animations); a failure is logged and ignored.
 - `runner.connect_device`: `emulator.MuMu.ensure_started` (MuMuManager `info`/`control launch`),
   `adb.find_adb` + `adb.resolve_device` (prefers the serial MuMu reports), `uiautomator2.connect`
   (imported lazily so tests do not need it). `runner.run_booking`: `Booker.prepare()`,
@@ -71,6 +166,25 @@ out of scope.
   appended to a caller-owned list; the debug log counts device commands per round. When a
   round, `prepare()` or `locate_entry()` fails, `log_last_screen` writes `Booker.last_screen`
   to the debug log, so a failure seen once at 06:00 can be fixed from the log alone.
+- `events.py`: progress events beside the log lines (spec part 2). `EventKind` values are
+  stable strings (future database values and message keys); `Reporter` stamps the time and
+  hands an `Event` to a sink, swallowing sink errors so reporting never costs a booking. Sinks:
+  `LogSink` (one debug line `Event <kind> key=value ...`), `MemorySink` (tests), `MultiSink`,
+  `NullSink`. The CLI emits `run_started` (trigger `scheduled`/`dry_run`/`manual`),
+  `device_ready` and `run_finished` (status `ok`/`partial`/`failed`/`interrupted`) on every
+  path; `run_booking` emits `app_ready`, `waiting`, `booking_started`, `slot_started`,
+  `slot_booked`/`slot_failed`; `Booker` emits `calendar_opened`, `date_selected`,
+  `slot_selected`, `court_selected`, `terms_accepted`. Reporting sends no device command.
+- `history.py`: the history database `booker.db` in the data folder (spec part 4; stdlib
+  `sqlite3`, `MIGRATIONS` counted in `PRAGMA user_version`, WAL, 0.5 s busy timeout).
+  `History` is an event sink: `run_started` inserts a `runs` row (`running`), `booking_started`
+  adds the play date and court, `slot_booked`/`slot_failed` insert `run_slots`,
+  `run_finished` sets the status; every event is also an `events` row (category `step`, `slot`
+  or `error`, kind, JSON data). `History.handler` copies log records into `log_lines`, holding
+  lines logged before `run_started` until the run exists. The first `sqlite3.Error` turns
+  history off for the process (logged once), so the database never costs a booking. The CLI
+  opens it after the log file (`open_history`) and closes it last; `History: N writes in X ms`
+  is logged on close (about 0.13 ms per write).
 - `screen.Screen` parses one `dump_hierarchy` into `Node`s (label, visible bounds, clickable);
   `screen.Match` (desc / prefix / contains / full-match pattern / clickable) is applied locally.
   `Screen.describe()` gives one log line per labelled or clickable node (bounds, label).
@@ -91,10 +205,19 @@ out of scope.
 - `config.load_config` rejects unknown keys (`ConfigError`); the TOML key `continue` maps to
   `Labels.continue_`; keys ending in `_xy` become tuples. New config fields must be added to
   the dataclass and `config.example.toml`. A relative `log_dir` resolves against the config file.
+  `config_from_dict` builds a config from parsed TOML; `validate_config` lists problems (slot
+  format and duplicates, empty court, `days_ahead` 0-2, `wake_at` before `start_at`, positive
+  timeouts, `_xy` ratios); `save_config` validates, then writes with `tomli-w` through a
+  temporary file and `os.replace` (comments are not kept); `ensure_config` writes the defaults
+  once. Loading does not validate, so an existing config never stops the 06:00 run.
+- `paths.data_folder()`: the app's data folder, `%LOCALAPPDATA%\CourtBooker` (override with
+  `COURT_BOOKER_HOME`), holding `config.toml`, `booker.db`, `logs/` and `run.lock`. The CLI
+  writes only `booker.db` there; its config and logs stay beside `--config` until the app.
 - Tests use hand-written fakes (`tests/test_flow.py`: `FakeApp`, a scripted app that serves
   hierarchy XML per screen and switches screens on taps and Back; `OpeningBooker`) and a fake
   `flow.time` clock so timeouts pass instantly. A full round must cost 16 commands. `tests/conftest.py` puts
-  `src/` on `sys.path`.
+  `src/` on `sys.path` and points `COURT_BOOKER_HOME` at a temporary folder for every test
+  (fixture `data_home`), so tests never write the real history.
 
 ## Booking flow (app screens)
 
@@ -142,12 +265,25 @@ the next round starts.
   re-taps with "Tapped 'Tiếp tục' but the next screen did not appear".
 - The MuMu clock follows the PC clock (+15 ms measured); the NTP offset of the PC varies
   (+0.035 to +0.144 s).
+- MuMu froze twice on 2026-10-13 during dry runs (11:13, and 11:58 right after a restart),
+  both times around the court list and booking details screens: `MuMuNxDevice` showed "Not
+  responding", `dumpsys window` and app starts hung, and `MuMuManager control shutdown`
+  did not end it; the user restarted MuMu by hand. A run then hangs inside uiautomator2
+  calls (the 0.4.0 table's "MuMu frozen" case, not handled).
 
 ## Environment
 
 - Windows 11, Python 3.14, Git; Python `Scripts` folder not on PATH (use `python -m ...`)
+- Runner folder `D:\VH-Booker\runner` at `v0.4.0` since 2026-10-12 (kept there after the
+  0.5.0 release until v0.5.0 passes a dry run); the task runs its
+  `.venv\Scripts\pythonw.exe` with `Start In` the development folder (src layout, so the
+  development code is not imported)
 - MuMu Player (instance 0 serves ADB on `127.0.0.1:16384`); adb is found and connected
-  automatically (`device = "auto"`)
+  automatically (`device = "auto"`). Installed in `C:\Program Files\Netease\MuMuPlayer`
+  (uninstall key `MuMuPlayerGlobal`), renderer Vulkan; Android animations were already off
+  (removed in MuMu's Android settings on 2026-10-12)
+- `python` is the Python install manager's launcher: it starts the interpreter as a child
+  process, so the pid `Start-Process python` returns is not the pid in `run.lock`
 
 ## Product goal and decisions (2026-10-07)
 
@@ -156,8 +292,8 @@ user must not need to be awake. Priority is unattended, scheduled, fastest-possi
 
 - Target date is always today + `days_ahead` (default 2); no specific `--date`.
 - No stop button / cancellation token; Ctrl+C prints the summary instead.
-- UI, backend and desktop packaging come last (phase 4 of the roadmap), after robustness and
-  performance.
+- UI, backend and desktop packaging are phase 4 of the roadmap; started on 2026-10-12 as
+  0.5.0 to 0.7.0 (`docs/specs/0.5.0-desktop-app.md`).
 - Each run waits on the utilities list ("Sân Tennis", screen 2) before the start time, so only
   the booking taps happen after 06:00.
 - Trigger is Windows Task Scheduler at `wake_at` (default 05:45; 05:50 on the dev machine,
@@ -175,6 +311,8 @@ instance 0); `control -v 0 launch` starts it. MuMu ships its own `adb.exe` in th
 The 0.x versions go through four phases: (1) it runs, (2) it handles every situation,
 (3) it is fast, (4) it has a user-friendly UI, toward 1.0.0. Speed came early (0.3.0) because
 it decides the 06:00 race. There is no 0.3.1: its candidate fixes were judged to have no impact.
+On 2026-10-12 the UI phase moved ahead of the remaining speed work: 0.4.0 waits for failures
+in the logs, and the core books reliably.
 
 | Phase | Version | Scope |
 |---|---|---|
@@ -182,8 +320,10 @@ it decides the 06:00 race. There is no 0.3.1: its candidate fixes were judged to
 | 1 Runs | 0.2.0 Unattended | Start MuMu, ADB auto-connect, timed start with NTP offset, opening retry, keep awake, log file, Telegram summary, Task Scheduler with wake (released) |
 | 3 Fast | 0.3.0 Fast rounds | MuMu 540x1600, one dump per screen, taps by coordinates, entry located before the start, command count (released 2026-10-09, verified at 06:00 on 2026-10-10) |
 | 2 Every situation | 0.4.0 Hardening | Failure screen log; the situations below are fixed as the logs show them (released 2026-10-12) |
-| 3 Fast | 0.5.0 | Tuning from the log files; several MuMu instances with separate accounts in parallel (one account cannot log in twice) |
-| 4 UI | 0.6.0+ | FastAPI backend with WebSocket progress, run history stored by the app, React + TypeScript UI, Tauri desktop shell with PyInstaller sidecar, installer and release automation |
+| 4 UI | 0.5.0 Backend | Separate run folder, engine events, data folder, SQLite history and activity, run lock, device setup and Auto setup, FastAPI backend (spec: `docs/specs/0.5.0-desktop-app.md`; released 2026-10-13) |
+| 4 UI | **0.6.0 UI** | React + TypeScript screens in the "Vé giấy" design, Vietnamese and English |
+| 4 UI | 0.7.0 Desktop app | Tauri shell with PyInstaller sidecar, installer, release automation |
+| 3 Fast | Later | Tuning from the log files; several MuMu instances with separate accounts in parallel (one account cannot log in twice) |
 
 0.4.0 situations ("done" = handled, or at least reported clearly in the log file). Decided on
 2026-10-10: 0.4.0 fixes failures as they show up in the log; no health check before 06:00,
@@ -220,16 +360,19 @@ Telegram setup (the optional code stays) and no run history file until the app s
   from it and PR'd into it (merge commit, never squash), one PR at a time, not stacked. One
   PR `release/X.Y.Z` → `main` when stable, then tag `vX.Y.Z` (see `CONTRIBUTING.md`). The
   user opens and merges PRs on GitHub (no `gh` CLI): give a compare link, title and description.
-- The scheduled task runs the checked-out code (editable install): leave the working tree on
-  a tested branch overnight.
+- The scheduled task runs the runner folder `D:\VH-Booker\runner` (git worktree at the last
+  release tag, own `.venv`) with the development `config.toml` and `logs/`; move it with
+  `tools/setup_runner.py` after each release. The development folder may stay on any branch.
 - Never commit `config.toml`, screenshots or UI dumps (may contain personal data).
 
 ## Next step
 
-0.4.0 is released. Read the log after each 06:00 run and fix what fails, one branch per
-problem; a fix after the release (e.g. the next-month case) ships as 0.4.1. The UI phase is
-planned next. Make sure a failure leaves enough in the log to fix it from one run: the
-next-month case only occurs twice a month (first on 2026-10-30). Ruled out on 2026-10-09:
-opening the calendar before 06:00, two slots in one booking, pre-recorded coordinates (no
-faster than reading the screen, which is needed anyway to know it appeared). Ruled out on
-2026-10-10: health check, fallback slots and courts, Telegram setup, run history file.
+First pass a dry run of v0.5.0 on MuMu, move the runner to it (`python tools/setup_runner.py
+v0.5.0`; `v0.4.0` moves it back) and check the history of the first real 06:00 run on it.
+Then 0.6.0 (UI) on `release/0.6.0`, following the 0.6.0 parts of
+`docs/specs/0.5.0-desktop-app.md`: one part at a time (clear branches, several small
+commits, one pull request each), each part merged before the next. Write code only when the
+user asks for it. Keep reading the 06:00 logs; a booking fix ships as 0.5.1 from `main`. The next-month case first occurs on 2026-10-30. Ruled out on 2026-10-09:
+opening the calendar before 06:00, two slots in one booking, pre-recorded coordinates. Ruled
+out on 2026-10-10: health check, fallback slots and courts, Telegram setup, run history file
+(history now comes with the app's database).

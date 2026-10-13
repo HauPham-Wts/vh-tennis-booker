@@ -8,12 +8,23 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from court_booker import __version__, schedule
+from court_booker import __version__, device_setup, schedule
 from court_booker.clock import ntp_offset, resolve_start
 from court_booker.config import Config, load_config
-from court_booker.errors import AppNotReadyError, CourtBookerError, DeviceError, RequestError
+from court_booker.device_setup import Check, Status, Tools, find_tools, run_checks
+from court_booker.errors import (
+    AppNotReadyError,
+    CourtBookerError,
+    DeviceError,
+    LockHeldError,
+    RequestError,
+)
+from court_booker.events import EventKind, LogSink, MultiSink, Reporter
+from court_booker.history import History, close_history, open_history
+from court_booker.lock import TAKE_OVER_AHEAD, RunLock, check_quiet_time
 from court_booker.logging_setup import LOGGER_NAME, add_file_handler, configure_logging
 from court_booker.notify import format_summary, send_telegram
+from court_booker.paths import data_folder
 from court_booker.power import keep_awake
 from court_booker.runner import RoundResult, connect_device, run_booking
 
@@ -24,6 +35,7 @@ EXIT_ROUND_FAILED = 1
 EXIT_BAD_REQUEST = 2
 EXIT_DEVICE = 3
 EXIT_APP_NOT_READY = 4
+EXIT_BUSY = 5
 EXIT_INTERRUPTED = 130
 
 
@@ -79,15 +91,110 @@ def exit_code(error: CourtBookerError) -> int:
         return EXIT_DEVICE
     if isinstance(error, AppNotReadyError):
         return EXIT_APP_NOT_READY
+    if isinstance(error, LockHeldError):
+        return EXIT_BUSY
     return EXIT_ROUND_FAILED
+
+
+def run_trigger(args: argparse.Namespace) -> str:
+    """Return what started the run: ``scheduled``, ``dry_run`` or ``manual``."""
+    if args.scheduled:
+        return "scheduled"
+    return "dry_run" if args.dry_run else "manual"
+
+
+def run_status(results: list[RoundResult], error: str | None, interrupted: bool) -> str:
+    """Return ``ok``, ``partial``, ``failed`` or ``interrupted`` for a finished run."""
+    if interrupted:
+        return "interrupted"
+    booked = sum(result.ok for result in results)
+    if results and booked == len(results) and error is None:
+        return "ok"
+    return "partial" if booked else "failed"
+
+
+def setup_main(argv: list[str]) -> int:
+    """Run ``court-booker setup``: check the PC and MuMu; ``--auto`` fixes what it can."""
+    parser = argparse.ArgumentParser(
+        prog="court-booker setup",
+        description="Check the PC and the emulator for booking; --auto fixes what it can.",
+    )
+    parser.add_argument(
+        "--config", default="config.toml", help="config file (default: %(default)s)"
+    )
+    parser.add_argument("--auto", action="store_true", help="fix every item that can be fixed")
+    parser.add_argument(
+        "--restart-mumu",
+        action="store_true",
+        help="with --auto, restart a running MuMu to apply its new screen",
+    )
+    args = parser.parse_args(argv)
+    configure_logging()
+    try:
+        config = load_config(args.config)
+        tools = find_tools(config)
+        results = run_auto_setup(args, config, tools) if args.auto else run_checks(config, tools)
+    except CourtBookerError as exc:
+        logger.error("%s", exc)
+        return exit_code(exc)
+    for result in results:
+        print(f"{result.status.value:8} {result.item:15} {result.detail}")
+    done = all(result.status in (Status.OK, Status.FIXED) for result in results)
+    return EXIT_OK if done else EXIT_ROUND_FAILED
+
+
+def run_auto_setup(args: argparse.Namespace, config: Config, tools: Tools) -> list[Check]:
+    """Run auto setup with its log file and its history, like a run."""
+    now = datetime.now()
+    check_quiet_time(now, config.wake_at, config.start_at, "auto setup")
+    if config.log_dir:
+        logger.debug(
+            "Logging to %s", add_file_handler(Path(args.config).resolve().parent / config.log_dir)
+        )
+    folder = data_folder()
+    history = open_history(folder.database)
+    report = Reporter(LogSink() if history is None else MultiSink(LogSink(), history))
+    try:
+        return device_setup.run_auto_setup(
+            config,
+            Path(args.config),
+            tools,
+            folder.lock,
+            report,
+            restart_mumu=args.restart_mumu,
+            now=now,
+        )
+    finally:
+        if history is not None:
+            close_history(history)
+
+
+def serve(argv: list[str]) -> int:
+    """Run ``court-booker serve``; the backend is imported only here, runs do not need it."""
+    try:
+        from court_booker.api.server import main as serve_main
+    except ModuleNotFoundError as exc:
+        configure_logging()
+        logger.error('The backend needs the app extra (pip install -e ".[app]"): %s', exc)
+        return EXIT_BAD_REQUEST
+    return serve_main(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     if argv[:1] == ["schedule"]:
         return schedule.main(argv[1:])
+    if argv[:1] == ["setup"]:
+        return setup_main(argv[1:])
+    if argv[:1] == ["serve"]:
+        return serve(argv[1:])
     args = build_parser().parse_args(argv)
     configure_logging(verbose=args.verbose)
+    trigger = run_trigger(args)
+    report = Reporter(LogSink())
+    history: History | None = None
+    lock: RunLock | None = None
+    started = False
     results: list[RoundResult] = []
     config: Config | None = None
     error: str | None = None
@@ -97,15 +204,42 @@ def main(argv: list[str] | None = None) -> int:
             # Relative to the config file, since a scheduled task may start elsewhere.
             log_dir = Path(args.config).resolve().parent / config.log_dir
             logger.debug("Logging to %s", add_file_handler(log_dir))
+        # Opened after the log file, so a database that cannot be opened is in the log.
+        history = open_history(data_folder().database)
+        if history is not None:
+            report = Reporter(MultiSink(LogSink(), history))
         logger.info("court-booker %s", __version__)
+        # Shows whether the scheduled task ran the runner folder or a development checkout.
+        logger.debug("Python %s, code in %s", sys.executable, Path(__file__).resolve().parent)
+        now = datetime.now()
+        if trigger == "dry_run":
+            check_quiet_time(now, config.wake_at, config.start_at, "dry run")
         start_text = config.start_at if args.scheduled else args.at
-        start = resolve_start(start_text, datetime.now()) if start_text else None
+        start = resolve_start(start_text, now) if start_text else None
+        report(
+            EventKind.RUN_STARTED,
+            trigger=trigger,
+            dry_run=args.dry_run,
+            slots=list(config.slots),
+            start=None if start is None else start.isoformat(timespec="seconds"),
+            version=__version__,
+        )
+        started = True
+        lock = RunLock(data_folder().lock, report)
         with keep_awake():
+            # Inside keep_awake: a PC woken for the scheduled run must not sleep while it waits.
+            if args.scheduled and start is not None:
+                lock.acquire_for_schedule(trigger, start - TAKE_OVER_AHEAD)
+            else:
+                lock.acquire(trigger)
+            if history is not None and lock.held is not None:
+                history.interrupt_stale_runs()
             offset = 0.0
             if start is not None and config.ntp_server:
                 offset = ntp_offset(config.ntp_server) or 0.0
                 logger.info("Clock offset %+.3f s", offset)
             device = connect_device(config)
+            report(EventKind.DEVICE_READY)
             run_booking(
                 device,
                 config,
@@ -113,6 +247,7 @@ def main(argv: list[str] | None = None) -> int:
                 start=start,
                 offset=offset,
                 results=results,
+                report=report,
             )
         code = EXIT_OK if all(result.ok for result in results) else EXIT_ROUND_FAILED
     except KeyboardInterrupt:
@@ -126,7 +261,19 @@ def main(argv: list[str] | None = None) -> int:
         error, code = repr(exc), EXIT_ROUND_FAILED
 
     print_summary(results)
+    if started:
+        report(
+            EventKind.RUN_FINISHED,
+            status=run_status(results, error, code == EXIT_INTERRUPTED),
+            booked=sum(result.ok for result in results),
+            total=len(results),
+            error=error,
+        )
     if config is not None and config.telegram_token and config.telegram_chat_id:
         text = format_summary(results, error, dry_run=args.dry_run)
         send_telegram(config.telegram_token, config.telegram_chat_id, text)
+    if lock is not None:
+        lock.release()
+    if history is not None:
+        close_history(history)
     return code

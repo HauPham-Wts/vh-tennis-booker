@@ -1,9 +1,21 @@
 """CLI exit codes with the device layer replaced by fakes."""
 
+import argparse
+import json
+import logging
+import os
+import sqlite3
+import subprocess
+import sys
 from datetime import datetime
+from pathlib import Path
 
 import court_booker.cli as cli
+from court_booker import device_setup, processes
+from court_booker.device_setup import Check, Status
 from court_booker.errors import EmulatorError
+from court_booker.history import HistoryHandler
+from court_booker.lock import Holder
 from court_booker.runner import RoundResult
 
 
@@ -19,9 +31,11 @@ def fake_run(outcomes):
     return run_booking
 
 
-def run_cli(monkeypatch, tmp_path, outcomes=(), connect=lambda config: object(), args=()):
+def run_cli(monkeypatch, tmp_path, outcomes=(), connect=lambda config: object(), args=(), now=None):
+    """Run the CLI with a fake device; the time is 05:40 unless ``now`` gives a class."""
     monkeypatch.setattr(cli, "connect_device", connect)
     monkeypatch.setattr(cli, "run_booking", fake_run(outcomes))
+    monkeypatch.setattr(cli, "datetime", now or FixedDatetime)
     return cli.main(["--config", str(tmp_path / "missing.toml"), *args])
 
 
@@ -81,7 +95,7 @@ def test_scheduled_uses_config_start_and_clock_offset(monkeypatch, tmp_path):
 class FixedDatetime(datetime):
     @classmethod
     def now(cls, tz=None):
-        return datetime(2026, 10, 8, 5, 45)
+        return datetime(2026, 10, 8, 5, 40)  # before the default wake time, 05:45
 
 
 def test_summary_is_sent_to_telegram_even_on_device_error(monkeypatch, tmp_path):
@@ -96,3 +110,261 @@ def test_summary_is_sent_to_telegram_even_on_device_error(monkeypatch, tmp_path)
     monkeypatch.setattr(cli, "connect_device", connect)
     assert cli.main(["--config", str(path)]) == cli.EXIT_DEVICE
     assert sent == ["court-booker: 0/0 ok\nError: MuMu did not start"]
+
+
+def test_log_names_the_python_and_code_folder(monkeypatch, tmp_path):
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)])
+
+    text = next((tmp_path / "logs").glob("court-booker-*.log")).read_text(encoding="utf-8")
+    assert f"Python {sys.executable}, code in " in text
+    assert str(Path(cli.__file__).resolve().parent) in text
+
+
+def read_log(tmp_path):
+    return next((tmp_path / "logs").glob("court-booker-*.log")).read_text(encoding="utf-8")
+
+
+def test_run_events_reach_the_log(monkeypatch, tmp_path):
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)], args=["--dry-run"])
+
+    text = read_log(tmp_path)
+    assert "Event run_started trigger='dry_run' dry_run=True" in text
+    assert "Event device_ready" in text
+    assert "Event run_finished status='ok' booked=1 total=1 error=None" in text
+
+
+def test_run_finished_is_reported_on_a_device_error(monkeypatch, tmp_path):
+    def connect(config):
+        raise EmulatorError("MuMu did not start")
+
+    run_cli(monkeypatch, tmp_path, connect=connect)
+
+    assert "Event run_finished status='failed' booked=0 total=0" in read_log(tmp_path)
+
+
+def test_a_run_is_recorded_in_the_history(monkeypatch, tmp_path, data_home):
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)], args=["--dry-run"])
+
+    connection = sqlite3.connect(data_home / "booker.db")
+    ((run_id, trigger, status),) = connection.execute("SELECT id, trigger, status FROM runs")
+    kinds = [kind for (kind,) in connection.execute("SELECT kind FROM events ORDER BY id")]
+    query = "SELECT message FROM log_lines WHERE run_id = ?"
+    lines = [line for (line,) in connection.execute(query, (run_id,))]
+    connection.close()
+    assert (trigger, status) == ("dry_run", "ok")
+    assert kinds == ["run_started", "device_ready", "run_finished"]
+    assert f"court-booker {cli.__version__}" in lines
+    assert "Summary" in lines
+
+
+def test_the_history_stops_listening_after_the_run(monkeypatch, tmp_path):
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)])
+
+    handlers = logging.getLogger("court_booker").handlers
+    assert not any(isinstance(handler, HistoryHandler) for handler in handlers)
+
+
+def test_a_run_books_without_the_history(monkeypatch, tmp_path, data_home):
+    data_home.parent.mkdir(parents=True, exist_ok=True)
+    data_home.write_text("not a folder", encoding="utf-8")
+
+    assert run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)]) == cli.EXIT_OK
+    assert "run not recorded" in read_log(tmp_path)
+
+
+def test_a_run_waits_for_no_one_and_releases_the_lock(monkeypatch, tmp_path, data_home):
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)])
+
+    assert "Run lock taken: manual run" in read_log(tmp_path)
+    assert not (data_home / "run.lock").exists()
+
+
+def test_a_run_is_refused_while_another_holds_the_lock(monkeypatch, tmp_path, data_home):
+    pid, started = processes.current()  # a process that is surely running
+    holder = Holder(pid, started, "dry_run", "2026-10-13T10:43:10")
+    data_home.mkdir(parents=True)
+    (data_home / "run.lock").write_text(json.dumps(vars(holder)), encoding="utf-8")
+
+    def connect(config):
+        raise AssertionError("must not touch the device")
+
+    code = run_cli(monkeypatch, tmp_path, connect=connect, args=["--dry-run"])
+
+    assert code == cli.EXIT_BUSY
+    assert f"Another run is in progress: dry_run run (pid {pid}) since 10:43:10" in read_log(
+        tmp_path
+    )
+    assert (data_home / "run.lock").exists()
+
+
+def test_a_run_stopped_midway_ends_up_interrupted(monkeypatch, tmp_path, data_home):
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)])
+    connection = sqlite3.connect(data_home / "booker.db")
+    with connection:
+        connection.execute("UPDATE runs SET status = 'running'")  # as if the PC lost power
+
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)])
+
+    statuses = [status for (status,) in connection.execute("SELECT status FROM runs ORDER BY id")]
+    connection.close()
+    assert statuses == ["interrupted", "ok"]
+
+
+def test_the_scheduled_run_may_take_the_lock_over_before_the_start(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr(
+        cli.RunLock,
+        "acquire_for_schedule",
+        lambda self, trigger, take_over_at: calls.append((trigger, take_over_at)),
+    )
+    monkeypatch.setattr(cli, "datetime", FixedDatetime)
+    monkeypatch.setattr(cli, "ntp_offset", lambda server: 0.0)
+
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)], args=["--scheduled"])
+
+    assert calls == [("scheduled", datetime(2026, 10, 8, 5, 58))]
+
+
+def at(hour, minute):
+    """Return a datetime class whose ``now`` is 2026-10-08 at ``hour:minute``."""
+
+    class Fixed(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2026, 10, 8, hour, minute)
+
+    return Fixed
+
+
+def test_no_dry_run_while_the_scheduled_run_uses_the_emulator(monkeypatch, tmp_path, data_home):
+    def connect(config):
+        raise AssertionError("must not touch the device")
+
+    code = run_cli(monkeypatch, tmp_path, connect=connect, args=["--dry-run"], now=at(5, 55))
+
+    assert code == cli.EXIT_BAD_REQUEST
+    assert "No dry run from 05:45 to 06:05: the scheduled run uses the emulator" in read_log(
+        tmp_path
+    )
+    assert not (data_home / "run.lock").exists()
+
+
+def test_a_dry_run_may_start_once_the_scheduled_run_is_over(monkeypatch, tmp_path):
+    outcomes = [("18:00 - 19:00", True)]
+
+    assert run_cli(monkeypatch, tmp_path, outcomes, args=["--dry-run"], now=at(6, 5)) == 0
+
+
+def test_a_manual_run_is_not_held_to_the_window(monkeypatch, tmp_path):
+    outcomes = [("18:00 - 19:00", True)]
+
+    assert run_cli(monkeypatch, tmp_path, outcomes, now=at(5, 55)) == cli.EXIT_OK
+
+
+CHECKS = [
+    Check("mumu_installed", Status.OK, "MuMu at C:/MuMu/MuMuManager.exe"),
+    Check("app_installed", Status.USER, "com.vinhomes.resident is not installed in MuMu"),
+]
+
+
+def run_setup(monkeypatch, tmp_path, args=(), now=None, results=None):
+    """Run ``court-booker setup`` with fake checks; returns the exit code and auto setup calls."""
+    calls = []
+
+    def fake_auto_setup(config, config_path, tools, *, restart_mumu=False, run=None):
+        calls.append(restart_mumu)
+        return results or [Check("wake_timers", Status.FIXED, "enabled")]
+
+    monkeypatch.setattr(cli, "datetime", now or FixedDatetime)
+    monkeypatch.setattr(cli, "find_tools", lambda config: None)
+    monkeypatch.setattr(cli, "run_checks", lambda config, tools: CHECKS)
+    monkeypatch.setattr(device_setup, "auto_setup", fake_auto_setup)
+    code = cli.main(["setup", "--config", str(tmp_path / "missing.toml"), *args])
+    return code, calls
+
+
+def test_setup_prints_every_item(monkeypatch, tmp_path, capsys):
+    code, calls = run_setup(monkeypatch, tmp_path)
+
+    out = capsys.readouterr().out
+    assert code == 1  # the app still has to be installed by the user
+    assert "ok       mumu_installed  MuMu at C:/MuMu/MuMuManager.exe" in out
+    assert "user     app_installed   com.vinhomes.resident is not installed" in out
+    assert calls == []
+
+
+def test_auto_setup_is_recorded_as_setup_steps(monkeypatch, tmp_path, data_home):
+    code, calls = run_setup(monkeypatch, tmp_path, ["--auto", "--restart-mumu"])
+
+    connection = sqlite3.connect(data_home / "booker.db")
+    steps = connection.execute("SELECT run_id, category, kind FROM events ORDER BY id").fetchall()
+    connection.close()
+    assert code == cli.EXIT_OK
+    assert calls == [True]
+    assert steps == [
+        (None, "setup", "setup_started"),
+        (None, "setup", "setup_item"),
+        (None, "setup", "setup_finished"),
+    ]
+    assert not (data_home / "run.lock").exists()
+
+
+def test_auto_setup_waits_for_no_run(monkeypatch, tmp_path, data_home):
+    pid, started = processes.current()
+    data_home.mkdir(parents=True)
+    holder = Holder(pid, started, "dry_run", "2026-10-13T10:43:10")
+    (data_home / "run.lock").write_text(json.dumps(vars(holder)), encoding="utf-8")
+
+    code, calls = run_setup(monkeypatch, tmp_path, ["--auto"])
+
+    assert code == cli.EXIT_BUSY
+    assert calls == []
+
+
+def test_no_auto_setup_while_the_scheduled_run_uses_the_emulator(monkeypatch, tmp_path):
+    code, calls = run_setup(monkeypatch, tmp_path, ["--auto"], now=at(5, 50))
+
+    assert code == cli.EXIT_BAD_REQUEST
+    assert calls == []
+
+
+def test_serve_explains_a_missing_app_extra(monkeypatch, capsys):
+    monkeypatch.setitem(sys.modules, "court_booker.api.server", None)
+
+    assert cli.main(["serve"]) == cli.EXIT_BAD_REQUEST
+    assert "The backend needs the app extra" in capsys.readouterr().out
+
+
+def test_a_run_does_not_load_the_backend():
+    code = "import sys, court_booker.cli; print('fastapi' in sys.modules)"
+    src = str(Path(cli.__file__).resolve().parents[1])
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        env={**os.environ, "PYTHONPATH": src},
+        check=True,
+    )
+
+    assert result.stdout.strip() == "False"
+
+
+def test_run_trigger():
+    def args(scheduled=False, dry_run=False):
+        return argparse.Namespace(scheduled=scheduled, dry_run=dry_run)
+
+    assert cli.run_trigger(args(scheduled=True, dry_run=True)) == "scheduled"
+    assert cli.run_trigger(args(dry_run=True)) == "dry_run"
+    assert cli.run_trigger(args()) == "manual"
+
+
+def test_run_status():
+    ok = RoundResult("18:00 - 19:00", True, "booked", 7.0)
+    failed = RoundResult("19:00 - 20:00", False, "Hết chỗ", 1.0)
+
+    assert cli.run_status([ok, ok], None, interrupted=False) == "ok"
+    assert cli.run_status([ok, failed], None, interrupted=False) == "partial"
+    assert cli.run_status([ok], "adb lost", interrupted=False) == "partial"
+    assert cli.run_status([failed], None, interrupted=False) == "failed"
+    assert cli.run_status([], "MuMu did not start", interrupted=False) == "failed"
+    assert cli.run_status([ok], "interrupted", interrupted=True) == "interrupted"
