@@ -3,11 +3,13 @@
 ## Setup
 
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[dev,app]"
 pre-commit install
 ```
 
-`pre-commit` runs Ruff (lint and format) and basic file checks on every commit.
+`pre-commit` runs Ruff (lint and format) and basic file checks on every commit. The `app`
+extra (FastAPI, Uvicorn) is the desktop app's backend; without it the backend tests are
+skipped. The runner folder installs the package without it.
 
 ## Before opening a pull request
 

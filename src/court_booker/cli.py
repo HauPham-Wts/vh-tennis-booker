@@ -188,12 +188,25 @@ def run_auto_setup(args: argparse.Namespace, config: Config, tools: Tools) -> li
     return results
 
 
+def serve(argv: list[str]) -> int:
+    """Run ``court-booker serve``; the backend is imported only here, runs do not need it."""
+    try:
+        from court_booker.api.server import main as serve_main
+    except ModuleNotFoundError as exc:
+        configure_logging()
+        logger.error('The backend needs the app extra (pip install -e ".[app]"): %s', exc)
+        return EXIT_BAD_REQUEST
+    return serve_main(argv)
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     if argv[:1] == ["schedule"]:
         return schedule.main(argv[1:])
     if argv[:1] == ["setup"]:
         return setup_main(argv[1:])
+    if argv[:1] == ["serve"]:
+        return serve(argv[1:])
     args = build_parser().parse_args(argv)
     configure_logging(verbose=args.verbose)
     trigger = run_trigger(args)

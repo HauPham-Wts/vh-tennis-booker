@@ -157,7 +157,7 @@ docs/specs/             one design spec per version
 ## Development
 
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[dev,app]"
 pre-commit install
 pytest
 ```

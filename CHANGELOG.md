@@ -36,6 +36,10 @@ uses [Semantic Versioning](https://semver.org/).
   restarting a running MuMu only with `--restart-mumu`, allows wake timers) and records each
   item in the history. It takes the run lock and does not start around the scheduled run.
 - Each run turns off Android animations before opening the app.
+- The desktop app's backend: `court-booker serve` runs a FastAPI app on 127.0.0.1 (port
+  8765) with a health route, its OpenAPI schema at `/api/openapi.json` and engine errors
+  answered as JSON with a stable code. It needs the new `app` extra
+  (`pip install -e ".[app]"`); scheduled runs do not load it.
 
 ### Fixed
 - `tools/inspect_screen.py` connects to MuMu 12 instance 0 (`127.0.0.1:16384`) by default

@@ -3,7 +3,9 @@
 import argparse
 import json
 import logging
+import os
 import sqlite3
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -324,6 +326,27 @@ def test_no_auto_setup_while_the_scheduled_run_uses_the_emulator(monkeypatch, tm
 
     assert code == cli.EXIT_BAD_REQUEST
     assert calls == []
+
+
+def test_serve_explains_a_missing_app_extra(monkeypatch, capsys):
+    monkeypatch.setitem(sys.modules, "court_booker.api.server", None)
+
+    assert cli.main(["serve"]) == cli.EXIT_BAD_REQUEST
+    assert "The backend needs the app extra" in capsys.readouterr().out
+
+
+def test_a_run_does_not_load_the_backend():
+    code = "import sys, court_booker.cli; print('fastapi' in sys.modules)"
+    src = str(Path(cli.__file__).resolve().parents[1])
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        env={**os.environ, "PYTHONPATH": src},
+        check=True,
+    )
+
+    assert result.stdout.strip() == "False"
 
 
 def test_run_trigger():

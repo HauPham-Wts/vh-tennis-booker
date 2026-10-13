@@ -9,7 +9,7 @@ Last updated: 2026-10-10.
 The Python `Scripts` folder is not on PATH on the dev machine, so prefix tools with `python -m`.
 
 ```bash
-python -m pip install -e ".[dev]"                    # install package + pytest, ruff, pre-commit
+python -m pip install -e ".[dev,app]"                # package + tests/lint tools + backend
 python -m pytest                                     # all tests (no emulator needed)
 python -m pytest tests/test_flow.py -k slot          # single file / single test
 python -m ruff check . && python -m ruff format .    # CI runs `ruff format --check .`
@@ -18,6 +18,7 @@ python -m court_booker --at 06:00 --dry-run          # timed run
 python tools/setup_runner.py v0.4.0 --schedule       # runner folder + daily task (CONTRIBUTING)
 python -m court_booker schedule status               # task details (install, remove)
 python -m court_booker setup                         # device setup checks (--auto fixes)
+python -m court_booker serve --config config.toml    # backend on 127.0.0.1:8765 (/api/docs)
 python tools/inspect_screen.py --near "Tôi đã hiểu"  # dump nodes level with a label
 ```
 
@@ -90,6 +91,17 @@ out of scope.
   `court-booker setup` prints the checks; `--auto` refuses from `wake_at` to start + 5 min,
   takes the run lock (trigger `setup`) and records `setup_started`, one `setup_item` per item
   and `setup_finished` as history events of category `setup` without a run.
+- `api/` (spec part 7, needs the `app` extra: FastAPI, Uvicorn): `create_app(AppContext)`
+  builds the backend; `AppContext` holds the config path and the `DataFolder`, and routes
+  receive it as a `Context` parameter (`Annotated` with `Depends(get_context)`).
+  `CourtBookerError`s become `Problem` JSON (`error` code, `detail`): `LockHeldError` 409
+  `lock_held`, `RequestError` 400 `bad_request`, `DeviceError` 503 `device`,
+  `AppNotReadyError` 503 `app_not_ready`, others 500 `engine`. OpenAPI at
+  `/api/openapi.json` (for the 0.6.0 TypeScript types), docs at `/api/docs`.
+  `court-booker serve` (`api/server.py`) listens on 127.0.0.1 only (no login yet), default
+  port 8765, config from `--config` or the data folder (created with defaults). `cli.serve`
+  imports the backend lazily, so a run never loads FastAPI. Backend tests live in
+  `tests/api/` and are skipped without FastAPI.
 - `Booker.prepare` first turns off Android animations (`ANIMATION_SCALES` set to 0 in one
   `shell` command, as Accessibility > Remove animations); a failure is logged and ignored.
 - `runner.connect_device`: `emulator.MuMu.ensure_started` (MuMuManager `info`/`control launch`),
