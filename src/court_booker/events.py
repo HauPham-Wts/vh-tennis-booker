@@ -37,6 +37,8 @@ class EventKind(str, Enum):
     SLOT_FAILED = "slot_failed"
     # The run lock.
     LOCK_CLEARED = "lock_cleared"
+    LOCK_WAITING = "lock_waiting"
+    LOCK_TAKEN_OVER = "lock_taken_over"
 
 
 @dataclass(frozen=True)
