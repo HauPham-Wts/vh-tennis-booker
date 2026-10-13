@@ -179,10 +179,18 @@ src/court_booker/
 ├── power.py            keep Windows awake during a run
 ├── notify.py           Telegram summary
 ├── schedule.py         Windows scheduled task
-├── config.py           defaults and config.toml loading
+├── config.py           defaults, config.toml loading, checking and saving
+├── paths.py            the data folder
+├── events.py           progress events and their sinks
+├── history.py          history database: schema, migrations, event sink
+├── history_read.py     read-only queries for the backend
+├── lock.py             run lock and the quiet time around the scheduled run
+├── processes.py        process identity by pid and start time
+├── device_setup.py     device setup checks and auto setup
 ├── errors.py           exception hierarchy
 ├── geometry.py         pure helpers for bounds and dates
-└── logging_setup.py    console and file logging with step timing
+├── logging_setup.py    console and file logging with step timing
+└── api/                FastAPI backend: app, errors, one module per route group
 tools/inspect_screen.py UI hierarchy dump
 tools/setup_runner.py   runner folder for the daily task on a development machine
 tests/                  unit tests with fake devices, adb, clocks and schtasks
