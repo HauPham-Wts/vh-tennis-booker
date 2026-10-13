@@ -49,6 +49,9 @@ uses [Semantic Versioning](https://semver.org/).
   of invalid values.
 - Backend setup routes: `GET /api/setup` (the device checks) and `POST /api/setup/auto`
   (auto setup, with the same lock, quiet time and activity log as `setup --auto`).
+- Backend schedule routes: `GET /api/schedule` (on or off, the next booking and its play
+  date) and `PUT /api/schedule`, which switches the daily task on only once a dry run has
+  passed, and records each switch in the activity log.
 
 ### Fixed
 - `tools/inspect_screen.py` connects to MuMu 12 instance 0 (`127.0.0.1:16384`) by default
