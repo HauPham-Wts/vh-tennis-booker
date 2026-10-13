@@ -15,13 +15,14 @@ import re
 import subprocess
 import sys
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 from pathlib import Path
 
-from court_booker.adb import AUTO, Adb, resolve_device
+from court_booker.adb import AUTO, Adb, find_adb, resolve_device
+from court_booker.config import Config, ConfigError, save_config
 from court_booker.emulator import MuMu, Run, run_command
-from court_booker.errors import DeviceError, EmulatorError
+from court_booker.errors import AdbNotFoundError, DeviceError, EmulatorError
 
 logger = logging.getLogger(__name__)
 
@@ -207,3 +208,119 @@ def check_app(mumu: MuMu | None, adb: Adb | None, package: str) -> Check:
     if "package:" in output:
         return Check(APP_INSTALLED, Status.OK, f"{package} installed")
     return Check(APP_INSTALLED, Status.USER, f"{package} is not installed in MuMu")
+
+
+@dataclass(frozen=True)
+class Tools:
+    """What the checks look at: MuMuManager.exe, the MuMu instance and adb, where found."""
+
+    manager: Path | None
+    mumu: MuMu | None
+    adb: Adb | None
+
+
+def find_tools(config: Config) -> Tools:
+    """Find MuMu and adb as a run would, without starting anything."""
+    manager = find_mumu_manager(config.mumu_manager)
+    mumu = MuMu(manager, config.mumu_index) if manager else None
+    try:
+        adb = Adb(find_adb(config.adb_path, [manager.parent] if manager else []))
+    except AdbNotFoundError:
+        adb = None
+    return Tools(manager, mumu, adb)
+
+
+def run_checks(config: Config, tools: Tools, run: Run = run_command) -> list[Check]:
+    """Check every setup item; nothing is changed."""
+    return [
+        check_mumu(tools.manager, config.mumu_manager),
+        check_screen(tools.mumu),
+        check_wake_timers(run),
+        check_app(tools.mumu, tools.adb, config.package),
+    ]
+
+
+def auto_setup(
+    config: Config,
+    config_path: Path,
+    tools: Tools,
+    *,
+    restart_mumu: bool = False,
+    run: Run = run_command,
+) -> list[Check]:
+    """Fix every item auto setup can fix, and return the result of each item.
+
+    A running MuMu applies a new screen only after a restart, which happens only with
+    ``restart_mumu``. Saving the MuMu path rewrites the config file without its comments.
+    """
+    results = []
+    for check in run_checks(config, tools, run):
+        if check.status is Status.FIXABLE:
+            if check.item == MUMU_INSTALLED:
+                check = _save_mumu_path(config, config_path, tools)
+            elif check.item == MUMU_SCREEN:
+                check = _set_screen(tools, restart_mumu)
+            elif check.item == WAKE_TIMERS:
+                check = _allow_wake_timers(run)
+        logger.info("Setup %s: %s (%s)", check.item, check.status.value, check.detail)
+        results.append(check)
+    return results
+
+
+def _save_mumu_path(config: Config, config_path: Path, tools: Tools) -> Check:
+    try:
+        save_config(replace(config, mumu_manager=str(tools.manager)), config_path)
+    except (ConfigError, OSError) as exc:
+        return Check(MUMU_INSTALLED, Status.USER, f"Could not save the config: {exc}")
+    return Check(MUMU_INSTALLED, Status.FIXED, f"Saved the MuMu path {tools.manager}")
+
+
+def _set_screen(tools: Tools, restart_mumu: bool) -> Check:
+    if tools.mumu is None:
+        return Check(MUMU_SCREEN, Status.UNKNOWN, "MuMu not found")
+    try:
+        running = tools.mumu.is_started()
+        if running and not restart_mumu:
+            return Check(
+                MUMU_SCREEN, Status.FIXABLE, "MuMu is running; allow a restart to set its screen"
+            )
+        tools.mumu.change_settings(SCREEN_SETTINGS)
+        written = tools.mumu.settings(*SCREEN_SETTINGS)
+        if running:
+            tools.mumu.restart()
+    except EmulatorError as exc:
+        return Check(MUMU_SCREEN, Status.USER, f"Could not set the MuMu screen: {exc}")
+    if not all(_same(written.get(key), value) for key, value in SCREEN_SETTINGS.items()):
+        return Check(MUMU_SCREEN, Status.USER, f"MuMu kept its screen settings: {written}")
+    when = "MuMu restarted" if running else "applies when MuMu starts"
+    return Check(MUMU_SCREEN, Status.FIXED, f"Screen set to 540x1600 at 220 DPI; {when}")
+
+
+def _same(actual: str | None, wanted: str) -> bool:
+    """Compare a MuMu setting as text or as a number (MuMu writes ``540.000000``)."""
+    if actual == wanted:
+        return True
+    try:
+        return actual is not None and float(actual) == float(wanted)
+    except ValueError:
+        return False
+
+
+def _allow_wake_timers(run: Run) -> Check:
+    commands = (
+        ["powercfg", "/setacvalueindex", *WAKE_SETTING, str(WAKE_ENABLED)],
+        ["powercfg", "/setdcvalueindex", *WAKE_SETTING, str(WAKE_ENABLED)],
+        ["powercfg", "/setactive", WAKE_SETTING[0]],
+    )
+    for command in commands:
+        try:
+            result = run(command)
+        except (OSError, subprocess.SubprocessError) as exc:
+            return Check(WAKE_TIMERS, Status.USER, f"powercfg could not run: {exc}")
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout).strip()
+            return Check(WAKE_TIMERS, Status.USER, f"powercfg {command[1]} failed: {detail}")
+    after = check_wake_timers(run)
+    if after.status is Status.OK:
+        return Check(WAKE_TIMERS, Status.FIXED, after.detail)
+    return Check(WAKE_TIMERS, Status.USER, after.detail)

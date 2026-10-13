@@ -7,7 +7,8 @@ from pathlib import Path
 import pytest
 
 from court_booker import device_setup
-from court_booker.device_setup import Status
+from court_booker.config import Config, load_config
+from court_booker.device_setup import Status, Tools
 from court_booker.errors import DeviceConnectionError
 
 
@@ -72,6 +73,7 @@ class FakeMuMu:
 
     def change_settings(self, values):
         self.changed.append(dict(values))
+        self.values.update(values)
 
     def is_started(self):
         return self.started
@@ -194,3 +196,116 @@ def test_mumu_check(tmp_path):
     assert device_setup.check_mumu(manager, "").status is Status.FIXABLE
     assert device_setup.check_mumu(manager, "C:/elsewhere.exe").status is Status.FIXABLE
     assert device_setup.check_mumu(manager, str(manager)).status is Status.OK
+
+
+def tools_for(tmp_path, mumu=None, adb=None):
+    manager = install_mumu(tmp_path / "MuMuPlayer")
+    return Tools(manager, mumu or FakeMuMu(), adb or FakeAdb())
+
+
+def config_for(tools):
+    return Config(mumu_manager=str(tools.manager))
+
+
+def statuses(results):
+    return {result.item: result.status for result in results}
+
+
+def test_checks_cover_every_item(tmp_path):
+    tools = tools_for(tmp_path)
+
+    results = device_setup.run_checks(config_for(tools), tools, FakePowercfg().run)
+
+    assert statuses(results) == {
+        device_setup.MUMU_INSTALLED: Status.OK,
+        device_setup.MUMU_SCREEN: Status.OK,
+        device_setup.WAKE_TIMERS: Status.OK,
+        device_setup.APP_INSTALLED: Status.OK,
+    }
+
+
+def test_auto_setup_changes_nothing_that_is_right(tmp_path):
+    tools = tools_for(tmp_path)
+    powercfg = FakePowercfg()
+    config_path = tmp_path / "config.toml"
+
+    results = device_setup.auto_setup(config_for(tools), config_path, tools, run=powercfg.run)
+
+    assert set(statuses(results).values()) == {Status.OK}
+    assert tools.mumu.changed == []
+    assert [call[0] for call in powercfg.calls] == ["/query"]
+    assert not config_path.exists()
+
+
+def test_auto_setup_saves_the_mumu_path(tmp_path):
+    tools = tools_for(tmp_path)
+    config_path = tmp_path / "config.toml"
+
+    results = device_setup.auto_setup(
+        Config(mumu_manager=""), config_path, tools, run=FakePowercfg().run
+    )
+
+    assert statuses(results)[device_setup.MUMU_INSTALLED] is Status.FIXED
+    assert load_config(config_path).mumu_manager == str(tools.manager)
+
+
+def test_auto_setup_sets_the_screen_of_a_stopped_mumu(tmp_path):
+    mumu = FakeMuMu(screen(540, 960, 240), started=False)
+    tools = tools_for(tmp_path, mumu)
+
+    results = device_setup.auto_setup(
+        config_for(tools), tmp_path / "c.toml", tools, run=FakePowercfg().run
+    )
+
+    screen_result = results[1]
+    assert screen_result.status is Status.FIXED
+    assert screen_result.detail.endswith("applies when MuMu starts")
+    assert mumu.changed == [device_setup.SCREEN_SETTINGS]
+    assert mumu.restarts == 0
+
+
+def test_a_running_mumu_is_restarted_only_when_allowed(tmp_path):
+    mumu = FakeMuMu(screen(540, 960, 240))
+    tools = tools_for(tmp_path, mumu)
+    config = config_for(tools)
+
+    asked = device_setup.auto_setup(config, tmp_path / "c.toml", tools, run=FakePowercfg().run)
+    assert asked[1].status is Status.FIXABLE
+    assert mumu.changed == []
+
+    done = device_setup.auto_setup(
+        config, tmp_path / "c.toml", tools, restart_mumu=True, run=FakePowercfg().run
+    )
+    assert done[1].status is Status.FIXED
+    assert mumu.restarts == 1
+
+
+def test_auto_setup_allows_wake_timers(tmp_path):
+    tools = tools_for(tmp_path)
+    powercfg = FakePowercfg(ac=0, dc=2)
+
+    results = device_setup.auto_setup(
+        config_for(tools), tmp_path / "c.toml", tools, run=powercfg.run
+    )
+
+    assert statuses(results)[device_setup.WAKE_TIMERS] is Status.FIXED
+    assert ["/setacvalueindex", "SCHEME_CURRENT", "SUB_SLEEP", "RTCWAKE", "1"] in powercfg.calls
+    assert ["/setdcvalueindex", "SCHEME_CURRENT", "SUB_SLEEP", "RTCWAKE", "1"] in powercfg.calls
+    assert ["/setactive", "SCHEME_CURRENT"] in powercfg.calls
+
+
+def test_wake_timers_refused_by_windows_need_the_user(tmp_path):
+    tools = tools_for(tmp_path)
+    powercfg = FakePowercfg(dc=0)
+
+    def run(argv):
+        result = powercfg.run(argv)
+        if argv[1] != "/query":
+            return subprocess.CompletedProcess(argv, 1, stdout="", stderr="Access denied.")
+        return result
+
+    results = device_setup.auto_setup(config_for(tools), tmp_path / "c.toml", tools, run=run)
+
+    wake = results[2]
+    assert wake.status is Status.USER
+    assert "Access denied." in wake.detail
