@@ -101,7 +101,16 @@ out of scope.
   `court-booker serve` (`api/server.py`) listens on 127.0.0.1 only (no login yet), default
   port 8765, config from `--config` or the data folder (created with defaults). `cli.serve`
   imports the backend lazily, so a run never loads FastAPI. Backend tests live in
-  `tests/api/` and are skipped without FastAPI.
+  `tests/api/` and are skipped without FastAPI. Route modules (`api/history.py` ...) skip
+  `from __future__ import annotations` and use `Optional`: FastAPI and Pydantic evaluate
+  annotations at run time, where Python 3.9 has no `X | None`.
+- `history_read.py` reads the history for the app through `open_read_only` (`mode=ro` URI,
+  `check_same_thread=False`, creates an empty database first): `list_runs` (newest first,
+  `booked`/`total` slot counts, `month` on the play date, `trigger`, `before` id paging),
+  `get_run` (slots, steps with parsed JSON `data`, log lines) and `list_events` (newest
+  first, `category`, `before`). Routes: `GET /api/runs`, `GET /api/runs/{id}` (404
+  `not_found` via `api.errors.NotFoundError`), `GET /api/events`. Tests share the
+  `record_run` fixture of `tests/conftest.py`, which writes runs through the history sink.
 - `Booker.prepare` first turns off Android animations (`ANIMATION_SCALES` set to 0 in one
   `shell` command, as Accessibility > Remove animations); a failure is logged and ignored.
 - `runner.connect_device`: `emulator.MuMu.ensure_started` (MuMuManager `info`/`control launch`),
