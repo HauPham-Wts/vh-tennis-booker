@@ -94,3 +94,23 @@ def test_cli_dispatches_schedule(monkeypatch):
     monkeypatch.setattr(cli.schedule, "main", lambda argv: seen.append(argv) or 0)
     assert cli.main(["schedule", "status"]) == 0
     assert seen == [["status"]]
+
+
+@pytest.mark.parametrize(("returncode", "expected"), [(0, True), (1, False)])
+def test_installed_asks_schtasks(returncode, expected):
+    calls = []
+
+    def run(argv):
+        calls.append(argv)
+        return subprocess.CompletedProcess(argv, returncode, stdout="", stderr="")
+
+    assert schedule.installed(run) is expected
+    assert calls == [["schtasks", "/Query", "/TN", "court-booker"]]
+
+
+def test_installed_without_schtasks_raises():
+    def run(argv):
+        raise FileNotFoundError("schtasks")
+
+    with pytest.raises(ScheduleError, match="could not run"):
+        schedule.installed(run)

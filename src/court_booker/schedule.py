@@ -127,6 +127,15 @@ def remove(run: Run = run_command) -> None:
     _schtasks(run, "/Delete", "/TN", TASK_NAME, "/F")
 
 
+def installed(run: Run = run_command) -> bool:
+    """Return whether the daily task exists."""
+    try:
+        result = run(["schtasks", "/Query", "/TN", TASK_NAME])
+    except OSError as exc:
+        raise ScheduleError(f"schtasks could not run: {exc}") from exc
+    return result.returncode == 0
+
+
 def status(run: Run = run_command) -> str:
     """Return the scheduled task details as printed by ``schtasks``."""
     return _schtasks(run, "/Query", "/TN", TASK_NAME, "/V", "/FO", "LIST")
