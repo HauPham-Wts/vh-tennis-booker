@@ -43,6 +43,8 @@ class EventKind(str, Enum):
     SETUP_STARTED = "setup_started"
     SETUP_ITEM = "setup_item"
     SETUP_FINISHED = "setup_finished"
+    # The app, outside any run.
+    SETTINGS_SAVED = "settings_saved"
 
 
 @dataclass(frozen=True)

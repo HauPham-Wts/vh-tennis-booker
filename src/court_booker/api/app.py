@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from court_booker import __version__
-from court_booker.api import history
+from court_booker.api import history, settings
 from court_booker.api.context import AppContext
 from court_booker.api.errors import add_error_handlers
 
@@ -36,4 +36,5 @@ def create_app(context: AppContext) -> FastAPI:
         return Health(status="ok", version=__version__)
 
     app.include_router(history.router)
+    app.include_router(settings.router)
     return app
