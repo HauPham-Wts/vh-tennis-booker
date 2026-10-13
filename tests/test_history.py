@@ -262,6 +262,22 @@ def test_logging_goes_on_when_the_database_fails(connection, capture):
     assert store.failed
 
 
+def test_runs_left_running_are_marked_interrupted(connection, caplog):
+    caplog.set_level(logging.INFO, logger="court_booker")
+    started = {"trigger": "dry_run", "dry_run": True, "version": "0.5.0"}
+    Reporter(history.History(connection), clock=ticking_clock())(EventKind.RUN_STARTED, **started)
+    store = history.History(connection)
+    Reporter(store, clock=ticking_clock())(EventKind.RUN_STARTED, **started)
+
+    store.interrupt_stale_runs()
+
+    assert rows(connection, "SELECT id, status FROM runs ORDER BY id") == [
+        {"id": 1, "status": "interrupted"},
+        {"id": 2, "status": "running"},
+    ]
+    assert "Marked 1 run(s) left running as interrupted" in caplog.text
+
+
 def test_a_database_error_turns_history_off_once(connection, caplog):
     caplog.set_level(logging.WARNING, logger="court_booker")
     store = history.History(connection)

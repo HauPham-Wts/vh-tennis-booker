@@ -194,6 +194,19 @@ def test_a_run_is_refused_while_another_holds_the_lock(monkeypatch, tmp_path, da
     assert (data_home / "run.lock").exists()
 
 
+def test_a_run_stopped_midway_ends_up_interrupted(monkeypatch, tmp_path, data_home):
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)])
+    connection = sqlite3.connect(data_home / "booker.db")
+    with connection:
+        connection.execute("UPDATE runs SET status = 'running'")  # as if the PC lost power
+
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)])
+
+    statuses = [status for (status,) in connection.execute("SELECT status FROM runs ORDER BY id")]
+    connection.close()
+    assert statuses == ["interrupted", "ok"]
+
+
 def test_the_scheduled_run_may_take_the_lock_over_before_the_start(monkeypatch, tmp_path):
     calls = []
     monkeypatch.setattr(

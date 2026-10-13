@@ -156,6 +156,24 @@ class History:
 
         self._write(write)
 
+    def interrupt_stale_runs(self) -> None:
+        """Mark runs left ``running`` by a process that is gone as ``interrupted``.
+
+        Call it while holding the run lock, when no other run can be going on.
+        """
+        counts: list[int] = []
+
+        def write(db: sqlite3.Connection) -> None:
+            cursor = db.execute(
+                "UPDATE runs SET status = 'interrupted' WHERE status = 'running' AND id IS NOT ?",
+                (self.run_id,),
+            )
+            counts.append(cursor.rowcount)
+
+        self._write(write)
+        if counts and counts[0]:
+            logger.info("Marked %d run(s) left running as interrupted", counts[0])
+
     def add_log_lines(self, lines: list[tuple[str, str, str]]) -> None:
         """Store log lines given as ``(time, level, message)`` with the current run."""
         run_id = self.run_id

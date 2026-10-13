@@ -191,6 +191,8 @@ def main(argv: list[str] | None = None) -> int:
                 lock.acquire_for_schedule(trigger, start - TAKE_OVER_AHEAD)
             else:
                 lock.acquire(trigger)
+            if history is not None and lock.held is not None:
+                history.interrupt_stale_runs()
             offset = 0.0
             if start is not None and config.ntp_server:
                 offset = ntp_offset(config.ntp_server) or 0.0
