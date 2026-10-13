@@ -1,44 +1,10 @@
 """Tests for reading the history back."""
 
 import sqlite3
-from datetime import datetime, timedelta
 
 import pytest
 
 from court_booker import history, history_read
-from court_booker.events import EventKind, Reporter
-
-
-class Clock:
-    """Moves one second per reading."""
-
-    def __init__(self):
-        self.now = datetime(2026, 10, 13, 5, 50)
-
-    def __call__(self):
-        self.now += timedelta(seconds=1)
-        return self.now
-
-
-def record_run(path, trigger="scheduled", date="2026-10-15", slots=(), status="ok", clock=None):
-    """Write one run through the history sink, as a real run does; return its id."""
-    connection = history.connect(path)
-    store = history.History(connection)
-    report = Reporter(store, clock=clock or Clock())
-    report(EventKind.RUN_STARTED, trigger=trigger, dry_run=trigger == "dry_run", version="0.5.0")
-    if date:
-        report(EventKind.BOOKING_STARTED, date=date, court="S6 - Sân tennis", slots=[])
-    for slot, ok in slots:
-        report(EventKind.SLOT_STARTED, slot=slot, round=1, rounds=len(slots))
-        if ok:
-            report(EventKind.SLOT_BOOKED, slot=slot, seconds=7.8, commands=51, dry_run=False)
-        else:
-            report(
-                EventKind.SLOT_FAILED, slot=slot, reason="fully booked", seconds=2.1, commands=12
-            )
-    report(EventKind.RUN_FINISHED, status=status, booked=0, total=0, error=None)
-    store.close()
-    return store.run_id
 
 
 @pytest.fixture
@@ -77,7 +43,7 @@ def test_the_app_cannot_write(tmp_path):
     connection.close()
 
 
-def test_runs_come_newest_first_with_their_slot_counts(path, read):
+def test_runs_come_newest_first_with_their_slot_counts(path, read, record_run):
     first = record_run(
         path, slots=[("18:00 - 19:00", True), ("19:00 - 20:00", False)], status="partial"
     )
@@ -91,7 +57,7 @@ def test_runs_come_newest_first_with_their_slot_counts(path, read):
     assert runs[1]["court"] == "S6 - Sân tennis"
 
 
-def test_runs_filter_by_play_month_and_trigger(path, read):
+def test_runs_filter_by_play_month_and_trigger(path, read, record_run):
     october = record_run(path, date="2026-10-31")
     record_run(path, date="2026-11-01")
     record_run(path, trigger="dry_run", date="2026-10-15")
@@ -101,7 +67,7 @@ def test_runs_filter_by_play_month_and_trigger(path, read):
     ] == [october]
 
 
-def test_runs_page_back_from_a_run(path, read):
+def test_runs_page_back_from_a_run(path, read, record_run):
     ids = [record_run(path) for _ in range(5)]
 
     page = history_read.list_runs(read(), before=ids[3], limit=2)
@@ -109,7 +75,7 @@ def test_runs_page_back_from_a_run(path, read):
     assert [run["id"] for run in page] == [ids[2], ids[1]]
 
 
-def test_one_run_comes_with_slots_steps_and_log_lines(path, read):
+def test_one_run_comes_with_slots_steps_and_log_lines(path, read, record_run):
     run_id = record_run(path, slots=[("18:00 - 19:00", True), ("19:00 - 20:00", False)])
 
     run = history_read.get_run(read(), run_id)
@@ -123,11 +89,11 @@ def test_one_run_comes_with_slots_steps_and_log_lines(path, read):
     assert run["log_lines"] == []  # the sink alone logs nothing
 
 
-def test_an_unknown_run_is_none(path, read):
+def test_an_unknown_run_is_none(path, read, record_run):
     assert history_read.get_run(read(), 42) is None
 
 
-def test_activity_comes_newest_first_and_filters_by_category(path, read):
+def test_activity_comes_newest_first_and_filters_by_category(path, read, record_run):
     record_run(path, slots=[("18:00 - 19:00", False)])
 
     steps = history_read.list_events(read())
@@ -139,7 +105,7 @@ def test_activity_comes_newest_first_and_filters_by_category(path, read):
     assert errors[0]["data"]["reason"] == "fully booked"
 
 
-def test_activity_pages_back(path, read):
+def test_activity_pages_back(path, read, record_run):
     record_run(path)
     newest = history_read.list_events(read(), limit=1)
 
