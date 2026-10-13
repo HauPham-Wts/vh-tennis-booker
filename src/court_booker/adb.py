@@ -119,6 +119,10 @@ class Adb:
                 raise DeviceConnectionError(f"Could not connect to {serial} in {timeout:.0f} s")
             self._sleep(_RETRY_INTERVAL)
 
+    def shell(self, serial: str, *args: str) -> str:
+        """Run ``adb -s serial shell args`` and return its output."""
+        return self._call("-s", serial, "shell", *args)
+
     def discover(self, ports: Sequence[int] = EMULATOR_PORTS) -> list[str]:
         """Return online devices, connecting the first open emulator port if none is."""
         serials = self.devices()
