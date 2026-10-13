@@ -179,6 +179,18 @@ def test_step_data_is_kept_as_json(connection):
     assert json.loads(data)["slots"] == ["18:00 - 19:00", "19:00 - 20:00"]
 
 
+def test_app_events_have_their_own_categories(connection):
+    report = Reporter(history.History(connection), clock=ticking_clock())
+
+    report(EventKind.SETUP_ITEM, item="wake_timers", status="fixed", detail="enabled")
+    report(EventKind.SETTINGS_SAVED, changed=["slots"])
+
+    assert rows(connection, "SELECT run_id, category FROM events ORDER BY id") == [
+        {"run_id": None, "category": "setup"},
+        {"run_id": None, "category": "settings"},
+    ]
+
+
 def test_a_run_that_ends_with_an_error_is_an_error_step(connection):
     report = Reporter(history.History(connection), clock=ticking_clock())
 
