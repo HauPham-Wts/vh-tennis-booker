@@ -55,6 +55,8 @@ uses [Semantic Versioning](https://semver.org/).
 - `POST /api/runs/dry-run` starts a dry run of the saved settings in its own process, as
   the scheduled task does; it is refused around the scheduled run and while another run
   (or the dry run started just before) is going.
+- `GET /api/status`: the Overview in one call (the run going on, the schedule and next
+  booking, the last run, the last auto setup).
 
 ### Fixed
 - `tools/inspect_screen.py` connects to MuMu 12 instance 0 (`127.0.0.1:16384`) by default

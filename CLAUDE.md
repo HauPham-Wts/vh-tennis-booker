@@ -140,6 +140,10 @@ out of scope.
   a running holder or while the process it started last (`app.state.dry_run`) still runs:
   a fresh dry run does not hold the lock for its first milliseconds. A `threading.Lock`
   keeps two requests from both starting one. Verified 2026-10-13 on MuMu (started from off).
+- `api/status.py`: `GET /api/status` gives the Overview in one call: `version`, `running`
+  (lock holder, or the dry run the backend just started), `schedule` (as `GET
+  /api/schedule`), `last_run` (newest run) and `setup` (`history_read.last_setup`: time and
+  items left by the last auto setup; empty until it ran), so the page never calls MuMu.
 - `Booker.prepare` first turns off Android animations (`ANIMATION_SCALES` set to 0 in one
   `shell` command, as Accessibility > Remove animations); a failure is logged and ignored.
 - `runner.connect_device`: `emulator.MuMu.ensure_started` (MuMuManager `info`/`control launch`),

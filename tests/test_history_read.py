@@ -5,6 +5,7 @@ import sqlite3
 import pytest
 
 from court_booker import history, history_read
+from court_booker.events import EventKind, Reporter
 
 
 @pytest.fixture
@@ -121,3 +122,17 @@ def test_a_passed_dry_run_is_found(path, read, record_run):
 
     record_run(path, trigger="dry_run", status="ok")
     assert history_read.dry_run_passed(read())
+
+
+def test_the_last_setup_result_is_read(path, read):
+    assert history_read.last_setup(read()) is None
+    store = history.History(history.connect(path))
+    report = Reporter(store)
+    report(EventKind.SETUP_FINISHED, left=["wake_timers"], error=None)
+    report(EventKind.SETUP_FINISHED, left=[], error=None)
+    store.close()
+
+    last = history_read.last_setup(read())
+
+    assert last["left"] == []
+    assert last["checked_at"].startswith("20")
