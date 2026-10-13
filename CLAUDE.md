@@ -320,8 +320,8 @@ in the logs, and the core books reliably.
 | 1 Runs | 0.2.0 Unattended | Start MuMu, ADB auto-connect, timed start with NTP offset, opening retry, keep awake, log file, Telegram summary, Task Scheduler with wake (released) |
 | 3 Fast | 0.3.0 Fast rounds | MuMu 540x1600, one dump per screen, taps by coordinates, entry located before the start, command count (released 2026-10-09, verified at 06:00 on 2026-10-10) |
 | 2 Every situation | 0.4.0 Hardening | Failure screen log; the situations below are fixed as the logs show them (released 2026-10-12) |
-| 4 UI | **0.5.0 Backend** | Separate run folder, engine events, data folder, SQLite history and activity, run lock, device setup and Auto setup, FastAPI backend (spec: `docs/specs/0.5.0-desktop-app.md`) |
-| 4 UI | 0.6.0 UI | React + TypeScript screens in the "Vé giấy" design, Vietnamese and English |
+| 4 UI | 0.5.0 Backend | Separate run folder, engine events, data folder, SQLite history and activity, run lock, device setup and Auto setup, FastAPI backend (spec: `docs/specs/0.5.0-desktop-app.md`; released 2026-10-13) |
+| 4 UI | **0.6.0 UI** | React + TypeScript screens in the "Vé giấy" design, Vietnamese and English |
 | 4 UI | 0.7.0 Desktop app | Tauri shell with PyInstaller sidecar, installer, release automation |
 | 3 Fast | Later | Tuning from the log files; several MuMu instances with separate accounts in parallel (one account cannot log in twice) |
 
@@ -367,10 +367,12 @@ Telegram setup (the optional code stays) and no run history file until the app s
 
 ## Next step
 
-Work happens on `release/0.5.0`, following `docs/specs/0.5.0-desktop-app.md`: one part at a
-time (one branch, several small commits, one pull request), each part merged before the next.
-Write code only when the user asks for it. Keep reading the 06:00 logs; a booking fix ships
-as 0.4.1 from `main`. The next-month case first occurs on 2026-10-30. Ruled out on 2026-10-09:
+First pass a dry run of v0.5.0 on MuMu, move the runner to it (`python tools/setup_runner.py
+v0.5.0`; `v0.4.0` moves it back) and check the history of the first real 06:00 run on it.
+Then 0.6.0 (UI) on `release/0.6.0`, following the 0.6.0 parts of
+`docs/specs/0.5.0-desktop-app.md`: one part at a time (clear branches, several small
+commits, one pull request each), each part merged before the next. Write code only when the
+user asks for it. Keep reading the 06:00 logs; a booking fix ships as 0.5.1 from `main`. The next-month case first occurs on 2026-10-30. Ruled out on 2026-10-09:
 opening the calendar before 06:00, two slots in one booking, pre-recorded coordinates. Ruled
 out on 2026-10-10: health check, fallback slots and courts, Telegram setup, run history file
 (history now comes with the app's database).
