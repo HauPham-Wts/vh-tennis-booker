@@ -8,6 +8,7 @@ import pytest
 
 from court_booker import device_setup
 from court_booker.device_setup import Status
+from court_booker.errors import DeviceConnectionError
 
 
 def install_mumu(folder, layout=("nx_main", "MuMuManager.exe")):
@@ -151,6 +152,39 @@ def test_wake_timer_check_without_powercfg():
         raise FileNotFoundError("powercfg")
 
     assert device_setup.check_wake_timers(missing).status is Status.UNKNOWN
+
+
+class FakeAdb:
+    """The adb of a running MuMu with ``packages`` installed."""
+
+    def __init__(self, packages=("com.vinhomes.resident",), fail=False):
+        self.packages = packages
+        self.fail = fail
+
+    def ensure_server(self):
+        pass
+
+    def connect_until(self, serial):
+        if self.fail:
+            raise DeviceConnectionError(f"Could not connect to {serial}")
+        return serial
+
+    def shell(self, serial, *args):
+        package = args[-1]
+        return f"package:/data/app/{package}/base.apk\n" if package in self.packages else ""
+
+
+def test_app_check():
+    package = "com.vinhomes.resident"
+
+    assert device_setup.check_app(FakeMuMu(), FakeAdb(), package).status is Status.OK
+    assert device_setup.check_app(FakeMuMu(), FakeAdb(()), package).status is Status.USER
+    stopped = device_setup.check_app(FakeMuMu(started=False), FakeAdb(), package)
+    assert stopped.status is Status.UNKNOWN
+    assert stopped.detail == "Start MuMu to check the app"
+    offline = device_setup.check_app(FakeMuMu(), FakeAdb(fail=True), package)
+    assert offline.status is Status.UNKNOWN
+    assert device_setup.check_app(None, None, package).status is Status.UNKNOWN
 
 
 def test_mumu_check(tmp_path):

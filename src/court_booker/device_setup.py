@@ -19,8 +19,9 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
+from court_booker.adb import AUTO, Adb, resolve_device
 from court_booker.emulator import MuMu, Run, run_command
-from court_booker.errors import EmulatorError
+from court_booker.errors import DeviceError, EmulatorError
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ logger = logging.getLogger(__name__)
 MUMU_INSTALLED = "mumu_installed"
 MUMU_SCREEN = "mumu_screen"
 WAKE_TIMERS = "wake_timers"
+APP_INSTALLED = "app_installed"
 
 SCREEN = {"resolution_width": 540, "resolution_height": 1600, "resolution_dpi": 220}
 """The screen the booking flow is tuned for (spec 0.3.0): all slots fit without scrolling."""
@@ -189,3 +191,19 @@ def check_wake_timers(run: Run = run_command) -> Check:
     if plugged == battery == WAKE_ENABLED:
         return Check(WAKE_TIMERS, Status.OK, detail)
     return Check(WAKE_TIMERS, Status.FIXABLE, detail)
+
+
+def check_app(mumu: MuMu | None, adb: Adb | None, package: str) -> Check:
+    """Check that ``package`` is installed in MuMu; MuMu must be running to tell."""
+    if mumu is None or adb is None:
+        return Check(APP_INSTALLED, Status.UNKNOWN, "MuMu or adb not found")
+    try:
+        if not mumu.is_started():
+            return Check(APP_INSTALLED, Status.UNKNOWN, "Start MuMu to check the app")
+        serial = resolve_device(adb, AUTO, mumu.adb_serial())
+        output = adb.shell(serial, "pm", "path", package)
+    except DeviceError as exc:
+        return Check(APP_INSTALLED, Status.UNKNOWN, f"Could not ask MuMu: {exc}")
+    if "package:" in output:
+        return Check(APP_INSTALLED, Status.OK, f"{package} installed")
+    return Check(APP_INSTALLED, Status.USER, f"{package} is not installed in MuMu")
