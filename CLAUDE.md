@@ -111,6 +111,14 @@ out of scope.
   first, `category`, `before`). Routes: `GET /api/runs`, `GET /api/runs/{id}` (404
   `not_found` via `api.errors.NotFoundError`), `GET /api/events`. Tests share the
   `record_run` fixture of `tests/conftest.py`, which writes runs through the history sink.
+- Invalid request values answer 422 `invalid_request` with `problems` (one line per value).
+  `api/settings.py`: `GET /api/settings` returns `settings_of(config)` (TOML keys, labels
+  with `continue`, without the `HIDDEN` Telegram keys); `PUT /api/settings` takes the full
+  `Settings` (extra keys refused), merges it into the config, runs `validate_config` (422
+  `invalid_settings` with `problems`, file untouched), and only when something changed
+  saves it (comments are lost) and records `settings_saved` with the changed keys.
+  `api/activity.record` writes such app events (no run) to the history; a database error
+  is only logged.
 - `Booker.prepare` first turns off Android animations (`ANIMATION_SCALES` set to 0 in one
   `shell` command, as Accessibility > Remove animations); a failure is logged and ignored.
 - `runner.connect_device`: `emulator.MuMu.ensure_started` (MuMuManager `info`/`control launch`),
