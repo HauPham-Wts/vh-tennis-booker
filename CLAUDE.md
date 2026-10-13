@@ -144,6 +144,12 @@ out of scope.
   (lock holder, or the dry run the backend just started), `schedule` (as `GET
   /api/schedule`), `last_run` (newest run) and `setup` (`history_read.last_setup`: time and
   items left by the last auto setup; empty until it ran), so the page never calls MuMu.
+- `api/live.py`: `WS /api/live` pushes each new activity step as `{"type": "step", "step":
+  ...}`, reading `history_read.events_after` every `POLL_SECONDS` (0.25 s) from a cursor
+  fixed before `accept` (the newest step, or `?after=<id>` to resume); a task awaiting
+  `websocket.receive` ends the loop when the client closes. Uvicorn needs the `websockets`
+  package (in the `app` extra) to serve it; `TestClient` does not, so only a real server
+  shows a missing one. Verified 2026-10-13 with a real client: steps arrive within 0.5 s.
 - `Booker.prepare` first turns off Android animations (`ANIMATION_SCALES` set to 0 in one
   `shell` command, as Accessibility > Remove animations); a failure is logged and ignored.
 - `runner.connect_device`: `emulator.MuMu.ensure_started` (MuMuManager `info`/`control launch`),

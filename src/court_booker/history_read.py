@@ -130,6 +130,21 @@ def list_events(
     return [_event(row) for row in rows]
 
 
+def events_after(db: sqlite3.Connection, after: int, limit: int = 500) -> list[dict[str, Any]]:
+    """Return the activity log steps written after step ``after``, oldest first."""
+    rows = db.execute(
+        "SELECT id, run_id, time, category, kind, data FROM events WHERE id > ?"
+        " ORDER BY id LIMIT ?",
+        (after, limit),
+    )
+    return [_event(row) for row in rows]
+
+
+def last_event_id(db: sqlite3.Connection) -> int:
+    """Return the id of the newest step, or 0 without any."""
+    return db.execute("SELECT COALESCE(MAX(id), 0) FROM events").fetchone()[0]
+
+
 def last_setup(db: sqlite3.Connection) -> dict[str, Any] | None:
     """Return when auto setup last ran and the items it left, or ``None`` if it never ran."""
     row = db.execute(

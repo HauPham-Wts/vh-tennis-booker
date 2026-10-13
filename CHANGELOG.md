@@ -57,6 +57,9 @@ uses [Semantic Versioning](https://semver.org/).
   (or the dry run started just before) is going.
 - `GET /api/status`: the Overview in one call (the run going on, the schedule and next
   booking, the last run, the last auto setup).
+- `WS /api/live`: the live feed pushes each new step of a run or of the app as it is
+  written; a client can resume after the last step it saw. New dependency in the `app`
+  extra: `websockets`.
 
 ### Fixed
 - `tools/inspect_screen.py` connects to MuMu 12 instance 0 (`127.0.0.1:16384`) by default

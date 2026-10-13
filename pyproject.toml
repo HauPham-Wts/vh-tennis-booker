@@ -23,8 +23,9 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-# The local backend of the desktop app; the scheduled run does not need it.
-app = ["fastapi>=0.110", "uvicorn>=0.29"]
+# The local backend of the desktop app; the scheduled run does not need it. Uvicorn
+# serves the live feed's WebSocket only with a WebSocket library.
+app = ["fastapi>=0.110", "uvicorn>=0.29", "websockets>=12"]
 dev = [
     "pytest>=8",
     "ruff==0.16.10",
