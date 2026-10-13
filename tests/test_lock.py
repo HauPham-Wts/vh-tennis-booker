@@ -6,6 +6,7 @@ from datetime import datetime
 import pytest
 
 from court_booker.errors import LockHeldError
+from court_booker.events import EventKind, MemorySink, Reporter
 from court_booker.lock import UNREADABLE, Holder, RunLock
 
 NOW = datetime(2026, 10, 13, 10, 43, 10)
@@ -44,7 +45,7 @@ def machine():
 
 
 def lock_for(path, machine, pid, **kwargs):
-    return RunLock(path, FakeProcesses(machine, pid), clock=lambda: NOW, **kwargs)
+    return RunLock(path, table=FakeProcesses(machine, pid), clock=lambda: NOW, **kwargs)
 
 
 def test_acquire_writes_who_holds_the_lock(tmp_path, machine):
@@ -107,3 +108,42 @@ def test_an_unreadable_lock_has_an_unknown_holder(tmp_path, machine):
     path.write_text("{", encoding="utf-8")
 
     assert lock_for(path, machine, 100).holder() is UNREADABLE
+
+
+def test_the_lock_of_a_run_that_is_gone_is_cleared(tmp_path, machine, caplog):
+    path = tmp_path / "run.lock"
+    lock_for(path, machine, 100).acquire("scheduled")
+    machine.running.discard((100, 1000.0))  # the PC lost power during the run
+    sink = MemorySink()
+    lock = lock_for(path, machine, 200, report=Reporter(sink))
+
+    lock.acquire("dry_run")
+
+    assert lock.holder().pid == 200
+    assert "Removed the run lock of scheduled run (pid 100) since 10:43:10" in caplog.text
+    assert sink.kinds == [EventKind.LOCK_CLEARED]
+    assert sink.events[0].data == {
+        "trigger": "scheduled",
+        "pid": 100,
+        "since": "2026-10-13T10:43:10",
+    }
+
+
+def test_a_reused_process_id_does_not_keep_the_lock(tmp_path, machine):
+    path = tmp_path / "run.lock"
+    lock_for(path, machine, 100).acquire("scheduled")
+    machine.running = {(100, 2000.0)}  # pid 100 now names a later process
+
+    lock_for(path, machine, 200).acquire("dry_run")
+
+    assert machine.stopped == []
+
+
+def test_an_unreadable_lock_is_cleared(tmp_path, machine):
+    path = tmp_path / "run.lock"
+    path.write_text("{", encoding="utf-8")
+    lock = lock_for(path, machine, 200)
+
+    lock.acquire("dry_run")
+
+    assert lock.holder().pid == 200

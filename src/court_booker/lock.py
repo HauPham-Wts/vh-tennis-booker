@@ -17,8 +17,12 @@ from typing import Any, Callable, Protocol
 
 from court_booker import processes
 from court_booker.errors import LockHeldError
+from court_booker.events import EventKind, Reporter
 
 logger = logging.getLogger(__name__)
+
+_ATTEMPTS = 3
+"""Tries to take the lock when others clear or release it at the same moment."""
 
 
 class ProcessTable(Protocol):
@@ -53,15 +57,21 @@ UNREADABLE = Holder(pid=-1, process_started=0.0, trigger="unknown", since="")
 
 
 class RunLock:
-    """The lock file at ``path``, taken and released by this process."""
+    """The lock file at ``path``, taken and released by this process.
+
+    A lock whose holder is no longer running (the PC lost power, the process was killed) is
+    removed when the next run takes the lock.
+    """
 
     def __init__(
         self,
         path: Path,
+        report: Reporter | None = None,
         table: ProcessTable = processes,
         clock: Callable[[], datetime] = datetime.now,
     ) -> None:
         self.path = path
+        self.report = Reporter() if report is None else report
         self.table = table
         self._clock = clock
         self.held: Holder | None = None
@@ -80,8 +90,9 @@ class RunLock:
 
         Raises ``LockHeldError`` if another run holds it.
         """
-        if not self._create(trigger):
-            raise LockHeldError(f"Another run is in progress: {self._describe(self.holder())}")
+        holder = self._take(trigger)
+        if holder is not None:
+            raise LockHeldError(f"Another run is in progress: {self._describe(holder)}")
 
     def release(self) -> None:
         """Give the lock back, unless another run has taken it over meanwhile."""
@@ -89,6 +100,25 @@ class RunLock:
             self._remove_if(self.held)
             logger.debug("Run lock released")
             self.held = None
+
+    def _take(self, trigger: str) -> Holder | None:
+        """Take the lock, clearing one whose holder is gone; return a running holder."""
+        for _ in range(_ATTEMPTS):
+            if self._create(trigger):
+                return None
+            holder = self.holder()
+            if holder is None:  # released meanwhile
+                continue
+            if holder is not UNREADABLE and self.table.is_running(
+                holder.pid, holder.process_started
+            ):
+                return holder
+            logger.warning(
+                "Removed the run lock of %s: it is no longer running", self._describe(holder)
+            )
+            self.report(EventKind.LOCK_CLEARED, **holder.fields())
+            self._remove_if(holder)
+        return self.holder() or UNREADABLE
 
     def _create(self, trigger: str) -> bool:
         """Write the lock for this process; ``False`` if a lock file exists."""
