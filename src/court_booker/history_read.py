@@ -130,6 +130,16 @@ def list_events(
     return [_event(row) for row in rows]
 
 
+def last_setup(db: sqlite3.Connection) -> dict[str, Any] | None:
+    """Return when auto setup last ran and the items it left, or ``None`` if it never ran."""
+    row = db.execute(
+        "SELECT time, data FROM events WHERE kind = 'setup_finished' ORDER BY id DESC LIMIT 1"
+    ).fetchone()
+    if row is None:
+        return None
+    return {"checked_at": row["time"], "left": json.loads(row["data"])["left"]}
+
+
 def dry_run_passed(db: sqlite3.Connection) -> bool:
     """Return whether any dry run went through every slot; scheduling requires one."""
     row = db.execute("SELECT 1 FROM runs WHERE trigger = 'dry_run' AND status = 'ok' LIMIT 1")
