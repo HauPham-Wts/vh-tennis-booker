@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from court_booker import __version__
 from court_booker.api.context import AppContext
+from court_booker.api.errors import add_error_handlers
 
 
 class Health(BaseModel):
@@ -26,6 +27,7 @@ def create_app(context: AppContext) -> FastAPI:
         redoc_url=None,
     )
     app.state.context = context
+    add_error_handlers(app)
 
     @app.get("/api/health", response_model=Health, tags=["app"])
     def health() -> Health:
