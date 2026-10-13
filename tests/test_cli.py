@@ -1,6 +1,7 @@
 """CLI exit codes with the device layer replaced by fakes."""
 
 import argparse
+import json
 import logging
 import sqlite3
 import sys
@@ -8,8 +9,10 @@ from datetime import datetime
 from pathlib import Path
 
 import court_booker.cli as cli
+from court_booker import processes
 from court_booker.errors import EmulatorError
 from court_booker.history import HistoryHandler
+from court_booker.lock import Holder
 from court_booker.runner import RoundResult
 
 
@@ -162,6 +165,46 @@ def test_a_run_books_without_the_history(monkeypatch, tmp_path, data_home):
 
     assert run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)]) == cli.EXIT_OK
     assert "run not recorded" in read_log(tmp_path)
+
+
+def test_a_run_waits_for_no_one_and_releases_the_lock(monkeypatch, tmp_path, data_home):
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)])
+
+    assert "Run lock taken: manual run" in read_log(tmp_path)
+    assert not (data_home / "run.lock").exists()
+
+
+def test_a_run_is_refused_while_another_holds_the_lock(monkeypatch, tmp_path, data_home):
+    pid, started = processes.current()  # a process that is surely running
+    holder = Holder(pid, started, "dry_run", "2026-10-13T10:43:10")
+    data_home.mkdir(parents=True)
+    (data_home / "run.lock").write_text(json.dumps(vars(holder)), encoding="utf-8")
+
+    def connect(config):
+        raise AssertionError("must not touch the device")
+
+    code = run_cli(monkeypatch, tmp_path, connect=connect, args=["--dry-run"])
+
+    assert code == cli.EXIT_BUSY
+    assert f"Another run is in progress: dry_run run (pid {pid}) since 10:43:10" in read_log(
+        tmp_path
+    )
+    assert (data_home / "run.lock").exists()
+
+
+def test_the_scheduled_run_may_take_the_lock_over_before_the_start(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr(
+        cli.RunLock,
+        "acquire_for_schedule",
+        lambda self, trigger, take_over_at: calls.append((trigger, take_over_at)),
+    )
+    monkeypatch.setattr(cli, "datetime", FixedDatetime)
+    monkeypatch.setattr(cli, "ntp_offset", lambda server: 0.0)
+
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)], args=["--scheduled"])
+
+    assert calls == [("scheduled", datetime(2026, 10, 8, 5, 58))]
 
 
 def test_run_trigger():
