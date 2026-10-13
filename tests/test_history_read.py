@@ -136,3 +136,17 @@ def test_the_last_setup_result_is_read(path, read):
 
     assert last["left"] == []
     assert last["checked_at"].startswith("20")
+
+
+def test_steps_after_a_step_come_oldest_first(path, read, record_run):
+    assert history_read.last_event_id(read()) == 0
+    record_run(path)
+    newest = history_read.last_event_id(read())
+    record_run(path, slots=[("18:00 - 19:00", True)])
+
+    later = history_read.events_after(read(), newest)
+
+    assert later[0]["kind"] == "run_started"
+    assert later[-1]["kind"] == "run_finished"
+    assert [step["id"] for step in later] == sorted(step["id"] for step in later)
+    assert history_read.events_after(read(), newest, limit=2)[1]["id"] == newest + 2
