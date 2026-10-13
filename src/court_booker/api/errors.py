@@ -14,6 +14,7 @@ from court_booker.errors import (
     DeviceError,
     LockHeldError,
     RequestError,
+    ScheduleError,
 )
 
 
@@ -46,6 +47,7 @@ _STATUSES: tuple[tuple[type[CourtBookerError], int, str], ...] = (
     (RequestError, 400, "bad_request"),
     (DeviceError, 503, "device"),
     (AppNotReadyError, 503, "app_not_ready"),
+    (ScheduleError, 503, "schedule"),
 )
 """First match wins: HTTP status and code per error class."""
 
