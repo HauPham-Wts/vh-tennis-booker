@@ -107,3 +107,21 @@ def test_runs_page_back_from_a_run(path, read):
     page = history_read.list_runs(read(), before=ids[3], limit=2)
 
     assert [run["id"] for run in page] == [ids[2], ids[1]]
+
+
+def test_one_run_comes_with_slots_steps_and_log_lines(path, read):
+    run_id = record_run(path, slots=[("18:00 - 19:00", True), ("19:00 - 20:00", False)])
+
+    run = history_read.get_run(read(), run_id)
+
+    assert [(slot["slot"], slot["ok"], slot["reason"]) for slot in run["slots"]] == [
+        ("18:00 - 19:00", True, None),
+        ("19:00 - 20:00", False, "fully booked"),
+    ]
+    assert [step["kind"] for step in run["steps"]][:2] == ["run_started", "booking_started"]
+    assert run["steps"][1]["data"]["court"] == "S6 - Sân tennis"
+    assert run["log_lines"] == []  # the sink alone logs nothing
+
+
+def test_an_unknown_run_is_none(path, read):
+    assert history_read.get_run(read(), 42) is None

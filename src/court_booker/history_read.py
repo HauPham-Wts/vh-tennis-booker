@@ -6,6 +6,7 @@ read-only connection, so a page can never change a run's record.
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from pathlib import Path
 from typing import Any
@@ -66,7 +67,51 @@ def list_runs(
     return [_run(row) for row in rows]
 
 
+def get_run(db: sqlite3.Connection, run_id: int) -> dict[str, Any] | None:
+    """Return one run with its slots, its steps and its log lines; ``None`` if unknown."""
+    row = db.execute(f"SELECT {_RUN_COLUMNS} FROM runs WHERE runs.id = ?", (run_id,)).fetchone()
+    if row is None:
+        return None
+    run = _run(row)
+    run["slots"] = [
+        _slot(slot)
+        for slot in db.execute(
+            "SELECT slot, ok, reason, finished_at, seconds, commands FROM run_slots"
+            " WHERE run_id = ? ORDER BY id",
+            (run_id,),
+        )
+    ]
+    run["steps"] = [
+        _event(event)
+        for event in db.execute(
+            "SELECT id, run_id, time, category, kind, data FROM events"
+            " WHERE run_id = ? ORDER BY id",
+            (run_id,),
+        )
+    ]
+    run["log_lines"] = [
+        dict(line)
+        for line in db.execute(
+            "SELECT id, time, level, message FROM log_lines WHERE run_id = ? ORDER BY id",
+            (run_id,),
+        )
+    ]
+    return run
+
+
 def _run(row: sqlite3.Row) -> dict[str, Any]:
     run = dict(row)
     run["dry_run"] = bool(run["dry_run"])
     return run
+
+
+def _slot(row: sqlite3.Row) -> dict[str, Any]:
+    slot = dict(row)
+    slot["ok"] = bool(slot["ok"])
+    return slot
+
+
+def _event(row: sqlite3.Row) -> dict[str, Any]:
+    event = dict(row)
+    event["data"] = json.loads(event["data"])
+    return event
