@@ -25,6 +25,11 @@ uses [Semantic Versioning](https://semver.org/).
   slot, every step, and the technical log lines. A database error only turns history off
   for that run; the booking goes on. Writing takes about 0.13 ms per row.
 - The booking started event names the court.
+- Run lock: only one run drives the emulator at a time. A second dry run or manual run is
+  refused with exit code 5. The scheduled run waits for another run and, if it still holds
+  the lock 2 minutes before the start time, stops it and goes on. A lock left by a run that
+  is gone is removed, and that run is marked as interrupted in the history.
+- No dry run may start from the wake time to 5 minutes after the start time (exit code 2).
 
 ### Fixed
 - `tools/inspect_screen.py` connects to MuMu 12 instance 0 (`127.0.0.1:16384`) by default
