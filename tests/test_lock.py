@@ -5,9 +5,9 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from court_booker.errors import LockHeldError
+from court_booker.errors import LockHeldError, RequestError
 from court_booker.events import EventKind, MemorySink, Reporter
-from court_booker.lock import UNREADABLE, Holder, RunLock, schedule_window
+from court_booker.lock import UNREADABLE, Holder, RunLock, check_quiet_time, schedule_window
 
 NOW = datetime(2026, 10, 13, 10, 43, 10)
 
@@ -258,6 +258,13 @@ def test_the_schedule_window_runs_from_wake_to_five_minutes_after_the_start():
 
     assert begin == WAKE
     assert end == datetime(2026, 10, 14, 6, 5)
+
+
+def test_quiet_time_refuses_a_task_inside_the_window():
+    check_quiet_time(datetime(2026, 10, 14, 6, 5), "05:50", "06:00", "dry run")
+
+    with pytest.raises(RequestError, match="No dry run from 05:50 to 06:05"):
+        check_quiet_time(datetime(2026, 10, 14, 5, 50), "05:50", "06:00", "dry run")
 
 
 def test_an_unreadable_lock_is_cleared(tmp_path, machine):

@@ -21,7 +21,7 @@ from court_booker.errors import (
 )
 from court_booker.events import EventKind, LogSink, MultiSink, Reporter
 from court_booker.history import History, close_history, open_history
-from court_booker.lock import TAKE_OVER_AHEAD, RunLock, schedule_window
+from court_booker.lock import TAKE_OVER_AHEAD, RunLock, check_quiet_time
 from court_booker.logging_setup import LOGGER_NAME, add_file_handler, configure_logging
 from court_booker.notify import format_summary, send_telegram
 from court_booker.paths import data_folder
@@ -113,15 +113,6 @@ def run_status(results: list[RoundResult], error: str | None, interrupted: bool)
     return "partial" if booked else "failed"
 
 
-def check_quiet_time(now: datetime, config: Config, task: str) -> None:
-    """Refuse ``task`` (a dry run, auto setup) while the scheduled run owns the emulator."""
-    begin, end = schedule_window(now.date(), config.wake_at, config.start_at)
-    if begin <= now < end:
-        raise RequestError(
-            f"No {task} from {begin:%H:%M} to {end:%H:%M}: the scheduled run uses the emulator"
-        )
-
-
 def setup_main(argv: list[str]) -> int:
     """Run ``court-booker setup``: check the PC and MuMu; ``--auto`` fixes what it can."""
     parser = argparse.ArgumentParser(
@@ -154,7 +145,7 @@ def setup_main(argv: list[str]) -> int:
 
 def run_auto_setup(args: argparse.Namespace, config: Config, tools: Tools) -> list[Check]:
     """Take the run lock and run auto setup, recording each item in the history."""
-    check_quiet_time(datetime.now(), config, "auto setup")
+    check_quiet_time(datetime.now(), config.wake_at, config.start_at, "auto setup")
     if config.log_dir:
         logger.debug(
             "Logging to %s", add_file_handler(Path(args.config).resolve().parent / config.log_dir)
@@ -232,7 +223,7 @@ def main(argv: list[str] | None = None) -> int:
         logger.debug("Python %s, code in %s", sys.executable, Path(__file__).resolve().parent)
         now = datetime.now()
         if trigger == "dry_run":
-            check_quiet_time(now, config, "dry run")
+            check_quiet_time(now, config.wake_at, config.start_at, "dry run")
         start_text = config.start_at if args.scheduled else args.at
         start = resolve_start(start_text, now) if start_text else None
         report(
