@@ -23,4 +23,4 @@ def test_a_database_that_cannot_be_written_is_only_logged(tmp_path, caplog):
 
     record(context, EventKind.SETTINGS_SAVED, changed=[])
 
-    assert "Could not record settings_saved in the history" in caplog.text
+    assert "app events not recorded" in caplog.text
