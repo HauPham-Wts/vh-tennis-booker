@@ -145,6 +145,20 @@ Sample output:
 11:12:09.118 +1.72s INFO    Accepted terms
 ```
 
+### Backend
+
+The backend of the coming desktop app needs the `app` extra:
+
+```bash
+pip install -e ".[app]"
+court-booker serve --config config.toml   # http://127.0.0.1:8765, docs at /api/docs
+```
+
+It listens on 127.0.0.1 only and serves the runs and activity log, the settings, device
+setup, the daily schedule (switched on only after a dry run passed), dry runs, an overview,
+and a live feed of new steps over a WebSocket (`/api/live`). Errors are JSON with a stable
+`error` code. Scheduled runs never load it.
+
 To inspect a screen whose elements cannot be found:
 
 ```bash
