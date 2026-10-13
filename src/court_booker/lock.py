@@ -116,6 +116,13 @@ class RunLock:
         except (OSError, ValueError, TypeError):
             return UNREADABLE
 
+    def running_holder(self) -> Holder | None:
+        """Return the holder if it still runs; the lock file is left as it is."""
+        holder = self.holder()
+        if holder is None or holder is UNREADABLE:
+            return None
+        return holder if self.table.is_running(holder.pid, holder.process_started) else None
+
     def acquire(self, trigger: str) -> None:
         """Take the lock for a run started by ``trigger``.
 
