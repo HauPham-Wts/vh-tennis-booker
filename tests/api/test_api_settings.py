@@ -2,7 +2,8 @@
 
 import pytest
 
-from court_booker.config import Config, save_config
+from court_booker import history_read
+from court_booker.config import Config, load_config, save_config
 
 
 @pytest.fixture
@@ -42,3 +43,69 @@ def test_settings_without_a_config_file_are_the_defaults(client, context):
 
     assert settings["days_ahead"] == Config().days_ahead
     assert not context.config_path.exists()  # reading never writes
+
+
+def steps(context):
+    connection = history_read.open_read_only(context.data.database)
+    found = history_read.list_events(connection)
+    connection.close()
+    return found
+
+
+def test_saved_settings_reach_the_file_and_the_activity_log(client, context, saved):
+    settings = client.get("/api/settings").json()
+    settings["slots"] = ["20:00 - 21:00"]
+    settings["court"] = "S9 - Sân tennis"
+
+    response = client.put("/api/settings", json=settings)
+
+    assert response.status_code == 200
+    assert response.json()["slots"] == ["20:00 - 21:00"]
+    written = load_config(context.config_path)
+    assert (written.slots, written.court) == (["20:00 - 21:00"], "S9 - Sân tennis")
+    assert written.telegram_token == "secret-token"
+    (step,) = steps(context)
+    assert (step["kind"], step["data"]) == ("settings_saved", {"changed": ["court", "slots"]})
+
+
+def test_labels_are_saved_under_their_toml_names(client, context, saved):
+    settings = client.get("/api/settings").json()
+    settings["labels"]["continue"] = "Continue"
+
+    client.put("/api/settings", json=settings)
+
+    assert load_config(context.config_path).labels.continue_ == "Continue"
+
+
+def test_invalid_settings_are_refused_with_each_problem(client, context, saved):
+    settings = client.get("/api/settings").json()
+    settings["slots"] = ["6pm"]
+    settings["wake_at"] = "06:30"
+    before = context.config_path.read_bytes()
+
+    response = client.put("/api/settings", json=settings)
+
+    body = response.json()
+    assert response.status_code == 422
+    assert body["error"] == "invalid_settings"
+    assert len(body["problems"]) == 2
+    assert context.config_path.read_bytes() == before
+    assert steps(context) == []
+
+
+def test_unknown_settings_are_refused(client, saved):
+    settings = client.get("/api/settings").json()
+    settings["telegram_token"] = "other"
+
+    response = client.put("/api/settings", json=settings)
+
+    assert response.status_code == 422
+    assert response.json()["error"] == "invalid_request"
+
+
+def test_unchanged_settings_write_nothing(client, context):
+    response = client.put("/api/settings", json=client.get("/api/settings").json())
+
+    assert response.status_code == 200
+    assert not context.config_path.exists()
+    assert steps(context) == []

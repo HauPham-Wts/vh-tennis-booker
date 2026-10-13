@@ -21,6 +21,14 @@ class NotFoundError(CourtBookerError):
     """The record asked for does not exist."""
 
 
+class InvalidSettingsError(CourtBookerError):
+    """Settings a run could not use; ``problems`` names each invalid value."""
+
+    def __init__(self, problems: list[str]) -> None:
+        super().__init__("; ".join(problems))
+        self.problems = problems
+
+
 class Problem(BaseModel):
     """An error: ``error`` is a stable code, ``detail`` the English message for the log.
 
@@ -44,6 +52,8 @@ _STATUSES: tuple[tuple[type[CourtBookerError], int, str], ...] = (
 
 def problem_for(error: CourtBookerError) -> tuple[int, Problem]:
     """Return the HTTP status and body for ``error``."""
+    if isinstance(error, InvalidSettingsError):
+        return 422, Problem(error="invalid_settings", detail=str(error), problems=error.problems)
     for kind, status, code in _STATUSES:
         if isinstance(error, kind):
             return status, Problem(error=code, detail=str(error))

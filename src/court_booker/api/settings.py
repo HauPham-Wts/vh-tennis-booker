@@ -7,8 +7,17 @@ from typing import Any
 from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict, Field
 
+from court_booker.api.activity import record
 from court_booker.api.context import Context
-from court_booker.config import Config, config_to_dict
+from court_booker.api.errors import InvalidSettingsError
+from court_booker.config import (
+    Config,
+    config_from_dict,
+    config_to_dict,
+    save_config,
+    validate_config,
+)
+from court_booker.events import EventKind
 
 router = APIRouter(prefix="/api", tags=["settings"])
 
@@ -72,3 +81,23 @@ def settings_of(config: Config) -> dict[str, Any]:
 def read_settings(context: Context) -> dict[str, Any]:
     """Read the settings the next run will use."""
     return settings_of(context.config())
+
+
+@router.put("/settings", response_model=Settings)
+def save_settings(context: Context, settings: Settings) -> dict[str, Any]:
+    """Check and save the settings; they apply from the next run.
+
+    Invalid settings are refused with every problem listed, and the file is left as it
+    was. The file is rewritten without its comments; the hidden Telegram keys are kept.
+    """
+    old = context.config()
+    config = config_from_dict({**config_to_dict(old), **settings.model_dump(by_alias=True)})
+    problems = validate_config(config)
+    if problems:
+        raise InvalidSettingsError(problems)
+    before, after = settings_of(old), settings_of(config)
+    changed = sorted(key for key in after if after[key] != before[key])
+    if changed:
+        save_config(config, context.config_path)
+        record(context, EventKind.SETTINGS_SAVED, changed=changed)
+    return after
