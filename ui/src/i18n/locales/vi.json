@@ -54,5 +54,19 @@
       "title": "Có lỗi xảy ra",
       "reload": "Mở lại Tổng quan"
     }
+  },
+  "errors": {
+    "not_found": "Không tìm thấy dữ liệu này.",
+    "lock_held": "Đang có một lần chạy khác. Hãy chờ nó xong rồi thử lại.",
+    "dry_run_required": "Cần chạy thử thành công một lần trước khi bật hẹn giờ.",
+    "bad_request": "Chưa làm được việc này lúc này.",
+    "device": "Không kết nối được MuMu.",
+    "app_not_ready": "App Vinhomes chưa sẵn sàng. Có thể app đã bị đăng xuất.",
+    "schedule": "Không đọc hoặc đổi được lịch hẹn giờ của Windows.",
+    "engine": "Court Booker gặp lỗi.",
+    "invalid_settings": "Một số cài đặt chưa hợp lệ.",
+    "invalid_request": "Dữ liệu gửi đi chưa hợp lệ.",
+    "unreachable": "Không kết nối được phần chạy nền của Court Booker.",
+    "http": "Phần chạy nền trả lời không như mong đợi."
   }
 }
