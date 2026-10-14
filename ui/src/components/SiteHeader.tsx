@@ -1,6 +1,7 @@
+import { MainNav } from "./MainNav";
 import styles from "./SiteHeader.module.css";
 
-/** Show the app's name above every screen, ruled off in ink. */
+/** Show the app's name and the navigation above every screen, ruled off in ink. */
 export function SiteHeader() {
   return (
     <header className={styles.header}>
@@ -10,6 +11,7 @@ export function SiteHeader() {
           .
         </span>
       </span>
+      <MainNav />
     </header>
   );
 }
