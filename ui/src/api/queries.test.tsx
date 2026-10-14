@@ -4,7 +4,7 @@ import { reply, requestsTo, stubBackend } from "../test/backend";
 import { createTestQueryClient, withQueryClient } from "../test/queries";
 import { ApiError } from "./client";
 import { useOverview, useRuns } from "./queries";
-import { shouldRetry, UNREACHABLE_RETRIES } from "./queryClient";
+import { createQueryClient, shouldRetry, UNREACHABLE_RETRIES } from "./queryClient";
 
 const unreachable = new ApiError(0, { error: "unreachable", detail: "fetch failed" });
 const lockHeld = new ApiError(409, { error: "lock_held", detail: "Another run is in progress" });
@@ -19,6 +19,25 @@ describe("shouldRetry", () => {
   it("does not retry a Problem the backend sent, or an error of the UI", () => {
     expect(shouldRetry(0, lockHeld)).toBe(false);
     expect(shouldRetry(0, new TypeError("x is undefined"))).toBe(false);
+  });
+});
+
+describe("createQueryClient", () => {
+  it("keeps a read fresh, yet reads it again at once when a step marks it stale", async () => {
+    const fetch = stubBackend({ "GET /api/status": reply({ version: "0.6.0" }) });
+    const client = createQueryClient();
+    const wrapper = withQueryClient(client);
+    const first = renderHook(() => useOverview(), { wrapper });
+    await waitFor(() => expect(first.result.current.isSuccess).toBe(true));
+
+    // A second screen showing the same data within the fresh time reads nothing.
+    const second = renderHook(() => useOverview(), { wrapper });
+    expect(second.result.current.isSuccess).toBe(true);
+    expect(requestsTo(fetch, "GET /api/status")).toBe(1);
+
+    await client.invalidateQueries({ queryKey: ["overview"] });
+
+    expect(requestsTo(fetch, "GET /api/status")).toBe(2);
   });
 });
 
