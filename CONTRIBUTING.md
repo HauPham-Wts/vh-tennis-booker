@@ -11,6 +11,14 @@ pre-commit install
 extra (FastAPI, Uvicorn) is the desktop app's backend; without it the backend tests are
 skipped. The runner folder installs the package without it.
 
+The app's screens live in `ui/` (React, TypeScript, Vite) and need Node.js 22.12 or later:
+
+```bash
+cd ui
+npm ci            # install the exact versions from package-lock.json
+npm run dev       # development server with hot reload
+```
+
 ## Before opening a pull request
 
 ```bash
@@ -21,12 +29,23 @@ pytest
 
 If the booking flow changed, also run `court-booker --dry-run --verbose` against the emulator.
 
+If the UI changed, run its checks in `ui/` (CI runs the same scripts):
+
+```bash
+npm run typecheck
+npm run lint
+npm run format       # or format:check to only report
+npm test
+npm run build
+```
+
 ## Conventions
 
 - **Language:** code, comments, logs, commit messages and documentation are in English.
   Accessibility labels of the target app stay in Vietnamese and live in `config.toml`.
 - **Style:** enforced by Ruff (line length 100). Public functions have type hints and a
-  one-line docstring in the imperative mood. Comments explain *why*, not *what*.
+  one-line docstring in the imperative mood. Comments explain *why*, not *what*. UI code
+  is strict TypeScript, linted by ESLint and formatted by Prettier (also 100 columns).
 - **Errors:** raise a subclass of `BookingError` for failures that should abort one round.
 - **Logging:** use the module logger (`logging.getLogger(__name__)`), never `print`, except
   for the final summary in the CLI.
@@ -35,7 +54,8 @@ If the booking flow changed, also run `court-booker --dry-run --verbose` against
 - **Branches:** each version is prepared on `release/X.Y.Z`, cut from `main`. Work happens
   on `feat/<topic>`, `fix/<topic>` or `docs/<topic>` branches cut from the release branch
   and merged back into it via pull request, one PR per branch. `main` only receives the
-  release branch when everything in it is stable.
+  release branch when everything in it is stable. Tooling and CI changes use `chore/<topic>`
+  and `ci/<topic>`.
 - **Merging:** use "Create a merge commit"; do not squash or rebase, so commits keep their
   identity across branches.
 - **Versioning:** [Semantic Versioning](https://semver.org/). Record changes in
