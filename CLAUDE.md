@@ -22,6 +22,17 @@ python -m court_booker serve --config config.toml    # backend on 127.0.0.1:8765
 python tools/inspect_screen.py --near "Tôi đã hiểu"  # dump nodes level with a label
 ```
 
+The UI lives in `ui/` (run these there; CI's `ui` job runs the same scripts):
+
+```bash
+npm ci                                               # install from package-lock.json
+npm run dev                                          # Vite dev server, http://localhost:5173
+npm run typecheck && npm run lint                    # tsc -b; ESLint (type-aware)
+npm run format                                       # Prettier (format:check in CI)
+npm test                                             # Vitest + Testing Library (jsdom)
+npm run build                                        # type-check and build to ui/dist
+```
+
 Whenever the booking flow changes, book one free slot for real against the emulator with
 `--at` a few minutes ahead (the user cancels it); CI cannot, and a dry run stops before
 "Xác nhận".
