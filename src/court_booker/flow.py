@@ -375,9 +375,6 @@ class Booker:
         if message is not None:
             raise BookingRejectedError(f"The app refused the booking: {message or 'no message'}")
         logger.info("Booking confirmed")
-        # The ticket screen's labels are not known yet; logging it lets a later version
-        # require the ticket instead of only the confirmation page being gone.
-        log_screen(outcome[1], "Screen after confirming")
 
     # Dialogs ----------------------------------------------------------------
 
@@ -402,20 +399,30 @@ class Booker:
     # Device commands --------------------------------------------------------
 
     def snapshot(self) -> Screen:
-        """Read every element of the current screen with one command."""
+        """Read every element of the current screen with one command.
+
+        A screen that differs from the previous read is logged, so the debug log shows
+        every screen a run went through, also the ones a failure or a popup left behind.
+        """
         self.commands += 1
-        self.last_screen = Screen.parse(self.device.dump_hierarchy(compressed=False))
-        return self.last_screen
+        screen = Screen.parse(self.device.dump_hierarchy(compressed=False))
+        if screen.nodes != self.last_screen.nodes:
+            log_screen(screen, "Screen")
+        self.last_screen = screen
+        return screen
 
     def tap(self, node: Node) -> None:
-        self.tap_point(*node.center)
+        self.tap_point(*node.center, label=node.desc)
 
-    def tap_point(self, x: float, y: float) -> None:
+    def tap_point(self, x: float, y: float, label: str = "") -> None:
+        """Tap ``(x, y)``; ``label`` names the element tapped, for the debug log."""
         self.commands += 1
+        logger.debug("Tap %s(%d, %d)", f"{label!r} at " if label else "", x, y)
         self.device.click(x, y)
 
     def press_back(self) -> None:
         self.commands += 1
+        logger.debug("Press Back")
         self.device.press("back")
 
     # Helpers ----------------------------------------------------------------
@@ -463,6 +470,7 @@ class Booker:
         width, height = screen.size
         start, end = (0.62, 0.38) if down else (0.38, 0.62)
         self.commands += 1
+        logger.debug("Swipe %s", "down the list" if down else "up the list")
         self.device.swipe(width * 0.5, height * start, width * 0.5, height * end, _SWIPE_SECONDS)
 
     def _settled_screen(self) -> Screen:
@@ -489,11 +497,12 @@ class Booker:
 
 
 def log_screen(screen: Screen, title: str) -> None:
-    """Log every labelled or clickable element of ``screen`` under ``title`` (debug)."""
+    """Log every labelled or clickable element of ``screen`` under ``title`` (debug).
+
+    One record per screen, so the history writes one row for it instead of one per element.
+    """
     lines = screen.describe()
-    logger.debug("%s (%d elements):", title, len(lines))
-    for line in lines:
-        logger.debug("  %s", line)
+    logger.debug("%s (%d elements):%s", title, len(lines), "".join(f"\n  {x}" for x in lines))
 
 
 def _area(node: Node) -> int:

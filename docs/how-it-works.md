@@ -49,7 +49,8 @@ list is read once more, so the first command at the start time is the tap itself
 After confirming, the script waits until the confirmation screen is gone (the ticket
 screen is shown). A notice dialog hides that screen as well, for example when someone else
 took the slot a moment earlier, so a "Thông báo" dialog with a button fails the round with
-its message instead. The screen after confirming is written to the debug log. From the
+its message instead. Every new screen a run reads, and every tap, is written to the debug
+log, so a failure can be followed screen by screen. From the
 ticket screen, one Back returns to the utilities list, where the next round begins.
 
 ## Lessons learned
