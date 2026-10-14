@@ -191,7 +191,11 @@ out of scope.
   `Screen.describe()` gives one log line per labelled or clickable node (bounds, label).
 - `flow.Booker` builds `Match`es from `config.labels` in `__init__`. The device is only used
   through `snapshot()` (one dump), `tap()`/`tap_point()` (`device.click(x, y)`), `press_back()`
-  and `_scroll()`; each increments `commands`. `wait_for(find, timeout, screen=None)` reads the
+  and `_scroll()`; each increments `commands` and logs itself at debug level (taps with the
+  element's label and position). `snapshot()` logs a screen that differs from the previous
+  read as one record (`log_screen`), so the debug log and the history's log lines hold every
+  screen a run went through (about 400 lines for one slot, no extra device commands).
+  `wait_for(find, timeout, screen=None)` reads the
   screen every 20 ms until a finder returns something; the found node carries the coordinates
   to tap. Every transition goes through `tap_and_advance(screen, target, name, find_next)`:
   tap `target` from `screen`, wait for `find_next`, re-tap while `target` is still shown.
@@ -263,8 +267,14 @@ the next round starts.
   booked but was not: round 2 then needed 11 s and 169 commands to get back to "Sân Tennis"
   (other days 0.6-0.8 s, one Back from the ticket), so a dialog had replaced the page. Since
   0.5.1 `accept_and_confirm` fails such a round (`BookingRejectedError` with the message,
-  `Booker.notice_text`) and logs the screen after every confirmation; the ticket's labels
-  are still unknown.
+  `Booker.notice_text`).
+- Ticket screen (real test booking on 2026-10-14, 540x1600): the first read 0.9 s after
+  "Xác nhận" held only the title `'Chi tiết đặt lịch'` `[99,52][311,89]` and a back button;
+  once loaded it adds `'qr code'`, `'Thông tin dịch vụ'`, the status `'Đã đăng ký'`, one
+  node `[0,642][540,1463]` whose label lists the utility, booking and transaction codes,
+  `'Thời gian đặt lịch\n16/10/2026 10:00 - 11:00'` and `'Vị trí/dịch vụ\nS6 - Sân tennis'`,
+  and a clickable `'Đặt lịch khác'` at the bottom. A later version can require this screen
+  and check the booked date, slot and court on it (the 13/10 S6/S9 case).
 - Outside 06:00-21:00, tapping "Sân Tennis" opens a dialog "Thông báo": "Ban quản lý BQL Grand
   Park chỉ nhận đăng ký Sân Tennis từ 06:00 đến 21:00 mỗi ngày" with a "Đóng" button; it hides
   the utilities list. The 06:00:00.0 tap of 0.3.0 did not trigger it on 2026-10-10.
