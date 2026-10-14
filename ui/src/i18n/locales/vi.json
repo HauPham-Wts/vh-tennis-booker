@@ -52,6 +52,25 @@
         "meta": "{{day}} · sân {{court}}",
         "done": "Đặt xong lúc {{time}} · mất {{seconds}}",
         "history": "Xem lịch sử →"
+      },
+      "live": {
+        "banner": {
+          "scheduled": "Đang đặt sân theo hẹn giờ {{start}}",
+          "dry_run": "Đang chạy thử",
+          "manual": "Đang đặt sân (chạy thủ công)",
+          "setup": "Đang thiết lập tự động",
+          "other": "Đang có một lần chạy"
+        },
+        "locked": "Chạy thử và Thiết lập tự động tạm khóa cho tới khi xong",
+        "preparing": "Đang chuẩn bị",
+        "booking": "Đang đặt cho {{day}} · sân {{court}}",
+        "running": "đang chạy",
+        "waiting": "{{slot}} · chờ tới lượt",
+        "progress": "Tiến độ",
+        "booked": "khung giờ đã đặt xong",
+        "through": "khung giờ đã qua",
+        "follow": "Xem nhật ký trực tiếp →",
+        "note": "Bạn có thể đóng cửa sổ này. Việc đặt sân vẫn tiếp tục và kết quả sẽ có trong Lịch sử khi bạn mở lại app."
       }
     },
     "schedule": {

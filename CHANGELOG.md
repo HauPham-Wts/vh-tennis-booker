@@ -66,6 +66,10 @@ uses [Semantic Versioning](https://semver.org/).
   (set up the device, turn the schedule on), the next booking as a ticket (start time,
   wake time, play date, court, slots), and the last real booking with one card per slot
   and the reason a slot failed in a few words ("Hết chỗ", "Sân S6 đã kín").
+- While a booking or a dry run goes on, the Overview shows it as it goes: a banner, the slot
+  being booked, every step with the newest marked, the slots still to come and the
+  progress, from the live feed alone. It leaves this view once the run gives the emulator
+  back.
 
 ### Changed
 - The OpenAPI schema describes every error response as a `Problem` (also 422, which it
