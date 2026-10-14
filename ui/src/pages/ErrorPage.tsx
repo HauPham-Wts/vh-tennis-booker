@@ -1,4 +1,5 @@
 import { isRouteErrorResponse, useRouteError } from "react-router";
+import { PageTitle } from "../components/PageTitle";
 import { paths } from "../paths";
 
 /** Describe an error thrown while a screen rendered. */
@@ -14,6 +15,7 @@ export function ErrorPage() {
   const error = useRouteError();
   return (
     <main>
+      <PageTitle>Có lỗi xảy ra</PageTitle>
       <h1>Có lỗi xảy ra</h1>
       <p>{describeError(error)}</p>
       <p>
