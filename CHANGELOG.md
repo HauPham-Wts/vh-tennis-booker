@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-10-14
+
 ### Added
 - The debug log lists every new screen a run reads, as one entry each and without extra
   device commands, and every tap (with the element's label and position), Back press and
