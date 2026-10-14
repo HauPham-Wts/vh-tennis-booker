@@ -6,8 +6,11 @@ import {
   formatDecimal,
   formatShortDate,
   formatTime,
+  dayPeriod,
+  localToday,
   monthParts,
   parseLocal,
+  relativeDay,
 } from "./format";
 
 describe("parseLocal", () => {
@@ -125,5 +128,49 @@ describe("monthParts", () => {
 
   it.each(["2026-13", "2026-00", "2026-1", "10/2026", ""])("gives null for %j", (text) => {
     expect(monthParts(text, "en")).toBeNull();
+  });
+});
+
+describe("dayPeriod", () => {
+  it.each([
+    ["2026-10-15T00:00", "morning"],
+    ["2026-10-15T05:50", "morning"],
+    ["2026-10-15T11:59:59", "morning"],
+    ["2026-10-15T12:00", "afternoon"],
+    ["2026-10-15T17:59", "afternoon"],
+    ["2026-10-15T18:00", "evening"],
+    ["2026-10-15T23:59", "evening"],
+  ] as const)("puts %j in the %s", (text, period) => {
+    expect(dayPeriod(text)).toBe(period);
+  });
+
+  it("gives null for a text it cannot read", () => {
+    expect(dayPeriod("06:00")).toBeNull();
+  });
+});
+
+describe("relativeDay", () => {
+  it.each([
+    ["2026-10-14T06:00:07", "2026-10-15", "yesterday"],
+    ["2026-10-15", "2026-10-15", "today"],
+    ["2026-10-16T06:00", "2026-10-15", "tomorrow"],
+    ["2026-11-01", "2026-10-31", "tomorrow"],
+    ["2026-12-31T23:59", "2027-01-01", "yesterday"],
+    ["2026-10-17", "2026-10-15", null],
+    ["2026-10-13", "2026-10-15", null],
+  ] as const)("names %j from %j as %j", (text, today, expected) => {
+    expect(relativeDay(text, today)).toBe(expected);
+  });
+
+  it("gives null for a text it cannot read", () => {
+    expect(relativeDay("tomorrow", "2026-10-15")).toBeNull();
+    expect(relativeDay("2026-10-15", "today")).toBeNull();
+  });
+});
+
+describe("localToday", () => {
+  it("writes this machine's date with leading zeros", () => {
+    expect(localToday(new Date(2026, 9, 5, 23, 59))).toBe("2026-10-05");
+    expect(localToday(new Date(2027, 0, 1, 0, 0))).toBe("2027-01-01");
   });
 });

@@ -136,3 +136,45 @@ export function monthParts(text: string, language: Language): MonthParts | null 
   );
   return { month, year, name };
 }
+
+/** The part of the day a time falls in; its word is `format.period.*` in the language files. */
+export type DayPeriod = "morning" | "afternoon" | "evening";
+
+/** Return the part of the day of a date-time: before 12:00, before 18:00, or later. */
+export function dayPeriod(text: string): DayPeriod | null {
+  const time = parseLocal(text);
+  if (time === null) {
+    return null;
+  }
+  if (time.hour < 12) {
+    return "morning";
+  }
+  return time.hour < 18 ? "afternoon" : "evening";
+}
+
+/** A day named by its distance from today. */
+export type RelativeDay = "yesterday" | "today" | "tomorrow";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Name the day of `text` from `today` (both as the backend writes them), or null. */
+export function relativeDay(text: string, today: string): RelativeDay | null {
+  const time = parseLocal(text);
+  const base = parseLocal(today);
+  if (time === null || base === null) {
+    return null;
+  }
+  const days = Math.round((utcDay(time).getTime() - utcDay(base).getTime()) / DAY_MS);
+  if (days === -1) {
+    return "yesterday";
+  }
+  if (days === 0) {
+    return "today";
+  }
+  return days === 1 ? "tomorrow" : null;
+}
+
+/** Return today's date on this machine, in the backend's form ("2026-10-15"). */
+export function localToday(now: Date = new Date()): string {
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
