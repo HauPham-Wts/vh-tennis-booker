@@ -3,6 +3,8 @@
     "skipToContent": "Bỏ qua tới nội dung"
   },
   "common": {
+    "loading": "Đang tải…",
+    "retry": "Thử lại",
     "on": "Đang bật",
     "off": "Đang tắt"
   },

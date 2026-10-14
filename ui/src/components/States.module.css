@@ -1,0 +1,15 @@
+.quiet {
+  color: var(--color-muted);
+}
+
+.error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+}
+
+.message {
+  color: var(--color-failed);
+  font-weight: var(--weight-semibold);
+}

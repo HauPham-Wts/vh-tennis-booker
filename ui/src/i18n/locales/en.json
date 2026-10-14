@@ -3,6 +3,8 @@
     "skipToContent": "Skip to content"
   },
   "common": {
+    "loading": "Loading…",
+    "retry": "Try again",
     "on": "On",
     "off": "Off"
   },
