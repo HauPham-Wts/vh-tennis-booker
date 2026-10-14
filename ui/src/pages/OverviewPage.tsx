@@ -4,6 +4,7 @@ import { PageHeader } from "../components/PageHeader";
 import { QueryView } from "../components/QueryView";
 import { LastBooking } from "./overview/LastBooking";
 import { NextBooking } from "./overview/NextBooking";
+import { RunningBanner } from "./overview/RunningBanner";
 import { StatusLine } from "./overview/StatusLine";
 
 /** Show whether the next booking is ready, the next booking and the last one. */
@@ -16,8 +17,9 @@ export function OverviewPage() {
         {overview.data && <StatusLine overview={overview.data} />}
       </PageHeader>
       <QueryView query={overview}>
-        {({ schedule }) => (
+        {({ schedule, running }) => (
           <>
+            {running !== null && <RunningBanner running={running} startAt={schedule.start_at} />}
             <NextBooking schedule={schedule} />
             <LastBooking />
           </>

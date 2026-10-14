@@ -199,3 +199,28 @@ describe("OverviewPage last booking", () => {
     expect(screen.queryByRole("region", { name: /Lần đặt gần nhất/ })).not.toBeInTheDocument();
   });
 });
+
+describe("OverviewPage while a run goes on", () => {
+  it.each([
+    ["scheduled", "Đang đặt sân theo hẹn giờ 06:00"],
+    ["dry_run", "Đang chạy thử"],
+    ["manual", "Đang đặt sân (chạy thủ công)"],
+    ["setup", "Đang thiết lập tự động"],
+  ])("names a %s run in a banner and says what waits for it", async (trigger, words) => {
+    renderOverview(overview({ running: { trigger, pid: 4242, since: "05:50:02" } }));
+
+    // The stub's "Đang tải…" is a status too: find the banner by its words.
+    const locked = await screen.findByText(
+      "Chạy thử và Thiết lập tự động tạm khóa cho tới khi xong",
+    );
+    const banner = locked.closest('[role="status"]');
+    expect(banner).toHaveTextContent(words);
+  });
+
+  it("shows no banner while nothing runs", async () => {
+    renderOverview(overview());
+
+    await screen.findByRole("region", { name: "Lần đặt tiếp theo" });
+    expect(screen.queryByText(/tạm khóa/)).not.toBeInTheDocument();
+  });
+});

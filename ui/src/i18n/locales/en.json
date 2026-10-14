@@ -52,6 +52,25 @@
         "meta": "{{day}} · court {{court}}",
         "done": "Booked at {{time}} · took {{seconds}}",
         "history": "See history →"
+      },
+      "live": {
+        "banner": {
+          "scheduled": "Booking on schedule at {{start}}",
+          "dry_run": "Dry run in progress",
+          "manual": "Booking (started by hand)",
+          "setup": "Auto setup in progress",
+          "other": "A run is in progress"
+        },
+        "locked": "Dry run and auto setup are locked until it ends",
+        "preparing": "Getting ready",
+        "booking": "Booking for {{day}} · court {{court}}",
+        "running": "running",
+        "waiting": "{{slot}} · waiting for its turn",
+        "progress": "Progress",
+        "booked": "slots booked",
+        "through": "slots through",
+        "follow": "Follow in the activity log →",
+        "note": "You can close this window. The booking goes on, and its result will be in History when you open the app again."
       }
     },
     "schedule": {
