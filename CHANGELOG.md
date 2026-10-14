@@ -15,6 +15,8 @@ uses [Semantic Versioning](https://semver.org/).
   `npm run typecheck` checks the types without building.
 - CI type-checks, lints, tests and builds the UI in its own job; Dependabot updates the
   UI's npm packages monthly.
+- The UI ships its fonts (Bricolage Grotesque, IBM Plex Mono, with Vietnamese) instead of
+  loading them from the internet, so it works offline.
 
 ## [0.5.3] - 2026-10-14
 
