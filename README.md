@@ -191,7 +191,15 @@ src/court_booker/
 ├── geometry.py         pure helpers for bounds and dates
 ├── logging_setup.py    console and file logging with step timing
 └── api/                FastAPI backend: app, errors, one module per route group
-ui/                     the app's screens: React, TypeScript, Vite (in progress)
+ui/src/                 the app's screens: React, TypeScript, Vite (in progress)
+├── main.tsx            entry: languages, styles, router
+├── paths.ts            the address of every screen
+├── routes.tsx          addresses mapped to pages
+├── App.tsx             layout: skip link, header, main area
+├── components/         header, navigation, language switch, window title
+├── pages/              one component per screen
+├── i18n/               i18next setup, Vietnamese and English texts
+└── styles/             fonts, design tokens, base styles
 tools/inspect_screen.py UI hierarchy dump
 tools/setup_runner.py   runner folder for the daily task on a development machine
 tests/                  unit tests with fake devices, adb, clocks and schtasks

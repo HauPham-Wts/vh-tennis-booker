@@ -259,8 +259,28 @@ out of scope.
   ESLint 10 flat config (`recommendedTypeChecked`, react-hooks, react-refresh, then
   eslint-config-prettier); Prettier at 100 columns. Tests sit beside the code
   (`*.test.tsx`), run in jsdom with Vitest globals off, so `src/test/setup.ts` adds the
-  jest-dom matchers and calls `cleanup` after each test. `App` is a placeholder until the
-  screens of part 4.
+  jest-dom matchers, calls `cleanup` and resets the language and `localStorage` after each
+  test. React Router is held at 7 (8 needs Node 22.22).
+- `ui/src` layout: `main.tsx` loads `i18n`, the styles (`styles/fonts.css`: Fontsource
+  Bricolage Grotesque variable with `opsz` and IBM Plex Mono 400/500/600, offline, with
+  Vietnamese, as `--font-sans`/`--font-mono`; `styles/tokens.css`: role-named tokens;
+  `styles/base.css`: page defaults, `:focus-visible` ring, reduced motion,
+  `.visually-hidden`) and `createBrowserRouter(routes)`. `paths.ts` names every address
+  once (English paths); `routes.tsx` maps them to `pages/*` under `App` (errorElement
+  `ErrorPage`, `*` `NotFoundPage`, `/settings` redirects to `/settings/booking`) and is
+  shared by the tests through `createMemoryRouter`. `App` lays out the skip link,
+  `components/SiteHeader` (brand, `MainNav` with `NavLink` `aria-current="page"`, hidden on
+  `/welcome` via `useMatch`, and `LanguageSwitch`) and `<main id="main">`. Pages set the
+  window title with `components/PageTitle` (React 19 hoists `<title>` above the static one
+  of `index.html`). Styles are CSS Modules on the tokens. `tokens.test.ts` reads
+  `tokens.css?raw` (Vitest `css.include` lists it, as Vitest blanks CSS imports) and holds
+  text pairs to 4.5:1 and markers to 3:1; `--color-failed` is `#b53c0b`, darker than the
+  mockups' `#c2410c` (4.14:1 on the ground).
+- `ui/src/i18n`: i18next with `locales/vi.json` and `en.json` (same keys, checked by
+  `locales.test.ts`), Vietnamese default and fallback; `i18next.d.ts` types the keys against
+  `vi.json`. The choice is stored under `court-booker.language` in `localStorage` (blocked
+  storage falls back to Vietnamese) and sets `<html lang>`. `LanguageSwitch` buttons are
+  named "VI Tiếng Việt" / "EN English" with `aria-label` (a hidden span lost the space).
 
 ## Booking flow (app screens)
 
@@ -331,7 +351,8 @@ the next round starts.
 ## Environment
 
 - Windows 11, Python 3.14, Git; Python `Scripts` folder not on PATH (use `python -m ...`)
-- Node.js 22.19 and npm 10.9 for `ui/` (the package asks for Node 22.12 or later)
+- Node.js 22.19 and npm 10.9 for `ui/` (the package asks for Node 22.12 or later); Node
+  22.22 or later would allow jsdom 30 and React Router 8, which Dependabot skips until then
 - Runner folder `D:\VH-Booker\runner` at `v0.5.3` since 2026-10-14 (`v0.4.0` from
   2026-10-12; `tools/setup_runner.py v0.4.0` moves it back); the task runs its
   `.venv\Scripts\pythonw.exe` with `Start In` the development folder (src layout, so the
@@ -432,9 +453,12 @@ Check the history of the first real 06:00 run on v0.5.3 (2026-10-15), and whethe
 reaches the calendar faster after the warm-up than the 1.3-2.0 s of 10-14/10.
 Meanwhile 0.6.0 (UI) continues on `release/0.6.0`, following the 0.6.0 parts of
 `docs/specs/0.5.0-desktop-app.md`: each part split into several branches (several small
-commits and one pull request each), each branch merged before the next. Part 1 (the `ui/`
-project, PRs #62-#65 and `docs/ui-project`) is done; part 2 is next: `feat/ui-tokens`,
-`feat/ui-shell`, `feat/ui-i18n`. Write code only when the user asks for it. Keep reading the 06:00 logs; a booking fix ships as the next 0.5.x patch from `main`;
+commits and one pull request each). Part 1 (the `ui/` project, PRs #62-#66) is merged.
+Part 2 (foundations) was built as six stacked branches, each checked on its own, and the
+user opens their pull requests together, merged in order into `release/0.6.0`:
+`feat/ui-fonts`, `feat/ui-tokens`, `feat/ui-routes`, `feat/ui-shell`, `feat/ui-i18n`,
+`docs/ui-foundations`. Part 3 is next: API types from OpenAPI, the API client, the live
+feed. Write code only when the user asks for it. Keep reading the 06:00 logs; a booking fix ships as the next 0.5.x patch from `main`;
 the screen log of each 06:00 run shows what happened on every screen. The next-month case first occurs on 2026-10-30. Ruled out on 2026-10-09:
 opening the calendar before 06:00, two slots in one booking, pre-recorded coordinates. Ruled
 out on 2026-10-10: health check, fallback slots and courts, Telegram setup, run history file
