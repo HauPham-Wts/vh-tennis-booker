@@ -163,7 +163,7 @@ category `setup` without a run. `court-booker setup` prints the checks; `--auto`
 |---|---|---|
 | `GET /api/status` | `status.py` | The Overview in one call (model `Overview`): `version`, `running` (lock holder, or the dry run the backend just started), `schedule`, `last_run`, `setup` (`last_setup`: time and items left by the last auto setup; empty until it ran). Never calls MuMu |
 | `GET /api/runs`, `GET /api/runs/{id}` | `history.py` | Runs newest first (`month`, `trigger`, `before`, `limit`); one run with slots, steps and log lines (404 `not_found` via `api.errors.NotFoundError`) |
-| `GET /api/events` | `history.py` | Activity steps newest first (`category`, `before`, `limit`) |
+| `GET /api/events` | `history.py` | Activity steps newest first (`category`, `before`, `limit`). A `Step`'s `kind` is the `EventKind` enum and its `category` the `Category` literal in the schema; a row with a kind the backend does not know fails the response, so the engine and the backend must be the same version or the backend newer |
 | `GET`/`PUT /api/settings` | `settings.py` | `settings_of(config)` (TOML keys, labels with `continue`, without the `HIDDEN` Telegram keys). `PUT` takes the full `Settings` (extra keys refused), merges it, runs `validate_config` (422 `invalid_settings` with `problems`, file untouched), and only when something changed saves it (comments are lost) and records `settings_saved` with the changed keys |
 | `GET /api/setup`, `POST /api/setup/auto` | `setup.py` | The checks as `SetupItem`s (item, status, detail); auto setup with `{"restart_mumu": bool}` (400 in the quiet time, 409 while a run holds the lock) |
 | `GET`/`PUT /api/schedule` | `schedule.py` | `enabled` (`schedule.installed`), wake and start time, `next_start`, `next_play_date`, `dry_run_passed`. `PUT {"enabled": bool}` installs the task again on every switch-on (needs a passed dry run: 409 `dry_run_required`; wake before start: 400) or removes it, recording `schedule_enabled` / `schedule_disabled` (category `schedule`). `ScheduleError` answers 503 `schedule` |
@@ -224,6 +224,13 @@ would move the task away from the runner folder.
   normal case), `PageHeader` (h1, lead, controls, window title), and `Loading`,
   `ErrorNotice`, `EmptyState`. `QueryView` shows a read's data first, so data already shown
   stays when a later refresh fails, then its error with a retry, then loading.
+- `src/steps.ts`: `stepMessage(t, f, step)` gives a step its words (`steps.*` in the
+  language files), a `tone` (`booked`, `failed`, `moment` for the start time, `plain`), an
+  `extra` (the time a slot took) and a `detail` (the engine's English reason or error,
+  for the technical details). `MESSAGES` is a `Record<StepKind, ...>`, so a new kind fails
+  the type check; a missing value gives a sentence without it (`.plain` keys), and an
+  unknown kind at run time reads "Bước khác (kind)". Trigger, setup item and status names
+  are `triggers.*` and `setup.items.*`/`setup.statuses.*`, shared with the screens.
 
 ### Backend connection (`ui/src/api`)
 

@@ -52,12 +52,17 @@ uses [Semantic Versioning](https://semver.org/).
   that writes out its state, pill filters, paper cards, a ticket with a torn-off stub, the
   "ĐÃ ĐẶT" stamp, a dotted ledger table that scrolls when narrow, small capital labels, the
   page header, and loading, error (with "Thử lại") and empty states.
+- Every step of a run or of the app has plain words in Vietnamese and English ("Đặt được
+  15:00–16:00", "Chạy thử tới bước xác nhận: 10:00–11:00"), with a ✓/✕ tone, the time a
+  slot took and the engine's own reason kept for the technical details.
 
 ### Changed
 - The OpenAPI schema describes every error response as a `Problem` (also 422, which it
   listed as FastAPI's own validation error) and names the `/api/status` model `Overview`.
 - The UI keeps a read fresh for 30 seconds, so returning to the window no longer reads
   everything again; the live feed still refreshes what each step changes at once.
+- The OpenAPI schema lists every step kind (`EventKind`) and category, so a step the UI
+  has no words for fails its type check.
 
 ## [0.5.3] - 2026-10-14
 
