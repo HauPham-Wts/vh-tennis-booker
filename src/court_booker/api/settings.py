@@ -39,6 +39,7 @@ class LabelSettings(BaseModel):
     next_month: str
     agree: str
     fully_booked: str
+    notice: str
 
 
 class Settings(BaseModel):

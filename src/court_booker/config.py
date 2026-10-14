@@ -42,6 +42,8 @@ class Labels:
     next_month: str = "Tháng sau"
     agree: str = "Tôi đã hiểu"
     fully_booked: str = "Hết chỗ"
+    notice: str = "Thông báo"
+    """Title of the app's message dialogs, e.g. the monthly quota or a refused booking."""
 
 
 @dataclass
