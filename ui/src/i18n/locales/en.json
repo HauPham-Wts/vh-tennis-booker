@@ -55,6 +55,15 @@
       "reload": "Reopen the overview"
     }
   },
+  "format": {
+    "seconds": "{{value}} s",
+    "month": "{{name}} {{year}}",
+    "period": {
+      "morning": "morning",
+      "afternoon": "afternoon",
+      "evening": "evening"
+    }
+  },
   "errors": {
     "not_found": "This record does not exist.",
     "lock_held": "Another run is in progress. Try again when it has finished.",
