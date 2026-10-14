@@ -252,16 +252,37 @@ def test_book_reports_each_step_without_extra_commands():
     assert booker.commands == 16
 
 
-def test_screen_after_confirming_is_logged_without_extra_commands(caplog):
+def test_every_new_screen_is_logged_once(caplog):
     caplog.set_level(logging.DEBUG, logger="court_booker")
-    booker = Booker(booking_app(), Config())
+    app = booking_app(slot_delay=5)  # the calendar is read six times before slots show
+    booker = Booker(app, Config())
 
     booker.book("11:00 - 12:00", TARGET)
 
+    screens = [r.getMessage() for r in caplog.records if r.getMessage().startswith("Screen (")]
+    # utilities, calendar, slots, courts, details, confirmation before and after the tick,
+    # ticket; the slot list after the slot tap reads the same and is not logged again.
+    assert len(screens) == len(set(screens)) == 8
+    assert screens[0].startswith("Screen (1 elements):\n  [35,300][505,360] clickable 'Sân")
+    assert screens[-1] == "Screen (1 elements):\n  [35,200][505,260] 'Đăng ký thành công'"
+    assert booker.commands == app.ops.count("dump") + len(app.taps)
+
+
+def test_taps_and_back_presses_are_logged(caplog):
+    caplog.set_level(logging.DEBUG, logger="court_booker")
+    app = booking_app()
+    booker = Booker(app, Config())
+
+    booker.book("11:00 - 12:00", TARGET)
+    booker.return_to_utilities()
+
     messages = [record.getMessage() for record in caplog.records]
-    start = messages.index("Screen after confirming (1 elements):")
-    assert messages[start + 1] == "  [35,200][505,260] 'Đăng ký thành công'"
-    assert booker.commands == 16
+    assert "Tap 'Sân Tennis' at (270, 330)" in messages
+    assert "Tap (57, 1345)" in messages  # the unlabelled consent checkbox
+    assert messages[-2:] == [
+        "Press Back",
+        "Screen (1 elements):\n  [35,300][505,360] clickable 'Sân Tennis'",
+    ]
 
 
 def test_book_waits_for_slow_slot_list():

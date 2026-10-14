@@ -6,6 +6,15 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- The debug log lists every new screen a run reads, as one entry each and without extra
+  device commands, and every tap (with the element's label and position), Back press and
+  swipe. Any failure can then be followed screen by screen; a one-slot run writes about
+  400 log lines.
+
+### Changed
+- The screen after a confirmation is part of that screen log instead of its own entry.
+
 ## [0.5.1] - 2026-10-14
 
 ### Fixed

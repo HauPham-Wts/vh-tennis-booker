@@ -77,11 +77,11 @@ def test_failed_round_logs_the_last_screen(monkeypatch, caplog):
 
     messages = [record.getMessage() for record in caplog.records]
     error = messages.index("Slot 18:00 - 19:00 is fully booked")
-    assert messages[error + 1 : error + 3] == [
-        "Last screen read (1 elements):",
-        "  [38,1178][263,1262] clickable '18:00 - 19:00\\nHết chỗ'",
-    ]
-    assert messages.count("Last screen read (1 elements):") == 1
+    last_screen = (
+        "Last screen read (1 elements):\n  [38,1178][263,1262] clickable '18:00 - 19:00\\nHết chỗ'"
+    )
+    assert messages[error + 1] == last_screen
+    assert messages.count(last_screen) == 1
 
 
 def test_failed_preparation_logs_the_last_screen(monkeypatch, caplog):
