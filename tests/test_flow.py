@@ -11,6 +11,7 @@ from court_booker.config import Config
 from court_booker.errors import (
     AppNotReadyError,
     BookingNotOpenError,
+    BookingRejectedError,
     ElementNotFoundError,
     SlotUnavailableError,
 )
@@ -275,6 +276,26 @@ def test_book_taps_venue_screen_when_shown():
 
     assert app.taps[4] == "Origami Grand Park"
     assert app.screen == "ticket"
+
+
+def refusing_app():
+    """Answer "Xác nhận" with a notice dialog, as when someone else took the slot first."""
+    app = booking_app()
+    app.screens["notice"] = NOTICE
+    app.taps_to[("confirm_ticked", "Xác nhận")] = "notice"
+    app.backs_to["notice"] = "confirm_ticked"
+    return app
+
+
+def test_notice_after_confirming_fails_the_round_with_its_message():
+    app = refusing_app()
+    booker = Booker(app, Config())
+
+    with pytest.raises(BookingRejectedError, match=f"refused the booking: {QUOTA_MESSAGE}"):
+        booker.book("11:00 - 12:00", TARGET)
+
+    assert app.taps == FULL_ROUND
+    assert booker.commands == 16
 
 
 def test_fully_booked_court_fails_the_round():

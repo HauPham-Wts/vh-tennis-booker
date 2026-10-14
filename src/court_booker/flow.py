@@ -20,6 +20,7 @@ from court_booker.config import Config
 from court_booker.errors import (
     AppNotReadyError,
     BookingNotOpenError,
+    BookingRejectedError,
     ElementNotFoundError,
     NavigationError,
     SlotUnavailableError,
@@ -343,7 +344,8 @@ class Booker:
         """Tick the consent checkbox at ``point`` and submit the booking.
 
         The confirm button only becomes clickable once the box is ticked, which
-        verifies the tick.
+        verifies the tick. A notice dialog, such as a slot taken a moment earlier by
+        someone else, also hides the confirmation page, so it fails the round.
         """
         deadline = time.monotonic() + self.config.timeout
         while True:
@@ -361,8 +363,12 @@ class Booker:
             logger.info("Dry run: skipping final confirmation")
             return
         self.tap(found[0])
-        if self.wait_for(self._absent(self.confirm_page), self.config.timeout) is None:
+        outcome = self.wait_for(self._after_confirm, self.config.timeout)
+        if outcome is None:
             raise NavigationError("Confirmation submitted but the ticket screen did not appear")
+        message = self.notice_text(outcome[1])
+        if message is not None:
+            raise BookingRejectedError(f"The app refused the booking: {message or 'no message'}")
         logger.info("Booking confirmed")
 
     # Dialogs ----------------------------------------------------------------
@@ -412,8 +418,11 @@ class Booker:
     def _either(self, first: Match, second: Match) -> Finder[Node]:
         return lambda screen: screen.find(first) or screen.find(second)
 
-    def _absent(self, match: Match) -> Finder[bool]:
-        return lambda screen: True if screen.find(match) is None else None
+    def _after_confirm(self, screen: Screen) -> bool | None:
+        """Return ``True`` once the confirmation page is gone or a notice covers it."""
+        if screen.find(self.confirm_page) is None or self.notice_text(screen) is not None:
+            return True
+        return None
 
     def _find_calendar(self, screen: Screen) -> Node | None:
         return (
