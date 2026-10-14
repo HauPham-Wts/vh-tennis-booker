@@ -54,5 +54,19 @@
       "title": "Something went wrong",
       "reload": "Reopen the overview"
     }
+  },
+  "errors": {
+    "not_found": "This record does not exist.",
+    "lock_held": "Another run is in progress. Try again when it has finished.",
+    "dry_run_required": "A dry run must pass once before the schedule can be switched on.",
+    "bad_request": "This cannot be done right now.",
+    "device": "MuMu cannot be reached.",
+    "app_not_ready": "The Vinhomes app is not ready. It may have been logged out.",
+    "schedule": "Windows Task Scheduler could not be read or changed.",
+    "engine": "Court Booker hit an error.",
+    "invalid_settings": "Some settings are not valid.",
+    "invalid_request": "The request has values that are not valid.",
+    "unreachable": "Court Booker's background service cannot be reached.",
+    "http": "The background service gave an unexpected answer."
   }
 }
