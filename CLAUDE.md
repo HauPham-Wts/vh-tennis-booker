@@ -37,7 +37,7 @@ real bookings with it on (verified 2026-10-08). Bypassing any app check is out o
 will not be done. On-device automation (an Android app using AccessibilityService) is also
 out of scope.
 
-## Current state: 0.5.2 released, the 06:00 task still on 0.4.0
+## Current state: 0.5.3 released, the 06:00 task still on 0.4.0
 
 - Repo: `github.com/servedbyhau/vh-tennis-booker` (private), local path `D:\VH-Booker\vh-tennis-booker`
 - Python package `court_booker` (src layout), CLI `court-booker` / `python -m court_booker`
@@ -64,8 +64,10 @@ out of scope.
 - 0.5.1 (2026-10-14) fails a round the app refuses after "Xác nhận" (notice dialog), which
   0.4.0 logged as booked that morning. 0.5.2 (same day) logs every screen, tap and Back
   press; a real booking with it (16/10 10:00-11:00, cancelled by the user afterwards)
-  logged all 24 screens up to the ticket. Then `tools/setup_runner.py v0.5.2` moves the
-  runner, and the first real 06:00 run on it is the 0.5.0 spec's last check (history rows).
+  logged all 24 screens up to the ticket. 0.5.3 (same day) waits on the home screen and
+  opens the utilities list 60 s before the start; a timed real booking (16/10 11:00-12:00)
+  passed. Then `tools/setup_runner.py v0.5.3` moves the runner, and the first real 06:00
+  run on it is the 0.5.0 spec's last check (history rows).
 - Test every change of the booking flow with a real booking to the ticket, timed with `--at`
   like the 06:00 run (the user cancels it afterwards), never with `--dry-run`: the test must
   follow the real process exactly (user's rule, 2026-10-14).
@@ -307,7 +309,7 @@ the next round starts.
 
 - Windows 11, Python 3.14, Git; Python `Scripts` folder not on PATH (use `python -m ...`)
 - Runner folder `D:\VH-Booker\runner` at `v0.4.0` since 2026-10-12 (kept there after the
-  0.5.x releases until v0.5.2 is tested); the task runs its
+  0.5.x releases until v0.5.3 is tested); the task runs its
   `.venv\Scripts\pythonw.exe` with `Start In` the development folder (src layout, so the
   development code is not imported)
 - MuMu Player (instance 0 serves ADB on `127.0.0.1:16384`); adb is found and connected
@@ -402,7 +404,9 @@ Telegram setup (the optional code stays) and no run history file until the app s
 
 ## Next step
 
-Move the runner to v0.5.2 (`python tools/setup_runner.py v0.5.2`; `v0.4.0` moves it back) and check the history of the first real 06:00 run on it.
+Move the runner to v0.5.3 (`python tools/setup_runner.py v0.5.3`; `v0.4.0` moves it back)
+and check the history of the first real 06:00 run on it, and whether round 1 reaches the
+calendar faster after the warm-up than the 1.3-2.0 s of 10-14/10.
 Then 0.6.0 (UI) on `release/0.6.0`, following the 0.6.0 parts of
 `docs/specs/0.5.0-desktop-app.md`: one part at a time (clear branches, several small
 commits, one pull request each), each part merged before the next. Write code only when the
