@@ -259,8 +259,10 @@ def test_screen_after_confirming_is_logged_without_extra_commands(caplog):
     booker.book("11:00 - 12:00", TARGET)
 
     messages = [record.getMessage() for record in caplog.records]
-    start = messages.index("Screen after confirming (1 elements):")
-    assert messages[start + 1] == "  [35,200][505,260] 'Đăng ký thành công'"
+    assert (
+        "Screen after confirming (1 elements):\n  [35,200][505,260] 'Đăng ký thành công'"
+        in messages
+    )
     assert booker.commands == 16
 
 

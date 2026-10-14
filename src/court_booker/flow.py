@@ -489,11 +489,12 @@ class Booker:
 
 
 def log_screen(screen: Screen, title: str) -> None:
-    """Log every labelled or clickable element of ``screen`` under ``title`` (debug)."""
+    """Log every labelled or clickable element of ``screen`` under ``title`` (debug).
+
+    One record per screen, so the history writes one row for it instead of one per element.
+    """
     lines = screen.describe()
-    logger.debug("%s (%d elements):", title, len(lines))
-    for line in lines:
-        logger.debug("  %s", line)
+    logger.debug("%s (%d elements):%s", title, len(lines), "".join(f"\n  {x}" for x in lines))
 
 
 def _area(node: Node) -> int:
