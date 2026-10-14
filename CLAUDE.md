@@ -35,7 +35,7 @@ real bookings with it on (verified 2026-10-08). Bypassing any app check is out o
 will not be done. On-device automation (an Android app using AccessibilityService) is also
 out of scope.
 
-## Current state: 0.5.1 released, the 06:00 task still on 0.4.0
+## Current state: 0.5.2 released, the 06:00 task still on 0.4.0
 
 - Repo: `github.com/servedbyhau/vh-tennis-booker` (private), local path `D:\VH-Booker\vh-tennis-booker`
 - Python package `court_booker` (src layout), CLI `court-booker` / `python -m court_booker`
@@ -60,9 +60,12 @@ out of scope.
   PRs) was released on 2026-10-13 with 287 tests: run events, data folder, history database,
   run lock, device setup, FastAPI backend. Dry runs on MuMu wrote correct history.
 - 0.5.1 (2026-10-14) fails a round the app refuses after "Xác nhận" (notice dialog), which
-  0.4.0 logged as booked that morning. The runner stays at v0.4.0 until a dry run of the
-  release passes; then `tools/setup_runner.py v0.5.1` moves it, and the first real 06:00
-  run on it is the 0.5.0 spec's last check (its history rows).
+  0.4.0 logged as booked that morning. 0.5.2 (same day) logs every screen, tap and Back
+  press; a real booking with it (16/10 10:00-11:00, cancelled by the user afterwards)
+  logged all 24 screens up to the ticket. Then `tools/setup_runner.py v0.5.2` moves the
+  runner, and the first real 06:00 run on it is the 0.5.0 spec's last check (history rows).
+- Test a release with a real booking to the ticket (the user cancels it afterwards), not
+  only a dry run, so the screens after "Xác nhận" are logged too.
 - The scheduled task has no `--dry-run`; it books for real. For a scheduled test, add
   `--dry-run` to the task arguments by hand (`schedule install` overwrites it).
 
@@ -294,7 +297,7 @@ the next round starts.
 
 - Windows 11, Python 3.14, Git; Python `Scripts` folder not on PATH (use `python -m ...`)
 - Runner folder `D:\VH-Booker\runner` at `v0.4.0` since 2026-10-12 (kept there after the
-  0.5.x releases until v0.5.1 passes a dry run); the task runs its
+  0.5.x releases until v0.5.2 is tested); the task runs its
   `.venv\Scripts\pythonw.exe` with `Start In` the development folder (src layout, so the
   development code is not imported)
 - MuMu Player (instance 0 serves ADB on `127.0.0.1:16384`); adb is found and connected
@@ -386,13 +389,12 @@ Telegram setup (the optional code stays) and no run history file until the app s
 
 ## Next step
 
-First pass a dry run of v0.5.1 on MuMu, move the runner to it (`python tools/setup_runner.py
-v0.5.1`; `v0.4.0` moves it back) and check the history of the first real 06:00 run on it.
+Move the runner to v0.5.2 (`python tools/setup_runner.py v0.5.2`; `v0.4.0` moves it back) and check the history of the first real 06:00 run on it.
 Then 0.6.0 (UI) on `release/0.6.0`, following the 0.6.0 parts of
 `docs/specs/0.5.0-desktop-app.md`: one part at a time (clear branches, several small
 commits, one pull request each), each part merged before the next. Write code only when the
 user asks for it. Keep reading the 06:00 logs; a booking fix ships as the next 0.5.x patch from `main`;
-check each 06:00 log for "Screen after confirming" to learn the ticket screen's labels. The next-month case first occurs on 2026-10-30. Ruled out on 2026-10-09:
+the screen log of each 06:00 run shows what happened on every screen. The next-month case first occurs on 2026-10-30. Ruled out on 2026-10-09:
 opening the calendar before 06:00, two slots in one booking, pre-recorded coordinates. Ruled
 out on 2026-10-10: health check, fallback slots and courts, Telegram setup, run history file
 (history now comes with the app's database).
