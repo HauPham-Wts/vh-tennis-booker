@@ -41,6 +41,10 @@ uses [Semantic Versioning](https://semver.org/).
 - The screens share backend data through a TanStack Query cache: one hook per kind of
   data and per action. Reads retry only while the backend is out of reach; actions
   never repeat on their own and refresh the data they change.
+- The UI follows the live feed: one connection for the whole app brings each new step as
+  runs write it and refreshes the data it changes. After a drop, or a socket that never
+  opens, it reconnects and resumes after the last step seen, so no step is lost or
+  repeated (checked with the backend stopped and restarted).
 
 ### Changed
 - The OpenAPI schema describes every error response as a `Problem` (also 422, which it
