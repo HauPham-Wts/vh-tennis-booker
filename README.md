@@ -191,6 +191,7 @@ src/court_booker/
 ├── geometry.py         pure helpers for bounds and dates
 ├── logging_setup.py    console and file logging with step timing
 └── api/                FastAPI backend: app, errors, one module per route group
+ui/                     the app's screens: React, TypeScript, Vite (in progress)
 tools/inspect_screen.py UI hierarchy dump
 tools/setup_runner.py   runner folder for the daily task on a development machine
 tests/                  unit tests with fake devices, adb, clocks and schtasks
@@ -203,6 +204,15 @@ docs/specs/             one design spec per version
 pip install -e ".[dev,app]"
 pre-commit install
 pytest
+```
+
+The desktop app's screens are being built in `ui/` and need Node.js 22.12 or later:
+
+```bash
+cd ui
+npm ci
+npm run dev    # http://localhost:5173
+npm test
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions and the release process. On a
