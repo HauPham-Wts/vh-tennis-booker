@@ -206,7 +206,14 @@ would move the task away from the runner folder.
   against `vi.json`. The choice is stored under `court-booker.language` in `localStorage`
   (blocked storage falls back to Vietnamese) and sets `<html lang>`. `LanguageSwitch`
   buttons are named "VI Tiếng Việt" / "EN English" with `aria-label` (a hidden span lost
-  the space).
+  the space). Language files use the same `{{placeholders}}` in both languages and no
+  i18next plurals (Vietnamese has only `_other`, so the keys would differ).
+- `src/format.ts`: pure formatting of backend values. `parseLocal` reads the backend's
+  local times (no zone) from the text, never through `new Date(text)`, which reads a date
+  alone as UTC; weekday and month names come from `Intl` on a UTC date, and Vietnamese
+  day/month is built by hand (`Intl` writes "14-10"). Unreadable values are returned as
+  they are. `useFormat()` binds the functions to the current language and adds the words
+  of `format.*` in the language files; `Formatter` is its type.
 
 ### Backend connection (`ui/src/api`)
 

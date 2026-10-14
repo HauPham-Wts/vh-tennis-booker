@@ -55,6 +55,15 @@
       "reload": "Mở lại Tổng quan"
     }
   },
+  "format": {
+    "seconds": "{{value}} giây",
+    "month": "{{name}}/{{year}}",
+    "period": {
+      "morning": "sáng",
+      "afternoon": "chiều",
+      "evening": "tối"
+    }
+  },
   "errors": {
     "not_found": "Không tìm thấy dữ liệu này.",
     "lock_held": "Đang có một lần chạy khác. Hãy chờ nó xong rồi thử lại.",
