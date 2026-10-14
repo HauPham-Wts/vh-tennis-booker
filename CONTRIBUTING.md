@@ -11,6 +11,14 @@ pre-commit install
 extra (FastAPI, Uvicorn) is the desktop app's backend; without it the backend tests are
 skipped. The runner folder installs the package without it.
 
+The app's screens live in `ui/` (React, TypeScript, Vite) and need Node.js 22.12 or later:
+
+```bash
+cd ui
+npm ci            # install the exact versions from package-lock.json
+npm run dev       # development server with hot reload
+```
+
 ## Before opening a pull request
 
 ```bash
@@ -20,6 +28,16 @@ pytest
 ```
 
 If the booking flow changed, also run `court-booker --dry-run --verbose` against the emulator.
+
+If the UI changed, run its checks in `ui/` (CI runs the same scripts):
+
+```bash
+npm run typecheck
+npm run lint
+npm run format       # or format:check to only report
+npm test
+npm run build
+```
 
 ## Conventions
 
