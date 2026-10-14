@@ -21,6 +21,9 @@ uses [Semantic Versioning](https://semver.org/).
   styles with a visible keyboard focus ring and reduced motion when Windows asks for it.
   A test holds every text color pair to WCAG AA contrast; the "failed" color is a little
   darker than in the mockups to pass it.
+- Every screen has its own address (`/`, `/schedule`, `/history`, `/activity`,
+  `/settings/booking`, `/settings/device`, `/guide`, `/welcome`) and names the window; an
+  unknown address or a screen that fails shows a page with a way back.
 
 ## [0.5.3] - 2026-10-14
 
