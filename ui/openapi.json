@@ -53,7 +53,7 @@
           "history"
         ],
         "summary": "List Runs",
-        "description": "List runs newest first; ``month`` filters on the play date, ``before`` pages back.",
+        "description": "List runs newest first.\n\n``month`` filters on the play date, ``dry_run`` keeps dry runs or real bookings,\n``before`` pages back.",
         "operationId": "list_runs_api_runs_get",
         "parameters": [
           {
@@ -92,6 +92,22 @@
                 }
               ],
               "title": "Trigger"
+            }
+          },
+          {
+            "name": "dry_run",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Dry Run"
             }
           },
           {

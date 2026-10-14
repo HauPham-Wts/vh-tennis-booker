@@ -98,11 +98,18 @@ def list_runs(
     db: HistoryDb,
     month: Annotated[Optional[str], Query(pattern=r"^\d{4}-\d{2}$")] = None,
     trigger: Optional[Trigger] = None,
+    dry_run: Optional[bool] = None,
     before: Optional[int] = None,
     limit: Annotated[int, Query(ge=1, le=500)] = history_read.DEFAULT_LIMIT,
 ) -> list[dict[str, Any]]:
-    """List runs newest first; ``month`` filters on the play date, ``before`` pages back."""
-    return history_read.list_runs(db, month=month, trigger=trigger, before=before, limit=limit)
+    """List runs newest first.
+
+    ``month`` filters on the play date, ``dry_run`` keeps dry runs or real bookings,
+    ``before`` pages back.
+    """
+    return history_read.list_runs(
+        db, month=month, trigger=trigger, dry_run=dry_run, before=before, limit=limit
+    )
 
 
 @router.get("/runs/{run_id}", response_model=RunDetail)

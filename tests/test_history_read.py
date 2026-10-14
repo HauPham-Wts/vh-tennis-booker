@@ -99,6 +99,20 @@ def test_runs_filter_by_play_month_and_trigger(path, read, record_run):
     ] == [october]
 
 
+def test_runs_filter_by_dry_run_not_by_trigger(path, read, record_run):
+    real = record_run(path, slots=[("18:00 - 19:00", True)])
+    manual = record_run(path, trigger="manual")
+    dry = record_run(path, trigger="dry_run")
+    scheduled_test = record_run(path, dry_run=True)
+
+    def ids(**filters):
+        return [run["id"] for run in history_read.list_runs(read(), **filters)]
+
+    assert ids(dry_run=False) == [manual, real]
+    assert ids(dry_run=True) == [scheduled_test, dry]
+    assert ids() == [scheduled_test, dry, manual, real]
+
+
 def test_runs_page_back_from_a_run(path, read, record_run):
     ids = [record_run(path) for _ in range(5)]
 

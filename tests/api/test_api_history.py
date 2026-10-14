@@ -39,6 +39,17 @@ def test_runs_filter_and_page(client, database, record_run):
     assert [run["id"] for run in older.json()] == [ids[0]]
 
 
+def test_runs_filter_real_bookings_from_dry_runs(client, database, record_run):
+    real = record_run(database)
+    tested = record_run(database, dry_run=True)
+
+    def ids(flag):
+        return [run["id"] for run in client.get(f"/api/runs?dry_run={flag}").json()]
+
+    assert ids("false") == [real]
+    assert ids("true") == [tested]
+
+
 @pytest.mark.parametrize(
     "params", [{"month": "October"}, {"trigger": "nightly"}, {"limit": 0}, {"limit": 501}]
 )

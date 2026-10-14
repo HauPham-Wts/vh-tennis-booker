@@ -44,13 +44,15 @@ def list_runs(
     *,
     month: str | None = None,
     trigger: str | None = None,
+    dry_run: bool | None = None,
     before: int | None = None,
     limit: int = DEFAULT_LIMIT,
 ) -> list[dict[str, Any]]:
     """Return runs newest first, each with its slots and its count of booked and all slots.
 
-    ``month`` (``YYYY-MM``) keeps runs whose play date falls in it; ``before`` (a run id)
-    returns the page after the one that ended with that run.
+    ``month`` (``YYYY-MM``) keeps runs whose play date falls in it; ``dry_run`` keeps dry
+    runs or real ones (a scheduled run can be a dry run too); ``before`` (a run id) returns
+    the page after the one that ended with that run.
     """
     where, params = [], []
     if month:
@@ -59,6 +61,9 @@ def list_runs(
     if trigger:
         where.append("runs.trigger = ?")
         params.append(trigger)
+    if dry_run is not None:
+        where.append("runs.dry_run = ?")
+        params.append(int(dry_run))
     if before is not None:
         where.append("runs.id < ?")
         params.append(before)

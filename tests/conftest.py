@@ -17,13 +17,16 @@ def record_run():
 
     moments = (datetime(2026, 10, 13, 5, 50) + timedelta(seconds=step) for step in count())
 
-    def record(path, trigger="scheduled", date="2026-10-15", slots=(), status="ok"):
-        """Write a run with ``slots`` as ``(slot, booked)`` pairs; return its id."""
+    def record(path, trigger="scheduled", date="2026-10-15", slots=(), status="ok", dry_run=None):
+        """Write a run with ``slots`` as ``(slot, booked)`` pairs; return its id.
+
+        A run is a dry run when its trigger says so, unless ``dry_run`` is given (a
+        scheduled task can be tested with --dry-run).
+        """
         store = history.History(history.connect(path))
         report = Reporter(store, clock=lambda: next(moments))
-        report(
-            EventKind.RUN_STARTED, trigger=trigger, dry_run=trigger == "dry_run", version="0.5.0"
-        )
+        dry = trigger == "dry_run" if dry_run is None else dry_run
+        report(EventKind.RUN_STARTED, trigger=trigger, dry_run=dry, version="0.5.0")
         if date:
             report(EventKind.BOOKING_STARTED, date=date, court="S6 - Sân tennis", slots=[])
         for slot, booked in slots:
