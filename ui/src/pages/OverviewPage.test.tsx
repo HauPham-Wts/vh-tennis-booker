@@ -24,8 +24,14 @@ function overview(fields: Partial<Overview> = {}): Overview {
   };
 }
 
+/** The booking settings, as far as the Overview reads them. */
+const SETTINGS = { court: "S6 - Sân tennis", slots: ["15:00 - 16:00", "16:00 - 17:00"] };
+
 function renderOverview(status: Overview) {
-  return renderApp(paths.overview, { "GET /api/status": reply(status) });
+  return renderApp(paths.overview, {
+    "GET /api/status": reply(status),
+    "GET /api/settings": reply(SETTINGS),
+  });
 }
 
 /** The status line beside the title. */
@@ -83,5 +89,39 @@ describe("OverviewPage status line", () => {
     expect(link.parentElement).toHaveTextContent("Hẹn giờ đang tắt");
     expect(link).toHaveTextContent("Bật hẹn giờ");
     expect(link).toHaveAttribute("href", paths.schedule);
+  });
+});
+
+describe("OverviewPage next booking", () => {
+  it("shows the next start, when the PC wakes and what it will book", async () => {
+    renderOverview(overview());
+
+    const ticket = await screen.findByRole("region", { name: "Lần đặt tiếp theo" });
+    expect(within(ticket).getByText("06:00")).toBeInTheDocument();
+    expect(
+      within(ticket).getByText("sáng Thứ Sáu 16/10 · đánh thức máy lúc 05:50"),
+    ).toBeInTheDocument();
+    const facts = await within(ticket).findAllByRole("definition");
+    expect(facts.map((fact) => fact.textContent)).toEqual([
+      "Chủ Nhật 18/10",
+      "S6",
+      "15:00–16:00",
+      "16:00–17:00",
+    ]);
+  });
+
+  it("still says what would be booked with the schedule off, and how to turn it on", async () => {
+    const status = overview();
+    renderOverview({ ...status, schedule: { ...status.schedule, enabled: false } });
+
+    const ticket = await screen.findByRole("region", { name: "Hẹn giờ đang tắt" });
+    expect(
+      within(ticket).getByText(/Bật hẹn giờ để app tự đặt lúc 06:00 mỗi sáng/),
+    ).toBeInTheDocument();
+    expect(within(ticket).getByRole("link", { name: "Bật hẹn giờ" })).toHaveAttribute(
+      "href",
+      paths.schedule,
+    );
+    expect(await within(ticket).findByText("Chủ Nhật 18/10")).toBeInTheDocument();
   });
 });
