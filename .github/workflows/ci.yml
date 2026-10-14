@@ -44,6 +44,10 @@ jobs:
           cache: npm
           cache-dependency-path: ui/package-lock.json
       - run: npm ci
+      - name: Check the API types match openapi.json
+        run: |
+          npm run api:types
+          git diff --exit-code -- src/api/schema.d.ts
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check
