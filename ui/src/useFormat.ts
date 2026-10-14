@@ -11,6 +11,7 @@ import {
   formatSlot,
   formatTime,
   monthParts,
+  relativeDay,
   slotStart,
 } from "./format";
 import { DEFAULT_LANGUAGE, LANGUAGES, type Language } from "./i18n";
@@ -50,6 +51,21 @@ export function useFormat() {
       period: (text: string) => {
         const period = dayPeriod(text);
         return period === null ? "" : t(`format.period.${period}`);
+      },
+      /**
+       * When a time falls, from `today` ("2026-10-15"): "sáng nay", "sáng mai", "chiều hôm
+       * qua", else "sáng Thứ Hai 12/10"; a text it cannot read stays as it is.
+       */
+      when: (text: string, today: string) => {
+        const period = dayPeriod(text);
+        if (period === null) {
+          return text;
+        }
+        const words = t(`format.period.${period}`);
+        const near = relativeDay(text, today);
+        return near === null
+          ? t("format.when.other", { period: words, day: formatDay(text, language) })
+          : t(`format.when.${near}`, { period: words });
       },
       /** "18:00–19:00". */
       slot: formatSlot,

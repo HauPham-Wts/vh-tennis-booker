@@ -85,6 +85,12 @@
       "morning": "sáng",
       "afternoon": "chiều",
       "evening": "tối"
+    },
+    "when": {
+      "today": "{{period}} nay",
+      "tomorrow": "{{period}} mai",
+      "yesterday": "{{period}} hôm qua",
+      "other": "{{period}} {{day}}"
     }
   },
   "triggers": {

@@ -85,6 +85,12 @@
       "morning": "morning",
       "afternoon": "afternoon",
       "evening": "evening"
+    },
+    "when": {
+      "today": "this {{period}}",
+      "tomorrow": "tomorrow {{period}}",
+      "yesterday": "yesterday {{period}}",
+      "other": "{{day}} {{period}}"
     }
   },
   "triggers": {
