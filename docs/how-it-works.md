@@ -47,8 +47,10 @@ element is still shown, up to 5 times. Two seconds before the start time the uti
 list is read once more, so the first command at the start time is the tap itself.
 
 After confirming, the script waits until the confirmation screen is gone (the ticket
-screen is shown). From the ticket screen, one Back returns to the utilities list, where
-the next round begins.
+screen is shown). A notice dialog hides that screen as well, for example when someone else
+took the slot a moment earlier, so a "Thông báo" dialog with a button fails the round with
+its message instead. The screen after confirming is written to the debug log. From the
+ticket screen, one Back returns to the utilities list, where the next round begins.
 
 ## Lessons learned
 

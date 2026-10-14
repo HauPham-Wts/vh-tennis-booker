@@ -20,6 +20,7 @@ from court_booker.config import Config
 from court_booker.errors import (
     AppNotReadyError,
     BookingNotOpenError,
+    BookingRejectedError,
     ElementNotFoundError,
     NavigationError,
     SlotUnavailableError,
@@ -30,6 +31,7 @@ from court_booker.geometry import (
     DAY_PATTERN,
     day_pattern,
     is_checkbox_beside,
+    is_inside,
     month_index,
     month_index_from_label,
 )
@@ -87,6 +89,7 @@ class Booker:
         self.agree = Match(contains=labels.agree)
         self.confirm_button = Match(desc=labels.confirm, clickable=True)
         self.confirm_page = Match(desc=labels.confirm_page)
+        self.notice = Match(desc=labels.notice)
 
     # Public API -------------------------------------------------------------
 
@@ -206,6 +209,11 @@ class Booker:
                     screen, self.home, self.config.labels.home, self._finder(self.utility)
                 )
                 return screen
+            message = self.notice_text(screen)
+            if message is not None:
+                # A notice met here may belong to the round before, e.g. one shown after
+                # the confirmation page was already gone.
+                logger.warning("Closing a notice of the app: %s", message or "no message")
             self.press_back()
             found = self.wait_for(self._either(self.utility, self.home), _NEXT_SCREEN_TIMEOUT)
             screen = found[1] if found is not None else self.last_screen
@@ -341,7 +349,8 @@ class Booker:
         """Tick the consent checkbox at ``point`` and submit the booking.
 
         The confirm button only becomes clickable once the box is ticked, which
-        verifies the tick.
+        verifies the tick. A notice dialog, such as a slot taken a moment earlier by
+        someone else, also hides the confirmation page, so it fails the round.
         """
         deadline = time.monotonic() + self.config.timeout
         while True:
@@ -359,9 +368,36 @@ class Booker:
             logger.info("Dry run: skipping final confirmation")
             return
         self.tap(found[0])
-        if self.wait_for(self._absent(self.confirm_page), self.config.timeout) is None:
+        outcome = self.wait_for(self._after_confirm, self.config.timeout)
+        if outcome is None:
             raise NavigationError("Confirmation submitted but the ticket screen did not appear")
+        message = self.notice_text(outcome[1])
+        if message is not None:
+            raise BookingRejectedError(f"The app refused the booking: {message or 'no message'}")
         logger.info("Booking confirmed")
+        # The ticket screen's labels are not known yet; logging it lets a later version
+        # require the ticket instead of only the confirmation page being gone.
+        log_screen(outcome[1], "Screen after confirming")
+
+    # Dialogs ----------------------------------------------------------------
+
+    def notice_text(self, screen: Screen) -> str | None:
+        """Return the message of the app's notice dialog on ``screen``, or ``None``.
+
+        The dialog's title node spans the whole dialog and holds its buttons; a node
+        with the same label but no button inside, such as a tab, is not a dialog. The
+        message is every other label inside the title that is not a button.
+        """
+        for title in screen.find_all(self.notice):
+            inner = [node for node in screen.nodes if is_inside(node.box, title.box)]
+            if not any(node.clickable and node is not title for node in inner):
+                continue
+            return " ".join(
+                node.desc
+                for node in inner
+                if node.desc and not node.clickable and node.desc != title.desc
+            )
+        return None
 
     # Device commands --------------------------------------------------------
 
@@ -390,8 +426,11 @@ class Booker:
     def _either(self, first: Match, second: Match) -> Finder[Node]:
         return lambda screen: screen.find(first) or screen.find(second)
 
-    def _absent(self, match: Match) -> Finder[bool]:
-        return lambda screen: True if screen.find(match) is None else None
+    def _after_confirm(self, screen: Screen) -> bool | None:
+        """Return ``True`` once the confirmation page is gone or a notice covers it."""
+        if screen.find(self.confirm_page) is None or self.notice_text(screen) is not None:
+            return True
+        return None
 
     def _find_calendar(self, screen: Screen) -> Node | None:
         return (
@@ -447,6 +486,14 @@ class Booker:
             width, height = screen.size
             self.tap_point(width * x_ratio, height * y_ratio)
         logger.debug("Switched to %s month", "next" if forward else "previous")
+
+
+def log_screen(screen: Screen, title: str) -> None:
+    """Log every labelled or clickable element of ``screen`` under ``title`` (debug)."""
+    lines = screen.describe()
+    logger.debug("%s (%d elements):", title, len(lines))
+    for line in lines:
+        logger.debug("  %s", line)
 
 
 def _area(node: Node) -> int:

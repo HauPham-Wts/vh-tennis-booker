@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from court_booker.config import (
@@ -13,6 +15,11 @@ from court_booker.config import (
 def test_missing_file_uses_defaults(tmp_path):
     config = load_config(tmp_path / "missing.toml")
     assert config.labels.home == "Tiện ích"
+
+
+def test_example_config_lists_the_default_labels():
+    example = Path(__file__).resolve().parents[1] / "config.example.toml"
+    assert load_config(example).labels == Config().labels
 
 
 def test_file_overrides_defaults(tmp_path):

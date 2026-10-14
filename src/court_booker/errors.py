@@ -33,6 +33,10 @@ class BookingNotOpenError(BookingError):
     """The date or slot did not appear before the retry window ended."""
 
 
+class BookingRejectedError(BookingError):
+    """The app answered the confirmation with a notice instead of the ticket."""
+
+
 class RequestError(CourtBookerError):
     """Invalid arguments or configuration; nothing was sent to the device."""
 
