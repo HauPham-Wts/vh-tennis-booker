@@ -4,7 +4,12 @@
  * The backend sends local wall-clock times without a time zone (`2026-10-14T06:00:06.123`,
  * `2026-10-16`). `new Date(text)` would read a date alone as UTC and a date with a time in
  * this machine's zone, so the parts are read from the text instead and never shifted.
+ * A text that cannot be read is shown as it is: formatting never throws.
+ *
+ * Words around the values ("giây", "Tháng") live in the language files; `useFormat` adds
+ * them. Times use 24 hours in both languages, as the Vinhomes app shows its slots.
  */
+import type { Language } from "./i18n";
 
 /** A local date and time as the backend wrote it; the time is 0:00:00 for a date alone. */
 export interface LocalTime {
@@ -42,4 +47,92 @@ export function parseLocal(text: string): LocalTime | null {
     return null;
   }
   return parts;
+}
+
+function pad(value: number): string {
+  return String(value).padStart(2, "0");
+}
+
+/** The day of `time` at midnight UTC, so Intl names its weekday and month unshifted. */
+function utcDay(time: LocalTime): Date {
+  return new Date(Date.UTC(time.year, time.month - 1, time.day));
+}
+
+function weekday(time: LocalTime, language: Language): string {
+  // "Thứ Tư" in Vietnamese; "Wed" in English, where the date follows as "14 Oct".
+  const width = language === "vi" ? "long" : "short";
+  return new Intl.DateTimeFormat(language, { weekday: width, timeZone: "UTC" }).format(
+    utcDay(time),
+  );
+}
+
+function dayMonth(time: LocalTime, language: Language): string {
+  if (language === "vi") {
+    // Intl writes "14-10" in Vietnamese; the app and its users write 14/10.
+    return `${pad(time.day)}/${pad(time.month)}`;
+  }
+  const month = new Intl.DateTimeFormat("en", { month: "short", timeZone: "UTC" }).format(
+    utcDay(time),
+  );
+  // "14 Oct": "10/14" or "14/10" would each be misread by some English readers.
+  return `${time.day} ${month}`;
+}
+
+/** Format a date as day and month: "14/10", "14 Oct". */
+export function formatShortDate(text: string, language: Language): string {
+  const time = parseLocal(text);
+  return time === null ? text : dayMonth(time, language);
+}
+
+/** Format a date with its weekday: "Thứ Tư 14/10", "Wed 14 Oct". */
+export function formatDay(text: string, language: Language): string {
+  const time = parseLocal(text);
+  return time === null ? text : `${weekday(time, language)} ${dayMonth(time, language)}`;
+}
+
+/** Format a date-time as day, month and minutes: "12/10 06:00", "12 Oct 06:00". */
+export function formatDateTime(text: string, language: Language): string {
+  const time = parseLocal(text);
+  return time === null ? text : `${dayMonth(time, language)} ${pad(time.hour)}:${pad(time.minute)}`;
+}
+
+/** Format the time of a date-time to the second: "06:00:06". */
+export function formatClock(text: string): string {
+  const time = parseLocal(text);
+  return time === null ? text : `${pad(time.hour)}:${pad(time.minute)}:${pad(time.second)}`;
+}
+
+/** Format the time of a date-time to the minute: "06:00". */
+export function formatTime(text: string): string {
+  const time = parseLocal(text);
+  return time === null ? text : `${pad(time.hour)}:${pad(time.minute)}`;
+}
+
+/** Format a number with one decimal in the language's style: "7,0", "7.0". */
+export function formatDecimal(value: number, language: Language): string {
+  return new Intl.NumberFormat(language, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
+/** The parts of a month for its message: the number, the year and its name. */
+export interface MonthParts {
+  month: number;
+  year: number;
+  name: string;
+}
+
+/** Read a month as the History filter sends it ("2026-10"); anything else gives null. */
+export function monthParts(text: string, language: Language): MonthParts | null {
+  const match = /^(\d{4})-(\d{2})$/.exec(text);
+  const month = Number(match?.[2]);
+  if (match === null || month < 1 || month > 12) {
+    return null;
+  }
+  const year = Number(match[1]);
+  const name = new Intl.DateTimeFormat(language, { month: "long", timeZone: "UTC" }).format(
+    new Date(Date.UTC(year, month - 1, 1)),
+  );
+  return { month, year, name };
 }
