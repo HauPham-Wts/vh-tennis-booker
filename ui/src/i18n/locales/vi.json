@@ -35,7 +35,13 @@
       "title": "Lịch sử"
     },
     "activity": {
-      "title": "Nhật ký"
+      "title": "Nhật ký",
+      "lead": "Từng bước app đã làm, để biết chuyện gì xảy ra khi có lỗi.",
+      "runs": "Các lần chạy",
+      "empty": "Chưa có lần chạy nào.",
+      "technical": "Chi tiết kỹ thuật",
+      "runTitle": "{{period}} {{day}}",
+      "meta": "{{trigger}} · chơi {{day}} · sân {{court}}"
     },
     "settings": {
       "title": "Cài đặt"

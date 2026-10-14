@@ -35,7 +35,13 @@
       "title": "History"
     },
     "activity": {
-      "title": "Activity"
+      "title": "Activity",
+      "lead": "Every step the app took, to see what happened when something went wrong.",
+      "runs": "Runs",
+      "empty": "No runs yet.",
+      "technical": "Technical details",
+      "runTitle": "{{day}} {{period}}",
+      "meta": "{{trigger}} · play {{day}} · court {{court}}"
     },
     "settings": {
       "title": "Settings"
