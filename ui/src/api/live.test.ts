@@ -1,48 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  connectLiveFeed,
-  type LiveSocket,
-  type LiveState,
-  liveUrl,
-  RECONNECT_DELAYS_MS,
-  stepOf,
-} from "./live";
+import { fakeConnection, step } from "../test/liveSocket";
+import { connectLiveFeed, type LiveState, liveUrl, RECONNECT_DELAYS_MS, stepOf } from "./live";
 import type { Step } from "./types";
-
-/** A WebSocket the test drives: open it, send it steps, drop it. */
-class FakeSocket implements LiveSocket {
-  onopen: ((event: Event) => void) | null = null;
-  onmessage: ((event: MessageEvent) => void) | null = null;
-  onclose: ((event: CloseEvent) => void) | null = null;
-  closed = false;
-  readonly url: string;
-
-  constructor(url: string) {
-    this.url = url;
-  }
-
-  open(): void {
-    this.onopen?.(new Event("open"));
-  }
-
-  receive(data: unknown): void {
-    this.onmessage?.(new MessageEvent("message", { data }));
-  }
-
-  drop(): void {
-    this.onclose?.(new CloseEvent("close"));
-  }
-
-  close(): void {
-    this.closed = true;
-    this.drop();
-  }
-}
-
-/** A step of the activity log with `id`. */
-function step(id: number): Step {
-  return { id, run_id: 1, time: `06:00:0${id}`, category: "step", kind: "slot_started", data: {} };
-}
 
 /** A feed message carrying `value` as the step. */
 function message(value: unknown): string {
@@ -51,27 +10,14 @@ function message(value: unknown): string {
 
 /** Connect a feed to fake sockets and record what it reports. */
 function connect() {
-  const sockets: FakeSocket[] = [];
+  const { connection, sockets, current } = fakeConnection();
   const steps: Step[] = [];
   const states: LiveState[] = [];
   const stop = connectLiveFeed({
+    ...connection,
     onStep: (received) => steps.push(received),
     onState: (state) => states.push(state),
-    url: (after) => (after === null ? "live" : `live?after=${after}`),
-    createSocket: (url) => {
-      const socket = new FakeSocket(url);
-      sockets.push(socket);
-      return socket;
-    },
   });
-  /** Return the newest socket. */
-  const current = (): FakeSocket => {
-    const socket = sockets.at(-1);
-    if (socket === undefined) {
-      throw new Error("No socket was opened");
-    }
-    return socket;
-  };
   return { sockets, steps, states, stop, current };
 }
 
@@ -88,8 +34,8 @@ describe("connectLiveFeed", () => {
     const feed = connect();
 
     feed.current().open();
-    feed.current().receive(message(step(1)));
-    feed.current().receive(message(step(2)));
+    feed.current().send(step(1));
+    feed.current().send(step(2));
 
     expect(feed.states).toEqual(["connecting", "open"]);
     expect(feed.steps.map(({ id }) => id)).toEqual([1, 2]);
@@ -99,7 +45,7 @@ describe("connectLiveFeed", () => {
   it("reconnects after a drop and resumes after the last step seen", () => {
     const feed = connect();
     feed.current().open();
-    feed.current().receive(message(step(7)));
+    feed.current().send(step(7));
 
     feed.current().drop();
     expect(feed.states.at(-1)).toBe("closed");
@@ -147,9 +93,9 @@ describe("connectLiveFeed", () => {
     const feed = connect();
     feed.current().open();
 
-    feed.current().receive(message(step(3)));
-    feed.current().receive(message(step(3)));
-    feed.current().receive(message(step(2)));
+    feed.current().send(step(3));
+    feed.current().send(step(3));
+    feed.current().send(step(2));
 
     expect(feed.steps.map(({ id }) => id)).toEqual([3]);
   });
