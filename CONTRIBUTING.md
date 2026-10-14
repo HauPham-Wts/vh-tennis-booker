@@ -46,6 +46,11 @@ npm run build
 - **Style:** enforced by Ruff (line length 100). Public functions have type hints and a
   one-line docstring in the imperative mood. Comments explain *why*, not *what*. UI code
   is strict TypeScript, linted by ESLint and formatted by Prettier (also 100 columns).
+- **UI:** every visible text has a key in `ui/src/i18n/locales/vi.json` and `en.json`
+  (tests check both hold the same keys; TypeScript checks the keys used). Styles are CSS
+  Modules beside their component and take values from `ui/src/styles/tokens.css`, never raw
+  colors or sizes. Addresses come from `ui/src/paths.ts`. Tests sit beside the code and find
+  elements by role and accessible name, as a screen reader would.
 - **Errors:** raise a subclass of `BookingError` for failures that should abort one round.
 - **Logging:** use the module logger (`logging.getLogger(__name__)`), never `print`, except
   for the final summary in the CLI.
