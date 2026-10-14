@@ -1,0 +1,58 @@
+{
+  "app": {
+    "skipToContent": "Skip to content"
+  },
+  "nav": {
+    "label": "Main navigation",
+    "overview": "Overview",
+    "schedule": "Schedule",
+    "history": "History",
+    "activity": "Activity",
+    "settings": "Settings",
+    "guide": "Guide"
+  },
+  "language": {
+    "label": "Language",
+    "names": {
+      "vi": "Tiếng Việt",
+      "en": "English"
+    }
+  },
+  "pages": {
+    "overview": {
+      "title": "Overview"
+    },
+    "schedule": {
+      "title": "Schedule"
+    },
+    "history": {
+      "title": "History"
+    },
+    "activity": {
+      "title": "Activity"
+    },
+    "settings": {
+      "title": "Settings"
+    },
+    "bookingSettings": {
+      "title": "Booking"
+    },
+    "deviceSetup": {
+      "title": "Device setup"
+    },
+    "guide": {
+      "title": "Guide"
+    },
+    "welcome": {
+      "title": "Welcome"
+    },
+    "notFound": {
+      "title": "Page not found",
+      "back": "Back to the overview"
+    },
+    "error": {
+      "title": "Something went wrong",
+      "reload": "Reopen the overview"
+    }
+  }
+}

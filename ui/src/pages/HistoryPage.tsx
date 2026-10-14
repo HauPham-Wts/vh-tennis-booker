@@ -1,11 +1,14 @@
+import { useTranslation } from "react-i18next";
 import { PageTitle } from "../components/PageTitle";
 
 /** List the runs with their booked slots. */
 export function HistoryPage() {
+  const { t } = useTranslation();
+  const title = t("pages.history.title");
   return (
     <>
-      <PageTitle>Lịch sử</PageTitle>
-      <h1>Lịch sử</h1>
+      <PageTitle>{title}</PageTitle>
+      <h1>{title}</h1>
     </>
   );
 }

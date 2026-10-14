@@ -1,0 +1,28 @@
+.group {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.button {
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  border: var(--border) solid transparent;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  cursor: pointer;
+}
+
+.button:hover {
+  color: var(--color-ink);
+}
+
+/* The language in use is outlined on paper. */
+.button[aria-pressed="true"] {
+  border-color: var(--color-ink);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-weight: var(--weight-semibold);
+}

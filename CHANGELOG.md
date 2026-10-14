@@ -27,6 +27,10 @@ uses [Semantic Versioning](https://semver.org/).
 - The page shell of the mockups: the "court booker." name over an ink rule, the navigation
   with the current screen as a filled ink tab (hidden on the welcome screen), one centred
   column that narrows with the window, and a skip link for keyboard users.
+- Vietnamese and English: a VI/EN switch in the header changes every text, the window title
+  and the page language at once, and the choice is remembered on this machine. Vietnamese
+  is the default. Both language files must hold the same keys, and a mistyped key fails
+  the type check.
 
 ## [0.5.3] - 2026-10-14
 

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { isRouteErrorResponse, useRouteError } from "react-router";
 import { PageTitle } from "../components/PageTitle";
 import { paths } from "../paths";
@@ -12,15 +13,17 @@ function describeError(error: unknown): string {
 
 /** Replace a screen that failed with the error, instead of a blank window. */
 export function ErrorPage() {
+  const { t } = useTranslation();
   const error = useRouteError();
+  const title = t("pages.error.title");
   return (
     <main>
-      <PageTitle>Có lỗi xảy ra</PageTitle>
-      <h1>Có lỗi xảy ra</h1>
+      <PageTitle>{title}</PageTitle>
+      <h1>{title}</h1>
       <p>{describeError(error)}</p>
       <p>
         {/* A full reload starts the app afresh. */}
-        <a href={paths.overview}>Mở lại Tổng quan</a>
+        <a href={paths.overview}>{t("pages.error.reload")}</a>
       </p>
     </main>
   );
