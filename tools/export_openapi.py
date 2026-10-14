@@ -24,10 +24,10 @@ def main() -> int:
     text = openapi_json()
     old = SNAPSHOT.read_text(encoding="utf-8") if SNAPSHOT.exists() else None
     if text == old:
-        print(f"{SNAPSHOT.relative_to(REPO)} is up to date")
+        print(f"{SNAPSHOT.relative_to(REPO).as_posix()} is up to date")
         return 0
     SNAPSHOT.write_text(text, encoding="utf-8", newline="\n")
-    print(f"Wrote {SNAPSHOT.relative_to(REPO)}; now run `npm run api:types` in ui/")
+    print(f"Wrote {SNAPSHOT.relative_to(REPO).as_posix()}; now run `npm run api:types` in ui/")
     return 0
 
 
