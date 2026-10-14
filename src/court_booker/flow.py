@@ -209,6 +209,11 @@ class Booker:
                     screen, self.home, self.config.labels.home, self._finder(self.utility)
                 )
                 return screen
+            message = self.notice_text(screen)
+            if message is not None:
+                # A notice met here may belong to the round before, e.g. one shown after
+                # the confirmation page was already gone.
+                logger.warning("Closing a notice of the app: %s", message or "no message")
             self.press_back()
             found = self.wait_for(self._either(self.utility, self.home), _NEXT_SCREEN_TIMEOUT)
             screen = found[1] if found is not None else self.last_screen

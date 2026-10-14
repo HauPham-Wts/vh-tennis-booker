@@ -354,6 +354,16 @@ def test_return_to_utilities_presses_back_from_ticket():
     assert app.screen == "utilities"
 
 
+def test_return_to_utilities_warns_about_a_notice_it_closes(caplog):
+    app = refusing_app()
+    app.screen = "notice"
+
+    Booker(app, Config()).return_to_utilities()
+
+    assert f"Closing a notice of the app: {QUOTA_MESSAGE}" in caplog.text
+    assert app.screen == "utilities"
+
+
 def screen_of(nodes):
     return Screen([Node(desc, box, clickable) for desc, box, clickable in nodes])
 
