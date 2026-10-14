@@ -24,6 +24,9 @@ uses [Semantic Versioning](https://semver.org/).
 - Every screen has its own address (`/`, `/schedule`, `/history`, `/activity`,
   `/settings/booking`, `/settings/device`, `/guide`, `/welcome`) and names the window; an
   unknown address or a screen that fails shows a page with a way back.
+- The page shell of the mockups: the "court booker." name over an ink rule, the navigation
+  with the current screen as a filled ink tab (hidden on the welcome screen), one centred
+  column that narrows with the window, and a skip link for keyboard users.
 
 ## [0.5.3] - 2026-10-14
 
