@@ -55,6 +55,9 @@ uses [Semantic Versioning](https://semver.org/).
 - Every step of a run or of the app has plain words in Vietnamese and English ("Đặt được
   15:00–16:00", "Chạy thử tới bước xác nhận: 10:00–11:00"), with a ✓/✕ tone, the time a
   slot took and the engine's own reason kept for the technical details.
+- The Activity screen: the 30 newest runs with when, how and a ✓/✕ mark; the run shown
+  (`?run=`, else the newest) with its stamp, every step in plain words, and its technical
+  log, closed until asked for.
 
 ### Changed
 - The OpenAPI schema describes every error response as a `Problem` (also 422, which it
@@ -63,6 +66,9 @@ uses [Semantic Versioning](https://semver.org/).
   everything again; the live feed still refreshes what each step changes at once.
 - The OpenAPI schema lists every step kind (`EventKind`) and category, so a step the UI
   has no words for fails its type check.
+- While a run goes on, the UI asks the backend nothing per step: steps come from the live
+  feed, and only a run's start, the end of a slot and the run's end refresh the data. A
+  window left open at 06:00 no longer starts `schtasks` and rereads the run at every step.
 
 ## [0.5.3] - 2026-10-14
 
