@@ -1,0 +1,26 @@
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pill {
+  min-height: var(--touch-target);
+  padding: 0 14px;
+  border: var(--border) solid var(--color-ink);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  cursor: pointer;
+}
+
+.pill:hover {
+  background: var(--color-paper);
+}
+
+.pill[aria-pressed="true"] {
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+}
