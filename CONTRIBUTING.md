@@ -53,7 +53,8 @@ npm run build
 - **Branches:** each version is prepared on `release/X.Y.Z`, cut from `main`. Work happens
   on `feat/<topic>`, `fix/<topic>` or `docs/<topic>` branches cut from the release branch
   and merged back into it via pull request, one PR per branch. `main` only receives the
-  release branch when everything in it is stable.
+  release branch when everything in it is stable. Tooling and CI changes use `chore/<topic>`
+  and `ci/<topic>`.
 - **Merging:** use "Create a merge commit"; do not squash or rebase, so commits keep their
   identity across branches.
 - **Versioning:** [Semantic Versioning](https://semver.org/). Record changes in
