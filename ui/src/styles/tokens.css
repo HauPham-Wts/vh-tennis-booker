@@ -24,7 +24,7 @@
   /* Meaning */
   --color-stamp: #2b48a6; /* booked, links */
   --color-stamp-strong: #1c3380; /* link hover */
-  --color-failed: #c2410c;
+  --color-failed: #b53c0b; /* the mockups' #c2410c, darkened to reach 4.5:1 on the ground */
   --color-highlight: #e6f24f; /* ball yellow: the 06:00 moment, the current step */
 
   /* Type: --font-sans and --font-mono come from fonts.css */
