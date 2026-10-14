@@ -15,7 +15,7 @@ from court_booker.config import Config
 from court_booker.emulator import MuMu
 from court_booker.errors import BookingError, DeviceConnectionError
 from court_booker.events import EventKind, Reporter
-from court_booker.flow import Booker
+from court_booker.flow import Booker, log_screen
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +39,7 @@ def log_last_screen(booker: Booker) -> None:
     A failure that happens only at the opening time, or only on the last days of a
     month, can then be fixed from the log of a single run.
     """
-    lines = booker.last_screen.describe()
-    logger.debug("Last screen read (%d elements):", len(lines))
-    for line in lines:
-        logger.debug("  %s", line)
+    log_screen(booker.last_screen, "Last screen read")
 
 
 def connect_device(config: Config) -> Any:

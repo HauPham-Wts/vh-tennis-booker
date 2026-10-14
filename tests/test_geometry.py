@@ -4,6 +4,7 @@ from datetime import date
 from court_booker.geometry import (
     day_pattern,
     is_checkbox_beside,
+    is_inside,
     month_index,
     month_index_from_label,
     parse_bounds,
@@ -17,6 +18,13 @@ CHECKBOX = (35, 740, 79, 784)
 def test_parse_bounds():
     assert parse_bounds("[35,740][79,784]") == CHECKBOX
     assert parse_bounds("") is None
+
+
+def test_is_inside_includes_the_edges():
+    dialog = (0, 33, 540, 1600)
+    assert is_inside((47, 841, 493, 936), dialog)
+    assert is_inside(dialog, dialog)
+    assert not is_inside((6, 5, 50, 28), dialog)  # the status bar clock above it
 
 
 def test_checkbox_beside_caption_is_accepted():
