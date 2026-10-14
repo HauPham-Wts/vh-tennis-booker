@@ -33,9 +33,10 @@ npm test                                             # Vitest + Testing Library 
 npm run build                                        # type-check and build to ui/dist
 ```
 
-Whenever the booking flow changes, book one free slot for real against the emulator with
-`--at` a few minutes ahead (the user cancels it); CI cannot, and a dry run stops before
-"Xác nhận".
+Whenever the booking flow changes, book two consecutive free slots on today + 2 for real
+against the emulator, like the 06:00 run's two rounds, with `--at` a few minutes ahead
+(`python -m court_booker --verbose --config config.toml --slots "<a>" "<b>" --at <time>`;
+the user cancels them); CI cannot, and a dry run stops before "Xác nhận".
 
 ## Goal
 
