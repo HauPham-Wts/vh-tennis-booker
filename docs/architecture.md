@@ -246,6 +246,13 @@ would move the task away from the runner folder.
   the stub) and the newest real run (`LastBooking`, hidden before one). `useFormat().when`
   says "sáng mai"; `reasons.ts` `failureReason` turns the engine's known English reasons
   into a few words and points to the activity log for the rest.
+- While `running` names a booking or a dry run, `OverviewPage` shows `RunningBanner` and
+  `LiveRun` instead: the run holding the lock is the newest run if it started after the
+  lock's `since` (it may have just ended), else "Đang chuẩn bị". `progress.ts`
+  `progressOf(steps)` reads the slots, the current one, each slot's state and the progress
+  from the steps alone. `useOverview` polls every 2 s (`settlingInterval`) only while a run
+  holds the lock without a running row, or during auto setup: a run gives the lock back
+  after its last step, and no step marks that moment.
 
 ### Backend connection (`ui/src/api`)
 
