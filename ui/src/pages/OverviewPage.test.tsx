@@ -1,9 +1,10 @@
-import { screen, within } from "@testing-library/react";
+import { act, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Overview } from "../api/types";
 import { paths } from "../paths";
 import { renderApp } from "../test/app";
-import { reply } from "../test/backend";
+import { reply, requestsTo } from "../test/backend";
+import { step } from "../test/liveSocket";
 import { runSummary } from "../test/runs";
 
 /** Everything ready for tomorrow's 06:00, as GET /api/status gives it. */
@@ -222,5 +223,114 @@ describe("OverviewPage while a run goes on", () => {
 
     await screen.findByRole("region", { name: "Lần đặt tiếp theo" });
     expect(screen.queryByText(/tạm khóa/)).not.toBeInTheDocument();
+  });
+});
+
+describe("OverviewPage live run", () => {
+  const SLOTS = ["15:00 - 16:00", "16:00 - 17:00"];
+  /** The 06:00 run so far: started, waited, booking the first slot. */
+  const STEPS = [
+    step(101, {
+      run_id: 30,
+      time: "2026-10-15T05:50:02.200",
+      kind: "run_started",
+      data: { trigger: "scheduled", slots: SLOTS, dry_run: false },
+    }),
+    step(102, {
+      run_id: 30,
+      time: "2026-10-15T06:00:00.004",
+      kind: "booking_started",
+      data: { date: "2026-10-17", court: "S6 - Sân tennis" },
+    }),
+    step(103, {
+      run_id: 30,
+      time: "2026-10-15T06:00:00.010",
+      kind: "slot_started",
+      data: { slot: SLOTS[0], round: 1, rounds: 2 },
+    }),
+  ];
+  const RUNNING = runSummary(30, {
+    status: "running",
+    finished_at: null,
+    booked: 0,
+    total: 0,
+    slots: [],
+  });
+
+  function renderLive() {
+    return renderApp(paths.overview, {
+      "GET /api/status": reply(
+        overview({
+          running: { trigger: "scheduled", pid: 4242, since: "05:50:02" },
+          last_run: RUNNING,
+        }),
+      ),
+      "GET /api/runs/30": reply({ ...RUNNING, steps: STEPS, log_lines: [] }),
+    });
+  }
+
+  it("shows the run as it goes in place of the next and last booking", async () => {
+    renderLive();
+
+    const live = await screen.findByRole("region", {
+      name: "Đang đặt cho Thứ Bảy 17/10 · sân S6",
+    });
+    expect(within(live).getByText("15:00–16:00")).toBeInTheDocument();
+    const newest = within(live).getByRole("listitem", { current: "step" });
+    expect(newest).toHaveTextContent("Lượt 1/2: 15:00–16:00đang chạy");
+    expect(within(live).getByText("16:00–17:00 · chờ tới lượt")).toBeInTheDocument();
+    expect(within(live).getByText("0/2")).toBeInTheDocument();
+    expect(within(live).getByText("khung giờ đã đặt xong")).toBeInTheDocument();
+    expect(within(live).getByRole("link", { name: "Xem nhật ký trực tiếp →" })).toHaveAttribute(
+      "href",
+      "/activity?run=30",
+    );
+    expect(screen.getByText(/Bạn có thể đóng cửa sổ này/)).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Lần đặt tiếp theo" })).not.toBeInTheDocument();
+  });
+
+  it("follows the live feed and asks the backend only when a slot ends", async () => {
+    const { live, fetch } = renderLive();
+    await screen.findByText("0/2");
+    const status = requestsTo(fetch, "GET /api/status");
+
+    act(() => {
+      live.current().open();
+      live.current().send(step(104, { run_id: 30, kind: "calendar_opened", data: { attempt: 1 } }));
+    });
+    expect(await screen.findByText("Đã mở lịch đặt sân")).toBeInTheDocument();
+    expect(requestsTo(fetch, "GET /api/status")).toBe(status);
+
+    act(() => {
+      live.current().send(
+        step(105, {
+          run_id: 30,
+          kind: "slot_booked",
+          category: "slot",
+          data: { slot: SLOTS[0], seconds: 6, dry_run: false },
+        }),
+      );
+    });
+    expect(await screen.findByText("1/2")).toBeInTheDocument();
+    expect(requestsTo(fetch, "GET /api/runs/30")).toBe(1);
+    expect(requestsTo(fetch, "GET /api/status")).toBe(status + 1);
+  });
+
+  it("gets ready while a dry run the app started has no step yet", async () => {
+    renderApp(paths.overview, {
+      "GET /api/status": reply(
+        overview({ running: { trigger: "dry_run", pid: 4242, since: null } }),
+      ),
+    });
+
+    expect(await screen.findByRole("region", { name: "Đang chuẩn bị" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Xem nhật ký trực tiếp →" })).not.toBeInTheDocument();
+  });
+
+  it("keeps the usual Overview under the banner during auto setup", async () => {
+    renderOverview(overview({ running: { trigger: "setup", pid: 4242, since: "21:00:00" } }));
+
+    expect(await screen.findByText("Đang thiết lập tự động")).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: "Lần đặt tiếp theo" })).toBeInTheDocument();
   });
 });
