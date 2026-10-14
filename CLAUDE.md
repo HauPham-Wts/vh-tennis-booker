@@ -31,7 +31,17 @@ npm run typecheck && npm run lint                    # tsc -b; ESLint (type-awar
 npm run format                                       # Prettier (format:check in CI)
 npm test                                             # Vitest + Testing Library (jsdom)
 npm run build                                        # type-check and build to ui/dist
+npm run api:types                                    # src/api/schema.d.ts from openapi.json
 ```
+
+After a backend route or model change: `python tools/export_openapi.py`, then
+`npm run api:types` (a backend test and CI fail until both match). To try the UI against a
+real backend without touching the real history or config, point `COURT_BOOKER_HOME` at a
+scratch folder and serve a copy of the config:
+`COURT_BOOKER_HOME=<scratch>/data python -m court_booker serve --config <scratch>/config.toml`,
+then `npm run dev` (Vite forwards `/api` to 127.0.0.1:8765). Headless Edge `--dump-dom`
+captures the page right after load, before any request or socket answers; read the DOM
+over the DevTools protocol after a real wait instead.
 
 Whenever the booking flow changes, book two consecutive free slots on today + 2 for real
 against the emulator, like the 06:00 run's two rounds, with `--at` a few minutes ahead
@@ -276,6 +286,33 @@ out of scope.
   `tokens.css?raw` (Vitest `css.include` lists it, as Vitest blanks CSS imports) and holds
   text pairs to 4.5:1 and markers to 3:1; `--color-failed` is `#b53c0b`, darker than the
   mockups' `#c2410c` (4.14:1 on the ground).
+- `ui/src/api` (0.6.0 part 3): `openapi.json` is written by `tools/export_openapi.py` from
+  `court_booker.api.schema.openapi_json` (no server needed); `tests/api/test_api_schema.py`
+  fails while it differs (skipped on Python 3.9, which gets FastAPI 0.128 and words the
+  schema differently). Every router lists `422` and `default` responses as `Problem`
+  (`api.app.ERROR_RESPONSES`); the `/api/status` model is `Overview` (it clashed with
+  `device_setup.Status`, the setup status enum, named `Status` in the schema).
+  `schema.d.ts` comes from openapi-typescript 7 (peer TypeScript 5; an npm override lets it
+  use TS 6) and is ignored by ESLint and Prettier; CI regenerates it and fails on a diff.
+  `types.ts` names the schema types (`SetupStatus` is the enum); `types.test.ts` pins shapes
+  with `expectTypeOf` (run by the type check). `client.ts`: openapi-fetch on the page's
+  origin, `fetch` looked up per call (tests stub it); `call` turns failures into `ApiError`
+  (`code`: the Problem's, `unreachable` for no answer or a proxy 5xx without a Problem,
+  `http` otherwise). `endpoints.ts`: one function per route with its schema return type
+  (the settings are cast: openapi-fetch widens the `[x, y]` tuples to `number[]`).
+  `errors.ts`: `ERROR_CODES` and `errorMessage(t, error)` from `errors.*` in the locales.
+  `queryClient.ts` retries reads only while `unreachable` (3 times), never mutations;
+  `queries.ts` (`queryKeys`, one hook per read) and `mutations.ts` (save settings, auto
+  setup, switch schedule, start dry run; each sets its answer in the cache and invalidates
+  what it changes). `live.ts` `connectLiveFeed`: checks messages (`stepOf`), drops repeats,
+  reconnects after 0.5/1/2/5 s with `?after=<last id>`, gives up a socket not open after
+  5 s at once (Vite's proxy with no backend never opens or closes it; Node's WebSocket
+  sends no close for a connecting socket it closes). `LiveProvider` (in `main.tsx`) keeps
+  one connection, the last 200 steps (`useLiveFeed`) and invalidates `staleKeysFor(step)`.
+  Test helpers in `src/test/`: `stubBackend`/`reply`/`requestsTo`, `createTestQueryClient`/
+  `withQueryClient`, `FakeSocket`/`fakeConnection`/`step`. Checked end to end against a
+  scratch backend: requests through the proxy, and the live feed across a backend stop and
+  restart (no step lost or repeated).
 - `ui/src/i18n`: i18next with `locales/vi.json` and `en.json` (same keys, checked by
   `locales.test.ts`), Vietnamese default and fallback; `i18next.d.ts` types the keys against
   `vi.json`. The choice is stored under `court-booker.language` in `localStorage` (blocked
