@@ -1,0 +1,11 @@
+/* The fonts ship with the app, which must work offline: nothing loads from Google Fonts. */
+@import "@fontsource-variable/bricolage-grotesque/opsz.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+@import "@fontsource/ibm-plex-mono/600.css";
+
+:root {
+  /* Bricolage carries headings and text; IBM Plex Mono carries times, dates and labels. */
+  --font-sans: "Bricolage Grotesque Variable", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
