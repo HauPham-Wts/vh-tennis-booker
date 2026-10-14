@@ -1,3 +1,3 @@
 """UI automation of the tennis-court booking flow in the Vinhomes Resident app."""
 
-__version__ = "0.5.2"
+__version__ = "0.5.3"

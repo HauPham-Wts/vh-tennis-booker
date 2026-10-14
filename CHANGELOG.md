@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-10-14
+
 ### Changed
 - A timed run waits on the app's home screen instead of the utilities list, and opens the
   list `warm_up_seconds` before the start time (new setting, default 60 s), so the app has
