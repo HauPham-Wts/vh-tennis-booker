@@ -9,6 +9,8 @@ uses [Semantic Versioning](https://semver.org/).
 ### Added
 - The `ui/` project for the app's screens: React, TypeScript (strict) and Vite, built with
   `npm run build` and served for development with `npm run dev`.
+- `npm run lint` checks the UI code with ESLint (type-aware TypeScript rules, React hooks
+  rules); `npm run format` and `npm run format:check` format it with Prettier.
 
 ## [0.5.3] - 2026-10-14
 
