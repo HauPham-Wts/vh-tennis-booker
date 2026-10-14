@@ -62,6 +62,10 @@ uses [Semantic Versioning](https://semver.org/).
   stamp, a month picker kept in the address, and the slots booked that month (helps with
   the quota of 8 per month). Runs from the API carry their slots; `GET /api/runs` filters
   real bookings or dry runs (`dry_run`), and `GET /api/runs/months` lists the months.
+- The Overview: one status line on whether the next start is ready or what to do first
+  (set up the device, turn the schedule on), the next booking as a ticket (start time,
+  wake time, play date, court, slots), and the last real booking with one card per slot
+  and the reason a slot failed in a few words ("Hết chỗ", "Sân S6 đã kín").
 
 ### Changed
 - The OpenAPI schema describes every error response as a `Problem` (also 422, which it

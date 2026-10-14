@@ -241,6 +241,11 @@ would move the task away from the runner folder.
   `stubBackend`.
 - `HistoryPage` shows the real bookings of one month (`?month=`, else the newest from
   `useRunMonths`), read in one request (`limit=200`), as small `Ticket`s with `runStamp`.
+- `OverviewPage` reads three things: `/api/status` (`StatusLine`: no setup, setup items
+  left, schedule off, or ready; `NextBooking` ticket), the settings (court and slots on
+  the stub) and the newest real run (`LastBooking`, hidden before one). `useFormat().when`
+  says "sáng mai"; `reasons.ts` `failureReason` turns the engine's known English reasons
+  into a few words and points to the activity log for the rest.
 
 ### Backend connection (`ui/src/api`)
 

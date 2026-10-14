@@ -26,7 +26,33 @@
   },
   "pages": {
     "overview": {
-      "title": "Overview"
+      "title": "Overview",
+      "status": {
+        "noSetup": "Device not set up yet",
+        "setupLeft": "Device setup: {{count}} left to do",
+        "scheduleOff": "The schedule is off",
+        "ready": "Ready for {{time}} {{when}}",
+        "setupLink": "Device setup",
+        "turnOn": "Turn it on",
+        "check": "Check the device"
+      },
+      "next": {
+        "title": "Next booking",
+        "off": "The schedule is off",
+        "when": "{{day}} {{period}} · PC wakes at {{wake}}",
+        "offLine": "Turn on the schedule to book at {{start}} every morning",
+        "playDate": "Play date",
+        "court": "Court",
+        "slots": "Slots"
+      },
+      "last": {
+        "title": "Last booking",
+        "booked": "BOOKED",
+        "notBooked": "NOT BOOKED",
+        "meta": "{{day}} · court {{court}}",
+        "done": "Booked at {{time}} · took {{seconds}}",
+        "history": "See history →"
+      }
     },
     "schedule": {
       "title": "Schedule"
@@ -85,6 +111,12 @@
       "morning": "morning",
       "afternoon": "afternoon",
       "evening": "evening"
+    },
+    "when": {
+      "today": "this {{period}}",
+      "tomorrow": "tomorrow {{period}}",
+      "yesterday": "yesterday {{period}}",
+      "other": "{{day}} {{period}}"
     }
   },
   "triggers": {
@@ -197,6 +229,15 @@
       "interrupted": "STOPPED",
       "running": "RUNNING"
     }
+  },
+  "reasons": {
+    "slotFull": "Fully booked",
+    "courtFull": "Court {{court}} fully booked",
+    "refused": "The app refused: {{message}}",
+    "notOpen": "Not open for booking yet",
+    "stuck": "The app did not move on",
+    "busy": "Another run was in progress",
+    "other": "Error, see the activity log"
   },
   "errors": {
     "not_found": "This record does not exist.",

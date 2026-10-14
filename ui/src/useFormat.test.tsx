@@ -38,6 +38,22 @@ describe("useFormat", () => {
     expect(format.period("2026-10-15T05:50")).toBe("morning");
   });
 
+  it("says when a time falls, near today or not", async () => {
+    const { result } = renderHook(() => useFormat());
+    const today = "2026-10-15";
+
+    expect(result.current.when("2026-10-15T05:50:02", today)).toBe("sáng nay");
+    expect(result.current.when("2026-10-16T06:00", today)).toBe("sáng mai");
+    expect(result.current.when("2026-10-14T19:43:00", today)).toBe("tối hôm qua");
+    expect(result.current.when("2026-10-12T09:40:00", today)).toBe("sáng Thứ Hai 12/10");
+    expect(result.current.when("soon", today)).toBe("soon");
+
+    await act(() => i18n.changeLanguage("en"));
+    expect(result.current.when("2026-10-16T06:00", today)).toBe("tomorrow morning");
+    expect(result.current.when("2026-10-15T14:00", today)).toBe("this afternoon");
+    expect(result.current.when("2026-10-12T09:40:00", today)).toBe("Mon 12 Oct morning");
+  });
+
   it("shows what it cannot read as it is, or nothing for a period", () => {
     const { result } = renderHook(() => useFormat());
 
