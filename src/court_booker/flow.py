@@ -30,6 +30,7 @@ from court_booker.geometry import (
     DAY_PATTERN,
     day_pattern,
     is_checkbox_beside,
+    is_inside,
     month_index,
     month_index_from_label,
 )
@@ -87,6 +88,7 @@ class Booker:
         self.agree = Match(contains=labels.agree)
         self.confirm_button = Match(desc=labels.confirm, clickable=True)
         self.confirm_page = Match(desc=labels.confirm_page)
+        self.notice = Match(desc=labels.notice)
 
     # Public API -------------------------------------------------------------
 
@@ -362,6 +364,26 @@ class Booker:
         if self.wait_for(self._absent(self.confirm_page), self.config.timeout) is None:
             raise NavigationError("Confirmation submitted but the ticket screen did not appear")
         logger.info("Booking confirmed")
+
+    # Dialogs ----------------------------------------------------------------
+
+    def notice_text(self, screen: Screen) -> str | None:
+        """Return the message of the app's notice dialog on ``screen``, or ``None``.
+
+        The dialog's title node spans the whole dialog and holds its buttons; a node
+        with the same label but no button inside, such as a tab, is not a dialog. The
+        message is every other label inside the title that is not a button.
+        """
+        for title in screen.find_all(self.notice):
+            inner = [node for node in screen.nodes if is_inside(node.box, title.box)]
+            if not any(node.clickable and node is not title for node in inner):
+                continue
+            return " ".join(
+                node.desc
+                for node in inner
+                if node.desc and not node.clickable and node.desc != title.desc
+            )
+        return None
 
     # Device commands --------------------------------------------------------
 

@@ -35,6 +35,15 @@ def center(box: Box) -> tuple[int, int]:
     return (left + right) // 2, (top + bottom) // 2
 
 
+def is_inside(box: Box, outer: Box) -> bool:
+    """Return whether ``box`` lies within ``outer``, edges included."""
+    left, top, right, bottom = box
+    outer_left, outer_top, outer_right, outer_bottom = outer
+    return (
+        outer_left <= left and outer_top <= top and right <= outer_right and bottom <= outer_bottom
+    )
+
+
 def is_checkbox_beside(box: Box, label: Box, screen_width: int) -> bool:
     """Return whether ``box`` is a plausible checkbox for the caption ``label``.
 

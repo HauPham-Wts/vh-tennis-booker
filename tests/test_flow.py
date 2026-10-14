@@ -16,7 +16,7 @@ from court_booker.errors import (
 )
 from court_booker.events import EventKind, MemorySink, Reporter
 from court_booker.flow import Booker
-from court_booker.screen import Screen
+from court_booker.screen import Node, Screen
 
 WIDTH, HEIGHT = 540, 1600
 TARGET = date(2026, 10, 11)
@@ -38,6 +38,15 @@ SLOTS = [
 COURTS = [
     node("S10 - Sân tennis", (35, 1024, 505, 1144)),
     node("S9 - Sân tennis\nHết chỗ", (35, 1157, 505, 1277)),
+]
+QUOTA_MESSAGE = "Căn hộ đã hết hạn mức đăng ký tiện ích cho phép."
+NOTICE = [  # read from the device on 2026-10-10; the dialog hides the page beneath
+    node("", (0, 0, 540, 1600)),
+    node("Thông báo", (0, 33, 540, 1600), False),
+    node(QUOTA_MESSAGE, (47, 758, 493, 817), False),
+    node("Đóng", (47, 841, 493, 936)),
+    node("7:43 PM", (6, 5, 50, 28), False),
+    node("Wifi signal full.", (439, 5, 460, 26), False),
 ]
 CONFIRM_PAGE = [
     node("Xác nhận đăng ký", (145, 52, 395, 89), False),
@@ -310,6 +319,24 @@ def test_return_to_utilities_presses_back_from_ticket():
 
     assert app.calls == ["back"]
     assert app.screen == "utilities"
+
+
+def screen_of(nodes):
+    return Screen([Node(desc, box, clickable) for desc, box, clickable in nodes])
+
+
+def test_notice_text_reads_the_dialog_message():
+    booker = Booker(booking_app(), Config())
+
+    assert booker.notice_text(screen_of(NOTICE)) == QUOTA_MESSAGE
+
+
+def test_notice_text_ignores_a_label_without_buttons_inside():
+    booker = Booker(booking_app(), Config())
+    tab = node("Thông báo", (400, 1500, 500, 1580))
+
+    assert booker.notice_text(screen_of([node("Tiện ích", (200, 1500, 340, 1580)), tab])) is None
+    assert booker.notice_text(screen_of(CONFIRM_PAGE)) is None
 
 
 def test_select_slot_scrolls_until_slot_is_shown():
