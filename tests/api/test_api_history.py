@@ -82,6 +82,16 @@ def test_one_run_in_full(client, database, record_run):
     assert run["log_lines"] == []
 
 
+def test_months_of_real_bookings(client, database, record_run):
+    record_run(database, date="2026-10-15", slots=[("18:00 - 19:00", True)])
+    record_run(database, trigger="dry_run", date="2026-10-16", slots=[("10:00 - 11:00", True)])
+
+    response = client.get("/api/runs/months")
+
+    assert response.status_code == 200
+    assert response.json() == [{"month": "2026-10", "runs": 1, "booked": 1}]
+
+
 def test_an_unknown_run_is_not_found(client):
     response = client.get("/api/runs/42")
 

@@ -102,6 +102,21 @@ def get_run(db: sqlite3.Connection, run_id: int) -> dict[str, Any] | None:
     return run
 
 
+def list_months(db: sqlite3.Connection) -> list[dict[str, Any]]:
+    """Return each month with real bookings, newest first: its runs and its booked slots.
+
+    Months follow the play date; dry runs and runs that never reached a date are left out.
+    """
+    rows = db.execute(
+        "SELECT substr(runs.play_date, 1, 7) AS month, COUNT(DISTINCT runs.id) AS runs,"
+        " COALESCE(SUM(run_slots.ok), 0) AS booked"
+        " FROM runs LEFT JOIN run_slots ON run_slots.run_id = runs.id"
+        " WHERE runs.play_date IS NOT NULL AND NOT runs.dry_run"
+        " GROUP BY month ORDER BY month DESC"
+    )
+    return [dict(row) for row in rows]
+
+
 def list_events(
     db: sqlite3.Connection,
     *,

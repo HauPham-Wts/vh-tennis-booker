@@ -177,6 +177,52 @@
         }
       }
     },
+    "/api/runs/months": {
+      "get": {
+        "tags": [
+          "history"
+        ],
+        "summary": "List Months",
+        "description": "List the months of real bookings by play date, newest first, with their totals.",
+        "operationId": "list_months_api_runs_months_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MonthSummary"
+                  },
+                  "type": "array",
+                  "title": "Response List Months Api Runs Months Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request values, one line per value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error with a stable code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/runs/{run_id}": {
       "get": {
         "tags": [
@@ -871,6 +917,30 @@
         ],
         "title": "LogLine",
         "description": "One technical log line."
+      },
+      "MonthSummary": {
+        "properties": {
+          "month": {
+            "type": "string",
+            "title": "Month"
+          },
+          "runs": {
+            "type": "integer",
+            "title": "Runs"
+          },
+          "booked": {
+            "type": "integer",
+            "title": "Booked"
+          }
+        },
+        "type": "object",
+        "required": [
+          "month",
+          "runs",
+          "booked"
+        ],
+        "title": "MonthSummary",
+        "description": "One month with real bookings: how many runs, how many slots they booked."
       },
       "Overview": {
         "properties": {

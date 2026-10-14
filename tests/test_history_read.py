@@ -113,6 +113,24 @@ def test_runs_filter_by_dry_run_not_by_trigger(path, read, record_run):
     assert ids() == [scheduled_test, dry, manual, real]
 
 
+def test_months_count_the_runs_and_slots_of_real_bookings(path, read, record_run):
+    record_run(path, date="2026-10-15", slots=[("18:00 - 19:00", True), ("19:00 - 20:00", True)])
+    record_run(path, date="2026-10-31", slots=[("18:00 - 19:00", False)], status="failed")
+    record_run(path, date="2026-11-01", slots=[("06:00 - 07:00", True)])
+    record_run(path, trigger="dry_run", date="2026-10-16", slots=[("10:00 - 11:00", True)])
+    record_run(path, dry_run=True, date="2026-09-30", slots=[("10:00 - 11:00", True)])
+    record_run(path, date=None)
+
+    assert history_read.list_months(read()) == [
+        {"month": "2026-11", "runs": 1, "booked": 1},
+        {"month": "2026-10", "runs": 2, "booked": 2},
+    ]
+
+
+def test_no_months_without_bookings(path, read):
+    assert history_read.list_months(read()) == []
+
+
 def test_runs_page_back_from_a_run(path, read, record_run):
     ids = [record_run(path) for _ in range(5)]
 

@@ -112,6 +112,21 @@ def list_runs(
     )
 
 
+class MonthSummary(BaseModel):
+    """One month with real bookings: how many runs, how many slots they booked."""
+
+    month: str
+    runs: int
+    booked: int
+
+
+# Declared before /runs/{run_id}, which would otherwise take "months" for a run id.
+@router.get("/runs/months", response_model=list[MonthSummary])
+def list_months(db: HistoryDb) -> list[dict[str, Any]]:
+    """List the months of real bookings by play date, newest first, with their totals."""
+    return history_read.list_months(db)
+
+
 @router.get("/runs/{run_id}", response_model=RunDetail)
 def get_run(db: HistoryDb, run_id: int) -> dict[str, Any]:
     """Show one run with its slots, its steps and its technical log lines."""
