@@ -38,6 +38,9 @@ uses [Semantic Versioning](https://semver.org/).
 - A typed API client with one function per backend endpoint. Every failure becomes an
   error with a stable code and a message in Vietnamese or English, also when the
   backend is not running. In development Vite forwards `/api` to `court-booker serve`.
+- The screens share backend data through a TanStack Query cache: one hook per kind of
+  data and per action. Reads retry only while the backend is out of reach; actions
+  never repeat on their own and refresh the data they change.
 
 ### Changed
 - The OpenAPI schema describes every error response as a `Problem` (also 422, which it
