@@ -49,7 +49,7 @@ real bookings with it on (verified 2026-10-08). Bypassing any app check is out o
 will not be done. On-device automation (an Android app using AccessibilityService) is also
 out of scope.
 
-## Current state: 0.5.3 released, the 06:00 task still on 0.4.0
+## Current state: 0.5.3 released and running the 06:00 task, 0.6.0 in progress
 
 - Repo: `github.com/servedbyhau/vh-tennis-booker` (private), local path `D:\VH-Booker\vh-tennis-booker`
 - Python package `court_booker` (src layout), CLI `court-booker` / `python -m court_booker`
@@ -78,8 +78,8 @@ out of scope.
   press; a real booking with it (16/10 10:00-11:00, cancelled by the user afterwards)
   logged all 24 screens up to the ticket. 0.5.3 (same day) waits on the home screen and
   opens the utilities list 60 s before the start; a timed real booking (16/10 11:00-12:00)
-  passed. Then `tools/setup_runner.py v0.5.3` moves the runner, and the first real 06:00
-  run on it is the 0.5.0 spec's last check (history rows).
+  passed. The runner moved to v0.5.3 on 2026-10-14; its first real 06:00 run (2026-10-15)
+  is the 0.5.0 spec's last check (history rows).
 - Test every change of the booking flow with a real booking to the ticket, timed with `--at`
   like the 06:00 run (the user cancels it afterwards), never with `--dry-run`: the test must
   follow the real process exactly (user's rule, 2026-10-14).
@@ -320,8 +320,8 @@ the next round starts.
 ## Environment
 
 - Windows 11, Python 3.14, Git; Python `Scripts` folder not on PATH (use `python -m ...`)
-- Runner folder `D:\VH-Booker\runner` at `v0.4.0` since 2026-10-12 (kept there after the
-  0.5.x releases until v0.5.3 is tested); the task runs its
+- Runner folder `D:\VH-Booker\runner` at `v0.5.3` since 2026-10-14 (`v0.4.0` from
+  2026-10-12; `tools/setup_runner.py v0.4.0` moves it back); the task runs its
   `.venv\Scripts\pythonw.exe` with `Start In` the development folder (src layout, so the
   development code is not imported)
 - MuMu Player (instance 0 serves ADB on `127.0.0.1:16384`); adb is found and connected
@@ -416,13 +416,13 @@ Telegram setup (the optional code stays) and no run history file until the app s
 
 ## Next step
 
-Move the runner to v0.5.3 (`python tools/setup_runner.py v0.5.3`; `v0.4.0` moves it back)
-and check the history of the first real 06:00 run on it, and whether round 1 reaches the
-calendar faster after the warm-up than the 1.3-2.0 s of 10-14/10.
-Then 0.6.0 (UI) on `release/0.6.0`, following the 0.6.0 parts of
-`docs/specs/0.5.0-desktop-app.md`: one part at a time (clear branches, several small
-commits, one pull request each), each part merged before the next. Write code only when the
-user asks for it. Keep reading the 06:00 logs; a booking fix ships as the next 0.5.x patch from `main`;
+Check the history of the first real 06:00 run on v0.5.3 (2026-10-15), and whether round 1
+reaches the calendar faster after the warm-up than the 1.3-2.0 s of 10-14/10.
+Meanwhile 0.6.0 (UI) continues on `release/0.6.0`, following the 0.6.0 parts of
+`docs/specs/0.5.0-desktop-app.md`: each part split into several branches (several small
+commits and one pull request each), each branch merged before the next. Part 1 (the `ui/`
+project, PRs #62-#65 and `docs/ui-project`) is done; part 2 is next: `feat/ui-tokens`,
+`feat/ui-shell`, `feat/ui-i18n`. Write code only when the user asks for it. Keep reading the 06:00 logs; a booking fix ships as the next 0.5.x patch from `main`;
 the screen log of each 06:00 run shows what happened on every screen. The next-month case first occurs on 2026-10-30. Ruled out on 2026-10-09:
 opening the calendar before 06:00, two slots in one booking, pre-recorded coordinates. Ruled
 out on 2026-10-10: health check, fallback slots and courts, Telegram setup, run history file
