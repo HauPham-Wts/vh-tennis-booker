@@ -259,8 +259,28 @@ out of scope.
   ESLint 10 flat config (`recommendedTypeChecked`, react-hooks, react-refresh, then
   eslint-config-prettier); Prettier at 100 columns. Tests sit beside the code
   (`*.test.tsx`), run in jsdom with Vitest globals off, so `src/test/setup.ts` adds the
-  jest-dom matchers and calls `cleanup` after each test. `App` is a placeholder until the
-  screens of part 4.
+  jest-dom matchers, calls `cleanup` and resets the language and `localStorage` after each
+  test. React Router is held at 7 (8 needs Node 22.22).
+- `ui/src` layout: `main.tsx` loads `i18n`, the styles (`styles/fonts.css`: Fontsource
+  Bricolage Grotesque variable with `opsz` and IBM Plex Mono 400/500/600, offline, with
+  Vietnamese, as `--font-sans`/`--font-mono`; `styles/tokens.css`: role-named tokens;
+  `styles/base.css`: page defaults, `:focus-visible` ring, reduced motion,
+  `.visually-hidden`) and `createBrowserRouter(routes)`. `paths.ts` names every address
+  once (English paths); `routes.tsx` maps them to `pages/*` under `App` (errorElement
+  `ErrorPage`, `*` `NotFoundPage`, `/settings` redirects to `/settings/booking`) and is
+  shared by the tests through `createMemoryRouter`. `App` lays out the skip link,
+  `components/SiteHeader` (brand, `MainNav` with `NavLink` `aria-current="page"`, hidden on
+  `/welcome` via `useMatch`, and `LanguageSwitch`) and `<main id="main">`. Pages set the
+  window title with `components/PageTitle` (React 19 hoists `<title>` above the static one
+  of `index.html`). Styles are CSS Modules on the tokens. `tokens.test.ts` reads
+  `tokens.css?raw` (Vitest `css.include` lists it, as Vitest blanks CSS imports) and holds
+  text pairs to 4.5:1 and markers to 3:1; `--color-failed` is `#b53c0b`, darker than the
+  mockups' `#c2410c` (4.14:1 on the ground).
+- `ui/src/i18n`: i18next with `locales/vi.json` and `en.json` (same keys, checked by
+  `locales.test.ts`), Vietnamese default and fallback; `i18next.d.ts` types the keys against
+  `vi.json`. The choice is stored under `court-booker.language` in `localStorage` (blocked
+  storage falls back to Vietnamese) and sets `<html lang>`. `LanguageSwitch` buttons are
+  named "VI Tiếng Việt" / "EN English" with `aria-label` (a hidden span lost the space).
 
 ## Booking flow (app screens)
 
