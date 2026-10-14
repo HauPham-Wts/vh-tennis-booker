@@ -21,6 +21,7 @@ start_at = "06:00"                  # when the app opens bookings, HH:MM or HH:M
 wake_at = "05:45"                   # scheduled task time (court-booker schedule install)
 ntp_server = "time.google.com"      # corrects the PC clock; "" uses the PC clock as is
 open_retry_seconds = 60             # keep reloading while the date or slot is not open yet
+warm_up_seconds = 60                # wait on the home screen; open the utilities list this early
 log_dir = "logs"                    # daily log files, next to this file; "" disables
 
 # Optional: send the summary to Telegram. Create a bot with @BotFather, send it a

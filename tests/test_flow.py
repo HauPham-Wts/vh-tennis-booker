@@ -182,6 +182,7 @@ def booking_app(screen="utilities", courts=COURTS, via_venue=False, slot_delay=0
         ("confirm_ticked", "Xác nhận"): "ticket",
     }
     backs_to = {
+        "utilities": "home",
         "ticket": "utilities",
         "confirm": "details",
         "confirm_ticked": "details",
@@ -434,24 +435,38 @@ def test_locate_checkbox_picks_small_node_level_with_caption():
     assert Booker(app, Config()).locate_checkbox(screen) == (57, 1345)
 
 
-def test_prepare_restarts_app_and_stops_on_utilities():
+def test_prepare_restarts_app_and_stops_on_home():
     app = booking_app(screen="loading")
 
     Booker(app, Config()).prepare()
 
     assert app.calls == ["app_stop", "app_start"]
-    assert app.taps == ["Tiện ích"]
-    assert app.screen == "utilities"
+    assert app.taps == []
+    assert app.screen == "home"
 
 
-def test_prepare_keeps_running_app_without_restart():
+def test_prepare_keeps_running_app_and_goes_back_to_home():
     app = booking_app(screen="utilities")
     app.current = "com.vinhomes.resident"
 
     Booker(app, Config(restart_app=False)).prepare()
 
-    assert app.calls == []
+    assert app.calls == ["back"]
     assert app.taps == []
+    assert app.screen == "home"
+
+
+def test_located_entry_opens_the_utilities_list_from_home_then_reads_it_again():
+    app = booking_app(screen="home")
+    booker = Booker(app, Config())
+
+    booker.locate_entry()  # warm-up: tap the home screen's utilities button
+    booker.locate_entry()  # just before the start: read only
+    app.ops.clear()
+    booker.book("11:00 - 12:00", TARGET)
+
+    assert app.taps[:2] == ["Tiện ích", "Sân Tennis"]
+    assert app.ops[0] == ("click", "Sân Tennis")
 
 
 def test_prepare_turns_animations_off_first():
@@ -476,7 +491,7 @@ def test_animations_that_stay_on_do_not_stop_the_run(caplog):
 
     Booker(app, Config()).prepare()
 
-    assert app.screen == "utilities"
+    assert app.screen == "home"
     assert "Could not turn off animations" in caplog.text
 
 
