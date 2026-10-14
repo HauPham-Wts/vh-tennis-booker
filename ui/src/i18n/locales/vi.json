@@ -12,19 +12,47 @@
     "guide": "Hướng dẫn"
   },
   "language": {
-    "label": "Ngôn ngữ"
+    "label": "Ngôn ngữ",
+    "names": {
+      "vi": "Tiếng Việt",
+      "en": "English"
+    }
   },
   "pages": {
-    "overview": { "title": "Tổng quan" },
-    "schedule": { "title": "Hẹn giờ" },
-    "history": { "title": "Lịch sử" },
-    "activity": { "title": "Nhật ký" },
-    "settings": { "title": "Cài đặt" },
-    "bookingSettings": { "title": "Đặt sân" },
-    "deviceSetup": { "title": "Thiết lập máy" },
-    "guide": { "title": "Hướng dẫn" },
-    "welcome": { "title": "Chào mừng" },
-    "notFound": { "title": "Không tìm thấy trang", "back": "Về Tổng quan" },
-    "error": { "title": "Có lỗi xảy ra", "reload": "Mở lại Tổng quan" }
+    "overview": {
+      "title": "Tổng quan"
+    },
+    "schedule": {
+      "title": "Hẹn giờ"
+    },
+    "history": {
+      "title": "Lịch sử"
+    },
+    "activity": {
+      "title": "Nhật ký"
+    },
+    "settings": {
+      "title": "Cài đặt"
+    },
+    "bookingSettings": {
+      "title": "Đặt sân"
+    },
+    "deviceSetup": {
+      "title": "Thiết lập máy"
+    },
+    "guide": {
+      "title": "Hướng dẫn"
+    },
+    "welcome": {
+      "title": "Chào mừng"
+    },
+    "notFound": {
+      "title": "Không tìm thấy trang",
+      "back": "Về Tổng quan"
+    },
+    "error": {
+      "title": "Có lỗi xảy ra",
+      "reload": "Mở lại Tổng quan"
+    }
   }
 }
