@@ -26,7 +26,33 @@
   },
   "pages": {
     "overview": {
-      "title": "Tổng quan"
+      "title": "Tổng quan",
+      "status": {
+        "noSetup": "Chưa thiết lập máy",
+        "setupLeft": "Còn {{count}} mục thiết lập máy cần làm",
+        "scheduleOff": "Hẹn giờ đang tắt",
+        "ready": "Mọi thứ đã sẵn sàng cho {{time}} {{when}}",
+        "setupLink": "Thiết lập máy",
+        "turnOn": "Bật hẹn giờ",
+        "check": "Kiểm tra máy"
+      },
+      "next": {
+        "title": "Lần đặt tiếp theo",
+        "off": "Hẹn giờ đang tắt",
+        "when": "{{period}} {{day}} · đánh thức máy lúc {{wake}}",
+        "offLine": "Bật hẹn giờ để app tự đặt lúc {{start}} mỗi sáng",
+        "playDate": "Ngày chơi",
+        "court": "Sân",
+        "slots": "Khung giờ"
+      },
+      "last": {
+        "title": "Lần đặt gần nhất",
+        "booked": "ĐÃ ĐẶT",
+        "notBooked": "KHÔNG ĐẶT ĐƯỢC",
+        "meta": "{{day}} · sân {{court}}",
+        "done": "Đặt xong lúc {{time}} · mất {{seconds}}",
+        "history": "Xem lịch sử →"
+      }
     },
     "schedule": {
       "title": "Hẹn giờ"

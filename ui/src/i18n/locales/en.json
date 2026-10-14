@@ -26,7 +26,33 @@
   },
   "pages": {
     "overview": {
-      "title": "Overview"
+      "title": "Overview",
+      "status": {
+        "noSetup": "Device not set up yet",
+        "setupLeft": "Device setup: {{count}} items left",
+        "scheduleOff": "The schedule is off",
+        "ready": "Ready for {{time}} {{when}}",
+        "setupLink": "Device setup",
+        "turnOn": "Turn it on",
+        "check": "Check the device"
+      },
+      "next": {
+        "title": "Next booking",
+        "off": "The schedule is off",
+        "when": "{{day}} {{period}} · PC wakes at {{wake}}",
+        "offLine": "Turn on the schedule to book at {{start}} every morning",
+        "playDate": "Play date",
+        "court": "Court",
+        "slots": "Slots"
+      },
+      "last": {
+        "title": "Last booking",
+        "booked": "BOOKED",
+        "notBooked": "NOT BOOKED",
+        "meta": "{{day}} · court {{court}}",
+        "done": "Booked at {{time}} · took {{seconds}}",
+        "history": "See history →"
+      }
     },
     "schedule": {
       "title": "Schedule"

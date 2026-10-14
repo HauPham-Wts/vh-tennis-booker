@@ -1,14 +1,19 @@
 import { useTranslation } from "react-i18next";
-import { PageTitle } from "../components/PageTitle";
+import { useOverview } from "../api/queries";
+import { PageHeader } from "../components/PageHeader";
+import { QueryView } from "../components/QueryView";
+import { StatusLine } from "./overview/StatusLine";
 
-/** Show the next booking, the last run and recent history. */
+/** Show whether the next booking is ready, the next booking and the last one. */
 export function OverviewPage() {
   const { t } = useTranslation();
-  const title = t("pages.overview.title");
+  const overview = useOverview();
   return (
     <>
-      <PageTitle>{title}</PageTitle>
-      <h1>{title}</h1>
+      <PageHeader title={t("pages.overview.title")}>
+        {overview.data && <StatusLine overview={overview.data} />}
+      </PageHeader>
+      <QueryView query={overview}>{() => null}</QueryView>
     </>
   );
 }

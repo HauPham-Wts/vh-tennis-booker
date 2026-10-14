@@ -1,0 +1,25 @@
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) 10px;
+  font-family: var(--font-mono);
+  font-size: var(--text-data);
+}
+
+/* Ready for the next start: the ball-yellow of the 06:00 moment. */
+.ready {
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-highlight);
+}
+
+/* Something to do first: the dot in orange-red, the words in ink. */
+.todo > span {
+  color: var(--color-failed);
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+}
