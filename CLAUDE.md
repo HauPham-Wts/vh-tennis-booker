@@ -351,7 +351,8 @@ the next round starts.
 ## Environment
 
 - Windows 11, Python 3.14, Git; Python `Scripts` folder not on PATH (use `python -m ...`)
-- Node.js 22.19 and npm 10.9 for `ui/` (the package asks for Node 22.12 or later)
+- Node.js 22.19 and npm 10.9 for `ui/` (the package asks for Node 22.12 or later); Node
+  22.22 or later would allow jsdom 30 and React Router 8, which Dependabot skips until then
 - Runner folder `D:\VH-Booker\runner` at `v0.5.3` since 2026-10-14 (`v0.4.0` from
   2026-10-12; `tools/setup_runner.py v0.4.0` moves it back); the task runs its
   `.venv\Scripts\pythonw.exe` with `Start In` the development folder (src layout, so the
@@ -452,9 +453,12 @@ Check the history of the first real 06:00 run on v0.5.3 (2026-10-15), and whethe
 reaches the calendar faster after the warm-up than the 1.3-2.0 s of 10-14/10.
 Meanwhile 0.6.0 (UI) continues on `release/0.6.0`, following the 0.6.0 parts of
 `docs/specs/0.5.0-desktop-app.md`: each part split into several branches (several small
-commits and one pull request each), each branch merged before the next. Part 1 (the `ui/`
-project, PRs #62-#65 and `docs/ui-project`) is done; part 2 is next: `feat/ui-tokens`,
-`feat/ui-shell`, `feat/ui-i18n`. Write code only when the user asks for it. Keep reading the 06:00 logs; a booking fix ships as the next 0.5.x patch from `main`;
+commits and one pull request each). Part 1 (the `ui/` project, PRs #62-#66) is merged.
+Part 2 (foundations) was built as six stacked branches, each checked on its own, and the
+user opens their pull requests together, merged in order into `release/0.6.0`:
+`feat/ui-fonts`, `feat/ui-tokens`, `feat/ui-routes`, `feat/ui-shell`, `feat/ui-i18n`,
+`docs/ui-foundations`. Part 3 is next: API types from OpenAPI, the API client, the live
+feed. Write code only when the user asks for it. Keep reading the 06:00 logs; a booking fix ships as the next 0.5.x patch from `main`;
 the screen log of each 06:00 run shows what happened on every screen. The next-month case first occurs on 2026-10-30. Ruled out on 2026-10-09:
 opening the calendar before 06:00, two slots in one booking, pre-recorded coordinates. Ruled
 out on 2026-10-10: health check, fallback slots and courts, Telegram setup, run history file
