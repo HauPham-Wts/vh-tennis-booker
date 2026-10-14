@@ -58,6 +58,37 @@ def test_runs_come_newest_first_with_their_slot_counts(path, read, record_run):
     assert runs[1]["court"] == "S6 - Sân tennis"
 
 
+def test_runs_come_with_their_slots_in_order(path, read, record_run):
+    first = record_run(
+        path, slots=[("18:00 - 19:00", True), ("19:00 - 20:00", False)], status="partial"
+    )
+    record_run(path, date=None)
+    third = record_run(path, slots=[("06:00 - 07:00", True)])
+
+    runs = {run["id"]: run for run in history_read.list_runs(read())}
+
+    assert [(slot["slot"], slot["ok"]) for slot in runs[first]["slots"]] == [
+        ("18:00 - 19:00", True),
+        ("19:00 - 20:00", False),
+    ]
+    assert runs[first]["slots"][1]["reason"] == "fully booked"
+    assert "run_id" not in runs[first]["slots"][0]
+    assert [slot["slot"] for slot in runs[third]["slots"]] == ["06:00 - 07:00"]
+    assert [run["slots"] for run in runs.values() if run["id"] not in (first, third)] == [[]]
+
+
+def test_runs_read_their_slots_in_one_query(path, read, record_run):
+    for _ in range(5):
+        record_run(path, slots=[("18:00 - 19:00", True)])
+    connection = read()
+    statements = []
+    connection.set_trace_callback(statements.append)
+
+    history_read.list_runs(connection)
+
+    assert len(statements) == 2
+
+
 def test_runs_filter_by_play_month_and_trigger(path, read, record_run):
     october = record_run(path, date="2026-10-31")
     record_run(path, date="2026-11-01")
@@ -66,6 +97,38 @@ def test_runs_filter_by_play_month_and_trigger(path, read, record_run):
     assert [
         r["id"] for r in history_read.list_runs(read(), month="2026-10", trigger="scheduled")
     ] == [october]
+
+
+def test_runs_filter_by_dry_run_not_by_trigger(path, read, record_run):
+    real = record_run(path, slots=[("18:00 - 19:00", True)])
+    manual = record_run(path, trigger="manual")
+    dry = record_run(path, trigger="dry_run")
+    scheduled_test = record_run(path, dry_run=True)
+
+    def ids(**filters):
+        return [run["id"] for run in history_read.list_runs(read(), **filters)]
+
+    assert ids(dry_run=False) == [manual, real]
+    assert ids(dry_run=True) == [scheduled_test, dry]
+    assert ids() == [scheduled_test, dry, manual, real]
+
+
+def test_months_count_the_runs_and_slots_of_real_bookings(path, read, record_run):
+    record_run(path, date="2026-10-15", slots=[("18:00 - 19:00", True), ("19:00 - 20:00", True)])
+    record_run(path, date="2026-10-31", slots=[("18:00 - 19:00", False)], status="failed")
+    record_run(path, date="2026-11-01", slots=[("06:00 - 07:00", True)])
+    record_run(path, trigger="dry_run", date="2026-10-16", slots=[("10:00 - 11:00", True)])
+    record_run(path, dry_run=True, date="2026-09-30", slots=[("10:00 - 11:00", True)])
+    record_run(path, date=None)
+
+    assert history_read.list_months(read()) == [
+        {"month": "2026-11", "runs": 1, "booked": 1},
+        {"month": "2026-10", "runs": 2, "booked": 2},
+    ]
+
+
+def test_no_months_without_bookings(path, read):
+    assert history_read.list_months(read()) == []
 
 
 def test_runs_page_back_from_a_run(path, read, record_run):

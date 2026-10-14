@@ -15,6 +15,24 @@ export function runSummary(id: number, fields: Partial<RunSummary> = {}): RunSum
     error: null,
     booked: 2,
     total: 2,
+    slots: [
+      {
+        slot: "15:00 - 16:00",
+        ok: true,
+        reason: null,
+        finished_at: "2026-10-15T06:00:06.120",
+        seconds: 6,
+        commands: 54,
+      },
+      {
+        slot: "16:00 - 17:00",
+        ok: true,
+        reason: null,
+        finished_at: "2026-10-15T06:00:11.056",
+        seconds: 4.3,
+        commands: 38,
+      },
+    ],
     ...fields,
   };
 }

@@ -32,7 +32,18 @@
       "title": "Schedule"
     },
     "history": {
-      "title": "History"
+      "title": "History",
+      "month": "Month",
+      "summary": "{{month}}: {{slots}} slots booked in {{runs}} runs.",
+      "play": "Play {{day}}",
+      "runOn": "Run on {{day}}",
+      "slots": "{{slots}} · court {{court}}",
+      "noSlot": "No slot was tried",
+      "meta": "Booked {{date}} {{period}} · done at {{time}}",
+      "metaRunning": "Booked {{date}} {{period}}",
+      "activity": "activity",
+      "emptyMonth": "No bookings this month.",
+      "empty": "No real bookings yet."
     },
     "activity": {
       "title": "Activity",

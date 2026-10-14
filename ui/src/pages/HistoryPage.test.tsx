@@ -1,0 +1,104 @@
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { paths } from "../paths";
+import { renderApp } from "../test/app";
+import { reply } from "../test/backend";
+import { runSummary } from "../test/runs";
+
+const MONTHS = [
+  { month: "2026-10", runs: 2, booked: 3 },
+  { month: "2026-09", runs: 1, booked: 2 },
+];
+
+const RUNS = [
+  runSummary(26),
+  runSummary(20, {
+    trigger: "manual",
+    started_at: "2026-10-12T09:40:00.000",
+    finished_at: null,
+    play_date: null,
+    court: null,
+    status: "running",
+    booked: 0,
+    total: 0,
+    slots: [],
+  }),
+];
+
+const REPLIES = { "GET /api/runs/months": reply(MONTHS), "GET /api/runs": reply(RUNS) };
+
+/** Return the query of the last request for runs. */
+function runsQuery(fetch: ReturnType<typeof renderApp>["fetch"]) {
+  const requests = fetch.mock.calls.map(([request]) => new URL(request.url));
+  return requests.filter(({ pathname }) => pathname === "/api/runs").at(-1)?.searchParams;
+}
+
+/** Return the tickets of the month, once shown (the header has list items too). */
+async function bookingRows() {
+  const main = screen.getByRole("main");
+  await within(main).findByText("Chơi Thứ Bảy 17/10");
+  return within(main).getAllByRole("listitem");
+}
+
+describe("HistoryPage", () => {
+  it("sums up the newest month and lists its real bookings as tickets", async () => {
+    const { fetch } = renderApp(paths.history, REPLIES);
+
+    expect(
+      await screen.findByText("Tháng 10/2026: đặt được 3 khung giờ trong 2 lần."),
+    ).toBeInTheDocument();
+    const rows = await bookingRows();
+    expect(rows[0]).toHaveTextContent("Chơi Thứ Bảy 17/10");
+    expect(rows[0]).toHaveTextContent("15:00–16:00 · 16:00–17:00 · sân S6");
+    expect(rows[0]).toHaveTextContent("Đặt sáng 15/10 · xong lúc 06:00:11 · nhật ký");
+    expect(rows[0]).toHaveTextContent("ĐẶT ĐƯỢC 2/2");
+    expect(within(rows[0]!).getByRole("link", { name: "nhật ký" })).toHaveAttribute(
+      "href",
+      "/activity?run=26",
+    );
+    const query = runsQuery(fetch);
+    expect(query?.get("month")).toBe("2026-10");
+    expect(query?.get("dry_run")).toBe("false");
+    expect(query?.get("limit")).toBe("200");
+  });
+
+  it("shows a run without a play date or slots in plain words", async () => {
+    renderApp(paths.history, REPLIES);
+
+    const rows = await bookingRows();
+    expect(rows[1]).toHaveTextContent("Lần chạy Thứ Hai 12/10");
+    expect(rows[1]).toHaveTextContent("Chưa thử khung giờ nào");
+    expect(rows[1]).toHaveTextContent("Đặt sáng 12/10 · nhật ký");
+    expect(rows[1]).toHaveTextContent("ĐANG CHẠY");
+  });
+
+  it("keeps the month picked in the address and reads that month", async () => {
+    const { fetch, router } = renderApp(paths.history, REPLIES);
+
+    fireEvent.change(await screen.findByRole("combobox", { name: "Tháng" }), {
+      target: { value: "2026-09" },
+    });
+
+    await waitFor(() => expect(runsQuery(fetch)?.get("month")).toBe("2026-09"));
+    expect(router.state.location.search).toBe("?month=2026-09");
+    expect(screen.getByText("Tháng 9/2026: đặt được 2 khung giờ trong 1 lần.")).toBeInTheDocument();
+  });
+
+  it("opens the month in the address", async () => {
+    renderApp(`${paths.history}?month=2026-09`, REPLIES);
+
+    expect(await screen.findByRole("combobox", { name: "Tháng" })).toHaveValue("2026-09");
+  });
+
+  it("says when there is no real booking yet, or none in the month", async () => {
+    renderApp(paths.history, { "GET /api/runs/months": reply([]) });
+    expect(await screen.findByText("Chưa có lần đặt thật nào.")).toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+  });
+
+  it("says when the month has no booking left to show", async () => {
+    renderApp(paths.history, { "GET /api/runs/months": reply(MONTHS), "GET /api/runs": reply([]) });
+
+    expect(await screen.findByText("Không có lần đặt nào trong tháng này.")).toBeInTheDocument();
+  });
+});

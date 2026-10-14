@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { reply, requestsTo, stubBackend } from "../test/backend";
 import { createTestQueryClient, withQueryClient } from "../test/queries";
 import { ApiError } from "./client";
-import { useOverview, useRuns } from "./queries";
+import { useOverview, useRunMonths, useRuns } from "./queries";
 import { createQueryClient, shouldRetry, UNREACHABLE_RETRIES } from "./queryClient";
 
 const unreachable = new ApiError(0, { error: "unreachable", detail: "fetch failed" });
@@ -52,6 +52,17 @@ describe("query hooks", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(overview);
+  });
+
+  it("read the months of real bookings", async () => {
+    const months = [{ month: "2026-10", runs: 5, booked: 10 }];
+    stubBackend({ "GET /api/runs/months": reply(months) });
+
+    const { result } = renderHook(() => useRunMonths(), {
+      wrapper: withQueryClient(createTestQueryClient()),
+    });
+
+    await waitFor(() => expect(result.current.data).toEqual(months));
   });
 
   it("keep each History filter apart in the cache", async () => {

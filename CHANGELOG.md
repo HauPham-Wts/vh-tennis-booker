@@ -58,6 +58,10 @@ uses [Semantic Versioning](https://semver.org/).
 - The Activity screen: the 30 newest runs with when, how and a ✓/✕ mark; the run shown
   (`?run=`, else the newest) with its stamp, every step in plain words, and its technical
   log, closed until asked for.
+- The History screen: the real bookings of a month as tickets with their slots, court and
+  stamp, a month picker kept in the address, and the slots booked that month (helps with
+  the quota of 8 per month). Runs from the API carry their slots; `GET /api/runs` filters
+  real bookings or dry runs (`dry_run`), and `GET /api/runs/months` lists the months.
 
 ### Changed
 - The OpenAPI schema describes every error response as a `Problem` (also 422, which it

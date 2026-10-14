@@ -32,6 +32,17 @@ def history_db(context: Context) -> Iterator[sqlite3.Connection]:
 HistoryDb = Annotated[sqlite3.Connection, Depends(history_db)]
 
 
+class SlotResult(BaseModel):
+    """The result of one slot of a run."""
+
+    slot: str
+    ok: bool
+    reason: Optional[str]
+    finished_at: str
+    seconds: float
+    commands: int
+
+
 class RunSummary(BaseModel):
     """One run as the History list shows it."""
 
@@ -47,17 +58,8 @@ class RunSummary(BaseModel):
     error: Optional[str]
     booked: int
     total: int
-
-
-class SlotResult(BaseModel):
-    """The result of one slot of a run."""
-
-    slot: str
-    ok: bool
-    reason: Optional[str]
-    finished_at: str
-    seconds: float
-    commands: int
+    slots: list[SlotResult]
+    """The slots tried, in order, with their results."""
 
 
 class Step(BaseModel):
@@ -87,7 +89,6 @@ class LogLine(BaseModel):
 class RunDetail(RunSummary):
     """One run in full, for its History page."""
 
-    slots: list[SlotResult]
     steps: list[Step]
     log_lines: list[LogLine]
 
@@ -97,11 +98,33 @@ def list_runs(
     db: HistoryDb,
     month: Annotated[Optional[str], Query(pattern=r"^\d{4}-\d{2}$")] = None,
     trigger: Optional[Trigger] = None,
+    dry_run: Optional[bool] = None,
     before: Optional[int] = None,
     limit: Annotated[int, Query(ge=1, le=500)] = history_read.DEFAULT_LIMIT,
 ) -> list[dict[str, Any]]:
-    """List runs newest first; ``month`` filters on the play date, ``before`` pages back."""
-    return history_read.list_runs(db, month=month, trigger=trigger, before=before, limit=limit)
+    """List runs newest first.
+
+    ``month`` filters on the play date, ``dry_run`` keeps dry runs or real bookings,
+    ``before`` pages back.
+    """
+    return history_read.list_runs(
+        db, month=month, trigger=trigger, dry_run=dry_run, before=before, limit=limit
+    )
+
+
+class MonthSummary(BaseModel):
+    """One month with real bookings: how many runs, how many slots they booked."""
+
+    month: str
+    runs: int
+    booked: int
+
+
+# Declared before /runs/{run_id}, which would otherwise take "months" for a run id.
+@router.get("/runs/months", response_model=list[MonthSummary])
+def list_months(db: HistoryDb) -> list[dict[str, Any]]:
+    """List the months of real bookings by play date, newest first, with their totals."""
+    return history_read.list_months(db)
 
 
 @router.get("/runs/{run_id}", response_model=RunDetail)

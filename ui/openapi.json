@@ -53,7 +53,7 @@
           "history"
         ],
         "summary": "List Runs",
-        "description": "List runs newest first; ``month`` filters on the play date, ``before`` pages back.",
+        "description": "List runs newest first.\n\n``month`` filters on the play date, ``dry_run`` keeps dry runs or real bookings,\n``before`` pages back.",
         "operationId": "list_runs_api_runs_get",
         "parameters": [
           {
@@ -92,6 +92,22 @@
                 }
               ],
               "title": "Trigger"
+            }
+          },
+          {
+            "name": "dry_run",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Dry Run"
             }
           },
           {
@@ -134,6 +150,52 @@
                     "$ref": "#/components/schemas/RunSummary"
                   },
                   "title": "Response List Runs Api Runs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request values, one line per value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error with a stable code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/months": {
+      "get": {
+        "tags": [
+          "history"
+        ],
+        "summary": "List Months",
+        "description": "List the months of real bookings by play date, newest first, with their totals.",
+        "operationId": "list_months_api_runs_months_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MonthSummary"
+                  },
+                  "type": "array",
+                  "title": "Response List Months Api Runs Months Get"
                 }
               }
             }
@@ -856,6 +918,30 @@
         "title": "LogLine",
         "description": "One technical log line."
       },
+      "MonthSummary": {
+        "properties": {
+          "month": {
+            "type": "string",
+            "title": "Month"
+          },
+          "runs": {
+            "type": "integer",
+            "title": "Runs"
+          },
+          "booked": {
+            "type": "integer",
+            "title": "Booked"
+          }
+        },
+        "type": "object",
+        "required": [
+          "month",
+          "runs",
+          "booked"
+        ],
+        "title": "MonthSummary",
+        "description": "One month with real bookings: how many runs, how many slots they booked."
+      },
       "Overview": {
         "properties": {
           "version": {
@@ -1138,6 +1224,13 @@
           "total": {
             "type": "integer",
             "title": "Total"
+          },
+          "slots": {
+            "items": {
+              "$ref": "#/components/schemas/SlotResult"
+            },
+            "type": "array",
+            "title": "Slots"
           }
         },
         "type": "object",
@@ -1153,7 +1246,8 @@
           "status",
           "error",
           "booked",
-          "total"
+          "total",
+          "slots"
         ],
         "title": "RunSummary",
         "description": "One run as the History list shows it."

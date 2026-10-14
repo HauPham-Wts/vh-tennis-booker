@@ -162,7 +162,8 @@ category `setup` without a run. `court-booker setup` prints the checks; `--auto`
 | Route | Module | Behaviour |
 |---|---|---|
 | `GET /api/status` | `status.py` | The Overview in one call (model `Overview`): `version`, `running` (lock holder, or the dry run the backend just started), `schedule`, `last_run`, `setup` (`last_setup`: time and items left by the last auto setup; empty until it ran). Never calls MuMu |
-| `GET /api/runs`, `GET /api/runs/{id}` | `history.py` | Runs newest first (`month`, `trigger`, `before`, `limit`); one run with slots, steps and log lines (404 `not_found` via `api.errors.NotFoundError`) |
+| `GET /api/runs`, `GET /api/runs/{id}` | `history.py` | Runs newest first, each with its `slots` (read for the whole page in one query; `month`, `trigger`, `dry_run` from the run's flag, not its trigger, `before`, `limit`); one run with slots, steps and log lines (404 `not_found` via `api.errors.NotFoundError`) |
+| `GET /api/runs/months` | `history.py` | Months of real bookings by play date, newest first, with `runs` and `booked` slots; declared before `/runs/{run_id}`, which would take "months" for an id |
 | `GET /api/events` | `history.py` | Activity steps newest first (`category`, `before`, `limit`). A `Step`'s `kind` is the `EventKind` enum and its `category` the `Category` literal in the schema; a row with a kind the backend does not know fails the response, so the engine and the backend must be the same version or the backend newer |
 | `GET`/`PUT /api/settings` | `settings.py` | `settings_of(config)` (TOML keys, labels with `continue`, without the `HIDDEN` Telegram keys). `PUT` takes the full `Settings` (extra keys refused), merges it, runs `validate_config` (422 `invalid_settings` with `problems`, file untouched), and only when something changed saves it (comments are lost) and records `settings_saved` with the changed keys |
 | `GET /api/setup`, `POST /api/setup/auto` | `setup.py` | The checks as `SetupItem`s (item, status, detail); auto setup with `{"restart_mumu": bool}` (400 in the quiet time, 409 while a run holds the lock) |
@@ -238,6 +239,8 @@ would move the task away from the runner folder.
   `stepMessage`, `<details>` technical log). Tests render the whole app with
   `test/app.tsx` `renderApp(path, replies)`: test cache, live feed on fake sockets and
   `stubBackend`.
+- `HistoryPage` shows the real bookings of one month (`?month=`, else the newest from
+  `useRunMonths`), read in one request (`limit=200`), as small `Ticket`s with `runStamp`.
 
 ### Backend connection (`ui/src/api`)
 

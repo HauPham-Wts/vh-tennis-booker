@@ -32,7 +32,18 @@
       "title": "Hẹn giờ"
     },
     "history": {
-      "title": "Lịch sử"
+      "title": "Lịch sử",
+      "month": "Tháng",
+      "summary": "{{month}}: đặt được {{slots}} khung giờ trong {{runs}} lần.",
+      "play": "Chơi {{day}}",
+      "runOn": "Lần chạy {{day}}",
+      "slots": "{{slots}} · sân {{court}}",
+      "noSlot": "Chưa thử khung giờ nào",
+      "meta": "Đặt {{period}} {{date}} · xong lúc {{time}}",
+      "metaRunning": "Đặt {{period}} {{date}}",
+      "activity": "nhật ký",
+      "emptyMonth": "Không có lần đặt nào trong tháng này.",
+      "empty": "Chưa có lần đặt thật nào."
     },
     "activity": {
       "title": "Nhật ký",

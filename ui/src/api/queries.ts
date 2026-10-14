@@ -7,6 +7,7 @@ import {
   getSettings,
   getSetupChecks,
   listEvents,
+  listRunMonths,
   listRuns,
   type RunsQuery,
 } from "./endpoints";
@@ -18,6 +19,7 @@ import {
 export const queryKeys = {
   overview: ["overview"] as const,
   runs: (query: RunsQuery = {}) => ["runs", query] as const,
+  months: ["runs", "months"] as const,
   run: (runId: number) => ["run", runId] as const,
   events: (query: EventsQuery = {}) => ["events", query] as const,
   settings: ["settings"] as const,
@@ -33,6 +35,11 @@ export function useOverview() {
 /** Read the runs of the History list. */
 export function useRuns(query: RunsQuery = {}) {
   return useQuery({ queryKey: queryKeys.runs(query), queryFn: () => listRuns(query) });
+}
+
+/** Read the months of real bookings; a finished run refreshes them with the runs. */
+export function useRunMonths() {
+  return useQuery({ queryKey: queryKeys.months, queryFn: listRunMonths });
 }
 
 /** Read one run in full. */
