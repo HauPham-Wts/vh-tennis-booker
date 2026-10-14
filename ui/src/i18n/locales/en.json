@@ -2,6 +2,10 @@
   "app": {
     "skipToContent": "Skip to content"
   },
+  "common": {
+    "on": "On",
+    "off": "Off"
+  },
   "nav": {
     "label": "Main navigation",
     "overview": "Overview",

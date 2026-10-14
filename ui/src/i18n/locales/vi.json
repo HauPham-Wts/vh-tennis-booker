@@ -2,6 +2,10 @@
   "app": {
     "skipToContent": "Bỏ qua tới nội dung"
   },
+  "common": {
+    "on": "Đang bật",
+    "off": "Đang tắt"
+  },
   "nav": {
     "label": "Điều hướng chính",
     "overview": "Tổng quan",
