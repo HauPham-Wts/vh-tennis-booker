@@ -33,9 +33,32 @@ export interface paths {
         };
         /**
          * List Runs
-         * @description List runs newest first; ``month`` filters on the play date, ``before`` pages back.
+         * @description List runs newest first.
+         *
+         *     ``month`` filters on the play date, ``dry_run`` keeps dry runs or real bookings,
+         *     ``before`` pages back.
          */
         get: operations["list_runs_api_runs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/runs/months": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Months
+         * @description List the months of real bookings by play date, newest first, with their totals.
+         */
+        get: operations["list_months_api_runs_months_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -309,6 +332,18 @@ export interface components {
             message: string;
         };
         /**
+         * MonthSummary
+         * @description One month with real bookings: how many runs, how many slots they booked.
+         */
+        MonthSummary: {
+            /** Month */
+            month: string;
+            /** Runs */
+            runs: number;
+            /** Booked */
+            booked: number;
+        };
+        /**
          * Overview
          * @description Everything the Overview shows, in one call.
          */
@@ -399,6 +434,8 @@ export interface components {
             booked: number;
             /** Total */
             total: number;
+            /** Slots */
+            slots: components["schemas"]["SlotResult"][];
         };
         /**
          * Running
@@ -615,6 +652,7 @@ export interface operations {
             query?: {
                 month?: string | null;
                 trigger?: ("scheduled" | "dry_run" | "manual") | null;
+                dry_run?: boolean | null;
                 before?: number | null;
                 limit?: number;
             };
@@ -631,6 +669,44 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RunSummary"][];
+                };
+            };
+            /** @description Invalid request values, one line per value */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description An error with a stable code */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    list_months_api_runs_months_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MonthSummary"][];
                 };
             };
             /** @description Invalid request values, one line per value */
