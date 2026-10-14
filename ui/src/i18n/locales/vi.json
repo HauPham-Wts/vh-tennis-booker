@@ -92,6 +92,85 @@
       "unknown": "chưa kiểm tra được"
     }
   },
+  "steps": {
+    "run_started": {
+      "scheduled": "Bắt đầu theo hẹn giờ",
+      "dry_run": "Bắt đầu chạy thử",
+      "manual": "Bắt đầu chạy thủ công",
+      "other": "Bắt đầu"
+    },
+    "device_ready": "Đã mở MuMu",
+    "app_ready": "Đã mở app Vinhomes",
+    "waiting": {
+      "full": "Chờ đến {{time}}",
+      "plain": "Chờ đến giờ đặt"
+    },
+    "booking_started": {
+      "full": "Bắt đầu đặt cho {{day}} · sân {{court}}",
+      "plain": "Bắt đầu đặt"
+    },
+    "slot_started": {
+      "full": "Lượt {{round}}/{{rounds}}: {{slot}}",
+      "plain": "Bắt đầu một lượt"
+    },
+    "calendar_opened": {
+      "first": "Đã mở lịch đặt sân",
+      "again": "Đã mở lịch đặt sân (lần {{attempt}})"
+    },
+    "date_selected": {
+      "full": "Đã chọn ngày {{day}}",
+      "plain": "Đã chọn ngày"
+    },
+    "slot_selected": {
+      "full": "Đã chọn khung {{slot}}",
+      "plain": "Đã chọn khung giờ"
+    },
+    "court_selected": {
+      "full": "Đã chọn sân {{court}}",
+      "plain": "Đã chọn sân"
+    },
+    "terms_accepted": "Đã tích đồng ý điều khoản",
+    "slot_booked": {
+      "full": "Đặt được {{slot}}",
+      "plain": "Đặt được một khung giờ",
+      "dry": "Chạy thử tới bước xác nhận: {{slot}}",
+      "dry_plain": "Chạy thử tới bước xác nhận"
+    },
+    "slot_failed": {
+      "full": "Không đặt được {{slot}}",
+      "plain": "Không đặt được một khung giờ"
+    },
+    "run_finished": {
+      "done": "Xong: {{booked}}/{{total}} khung thành công",
+      "plain": "Xong",
+      "none": "Xong: không khung nào thành công",
+      "error": "Dừng vì lỗi",
+      "interrupted": "Đã dừng giữa chừng"
+    },
+    "lock_cleared": "Đã gỡ khóa của một lần chạy đã dừng",
+    "lock_waiting": "Chờ lần chạy khác xong ({{trigger}})",
+    "lock_taken_over": "Đã dừng lần chạy khác ({{trigger}}) để kịp giờ đặt",
+    "setup_started": "Bắt đầu thiết lập tự động",
+    "setup_item": {
+      "full": "{{item}}: {{status}}",
+      "plain": "Đã kiểm tra một mục thiết lập"
+    },
+    "setup_finished": {
+      "done": "Thiết lập tự động xong",
+      "left": "Thiết lập xong, số mục cần bạn làm: {{count}}",
+      "error": "Thiết lập tự động dừng vì lỗi"
+    },
+    "settings_saved": {
+      "full": "Đã lưu cài đặt (số mục đổi: {{count}})",
+      "plain": "Đã lưu cài đặt"
+    },
+    "schedule_enabled": {
+      "full": "Đã bật hẹn giờ: đánh thức máy {{wake}}, đặt lúc {{start}}",
+      "plain": "Đã bật hẹn giờ"
+    },
+    "schedule_disabled": "Đã tắt hẹn giờ",
+    "other": "Bước khác ({{kind}})"
+  },
   "errors": {
     "not_found": "Không tìm thấy dữ liệu này.",
     "lock_held": "Đang có một lần chạy khác. Hãy chờ nó xong rồi thử lại.",

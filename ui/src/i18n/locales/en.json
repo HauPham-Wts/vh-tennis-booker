@@ -92,6 +92,85 @@
       "unknown": "could not be checked"
     }
   },
+  "steps": {
+    "run_started": {
+      "scheduled": "Started by the schedule",
+      "dry_run": "Dry run started",
+      "manual": "Started by hand",
+      "other": "Started"
+    },
+    "device_ready": "MuMu is ready",
+    "app_ready": "Vinhomes app is open",
+    "waiting": {
+      "full": "Waiting until {{time}}",
+      "plain": "Waiting for the start time"
+    },
+    "booking_started": {
+      "full": "Booking for {{day}} · court {{court}}",
+      "plain": "Booking started"
+    },
+    "slot_started": {
+      "full": "Round {{round}} of {{rounds}}: {{slot}}",
+      "plain": "Round started"
+    },
+    "calendar_opened": {
+      "first": "Opened the calendar",
+      "again": "Opened the calendar (attempt {{attempt}})"
+    },
+    "date_selected": {
+      "full": "Selected {{day}}",
+      "plain": "Selected the date"
+    },
+    "slot_selected": {
+      "full": "Selected {{slot}}",
+      "plain": "Selected the slot"
+    },
+    "court_selected": {
+      "full": "Selected court {{court}}",
+      "plain": "Selected the court"
+    },
+    "terms_accepted": "Accepted the terms",
+    "slot_booked": {
+      "full": "Booked {{slot}}",
+      "plain": "Booked a slot",
+      "dry": "Dry run reached the confirmation: {{slot}}",
+      "dry_plain": "Dry run reached the confirmation"
+    },
+    "slot_failed": {
+      "full": "Could not book {{slot}}",
+      "plain": "Could not book a slot"
+    },
+    "run_finished": {
+      "done": "Done: {{booked}} of {{total}} slots succeeded",
+      "plain": "Done",
+      "none": "Done: no slot succeeded",
+      "error": "Stopped by an error",
+      "interrupted": "Interrupted"
+    },
+    "lock_cleared": "Removed the lock of a run that had stopped",
+    "lock_waiting": "Waiting for another run to finish ({{trigger}})",
+    "lock_taken_over": "Stopped another run ({{trigger}}) to book on time",
+    "setup_started": "Auto setup started",
+    "setup_item": {
+      "full": "{{item}}: {{status}}",
+      "plain": "Checked a setup item"
+    },
+    "setup_finished": {
+      "done": "Auto setup finished",
+      "left": "Auto setup finished; items that need you: {{count}}",
+      "error": "Auto setup stopped by an error"
+    },
+    "settings_saved": {
+      "full": "Settings saved (changed: {{count}})",
+      "plain": "Settings saved"
+    },
+    "schedule_enabled": {
+      "full": "Schedule on: wake at {{wake}}, book at {{start}}",
+      "plain": "Schedule on"
+    },
+    "schedule_disabled": "Schedule off",
+    "other": "Other step ({{kind}})"
+  },
   "errors": {
     "not_found": "This record does not exist.",
     "lock_held": "Another run is in progress. Try again when it has finished.",
