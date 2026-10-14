@@ -1,0 +1,62 @@
+/* Page defaults on top of the tokens: paper ground, ink text, no stray margins. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The design spaces blocks with gaps, never with margins. */
+h1,
+h2,
+h3,
+h4,
+p,
+dl,
+dd,
+figure,
+blockquote {
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--color-stamp);
+}
+
+a:hover {
+  color: var(--color-stamp-strong);
+}
+
+mark {
+  background: var(--color-highlight);
+  color: var(--color-ink);
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
