@@ -18,6 +18,12 @@ export interface LiveSocket {
 /** Waits before each reconnect; the last one repeats until the backend is back. */
 export const RECONNECT_DELAYS_MS = [500, 1000, 2000, 5000] as const;
 
+/**
+ * A socket not open by then is closed and tried again. Vite's proxy, with no backend behind
+ * it, accepts the socket and then neither opens nor closes it.
+ */
+export const OPEN_TIMEOUT_MS = 5000;
+
 export interface LiveFeedOptions {
   /** Receives each new step once, oldest first. */
   onStep: (step: Step) => void;
@@ -77,11 +83,29 @@ export function connectLiveFeed({
   let failures = 0;
   let stopped = false;
 
+  /** Reconnect after `current` dropped; a socket already replaced or stopped is ignored. */
+  function dropped(current: LiveSocket): void {
+    if (stopped || socket !== current) {
+      return;
+    }
+    socket = null;
+    onState("closed");
+    const delay = RECONNECT_DELAYS_MS[Math.min(failures, RECONNECT_DELAYS_MS.length - 1)] ?? 5000;
+    failures += 1;
+    timer = setTimeout(open, delay);
+  }
+
   function open(): void {
     onState("connecting");
     const current = createSocket(url(lastId));
     socket = current;
+    // Retry at once: a socket closed before it opened may never report its close (Node).
+    const openTimer = setTimeout(() => {
+      dropped(current);
+      current.close();
+    }, OPEN_TIMEOUT_MS);
     current.onopen = () => {
+      clearTimeout(openTimer);
       failures = 0;
       onState("open");
     };
@@ -94,13 +118,8 @@ export function connectLiveFeed({
       }
     };
     current.onclose = () => {
-      if (stopped || socket !== current) {
-        return;
-      }
-      onState("closed");
-      const delay = RECONNECT_DELAYS_MS[Math.min(failures, RECONNECT_DELAYS_MS.length - 1)] ?? 5000;
-      failures += 1;
-      timer = setTimeout(open, delay);
+      clearTimeout(openTimer);
+      dropped(current);
     };
   }
 
