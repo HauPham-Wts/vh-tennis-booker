@@ -2,13 +2,21 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 
 from court_booker import __version__
 from court_booker.api import history, live, runs, schedule, settings, setup, status
 from court_booker.api.context import AppContext
-from court_booker.api.errors import add_error_handlers
+from court_booker.api.errors import Problem, add_error_handlers
+
+ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
+    422: {"model": Problem, "description": "Invalid request values, one line per value"},
+    "default": {"model": Problem, "description": "An error with a stable code"},
+}
+"""Every route answers errors as a Problem; this tells the schema (and the UI types) so."""
 
 
 class Health(BaseModel):
@@ -30,16 +38,12 @@ def create_app(context: AppContext) -> FastAPI:
     app.state.context = context
     add_error_handlers(app)
 
-    @app.get("/api/health", response_model=Health, tags=["app"])
+    @app.get("/api/health", response_model=Health, tags=["app"], responses=ERROR_RESPONSES)
     def health() -> Health:
         """Tell the UI the backend is up, and its version."""
         return Health(status="ok", version=__version__)
 
-    app.include_router(history.router)
-    app.include_router(settings.router)
-    app.include_router(setup.router)
-    app.include_router(schedule.router)
-    app.include_router(runs.router)
-    app.include_router(status.router)
+    for module in (history, settings, setup, schedule, runs, status):
+        app.include_router(module.router, responses=ERROR_RESPONSES)
     app.include_router(live.router)
     return app
