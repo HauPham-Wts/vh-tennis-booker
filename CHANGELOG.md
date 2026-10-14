@@ -35,6 +35,9 @@ uses [Semantic Versioning](https://semver.org/).
   source of the UI's types; the backend tests fail while it is out of date.
 - `npm run api:types` generates the UI's TypeScript types from `ui/openapi.json`; CI fails
   while they are out of date.
+- A typed API client with one function per backend endpoint. Every failure becomes an
+  error with a stable code and a message in Vietnamese or English, also when the
+  backend is not running. In development Vite forwards `/api` to `court-booker serve`.
 
 ### Changed
 - The OpenAPI schema describes every error response as a `Problem` (also 422, which it
