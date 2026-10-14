@@ -70,6 +70,28 @@
       "evening": "tối"
     }
   },
+  "triggers": {
+    "scheduled": "hẹn giờ",
+    "dry_run": "chạy thử",
+    "manual": "thủ công",
+    "setup": "thiết lập tự động",
+    "unknown": "không rõ"
+  },
+  "setup": {
+    "items": {
+      "mumu_installed": "MuMu Player",
+      "mumu_screen": "Màn hình MuMu 540x1600",
+      "wake_timers": "Cho phép hẹn giờ đánh thức máy",
+      "app_installed": "App Vinhomes trong MuMu"
+    },
+    "statuses": {
+      "ok": "đã đúng",
+      "fixed": "đã sửa",
+      "fixable": "sửa tự động được",
+      "user": "cần bạn tự làm",
+      "unknown": "chưa kiểm tra được"
+    }
+  },
   "errors": {
     "not_found": "Không tìm thấy dữ liệu này.",
     "lock_held": "Đang có một lần chạy khác. Hãy chờ nó xong rồi thử lại.",

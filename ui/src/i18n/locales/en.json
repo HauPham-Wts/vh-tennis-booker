@@ -70,6 +70,28 @@
       "evening": "evening"
     }
   },
+  "triggers": {
+    "scheduled": "schedule",
+    "dry_run": "dry run",
+    "manual": "by hand",
+    "setup": "auto setup",
+    "unknown": "unknown"
+  },
+  "setup": {
+    "items": {
+      "mumu_installed": "MuMu Player",
+      "mumu_screen": "MuMu screen 540x1600",
+      "wake_timers": "Wake timers",
+      "app_installed": "Vinhomes app in MuMu"
+    },
+    "statuses": {
+      "ok": "already right",
+      "fixed": "fixed",
+      "fixable": "can be fixed automatically",
+      "user": "needs you",
+      "unknown": "could not be checked"
+    }
+  },
   "errors": {
     "not_found": "This record does not exist.",
     "lock_held": "Another run is in progress. Try again when it has finished.",
