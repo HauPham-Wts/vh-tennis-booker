@@ -7,6 +7,7 @@ import { QueryView } from "../components/QueryView";
 import { runResult, triggerName } from "../runs";
 import { useFormat } from "../useFormat";
 import styles from "./ActivityPage.module.css";
+import { RunDetail } from "./RunDetail";
 
 /** How many recent runs the list shows; older ones are reached from History. */
 const RECENT_RUNS = 30;
@@ -64,6 +65,7 @@ export function ActivityPage() {
           return (
             <div className={styles.layout}>
               <RunList runs={list} selected={selected} />
+              <RunDetail runId={selected} />
             </div>
           );
         }}

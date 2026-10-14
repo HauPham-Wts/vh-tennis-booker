@@ -1,8 +1,9 @@
-import { screen, within } from "@testing-library/react";
+import { act, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { paths } from "../paths";
 import { renderApp } from "../test/app";
 import { reply } from "../test/backend";
+import { step } from "../test/liveSocket";
 import { runSummary } from "../test/runs";
 
 const RUNS = [
@@ -17,6 +18,48 @@ const RUNS = [
   }),
   runSummary(24, { trigger: "manual", started_at: "2026-10-14T08:32:16.966", status: "running" }),
 ];
+
+/** Run 26 in full: a booked slot, a failed one, and two lines of its log. */
+const RUN_26 = {
+  ...RUNS[0],
+  status: "partial",
+  booked: 1,
+  slots: [],
+  steps: [
+    step(1, {
+      run_id: 26,
+      time: "2026-10-15T05:50:02.200",
+      kind: "run_started",
+      data: { trigger: "scheduled" },
+    }),
+    step(2, {
+      run_id: 26,
+      time: "2026-10-15T06:00:00.004",
+      kind: "booking_started",
+      data: { date: "2026-10-17", court: "S6 - Sân tennis" },
+    }),
+    step(3, {
+      run_id: 26,
+      time: "2026-10-15T06:00:06.120",
+      kind: "slot_booked",
+      category: "slot",
+      data: { slot: "15:00 - 16:00", seconds: 6, dry_run: false },
+    }),
+    step(4, {
+      run_id: 26,
+      time: "2026-10-15T06:00:11.300",
+      kind: "slot_failed",
+      category: "error",
+      data: { slot: "16:00 - 17:00", reason: "Slot 16:00 - 17:00 is fully booked", seconds: 4.3 },
+    }),
+  ],
+  log_lines: [
+    { id: 1, time: "2026-10-15T05:50:02.073", level: "INFO", message: "court-booker 0.6.0" },
+    { id: 2, time: "2026-10-15T06:00:06.120", level: "INFO", message: "Booking confirmed" },
+  ],
+};
+
+const REPLIES = { "GET /api/runs": reply(RUNS), "GET /api/runs/26": reply(RUN_26) };
 
 describe("ActivityPage", () => {
   it("lists the recent runs with their result and shows the newest", async () => {
@@ -45,5 +88,58 @@ describe("ActivityPage", () => {
     renderApp(paths.activity, { "GET /api/runs": reply([]) });
 
     expect(await screen.findByText("Chưa có lần chạy nào.")).toBeInTheDocument();
+  });
+
+  it("shows the run's result, every step and the engine's reason", async () => {
+    renderApp(paths.activity, REPLIES);
+
+    const run = await screen.findByRole("article", { name: "sáng Thứ Năm 15/10" });
+    expect(within(run).getByText("hẹn giờ · chơi Thứ Bảy 17/10 · sân S6")).toBeInTheDocument();
+    expect(within(run).getByText("ĐẶT ĐƯỢC 1/2")).toBeInTheDocument();
+    const steps = within(run)
+      .getAllByRole("listitem")
+      .map((item) => item.textContent);
+    expect(steps).toEqual([
+      "05:50:02Bắt đầu theo hẹn giờ",
+      "06:00:00Bắt đầu đặt cho Thứ Bảy 17/10 · sân S6",
+      "06:00:06✓ Đặt được 15:00–16:00 (6,0 giây)",
+      "06:00:11✕ Không đặt được 16:00–17:00 (4,3 giây)Slot 16:00 - 17:00 is fully booked",
+    ]);
+    expect(within(run).getByText("Bắt đầu đặt cho Thứ Bảy 17/10 · sân S6").tagName).toBe("MARK");
+  });
+
+  it("keeps the technical log closed until asked for", async () => {
+    renderApp(paths.activity, REPLIES);
+
+    const summary = await screen.findByText("Chi tiết kỹ thuật");
+    const details = summary.closest("details");
+    expect(details).not.toHaveAttribute("open");
+    // The log keeps its columns, so the text is compared as it is.
+    expect(details?.textContent).toContain("05:50:02.073 INFO    court-booker 0.6.0");
+  });
+
+  it("adds the steps of a running run as the live feed brings them", async () => {
+    const { live } = renderApp(paths.activity, REPLIES);
+    await screen.findByText("Bắt đầu theo hẹn giờ");
+
+    act(() => {
+      live.current().open();
+      live.current().send(
+        step(5, {
+          run_id: 26,
+          time: "2026-10-15T06:00:12.000",
+          kind: "run_finished",
+          data: { status: "partial", booked: 1, total: 2 },
+        }),
+      );
+    });
+
+    expect(await screen.findByText("Xong: 1/2 khung thành công")).toBeInTheDocument();
+  });
+
+  it("says when the run asked for does not exist", async () => {
+    renderApp(`${paths.activity}?run=99`, { "GET /api/runs": reply(RUNS) });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Không tìm thấy dữ liệu này.");
   });
 });
