@@ -178,3 +178,19 @@ export function relativeDay(text: string, today: string): RelativeDay | null {
 export function localToday(now: Date = new Date()): string {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
+
+/** Write a slot as "18:00–19:00"; the app and the config write "18:00 - 19:00". */
+export function formatSlot(slot: string): string {
+  return slot.replace(/\s*-\s*/, "–");
+}
+
+/** Return the start of a slot ("18:00"), for short lists. */
+export function slotStart(slot: string): string {
+  return slot.split("-", 1)[0]?.trim() ?? slot;
+}
+
+/** Return a court's short name: "S6" from "S6 - Sân tennis"; other names stay whole. */
+export function courtName(court: string): string {
+  const [name = ""] = court.split(" - ", 1);
+  return name.trim() === "" ? court : name.trim();
+}

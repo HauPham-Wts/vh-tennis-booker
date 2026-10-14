@@ -1,16 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
+  courtName,
   formatClock,
   formatDateTime,
   formatDay,
   formatDecimal,
   formatShortDate,
+  formatSlot,
   formatTime,
   dayPeriod,
   localToday,
   monthParts,
   parseLocal,
   relativeDay,
+  slotStart,
 } from "./format";
 
 describe("parseLocal", () => {
@@ -172,5 +175,25 @@ describe("localToday", () => {
   it("writes this machine's date with leading zeros", () => {
     expect(localToday(new Date(2026, 9, 5, 23, 59))).toBe("2026-10-05");
     expect(localToday(new Date(2027, 0, 1, 0, 0))).toBe("2027-01-01");
+  });
+});
+
+describe("slots and courts", () => {
+  it("writes a slot with a dash and no spaces", () => {
+    expect(formatSlot("18:00 - 19:00")).toBe("18:00–19:00");
+    expect(formatSlot("06:00-07:00")).toBe("06:00–07:00");
+    expect(formatSlot("soon")).toBe("soon");
+  });
+
+  it("gives the start of a slot", () => {
+    expect(slotStart("18:00 - 19:00")).toBe("18:00");
+    expect(slotStart("soon")).toBe("soon");
+  });
+
+  it("shortens a court to its name", () => {
+    expect(courtName("S6 - Sân tennis")).toBe("S6");
+    expect(courtName("S10 - Sân tennis")).toBe("S10");
+    expect(courtName("Sân trung tâm")).toBe("Sân trung tâm");
+    expect(courtName(" - Sân tennis")).toBe(" - Sân tennis");
   });
 });
