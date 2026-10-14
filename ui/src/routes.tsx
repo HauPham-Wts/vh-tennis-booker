@@ -3,8 +3,10 @@ import { App } from "./App";
 import { ActivityPage } from "./pages/ActivityPage";
 import { BookingSettingsPage } from "./pages/BookingSettingsPage";
 import { DeviceSetupPage } from "./pages/DeviceSetupPage";
+import { ErrorPage } from "./pages/ErrorPage";
 import { GuidePage } from "./pages/GuidePage";
 import { HistoryPage } from "./pages/HistoryPage";
+import { NotFoundPage } from "./pages/NotFoundPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { SchedulePage } from "./pages/SchedulePage";
 import { SettingsPage } from "./pages/SettingsPage";
@@ -16,6 +18,7 @@ export const routes: RouteObject[] = [
   {
     path: paths.overview,
     element: <App />,
+    errorElement: <ErrorPage />,
     children: [
       { index: true, element: <OverviewPage /> },
       { path: paths.schedule, element: <SchedulePage /> },
@@ -33,6 +36,7 @@ export const routes: RouteObject[] = [
       },
       { path: paths.guide, element: <GuidePage /> },
       { path: paths.welcome, element: <WelcomePage /> },
+      { path: "*", element: <NotFoundPage /> },
     ],
   },
 ];
