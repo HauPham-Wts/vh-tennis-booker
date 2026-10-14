@@ -66,11 +66,25 @@ describe("LiveProvider", () => {
 
     act(() => {
       feed.current().open();
-      feed.current().send(step(9, { run_id: 3 }));
+      feed.current().send(step(9, { run_id: 3, kind: "slot_booked", category: "slot" }));
     });
 
     const keys = invalidate.mock.calls.map(([filters]) => filters?.queryKey);
-    expect(keys).toEqual(staleKeysFor(step(9, { run_id: 3 })));
+    expect(keys).toEqual([queryKeys.overview, ["runs"]]);
+  });
+
+  it("sends no request for the ordinary steps of a run", () => {
+    const feed = renderFeed();
+    const invalidate = vi.spyOn(feed.cache, "invalidateQueries");
+
+    act(() => {
+      feed.current().open();
+      for (const kind of ["calendar_opened", "date_selected", "slot_selected"] as const) {
+        feed.current().send(step(10, { run_id: 3, kind }));
+      }
+    });
+
+    expect(invalidate).not.toHaveBeenCalled();
   });
 
   it("closes the connection when the app goes away", () => {
@@ -92,33 +106,44 @@ describe("useLiveFeed", () => {
 });
 
 describe("staleKeysFor", () => {
-  it("makes a run's step stale the overview, the activity log and that run", () => {
-    expect(staleKeysFor(step(1, { run_id: 3 }))).toEqual([
+  it("leaves the steps inside a run to the live feed", () => {
+    for (const kind of ["device_ready", "waiting", "booking_started", "court_selected"] as const) {
+      expect(staleKeysFor(step(1, { run_id: 3, kind })), kind).toEqual([]);
+    }
+  });
+
+  it("refreshes the overview and the runs when a run starts or a slot ends", () => {
+    for (const kind of ["run_started", "slot_booked", "slot_failed"] as const) {
+      expect(staleKeysFor(step(1, { run_id: 3, kind })), kind).toEqual([
+        queryKeys.overview,
+        ["runs"],
+      ]);
+    }
+  });
+
+  it("also refreshes the run itself when it ends, for its final log", () => {
+    expect(staleKeysFor(step(1, { run_id: 3, kind: "run_finished" }))).toEqual([
       queryKeys.overview,
-      ["events"],
       ["runs"],
       queryKeys.run(3),
     ]);
   });
 
   it("makes a settings step stale the settings and the schedule", () => {
-    expect(staleKeysFor(step(1, { run_id: null, category: "settings" }))).toEqual([
-      queryKeys.overview,
-      ["events"],
-      queryKeys.settings,
-      queryKeys.schedule,
-    ]);
+    expect(
+      staleKeysFor(step(1, { run_id: null, kind: "settings_saved", category: "settings" })),
+    ).toEqual([queryKeys.overview, queryKeys.settings, queryKeys.schedule]);
   });
 
   it("makes a setup step stale the setup checks", () => {
-    expect(staleKeysFor(step(1, { run_id: null, category: "setup" }))).toContainEqual(
-      queryKeys.setup,
-    );
+    expect(
+      staleKeysFor(step(1, { run_id: null, kind: "setup_finished", category: "setup" })),
+    ).toEqual([queryKeys.overview, queryKeys.setup]);
   });
 
   it("makes a schedule step stale the schedule", () => {
-    expect(staleKeysFor(step(1, { run_id: null, category: "schedule" }))).toContainEqual(
-      queryKeys.schedule,
-    );
+    expect(
+      staleKeysFor(step(1, { run_id: null, kind: "schedule_enabled", category: "schedule" })),
+    ).toEqual([queryKeys.overview, queryKeys.schedule]);
   });
 });

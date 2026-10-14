@@ -2,7 +2,7 @@ import type { QueryKey } from "@tanstack/react-query";
 import { createContext, useContext } from "react";
 import type { LiveState } from "./live";
 import { queryKeys } from "./queries";
-import type { Step } from "./types";
+import type { Step, StepKind } from "./types";
 
 /** How many recent steps the app keeps for the screens that show them live. */
 export const MAX_LIVE_STEPS = 200;
@@ -24,12 +24,35 @@ export function useLiveFeed(): LiveFeed {
   return feed;
 }
 
-/** Return the cached data a new step makes stale; only the screens shown refetch it. */
+/**
+ * The steps of a run after which the backend reports something new: the run starts, a
+ * slot ends, the run ends. The steps in between are shown from the live feed itself.
+ */
+const RUN_BOUNDARIES: ReadonlySet<StepKind> = new Set<StepKind>([
+  "run_started",
+  "slot_booked",
+  "slot_failed",
+  "run_finished",
+]);
+
+/**
+ * Return the cached data a new step makes stale; only the screens shown refetch it. A run
+ * sends no request for its ordinary steps, so a window left open at 06:00 costs the
+ * booking nothing between them.
+ */
 export function staleKeysFor(step: Step): QueryKey[] {
-  const keys: QueryKey[] = [queryKeys.overview, ["events"]];
   if (step.run_id !== null) {
-    keys.push(["runs"], queryKeys.run(step.run_id));
+    if (!RUN_BOUNDARIES.has(step.kind)) {
+      return [];
+    }
+    const keys: QueryKey[] = [queryKeys.overview, ["runs"]];
+    if (step.kind === "run_finished") {
+      // Its final status and technical log.
+      keys.push(queryKeys.run(step.run_id));
+    }
+    return keys;
   }
+  const keys: QueryKey[] = [queryKeys.overview];
   if (step.category === "setup") {
     keys.push(queryKeys.setup);
   }
