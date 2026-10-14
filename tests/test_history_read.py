@@ -58,6 +58,37 @@ def test_runs_come_newest_first_with_their_slot_counts(path, read, record_run):
     assert runs[1]["court"] == "S6 - Sân tennis"
 
 
+def test_runs_come_with_their_slots_in_order(path, read, record_run):
+    first = record_run(
+        path, slots=[("18:00 - 19:00", True), ("19:00 - 20:00", False)], status="partial"
+    )
+    record_run(path, date=None)
+    third = record_run(path, slots=[("06:00 - 07:00", True)])
+
+    runs = {run["id"]: run for run in history_read.list_runs(read())}
+
+    assert [(slot["slot"], slot["ok"]) for slot in runs[first]["slots"]] == [
+        ("18:00 - 19:00", True),
+        ("19:00 - 20:00", False),
+    ]
+    assert runs[first]["slots"][1]["reason"] == "fully booked"
+    assert "run_id" not in runs[first]["slots"][0]
+    assert [slot["slot"] for slot in runs[third]["slots"]] == ["06:00 - 07:00"]
+    assert [run["slots"] for run in runs.values() if run["id"] not in (first, third)] == [[]]
+
+
+def test_runs_read_their_slots_in_one_query(path, read, record_run):
+    for _ in range(5):
+        record_run(path, slots=[("18:00 - 19:00", True)])
+    connection = read()
+    statements = []
+    connection.set_trace_callback(statements.append)
+
+    history_read.list_runs(connection)
+
+    assert len(statements) == 2
+
+
 def test_runs_filter_by_play_month_and_trigger(path, read, record_run):
     october = record_run(path, date="2026-10-31")
     record_run(path, date="2026-11-01")

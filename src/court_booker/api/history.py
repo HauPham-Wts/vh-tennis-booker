@@ -32,6 +32,17 @@ def history_db(context: Context) -> Iterator[sqlite3.Connection]:
 HistoryDb = Annotated[sqlite3.Connection, Depends(history_db)]
 
 
+class SlotResult(BaseModel):
+    """The result of one slot of a run."""
+
+    slot: str
+    ok: bool
+    reason: Optional[str]
+    finished_at: str
+    seconds: float
+    commands: int
+
+
 class RunSummary(BaseModel):
     """One run as the History list shows it."""
 
@@ -47,17 +58,8 @@ class RunSummary(BaseModel):
     error: Optional[str]
     booked: int
     total: int
-
-
-class SlotResult(BaseModel):
-    """The result of one slot of a run."""
-
-    slot: str
-    ok: bool
-    reason: Optional[str]
-    finished_at: str
-    seconds: float
-    commands: int
+    slots: list[SlotResult]
+    """The slots tried, in order, with their results."""
 
 
 class Step(BaseModel):
@@ -87,7 +89,6 @@ class LogLine(BaseModel):
 class RunDetail(RunSummary):
     """One run in full, for its History page."""
 
-    slots: list[SlotResult]
     steps: list[Step]
     log_lines: list[LogLine]
 

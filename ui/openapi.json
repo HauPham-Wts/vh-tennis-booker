@@ -1138,6 +1138,13 @@
           "total": {
             "type": "integer",
             "title": "Total"
+          },
+          "slots": {
+            "items": {
+              "$ref": "#/components/schemas/SlotResult"
+            },
+            "type": "array",
+            "title": "Slots"
           }
         },
         "type": "object",
@@ -1153,7 +1160,8 @@
           "status",
           "error",
           "booked",
-          "total"
+          "total",
+          "slots"
         ],
         "title": "RunSummary",
         "description": "One run as the History list shows it."

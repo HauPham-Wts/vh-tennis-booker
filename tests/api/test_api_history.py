@@ -22,6 +22,10 @@ def test_runs_are_listed_newest_first(client, database, record_run):
     assert runs[1]["booked"] == 1
     assert runs[1]["total"] == 2
     assert runs[1]["play_date"] == "2026-10-15"
+    assert [(slot["slot"], slot["ok"]) for slot in runs[1]["slots"]] == [
+        ("18:00 - 19:00", True),
+        ("19:00 - 20:00", False),
+    ]
 
 
 def test_runs_filter_and_page(client, database, record_run):
