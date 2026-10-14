@@ -109,10 +109,12 @@ class Booker:
         logger.debug("Animations off")
 
     def prepare(self) -> None:
-        """Open the app and stop on the utilities list, ready for the first round.
+        """Open the app and stop on its home screen, ready for the first round.
 
         With ``restart_app`` the app is stopped first, so a stale screen, popup or
-        expired session from the previous day cannot get in the way.
+        expired session from the previous day cannot get in the way. A timed run waits
+        on the home screen and opens the utilities list shortly before the start
+        (:meth:`locate_entry`), so the list it books from is freshly loaded.
         """
         package = self.config.package
         self.disable_animations()
@@ -132,19 +134,21 @@ class Booker:
                 "check that it is logged in"
             )
         try:
-            self.return_to_utilities(found[1])
+            self.return_to_home(found[1])
         except NavigationError as exc:
             raise AppNotReadyError(str(exc)) from exc
-        logger.info("Ready on the utilities list")
+        logger.info("Ready on the home screen")
 
     def locate_entry(self) -> None:
-        """Read the utilities list just before the start time.
+        """Open the utilities list from the home screen, or read it again if it is shown.
 
-        The first round then taps the utility with a single command at the start
-        time, and the read wakes the device connection after the long wait.
+        A timed run calls this at ``warm_up_seconds`` before the start, which taps
+        the home screen's utilities button and loads the list, and again just before
+        the start, which only reads it. The first round then taps the utility with a
+        single command at the start time.
         """
         self._entry = self.return_to_utilities()
-        logger.debug("Located %r ahead of the start time", self.config.labels.utility)
+        logger.info("On the utilities list ahead of the start time")
 
     def book(self, slot: str, target: date, dry_run: bool = False) -> None:
         """Book ``slot`` on ``target``, starting from the home or utilities screen."""
@@ -209,15 +213,24 @@ class Booker:
                     screen, self.home, self.config.labels.home, self._finder(self.utility)
                 )
                 return screen
-            message = self.notice_text(screen)
-            if message is not None:
-                # A notice met here may belong to the round before, e.g. one shown after
-                # the confirmation page was already gone.
-                logger.warning("Closing a notice of the app: %s", message or "no message")
+            self._warn_about_notice(screen)
             self.press_back()
             found = self.wait_for(self._either(self.utility, self.home), _NEXT_SCREEN_TIMEOUT)
             screen = found[1] if found is not None else self.last_screen
         raise NavigationError("Could not return to the utilities list")
+
+    def return_to_home(self, screen: Screen | None = None) -> Screen:
+        """Press Back until the home screen shows; Back is never pressed on it (that exits)."""
+        if screen is None:
+            screen = self.snapshot()
+        for _ in range(_BACK_PRESSES):
+            if screen.find(self.home):
+                return screen
+            self._warn_about_notice(screen)
+            self.press_back()
+            found = self.wait_for(self._finder(self.home), _NEXT_SCREEN_TIMEOUT)
+            screen = found[1] if found is not None else self.last_screen
+        raise NavigationError("Could not return to the home screen")
 
     # Navigation -------------------------------------------------------------
 
@@ -395,6 +408,12 @@ class Booker:
                 if node.desc and not node.clickable and node.desc != title.desc
             )
         return None
+
+    def _warn_about_notice(self, screen: Screen) -> None:
+        """Log a notice about to be closed with Back; it may belong to the round before."""
+        message = self.notice_text(screen)
+        if message is not None:
+            logger.warning("Closing a notice of the app: %s", message or "no message")
 
     # Device commands --------------------------------------------------------
 
