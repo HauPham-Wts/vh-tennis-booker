@@ -8,3 +8,20 @@ updates:
     directory: /
     schedule:
       interval: monthly
+  - package-ecosystem: npm
+    directory: /ui
+    schedule:
+      interval: monthly
+    groups:
+      ui-minor:
+        update-types: [minor, patch]
+    ignore:
+      # typescript-eslint supports TypeScript below 6.1 only.
+      - dependency-name: typescript
+        versions: [">=6.1"]
+      # jsdom 30 needs Node 22.22; the development machine has 22.19.
+      - dependency-name: jsdom
+        versions: [">=30"]
+      # The Node types follow the Node major in use.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]

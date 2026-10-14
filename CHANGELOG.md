@@ -13,6 +13,8 @@ uses [Semantic Versioning](https://semver.org/).
   rules); `npm run format` and `npm run format:check` format it with Prettier.
 - `npm test` runs the UI tests with Vitest and Testing Library in a jsdom page;
   `npm run typecheck` checks the types without building.
+- CI type-checks, lints, tests and builds the UI in its own job; Dependabot updates the
+  UI's npm packages monthly.
 
 ## [0.5.3] - 2026-10-14
 
