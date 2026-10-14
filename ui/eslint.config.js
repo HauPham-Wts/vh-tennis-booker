@@ -1,5 +1,6 @@
 import js from "@eslint/js";
 import { defineConfig, globalIgnores } from "eslint/config";
+import prettier from "eslint-config-prettier/flat";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import globals from "globals";
@@ -30,4 +31,6 @@ export default defineConfig([
       globals: globals.node,
     },
   },
+  // Last, so Prettier alone decides formatting.
+  prettier,
 ]);
