@@ -171,6 +171,16 @@
     "schedule_disabled": "Schedule off",
     "other": "Other step ({{kind}})"
   },
+  "runs": {
+    "stamp": {
+      "booked": "BOOKED {{booked}}/{{total}}",
+      "failed": "NOT BOOKED",
+      "dry": "DRY RUN {{booked}}/{{total}}",
+      "dryFailed": "DRY RUN FAILED",
+      "interrupted": "STOPPED",
+      "running": "RUNNING"
+    }
+  },
   "errors": {
     "not_found": "This record does not exist.",
     "lock_held": "Another run is in progress. Try again when it has finished.",

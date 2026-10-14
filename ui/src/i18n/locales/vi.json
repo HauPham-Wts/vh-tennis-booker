@@ -171,6 +171,16 @@
     "schedule_disabled": "Đã tắt hẹn giờ",
     "other": "Bước khác ({{kind}})"
   },
+  "runs": {
+    "stamp": {
+      "booked": "ĐẶT ĐƯỢC {{booked}}/{{total}}",
+      "failed": "KHÔNG ĐẶT ĐƯỢC",
+      "dry": "CHẠY THỬ ĐẠT {{booked}}/{{total}}",
+      "dryFailed": "CHẠY THỬ LỖI",
+      "interrupted": "ĐÃ DỪNG",
+      "running": "ĐANG CHẠY"
+    }
+  },
   "errors": {
     "not_found": "Không tìm thấy dữ liệu này.",
     "lock_held": "Đang có một lần chạy khác. Hãy chờ nó xong rồi thử lại.",
