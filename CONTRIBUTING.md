@@ -44,7 +44,8 @@ npm run build
 - **Language:** code, comments, logs, commit messages and documentation are in English.
   Accessibility labels of the target app stay in Vietnamese and live in `config.toml`.
 - **Style:** enforced by Ruff (line length 100). Public functions have type hints and a
-  one-line docstring in the imperative mood. Comments explain *why*, not *what*.
+  one-line docstring in the imperative mood. Comments explain *why*, not *what*. UI code
+  is strict TypeScript, linted by ESLint and formatted by Prettier (also 100 columns).
 - **Errors:** raise a subclass of `BookingError` for failures that should abort one round.
 - **Logging:** use the module logger (`logging.getLogger(__name__)`), never `print`, except
   for the final summary in the CLI.
