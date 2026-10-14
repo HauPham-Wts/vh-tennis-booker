@@ -56,7 +56,8 @@ flowchart LR
 ```
 
 Each configured slot is booked in its own round. See [docs/how-it-works.md](docs/how-it-works.md)
-for design notes.
+for design notes, [docs/architecture.md](docs/architecture.md) for the code and
+[docs/roadmap.md](docs/roadmap.md) for what comes next.
 
 ## Requirements
 
@@ -205,6 +206,9 @@ tools/inspect_screen.py UI hierarchy dump
 tools/setup_runner.py   runner folder for the daily task on a development machine
 tools/export_openapi.py the backend's OpenAPI schema for the UI's types
 tests/                  unit tests with fake devices, adb, clocks and schtasks
+docs/architecture.md    every module, backend route and UI layer
+docs/field-notes.md     what the app and the emulator were seen to do, verified runs
+docs/roadmap.md         product decisions, phases and the situations handled
 docs/specs/             one design spec per version
 ```
 
