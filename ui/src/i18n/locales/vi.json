@@ -35,7 +35,13 @@
       "title": "Lịch sử"
     },
     "activity": {
-      "title": "Nhật ký"
+      "title": "Nhật ký",
+      "lead": "Từng bước app đã làm, để biết chuyện gì xảy ra khi có lỗi.",
+      "runs": "Các lần chạy",
+      "empty": "Chưa có lần chạy nào.",
+      "technical": "Chi tiết kỹ thuật",
+      "runTitle": "{{period}} {{day}}",
+      "meta": "{{trigger}} · chơi {{day}} · sân {{court}}"
     },
     "settings": {
       "title": "Cài đặt"
@@ -170,6 +176,16 @@
     },
     "schedule_disabled": "Đã tắt hẹn giờ",
     "other": "Bước khác ({{kind}})"
+  },
+  "runs": {
+    "stamp": {
+      "booked": "ĐẶT ĐƯỢC {{booked}}/{{total}}",
+      "failed": "KHÔNG ĐẶT ĐƯỢC",
+      "dry": "CHẠY THỬ ĐẠT {{booked}}/{{total}}",
+      "dryFailed": "CHẠY THỬ LỖI",
+      "interrupted": "ĐÃ DỪNG",
+      "running": "ĐANG CHẠY"
+    }
   },
   "errors": {
     "not_found": "Không tìm thấy dữ liệu này.",

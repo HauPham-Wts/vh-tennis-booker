@@ -231,6 +231,13 @@ would move the task away from the runner folder.
   the type check; a missing value gives a sentence without it (`.plain` keys), and an
   unknown kind at run time reads "Bước khác (kind)". Trigger, setup item and status names
   are `triggers.*` and `setup.items.*`/`setup.statuses.*`, shared with the screens.
+- `src/runs.ts`: `runStamp` (the run's stamp, blue only when every slot went through; a
+  dry run says "CHẠY THỬ ĐẠT"), `runResult` (✓/✕ mark for lists), `triggerName`.
+- Screens (`src/pages`): `ActivityPage` lists the 30 newest runs (no paging; older runs
+  open from History through `?run=`) beside `RunDetail` (header, stamp, step lines from
+  `stepMessage`, `<details>` technical log). Tests render the whole app with
+  `test/app.tsx` `renderApp(path, replies)`: test cache, live feed on fake sockets and
+  `stubBackend`.
 
 ### Backend connection (`ui/src/api`)
 
@@ -259,6 +266,10 @@ would move the task away from the runner folder.
   proxy with no backend never opens or closes it; Node's WebSocket sends no close for a
   connecting socket it closes). `LiveProvider` (in `main.tsx`) keeps one connection, the
   last 200 steps (`useLiveFeed`) and invalidates `staleKeysFor(step)`.
+- `staleKeysFor` refreshes backend data only at run boundaries (`run_started`,
+  `slot_booked`, `slot_failed`, `run_finished`; the run itself at `run_finished`) and for
+  app events; a run's other steps send no request. `runSteps.ts` `useRunSteps(runId)`
+  joins a run's stored steps with the live ones after the last stored id.
 
 ## Tests
 

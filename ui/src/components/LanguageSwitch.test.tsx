@@ -1,14 +1,12 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { STORAGE_KEY } from "../i18n";
 import { paths } from "../paths";
-import { routes } from "../routes";
+import { renderApp } from "../test/app";
 
 /** Render the whole app on the history screen. */
 function renderHistory() {
-  const router = createMemoryRouter(routes, { initialEntries: [paths.history] });
-  render(<RouterProvider router={router} />);
+  renderApp(paths.history);
 }
 
 describe("LanguageSwitch", () => {

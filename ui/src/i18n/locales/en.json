@@ -35,7 +35,13 @@
       "title": "History"
     },
     "activity": {
-      "title": "Activity"
+      "title": "Activity",
+      "lead": "Every step the app took, to see what happened when something went wrong.",
+      "runs": "Runs",
+      "empty": "No runs yet.",
+      "technical": "Technical details",
+      "runTitle": "{{day}} {{period}}",
+      "meta": "{{trigger}} · play {{day}} · court {{court}}"
     },
     "settings": {
       "title": "Settings"
@@ -170,6 +176,16 @@
     },
     "schedule_disabled": "Schedule off",
     "other": "Other step ({{kind}})"
+  },
+  "runs": {
+    "stamp": {
+      "booked": "BOOKED {{booked}}/{{total}}",
+      "failed": "NOT BOOKED",
+      "dry": "DRY RUN {{booked}}/{{total}}",
+      "dryFailed": "DRY RUN FAILED",
+      "interrupted": "STOPPED",
+      "running": "RUNNING"
+    }
   },
   "errors": {
     "not_found": "This record does not exist.",

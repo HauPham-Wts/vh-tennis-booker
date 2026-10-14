@@ -1,14 +1,13 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import { createMemoryRouter, type RouteObject, RouterProvider } from "react-router";
+import { screen, waitFor } from "@testing-library/react";
+import type { RouteObject } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { paths } from "./paths";
 import { routes } from "./routes";
+import { renderApp } from "./test/app";
 
 /** Render a route table at one address and return its router. */
 function renderAt(path: string, table: RouteObject[] = routes) {
-  const router = createMemoryRouter(table, { initialEntries: [path] });
-  render(<RouterProvider router={router} />);
-  return router;
+  return renderApp(path, {}, table).router;
 }
 
 afterEach(() => {
