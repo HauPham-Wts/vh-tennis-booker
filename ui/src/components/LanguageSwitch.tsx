@@ -7,22 +7,22 @@ export function LanguageSwitch() {
   const { t, i18n } = useTranslation();
   return (
     <div role="group" aria-label={t("language.label")} className={styles.group}>
-      {LANGUAGES.map((language) => (
-        <button
-          key={language}
-          type="button"
-          className={styles.button}
-          aria-pressed={i18n.resolvedLanguage === language}
-          onClick={() => void i18n.changeLanguage(language)}
-        >
-          {language.toUpperCase()}
-          {/* The name in its own language, so screen readers say "VI Tiếng Việt". */}
-          <span className="visually-hidden" lang={language}>
-            {" "}
-            {t(`language.names.${language}`)}
-          </span>
-        </button>
-      ))}
+      {LANGUAGES.map((language) => {
+        const code = language.toUpperCase();
+        return (
+          <button
+            key={language}
+            type="button"
+            className={styles.button}
+            // The visible code, then the language named in itself: "VI Tiếng Việt".
+            aria-label={`${code} ${t(`language.names.${language}`)}`}
+            aria-pressed={i18n.resolvedLanguage === language}
+            onClick={() => void i18n.changeLanguage(language)}
+          >
+            {code}
+          </button>
+        );
+      })}
     </div>
   );
 }
