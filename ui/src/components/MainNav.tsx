@@ -19,8 +19,8 @@ export function MainNav() {
       <ul className={styles.list}>
         {ITEMS.map(({ to, label }) => (
           <li key={to}>
-            {/* "end" keeps the overview from matching every address under "/". */}
-            <NavLink to={to} end={to === paths.overview} className={styles.link}>
+            {/* NavLink treats "/" as current on the overview only, not on every address. */}
+            <NavLink to={to} className={styles.link}>
               {label}
             </NavLink>
           </li>
