@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Last updated: 2026-10-10.
+Last updated: 2026-10-14.
 
 ## Commands
 
@@ -55,7 +55,8 @@ out of scope.
 - Python package `court_booker` (src layout), CLI `court-booker` / `python -m court_booker`
 - `tools/inspect_screen.py`: dumps the UI hierarchy and lists nodes level with a text
 - pytest suite with fakes only (device, subprocess, port probe, clock, HTTP, schtasks);
-  CI on GitHub Actions: `lint` (ruff check + format) and `test` (Python 3.9, 3.11, 3.12, 3.13, 3.14)
+  CI on GitHub Actions: `lint` (ruff check + format), `test` (Python 3.9, 3.11, 3.12, 3.13,
+  3.14) and `ui` (Node 22: `npm ci`, typecheck, lint, format check, test, build)
 - Tooling: pre-commit (ruff, basic hooks), `.editorconfig`, `.gitattributes` (LF),
   Dependabot, PR and issue templates, `CONTRIBUTING.md`, `CHANGELOG.md` (Keep a Changelog)
 - 0.2.0 (spec: `docs/specs/0.2.0-unattended.md`) was verified on 2026-10-08: dry run with
@@ -251,6 +252,16 @@ out of scope.
   `src/` on `sys.path` and points `COURT_BOOKER_HOME` at a temporary folder for every test
   (fixture `data_home`), so tests never write the real history.
 
+- `ui/` (0.6.0, the app's screens): Vite 8, React 19, strict TypeScript (two projects:
+  `tsconfig.app.json` for `src/`, `tsconfig.node.json` for `vite.config.ts`, which also holds
+  the Vitest settings). TypeScript is held at `~6.0.3` because typescript-eslint supports
+  below 6.1, and jsdom at 29 because jsdom 30 needs Node 22.22 (Dependabot skips both).
+  ESLint 10 flat config (`recommendedTypeChecked`, react-hooks, react-refresh, then
+  eslint-config-prettier); Prettier at 100 columns. Tests sit beside the code
+  (`*.test.tsx`), run in jsdom with Vitest globals off, so `src/test/setup.ts` adds the
+  jest-dom matchers and calls `cleanup` after each test. `App` is a placeholder until the
+  screens of part 4.
+
 ## Booking flow (app screens)
 
 Home ("Tiện ích") → Utilities list ("Sân Tennis") → Calendar (pick date, then a slot appears;
@@ -320,6 +331,7 @@ the next round starts.
 ## Environment
 
 - Windows 11, Python 3.14, Git; Python `Scripts` folder not on PATH (use `python -m ...`)
+- Node.js 22.19 and npm 10.9 for `ui/` (the package asks for Node 22.12 or later)
 - Runner folder `D:\VH-Booker\runner` at `v0.5.3` since 2026-10-14 (`v0.4.0` from
   2026-10-12; `tools/setup_runner.py v0.4.0` moves it back); the task runs its
   `.venv\Scripts\pythonw.exe` with `Start In` the development folder (src layout, so the
