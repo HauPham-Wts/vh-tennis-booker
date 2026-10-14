@@ -255,7 +255,15 @@ the next round starts.
   clickable. Courts can be "Hết chỗ" (e.g. `"S9 - Sân tennis\nHết chỗ"`).
 - Consent checkbox at 540x1600: `[35,1323][79,1367]` (seen shifted to x=43 once), so it is
   located per run, never stored.
-- Success is verified by waiting for the confirmation screen to disappear.
+- Success is verified by waiting for the confirmation screen to disappear. A notice dialog
+  hides it too: the dialog's title node `'Thông báo'` spans `[0,33][540,1600]` and holds the
+  message and a clickable `'Đóng'`; the page beneath leaves the dump (8 elements in all,
+  seen 2026-10-10 for the monthly quota). On 2026-10-14 round 1 (18-19) was logged as
+  booked but was not: round 2 then needed 11 s and 169 commands to get back to "Sân Tennis"
+  (other days 0.6-0.8 s, one Back from the ticket), so a dialog had replaced the page. Since
+  0.5.1 `accept_and_confirm` fails such a round (`BookingRejectedError` with the message,
+  `Booker.notice_text`) and logs the screen after every confirmation; the ticket's labels
+  are still unknown.
 - Outside 06:00-21:00, tapping "Sân Tennis" opens a dialog "Thông báo": "Ban quản lý BQL Grand
   Park chỉ nhận đăng ký Sân Tennis từ 06:00 đến 21:00 mỗi ngày" with a "Đóng" button; it hides
   the utilities list. The 06:00:00.0 tap of 0.3.0 did not trigger it on 2026-10-10.
@@ -340,7 +348,7 @@ Telegram setup (the optional code stays) and no run history file until the app s
 | Booking | New date not open yet | Calendar reloaded for `open_retry_seconds` |
 | Booking | Slot fully booked | Round fails; no fallback slot (by decision) |
 | Booking | Court fully booked | Round fails; no fallback court (by decision) |
-| Booking | Slot taken by someone else at "Xác nhận" | Not handled |
+| Booking | Slot taken by someone else at "Xác nhận" | Round fails with the app's notice (0.5.1; was logged as booked on 2026-10-14) |
 | Booking | Target date in the next month | Code exists; untested since 0.3.0. Only testable on the last two days of a month (30/10 → 1/11, 31/10 → 2/11): the calendar does not switch to a month without bookable days |
 | Booking | Booking limit per account | 8 slots per apartment per month; not handled by decision (users track their own quota), the log shows the dialog |
 | Device | MuMu not running / frozen | Started automatically / not handled |

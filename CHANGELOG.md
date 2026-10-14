@@ -6,6 +6,18 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- A booking the app refused right after "Xác nhận" was reported as booked: the notice
+  dialog (for example a slot someone else took a moment earlier) hides the confirmation
+  page just as the ticket does. Such a round now fails with the app's message, which also
+  reaches the history. Seen on 2026-10-14, when 18:00 - 19:00 was logged as booked but was
+  not.
+
+### Added
+- The debug log lists the screen shown after each confirmation, and warns about any notice
+  closed on the way back to the utilities list.
+- Config label `notice` ("Thông báo"), the title of the app's message dialogs.
+
 ## [0.5.0] - 2026-10-13
 
 ### Added
