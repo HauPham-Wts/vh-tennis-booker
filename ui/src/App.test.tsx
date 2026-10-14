@@ -1,11 +1,16 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
+import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 import { App } from "./App";
 
 describe("App", () => {
-  it("shows the app name as the page heading", () => {
-    render(<App />);
+  it("shows the current screen inside the main area", () => {
+    const router = createMemoryRouter([
+      { path: "/", element: <App />, children: [{ index: true, element: <p>Screen</p> }] },
+    ]);
 
-    expect(screen.getByRole("heading", { level: 1, name: "Court Booker" })).toBeInTheDocument();
+    render(<RouterProvider router={router} />);
+
+    expect(within(screen.getByRole("main")).getByText("Screen")).toBeInTheDocument();
   });
 });

@@ -1,8 +1,10 @@
-/** Show the app name until the screens of 0.6.0 replace it. */
+import { Outlet } from "react-router";
+
+/** Lay out every screen: the current one fills the main area. */
 export function App() {
   return (
     <main>
-      <h1>Court Booker</h1>
+      <Outlet />
     </main>
   );
 }
