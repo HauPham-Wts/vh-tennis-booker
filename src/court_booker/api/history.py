@@ -12,10 +12,12 @@ from pydantic import BaseModel
 from court_booker import history_read
 from court_booker.api.context import Context
 from court_booker.api.errors import NotFoundError
+from court_booker.events import EventKind
 
 router = APIRouter(prefix="/api", tags=["history"])
 
 Trigger = Literal["scheduled", "dry_run", "manual"]
+Category = Literal["step", "slot", "setup", "schedule", "settings", "error"]
 
 
 def history_db(context: Context) -> Iterator[sqlite3.Connection]:
@@ -59,13 +61,17 @@ class SlotResult(BaseModel):
 
 
 class Step(BaseModel):
-    """One step of the activity log; ``kind`` is the message key, ``data`` its values."""
+    """One step of the activity log; ``kind`` is the message key, ``data`` its values.
+
+    ``kind`` and ``category`` are listed in the schema, so the UI's types name every step
+    and a step without a message fails its type check.
+    """
 
     id: int
     run_id: Optional[int]
     time: str
-    category: str
-    kind: str
+    category: Category
+    kind: EventKind
     data: dict[str, Any]
 
 
@@ -105,9 +111,6 @@ def get_run(db: HistoryDb, run_id: int) -> dict[str, Any]:
     if run is None:
         raise NotFoundError(f"No run {run_id}")
     return run
-
-
-Category = Literal["step", "slot", "setup", "schedule", "settings", "error"]
 
 
 @router.get("/events", response_model=list[Step])

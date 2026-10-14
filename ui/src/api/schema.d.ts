@@ -253,6 +253,12 @@ export interface components {
             started_at: string;
         };
         /**
+         * EventKind
+         * @description What happened. The value is stable: it becomes a database value and a message key.
+         * @enum {string}
+         */
+        EventKind: "run_started" | "device_ready" | "app_ready" | "waiting" | "booking_started" | "run_finished" | "slot_started" | "calendar_opened" | "date_selected" | "slot_selected" | "court_selected" | "terms_accepted" | "slot_booked" | "slot_failed" | "lock_cleared" | "lock_waiting" | "lock_taken_over" | "setup_started" | "setup_item" | "setup_finished" | "settings_saved" | "schedule_enabled" | "schedule_disabled";
+        /**
          * Health
          * @description The backend answers and runs this version.
          */
@@ -535,6 +541,9 @@ export interface components {
         /**
          * Step
          * @description One step of the activity log; ``kind`` is the message key, ``data`` its values.
+         *
+         *     ``kind`` and ``category`` are listed in the schema, so the UI's types name every step
+         *     and a step without a message fails its type check.
          */
         Step: {
             /** Id */
@@ -543,10 +552,12 @@ export interface components {
             run_id: number | null;
             /** Time */
             time: string;
-            /** Category */
-            category: string;
-            /** Kind */
-            kind: string;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "step" | "slot" | "setup" | "schedule" | "settings" | "error";
+            kind: components["schemas"]["EventKind"];
             /** Data */
             data: {
                 [key: string]: unknown;

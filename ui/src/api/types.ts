@@ -22,6 +22,10 @@ export type RunDetail = Schemas["RunDetail"];
 export type SlotResult = Schemas["SlotResult"];
 /** One step of the activity log; `kind` is the message key, `data` its values. */
 export type Step = Schemas["Step"];
+/** Every kind of step the engine and the app record (the backend's `EventKind`). */
+export type StepKind = Schemas["EventKind"];
+/** The Activity filter a step belongs to. */
+export type StepCategory = Step["category"];
 export type LogLine = Schemas["LogLine"];
 
 export type Settings = Schemas["Settings"];

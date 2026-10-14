@@ -718,6 +718,36 @@
         "title": "DryRunStarted",
         "description": "A dry run has started; its steps show in the history as it goes."
       },
+      "EventKind": {
+        "type": "string",
+        "enum": [
+          "run_started",
+          "device_ready",
+          "app_ready",
+          "waiting",
+          "booking_started",
+          "run_finished",
+          "slot_started",
+          "calendar_opened",
+          "date_selected",
+          "slot_selected",
+          "court_selected",
+          "terms_accepted",
+          "slot_booked",
+          "slot_failed",
+          "lock_cleared",
+          "lock_waiting",
+          "lock_taken_over",
+          "setup_started",
+          "setup_item",
+          "setup_finished",
+          "settings_saved",
+          "schedule_enabled",
+          "schedule_disabled"
+        ],
+        "title": "EventKind",
+        "description": "What happened. The value is stable: it becomes a database value and a message key."
+      },
       "Health": {
         "properties": {
           "status": {
@@ -1480,11 +1510,18 @@
           },
           "category": {
             "type": "string",
+            "enum": [
+              "step",
+              "slot",
+              "setup",
+              "schedule",
+              "settings",
+              "error"
+            ],
             "title": "Category"
           },
           "kind": {
-            "type": "string",
-            "title": "Kind"
+            "$ref": "#/components/schemas/EventKind"
           },
           "data": {
             "additionalProperties": true,
@@ -1502,7 +1539,7 @@
           "data"
         ],
         "title": "Step",
-        "description": "One step of the activity log; ``kind`` is the message key, ``data`` its values."
+        "description": "One step of the activity log; ``kind`` is the message key, ``data`` its values.\n\n``kind`` and ``category`` are listed in the schema, so the UI's types name every step\nand a step without a message fails its type check."
       }
     }
   }

@@ -1,5 +1,13 @@
 import { describe, expectTypeOf, it } from "vitest";
-import type { Overview, Problem, RunSummary, SetupStatus, Step } from "./types";
+import type {
+  Overview,
+  Problem,
+  RunSummary,
+  SetupStatus,
+  Step,
+  StepCategory,
+  StepKind,
+} from "./types";
 
 // These checks run in `npm run typecheck`: a backend change that breaks them fails there.
 describe("API types", () => {
@@ -23,5 +31,14 @@ describe("API types", () => {
 
   it("give a step its values as an object", () => {
     expectTypeOf<Step["data"]>().toEqualTypeOf<Record<string, unknown>>();
+  });
+
+  it("name every kind and category of step", () => {
+    expectTypeOf<"slot_booked">().toExtend<StepKind>();
+    expectTypeOf<"schedule_disabled">().toExtend<StepKind>();
+    expectTypeOf<"no_such_step">().not.toExtend<StepKind>();
+    expectTypeOf<StepCategory>().toEqualTypeOf<
+      "step" | "slot" | "setup" | "schedule" | "settings" | "error"
+    >();
   });
 });
