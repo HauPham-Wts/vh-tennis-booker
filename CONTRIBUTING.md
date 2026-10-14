@@ -49,6 +49,9 @@ cd ui && npm run api:types       # writes ui/src/api/schema.d.ts
 
 ## Conventions
 
+- **Where things are:** [docs/architecture.md](docs/architecture.md) describes every module,
+  backend route and UI layer; [docs/field-notes.md](docs/field-notes.md) holds what the app
+  and the emulator were seen to do. Update them with the code they describe.
 - **Language:** code, comments, logs, commit messages and documentation are in English.
   Accessibility labels of the target app stay in Vietnamese and live in `config.toml`.
 - **Style:** enforced by Ruff (line length 100). Public functions have type hints and a
