@@ -196,12 +196,14 @@ ui/src/                 the app's screens: React, TypeScript, Vite (in progress)
 ├── paths.ts            the address of every screen
 ├── routes.tsx          addresses mapped to pages
 ├── App.tsx             layout: skip link, header, main area
+├── api/                backend client: generated types, endpoints, query hooks, live feed
 ├── components/         header, navigation, language switch, window title
 ├── pages/              one component per screen
 ├── i18n/               i18next setup, Vietnamese and English texts
 └── styles/             fonts, design tokens, base styles
 tools/inspect_screen.py UI hierarchy dump
 tools/setup_runner.py   runner folder for the daily task on a development machine
+tools/export_openapi.py the backend's OpenAPI schema for the UI's types
 tests/                  unit tests with fake devices, adb, clocks and schtasks
 docs/specs/             one design spec per version
 ```
