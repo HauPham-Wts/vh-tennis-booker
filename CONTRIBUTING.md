@@ -39,6 +39,14 @@ npm test
 npm run build
 ```
 
+After changing a backend route or model, regenerate the UI's copy of the API (the backend
+tests and CI fail until both files match the backend):
+
+```bash
+python tools/export_openapi.py   # writes ui/openapi.json
+cd ui && npm run api:types       # writes ui/src/api/schema.d.ts
+```
+
 ## Conventions
 
 - **Language:** code, comments, logs, commit messages and documentation are in English.
@@ -76,7 +84,8 @@ npm run build
    ```
 2. For each change, branch from `release/X.Y.Z` and open a pull request into it.
 3. When the release branch is stable, on a branch from it update `__version__` in
-   `src/court_booker/__init__.py` (`pyproject.toml` reads it from there), move the
+   `src/court_booker/__init__.py` (`pyproject.toml` reads it from there), run
+   `python tools/export_openapi.py` (the schema carries the version), move the
    "Unreleased" entries in `CHANGELOG.md` to a new version section, and commit with
    `chore: release vX.Y.Z`; merge it into the release branch.
 4. Open one pull request `release/X.Y.Z` → `main` and merge it with a merge commit.
