@@ -252,18 +252,20 @@ def test_book_reports_each_step_without_extra_commands():
     assert booker.commands == 16
 
 
-def test_screen_after_confirming_is_logged_without_extra_commands(caplog):
+def test_every_new_screen_is_logged_once(caplog):
     caplog.set_level(logging.DEBUG, logger="court_booker")
-    booker = Booker(booking_app(), Config())
+    app = booking_app(slot_delay=5)  # the calendar is read six times before slots show
+    booker = Booker(app, Config())
 
     booker.book("11:00 - 12:00", TARGET)
 
-    messages = [record.getMessage() for record in caplog.records]
-    assert (
-        "Screen after confirming (1 elements):\n  [35,200][505,260] 'Đăng ký thành công'"
-        in messages
-    )
-    assert booker.commands == 16
+    screens = [r.getMessage() for r in caplog.records if r.getMessage().startswith("Screen (")]
+    # utilities, calendar, slots, courts, details, confirmation before and after the tick,
+    # ticket; the slot list after the slot tap reads the same and is not logged again.
+    assert len(screens) == len(set(screens)) == 8
+    assert screens[0].startswith("Screen (1 elements):\n  [35,300][505,360] clickable 'Sân")
+    assert screens[-1] == "Screen (1 elements):\n  [35,200][505,260] 'Đăng ký thành công'"
+    assert booker.commands == app.ops.count("dump") + len(app.taps)
 
 
 def test_book_waits_for_slow_slot_list():

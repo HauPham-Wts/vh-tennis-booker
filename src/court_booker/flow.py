@@ -375,9 +375,6 @@ class Booker:
         if message is not None:
             raise BookingRejectedError(f"The app refused the booking: {message or 'no message'}")
         logger.info("Booking confirmed")
-        # The ticket screen's labels are not known yet; logging it lets a later version
-        # require the ticket instead of only the confirmation page being gone.
-        log_screen(outcome[1], "Screen after confirming")
 
     # Dialogs ----------------------------------------------------------------
 
@@ -402,10 +399,17 @@ class Booker:
     # Device commands --------------------------------------------------------
 
     def snapshot(self) -> Screen:
-        """Read every element of the current screen with one command."""
+        """Read every element of the current screen with one command.
+
+        A screen that differs from the previous read is logged, so the debug log shows
+        every screen a run went through, also the ones a failure or a popup left behind.
+        """
         self.commands += 1
-        self.last_screen = Screen.parse(self.device.dump_hierarchy(compressed=False))
-        return self.last_screen
+        screen = Screen.parse(self.device.dump_hierarchy(compressed=False))
+        if screen.nodes != self.last_screen.nodes:
+            log_screen(screen, "Screen")
+        self.last_screen = screen
+        return screen
 
     def tap(self, node: Node) -> None:
         self.tap_point(*node.center)
