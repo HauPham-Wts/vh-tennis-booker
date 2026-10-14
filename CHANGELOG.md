@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-14
+
 ### Fixed
 - A booking the app refused right after "Xác nhận" was reported as booked: the notice
   dialog (for example a slot someone else took a moment earlier) hides the confirmation
