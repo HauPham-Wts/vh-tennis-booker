@@ -45,6 +45,9 @@ uses [Semantic Versioning](https://semver.org/).
   runs write it and refreshes the data it changes. After a drop, or a socket that never
   opens, it reconnects and resumes after the last step seen, so no step is lost or
   repeated (checked with the backend stopped and restarted).
+- Dates, times, durations, slots and courts are formatted per language ("Thứ Tư 14/10",
+  "Wed 14 Oct", "7,0 giây", "18:00–19:00", "S6"). The backend's local times are read as
+  written, never shifted by a time zone, and a value that cannot be read is shown as it is.
 
 ### Changed
 - The OpenAPI schema describes every error response as a `Problem` (also 422, which it
