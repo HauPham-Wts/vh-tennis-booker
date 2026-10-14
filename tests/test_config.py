@@ -53,6 +53,8 @@ def test_defaults_are_valid():
         ({"wake_at": "06:05"}, "wake_at must be before start_at"),
         ({"timeout": 0}, "timeout must be positive"),
         ({"open_retry_seconds": -1}, "open_retry_seconds must not be negative"),
+        ({"warm_up_seconds": 2}, "warm_up_seconds must be 5 to 600 seconds"),
+        ({"warm_up_seconds": 900}, "warm_up_seconds must be 5 to 600 seconds"),
         ({"next_month_xy": (1.2, 0.1)}, "next_month_xy must be two screen ratios between 0 and 1"),
     ],
 )

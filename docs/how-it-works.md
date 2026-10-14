@@ -43,8 +43,10 @@ it has appeared.
 `Booker.tap_and_advance()` taps an element of the current dump, then reads the screen every
 20 ms until a finder returns what the next step needs (for example the target day). If the
 next screen does not appear within 2 s (tap swallowed by lag), it taps again while the
-element is still shown, up to 5 times. Two seconds before the start time the utilities
-list is read once more, so the first command at the start time is the tap itself.
+element is still shown, up to 5 times. A timed run waits on the app's home screen and
+opens the utilities list `warm_up_seconds` (60 s) before the start time, so the list is
+freshly loaded; two seconds before the start it is read once more, so the first command at
+the start time is the tap itself.
 
 After confirming, the script waits until the confirmation screen is gone (the ticket
 screen is shown). A notice dialog hides that screen as well, for example when someone else

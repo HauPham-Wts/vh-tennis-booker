@@ -64,6 +64,7 @@ class Settings(BaseModel):
     restart_app: bool
     ntp_server: str
     open_retry_seconds: float
+    warm_up_seconds: float
     log_dir: str
     next_month_xy: tuple[float, float]
     prev_month_xy: tuple[float, float]

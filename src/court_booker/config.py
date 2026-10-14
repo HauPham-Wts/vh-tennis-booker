@@ -22,6 +22,8 @@ else:  # pragma: no cover
 DEFAULT_MUMU_MANAGER = "C:/Program Files/Netease/MuMuPlayer/nx_main/MuMuManager.exe"
 MAX_DAYS_AHEAD = 2
 """The app books from today to today + 2."""
+WARM_UP_RANGE = (5, 600)
+"""Allowed ``warm_up_seconds``: time to load the utilities list, at most ten minutes ahead."""
 _SLOT_PATTERN = re.compile(r"\d{2}:\d{2} - \d{2}:\d{2}")
 
 
@@ -76,6 +78,8 @@ class Config:
     """Time server used to correct the PC clock before a timed start; empty disables."""
     open_retry_seconds: float = 60.0
     """How long to keep reloading the calendar while the date or slot is not open yet."""
+    warm_up_seconds: float = 60.0
+    """How long before ``start_at`` a timed run leaves the home screen for the utilities list."""
     log_dir: str = "logs"
     """Folder for daily log files, relative to the config file; empty disables them."""
     telegram_token: str = ""
@@ -184,6 +188,8 @@ def validate_config(config: Config) -> list[str]:
     for name in ("open_retry_seconds", "max_swipes"):
         if getattr(config, name) < 0:
             problems.append(f"{name} must not be negative")
+    if not WARM_UP_RANGE[0] <= config.warm_up_seconds <= WARM_UP_RANGE[1]:
+        problems.append(f"warm_up_seconds must be {WARM_UP_RANGE[0]} to {WARM_UP_RANGE[1]} seconds")
     for name in ("next_month_xy", "prev_month_xy"):
         point = getattr(config, name)
         if len(point) != 2 or not all(0 <= value <= 1 for value in point):

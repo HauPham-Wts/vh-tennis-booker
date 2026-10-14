@@ -88,6 +88,13 @@ def run_booking(
         report(EventKind.APP_READY)
         if start is not None:
             report(EventKind.WAITING, until=start.isoformat(timespec="seconds"))
+            # Wait on the home screen, then load the utilities list shortly before the
+            # start, so the app has just talked to its server when the first tap comes.
+            wait_until(start - timedelta(seconds=config.warm_up_seconds), offset)
+            try:
+                booker.locate_entry()
+            except BookingError as exc:
+                logger.warning("Could not open the utilities list yet (%s); retrying", exc)
             wait_until(start - LOCATE_AHEAD, offset)
             booker.locate_entry()
             wait_until(start, offset)

@@ -22,7 +22,9 @@ python -m court_booker serve --config config.toml    # backend on 127.0.0.1:8765
 python tools/inspect_screen.py --near "Tôi đã hiểu"  # dump nodes level with a label
 ```
 
-Run `--dry-run` against the emulator whenever the booking flow changes; CI cannot.
+Whenever the booking flow changes, book one free slot for real against the emulator with
+`--at` a few minutes ahead (the user cancels it); CI cannot, and a dry run stops before
+"Xác nhận".
 
 ## Goal
 
@@ -35,7 +37,7 @@ real bookings with it on (verified 2026-10-08). Bypassing any app check is out o
 will not be done. On-device automation (an Android app using AccessibilityService) is also
 out of scope.
 
-## Current state: 0.5.2 released, the 06:00 task still on 0.4.0
+## Current state: 0.5.3 released, the 06:00 task still on 0.4.0
 
 - Repo: `github.com/servedbyhau/vh-tennis-booker` (private), local path `D:\VH-Booker\vh-tennis-booker`
 - Python package `court_booker` (src layout), CLI `court-booker` / `python -m court_booker`
@@ -62,10 +64,13 @@ out of scope.
 - 0.5.1 (2026-10-14) fails a round the app refuses after "Xác nhận" (notice dialog), which
   0.4.0 logged as booked that morning. 0.5.2 (same day) logs every screen, tap and Back
   press; a real booking with it (16/10 10:00-11:00, cancelled by the user afterwards)
-  logged all 24 screens up to the ticket. Then `tools/setup_runner.py v0.5.2` moves the
-  runner, and the first real 06:00 run on it is the 0.5.0 spec's last check (history rows).
-- Test a release with a real booking to the ticket (the user cancels it afterwards), not
-  only a dry run, so the screens after "Xác nhận" are logged too.
+  logged all 24 screens up to the ticket. 0.5.3 (same day) waits on the home screen and
+  opens the utilities list 60 s before the start; a timed real booking (16/10 11:00-12:00)
+  passed. Then `tools/setup_runner.py v0.5.3` moves the runner, and the first real 06:00
+  run on it is the 0.5.0 spec's last check (history rows).
+- Test every change of the booking flow with a real booking to the ticket, timed with `--at`
+  like the 06:00 run (the user cancels it afterwards), never with `--dry-run`: the test must
+  follow the real process exactly (user's rule, 2026-10-14).
 - The scheduled task has no `--dry-run`; it books for real. For a scheduled test, add
   `--dry-run` to the task arguments by hand (`schedule install` overwrites it).
 
@@ -164,8 +169,11 @@ out of scope.
   `shell` command, as Accessibility > Remove animations); a failure is logged and ignored.
 - `runner.connect_device`: `emulator.MuMu.ensure_started` (MuMuManager `info`/`control launch`),
   `adb.find_adb` + `adb.resolve_device` (prefers the serial MuMu reports), `uiautomator2.connect`
-  (imported lazily so tests do not need it). `runner.run_booking`: `Booker.prepare()`,
-  `wait_until(start - LOCATE_AHEAD)`, `Booker.locate_entry()`, `wait_until(start)`, then one
+  (imported lazily so tests do not need it). `runner.run_booking`: `Booker.prepare()` (ends on
+  the home screen), `wait_until(start - warm_up_seconds)`, `Booker.locate_entry()` (taps
+  "Tiện ích", loads the utilities list; a failure is logged and retried by the next call),
+  `wait_until(start - LOCATE_AHEAD)`, `locate_entry()` again (read only), `wait_until(start)`,
+  then one
   round per slot; a `BookingError` (or any exception) fails that round only. Results are
   appended to a caller-owned list; the debug log counts device commands per round. When a
   round, `prepare()` or `locate_entry()` fails, `log_last_screen` writes `Booker.last_screen`
@@ -202,9 +210,13 @@ out of scope.
   screen every 20 ms until a finder returns something; the found node carries the coordinates
   to tap. Every transition goes through `tap_and_advance(screen, target, name, find_next)`:
   tap `target` from `screen`, wait for `find_next`, re-tap while `target` is still shown.
-  `return_to_utilities()` presses Back until the utilities list or home appears and returns
-  that screen. `prepare()` restarts the app and ends on the utilities list; `locate_entry()`
-  reads it again just before the start, so the first command at the start is the tap.
+  `return_to_utilities()` presses Back until the utilities list or home appears (home: taps
+  "Tiện ích") and returns that screen. `prepare()` restarts the app and ends on the home
+  screen (`return_to_home()`, never Back on home: that leaves the app); `locate_entry()`
+  opens the utilities list, then reads it again just before the start, so the first command
+  at the start is the tap. A timed real booking on 2026-10-14 (start 10:46:21) followed this:
+  "Tiện ích" at start - 60 s (list loaded in 0.63 s), read at start - 2 s, "Sân Tennis" tapped
+  1 ms after the start, booked in 6.0 s.
   `open_slot()` re-enters the calendar while the date or slot is missing.
 - `geometry.py`, `screen.py` and most of `clock.py` are pure; logic testable without a device
   belongs there.
@@ -297,7 +309,7 @@ the next round starts.
 
 - Windows 11, Python 3.14, Git; Python `Scripts` folder not on PATH (use `python -m ...`)
 - Runner folder `D:\VH-Booker\runner` at `v0.4.0` since 2026-10-12 (kept there after the
-  0.5.x releases until v0.5.2 is tested); the task runs its
+  0.5.x releases until v0.5.3 is tested); the task runs its
   `.venv\Scripts\pythonw.exe` with `Start In` the development folder (src layout, so the
   development code is not imported)
 - MuMu Player (instance 0 serves ADB on `127.0.0.1:16384`); adb is found and connected
@@ -316,8 +328,11 @@ user must not need to be awake. Priority is unattended, scheduled, fastest-possi
 - No stop button / cancellation token; Ctrl+C prints the summary instead.
 - UI, backend and desktop packaging are phase 4 of the roadmap; started on 2026-10-12 as
   0.5.0 to 0.7.0 (`docs/specs/0.5.0-desktop-app.md`).
-- Each run waits on the utilities list ("Sân Tennis", screen 2) before the start time, so only
-  the booking taps happen after 06:00.
+- Each run waits on the home screen and opens the utilities list ("Sân Tennis", screen 2)
+  `warm_up_seconds` (60) before the start time, so only the booking taps happen after 06:00
+  and the app has loaded data shortly before (user's request, 2026-10-14). Round 1 took
+  1.3-2.0 s from "Sân Tennis" to the calendar at 06:00 on 10-14/10, 0.3-0.7 s at other
+  times, also after long waits: mostly server load at 06:00; compare after the change.
 - Trigger is Windows Task Scheduler at `wake_at` (default 05:45; 05:50 on the dev machine,
   where preparing takes under a minute), time-based, not logon. The script itself starts
   MuMu, connects ADB and restarts the app. MuMu and the app are left open after the run.
@@ -389,7 +404,9 @@ Telegram setup (the optional code stays) and no run history file until the app s
 
 ## Next step
 
-Move the runner to v0.5.2 (`python tools/setup_runner.py v0.5.2`; `v0.4.0` moves it back) and check the history of the first real 06:00 run on it.
+Move the runner to v0.5.3 (`python tools/setup_runner.py v0.5.3`; `v0.4.0` moves it back)
+and check the history of the first real 06:00 run on it, and whether round 1 reaches the
+calendar faster after the warm-up than the 1.3-2.0 s of 10-14/10.
 Then 0.6.0 (UI) on `release/0.6.0`, following the 0.6.0 parts of
 `docs/specs/0.5.0-desktop-app.md`: one part at a time (clear branches, several small
 commits, one pull request each), each part merged before the next. Write code only when the

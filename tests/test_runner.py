@@ -1,13 +1,13 @@
 """Runner tests with a fake booker; no device required."""
 
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 
 import court_booker.runner as runner
 from court_booker.config import Config
-from court_booker.errors import AppNotReadyError, SlotUnavailableError
+from court_booker.errors import AppNotReadyError, NavigationError, SlotUnavailableError
 from court_booker.events import EventKind, MemorySink, Reporter
 from court_booker.screen import Node, Screen
 
@@ -63,9 +63,42 @@ def test_entry_is_located_just_before_the_start_time(monkeypatch):
     )
     start = datetime(2026, 10, 10, 6, 0)
 
-    runner.run_booking(FakeDevice(), Config(slots=["19:00 - 20:00"]), start=start)
+    config = Config(slots=["19:00 - 20:00"], warm_up_seconds=60)
+    runner.run_booking(FakeDevice(), config, start=start)
 
-    assert bookers[0].events == ["prepare", start - runner.LOCATE_AHEAD, "locate", start]
+    assert bookers[0].events == [
+        "prepare",
+        start - timedelta(seconds=60),
+        "locate",
+        start - runner.LOCATE_AHEAD,
+        "locate",
+        start,
+    ]
+
+
+def test_failed_warm_up_is_retried_just_before_the_start(monkeypatch, caplog):
+    class SlowListBooker(FakeBooker):
+        def locate_entry(self):
+            self.events.append("locate")
+            if self.events.count("locate") == 1:
+                raise NavigationError("Tapped 'Tiện ích' but the next screen did not appear")
+
+    bookers = []
+
+    def make_booker(device, config, report=None):
+        bookers.append(SlowListBooker(device, config, report))
+        return bookers[-1]
+
+    monkeypatch.setattr(runner, "Booker", make_booker)
+    monkeypatch.setattr(runner, "wait_until", lambda target, offset: None)
+
+    results = runner.run_booking(
+        FakeDevice(), Config(slots=["19:00 - 20:00"]), start=datetime(2026, 10, 10, 6, 0)
+    )
+
+    assert bookers[0].events == ["prepare", "locate", "locate"]
+    assert results[0].ok
+    assert "Could not open the utilities list yet" in caplog.text
 
 
 def test_failed_round_logs_the_last_screen(monkeypatch, caplog):
