@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeConnection, step } from "../test/liveSocket";
-import { connectLiveFeed, type LiveState, liveUrl, RECONNECT_DELAYS_MS, stepOf } from "./live";
+import {
+  connectLiveFeed,
+  type LiveState,
+  liveUrl,
+  OPEN_TIMEOUT_MS,
+  RECONNECT_DELAYS_MS,
+  stepOf,
+} from "./live";
 import type { Step } from "./types";
 
 /** A feed message carrying `value` as the step. */
@@ -87,6 +94,53 @@ describe("connectLiveFeed", () => {
     vi.advanceTimersByTime(RECONNECT_DELAYS_MS[0]);
 
     expect(feed.sockets).toHaveLength(4);
+  });
+
+  it("gives up on a socket that does not open in time and tries again", () => {
+    const feed = connect();
+
+    vi.advanceTimersByTime(OPEN_TIMEOUT_MS);
+    expect(feed.sockets[0]?.closed).toBe(true);
+    expect(feed.states.at(-1)).toBe("closed");
+    vi.advanceTimersByTime(RECONNECT_DELAYS_MS[0]);
+
+    expect(feed.sockets).toHaveLength(2);
+  });
+
+  it("tries again even when the stuck socket never reports its close", () => {
+    const feed = connect();
+    const stuck = feed.current();
+    stuck.close = () => {
+      stuck.closed = true;
+    };
+
+    vi.advanceTimersByTime(OPEN_TIMEOUT_MS + RECONNECT_DELAYS_MS[0]);
+
+    expect(stuck.closed).toBe(true);
+    expect(feed.sockets).toHaveLength(2);
+  });
+
+  it("ignores a late close of a socket it already gave up on", () => {
+    const feed = connect();
+    const stuck = feed.current();
+    vi.advanceTimersByTime(OPEN_TIMEOUT_MS + RECONNECT_DELAYS_MS[0]);
+    feed.current().open();
+
+    stuck.drop();
+    vi.advanceTimersByTime(60_000);
+
+    expect(feed.sockets).toHaveLength(2);
+    expect(feed.states.at(-1)).toBe("open");
+  });
+
+  it("never closes an open socket for being slow", () => {
+    const feed = connect();
+    feed.current().open();
+
+    vi.advanceTimersByTime(OPEN_TIMEOUT_MS * 10);
+
+    expect(feed.current().closed).toBe(false);
+    expect(feed.sockets).toHaveLength(1);
   });
 
   it("does not pass a step on twice", () => {
