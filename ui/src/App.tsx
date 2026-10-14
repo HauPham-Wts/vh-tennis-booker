@@ -8,8 +8,11 @@ export function App() {
   const welcome = useMatch(paths.welcome) !== null;
   return (
     <div className={styles.page}>
+      <a className={styles.skipLink} href="#main">
+        Bỏ qua tới nội dung
+      </a>
       <SiteHeader navigation={!welcome} />
-      <main className={styles.main}>
+      <main id="main" tabIndex={-1} className={styles.main}>
         <Outlet />
       </main>
     </div>

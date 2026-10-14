@@ -21,3 +21,27 @@
     gap: var(--space-6);
   }
 }
+
+/* Out of sight until the first Tab, then the first thing keyboard users can follow. */
+.skipLink {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-4);
+  z-index: 1;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-control);
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+  font-weight: var(--weight-semibold);
+  transform: translateY(-200%);
+}
+
+.skipLink:focus {
+  transform: none;
+  color: var(--color-on-ink);
+}
+
+/* The skip link moves focus here; the area itself is not a control, so it shows no ring. */
+.main:focus {
+  outline: none;
+}
