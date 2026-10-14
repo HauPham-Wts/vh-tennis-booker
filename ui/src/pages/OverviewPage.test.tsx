@@ -261,7 +261,7 @@ describe("OverviewPage live run", () => {
     return renderApp(paths.overview, {
       "GET /api/status": reply(
         overview({
-          running: { trigger: "scheduled", pid: 4242, since: "05:50:02" },
+          running: { trigger: "scheduled", pid: 4242, since: "2026-10-15T05:50:01.900" },
           last_run: RUNNING,
         }),
       ),
@@ -314,6 +314,45 @@ describe("OverviewPage live run", () => {
     expect(await screen.findByText("1/2")).toBeInTheDocument();
     expect(requestsTo(fetch, "GET /api/runs/30")).toBe(1);
     expect(requestsTo(fetch, "GET /api/status")).toBe(status + 1);
+  });
+
+  it("shows the run that just ended until it lets go of the lock", async () => {
+    const ended = { ...RUNNING, status: "ok", booked: 2, total: 2 };
+    const finished = step(110, {
+      run_id: 30,
+      time: "2026-10-15T06:00:12.000",
+      kind: "run_finished",
+      data: { status: "ok", booked: 2, total: 2 },
+    });
+    renderApp(paths.overview, {
+      "GET /api/status": reply(
+        overview({
+          running: { trigger: "scheduled", pid: 4242, since: "2026-10-15T05:50:01.900" },
+          last_run: ended,
+        }),
+      ),
+      "GET /api/runs/30": reply({ ...ended, steps: [...STEPS, finished], log_lines: [] }),
+    });
+
+    const live = await screen.findByRole("region", {
+      name: "Đang đặt cho Thứ Bảy 17/10 · sân S6",
+    });
+    expect(await within(live).findByText("Xong: 2/2 khung thành công")).toBeInTheDocument();
+    expect(within(live).queryByRole("listitem", { current: "step" })).not.toBeInTheDocument();
+  });
+
+  it("does not take the run before the lock for the one holding it", async () => {
+    const before = runSummary(29, { started_at: "2026-10-14T06:00:00.000" });
+    renderApp(paths.overview, {
+      "GET /api/status": reply(
+        overview({
+          running: { trigger: "dry_run", pid: 4242, since: "2026-10-15T10:00:00.000" },
+          last_run: before,
+        }),
+      ),
+    });
+
+    expect(await screen.findByRole("region", { name: "Đang chuẩn bị" })).toBeInTheDocument();
   });
 
   it("gets ready while a dry run the app started has no step yet", async () => {

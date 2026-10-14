@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import type { Overview } from "./types";
 import {
   type EventsQuery,
   getOverview,
@@ -27,9 +28,31 @@ export const queryKeys = {
   schedule: ["schedule"] as const,
 };
 
+/** How often the Overview is read while a run is starting or letting go of the emulator. */
+export const SETTLING_POLL_MS = 2000;
+
+/**
+ * Return how often to read the Overview again, or false. A run writes its first step a
+ * moment after taking the lock and gives the lock back a moment after its last step, and
+ * no step marks that moment; auto setup ends the same way. Only then is the Overview read
+ * every 2 s, never while a booking goes on (the run is "running" then).
+ */
+export function settlingInterval(overview: Overview | undefined): number | false {
+  const running = overview?.running;
+  if (running === null || running === undefined) {
+    return false;
+  }
+  const settling = running.trigger === "setup" || overview?.last_run?.status !== "running";
+  return settling ? SETTLING_POLL_MS : false;
+}
+
 /** Read everything the Overview shows. */
 export function useOverview() {
-  return useQuery({ queryKey: queryKeys.overview, queryFn: getOverview });
+  return useQuery({
+    queryKey: queryKeys.overview,
+    queryFn: getOverview,
+    refetchInterval: (query) => settlingInterval(query.state.data),
+  });
 }
 
 /** Read the runs of the History list. */

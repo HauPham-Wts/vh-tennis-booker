@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import { reply, requestsTo, stubBackend } from "../test/backend";
 import { createTestQueryClient, withQueryClient } from "../test/queries";
 import { ApiError } from "./client";
-import { useOverview, useRunMonths, useRuns } from "./queries";
+import { SETTLING_POLL_MS, settlingInterval, useOverview, useRunMonths, useRuns } from "./queries";
+import type { Overview } from "./types";
 import { createQueryClient, shouldRetry, UNREACHABLE_RETRIES } from "./queryClient";
 
 const unreachable = new ApiError(0, { error: "unreachable", detail: "fetch failed" });
@@ -38,6 +39,29 @@ describe("createQueryClient", () => {
     await client.invalidateQueries({ queryKey: ["overview"] });
 
     expect(requestsTo(fetch, "GET /api/status")).toBe(2);
+  });
+});
+
+describe("settlingInterval", () => {
+  const base = { running: null, last_run: null } as unknown as Overview;
+  const holding = (trigger: string, lastStatus?: string) =>
+    ({
+      ...base,
+      running: { trigger, pid: 1, since: "05:50:02" },
+      last_run: lastStatus === undefined ? null : { id: 30, status: lastStatus },
+    }) as unknown as Overview;
+
+  it("reads nothing again while nothing runs or a booking goes on", () => {
+    expect(settlingInterval(undefined)).toBe(false);
+    expect(settlingInterval(base)).toBe(false);
+    expect(settlingInterval(holding("scheduled", "running"))).toBe(false);
+    expect(settlingInterval(holding("dry_run", "running"))).toBe(false);
+  });
+
+  it("reads every 2 s while a run is starting or letting go, and during auto setup", () => {
+    expect(settlingInterval(holding("dry_run"))).toBe(SETTLING_POLL_MS);
+    expect(settlingInterval(holding("scheduled", "ok"))).toBe(SETTLING_POLL_MS);
+    expect(settlingInterval(holding("setup", "ok"))).toBe(SETTLING_POLL_MS);
   });
 });
 
