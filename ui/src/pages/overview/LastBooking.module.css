@@ -36,14 +36,17 @@
   gap: 6px;
 }
 
+/* A narrow card puts the stamp under the slot rather than breaking the slot in two. */
 .slotHead {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-3);
 }
 
 .slotTime {
+  white-space: nowrap;
   font-size: var(--text-slot);
   font-weight: var(--weight-heavy);
   letter-spacing: var(--tracking-heading);

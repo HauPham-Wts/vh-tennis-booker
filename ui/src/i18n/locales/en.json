@@ -29,7 +29,7 @@
       "title": "Overview",
       "status": {
         "noSetup": "Device not set up yet",
-        "setupLeft": "Device setup: {{count}} items left",
+        "setupLeft": "Device setup: {{count}} left to do",
         "scheduleOff": "The schedule is off",
         "ready": "Ready for {{time}} {{when}}",
         "setupLink": "Device setup",
