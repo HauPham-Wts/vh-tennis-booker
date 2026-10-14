@@ -17,6 +17,10 @@ uses [Semantic Versioning](https://semver.org/).
   UI's npm packages monthly.
 - The UI ships its fonts (Bricolage Grotesque, IBM Plex Mono, with Vietnamese) instead of
   loading them from the internet, so it works offline.
+- Design tokens of the "Vé giấy" design (colors, type, spacing, shapes) and base page
+  styles with a visible keyboard focus ring and reduced motion when Windows asks for it.
+  A test holds every text color pair to WCAG AA contrast; the "failed" color is a little
+  darker than in the mockups to pass it.
 
 ## [0.5.3] - 2026-10-14
 

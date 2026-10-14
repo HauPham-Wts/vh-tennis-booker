@@ -1,0 +1,99 @@
+/*
+ * Design tokens of the "Vé giấy" (paper ticket) design. Components use these variables
+ * instead of raw values, so the look changes in one place.
+ */
+:root {
+  color-scheme: light;
+
+  /* Paper and ink */
+  --color-ground: #e7e6e1; /* page background */
+  --color-paper: #f8f7f3; /* cards and tickets */
+  --color-field: #ffffff; /* inputs and selects */
+  --color-ink: #1c1b19; /* text, rules, dark fills */
+  --color-muted: #5c5850; /* secondary text */
+  --color-faint: #8f8a7f; /* markers of pending steps, never text */
+  --color-rule: #a9a59a; /* dotted rows of lists and tables */
+  --color-perforation: #b9b5aa; /* dashed ticket stub, steps not reached */
+  --color-shadow: #c9c6bc; /* edge under a card */
+
+  /* Text on ink fills (running banner, technical details) */
+  --color-on-ink: #f8f7f3;
+  --color-on-ink-muted: #d9d6cd;
+  --color-code: #edebe4;
+
+  /* Meaning */
+  --color-stamp: #2b48a6; /* booked, links */
+  --color-stamp-strong: #1c3380; /* link hover */
+  --color-failed: #b53c0b; /* the mockups' #c2410c, darkened to reach 4.5:1 on the ground */
+  --color-highlight: #e6f24f; /* ball yellow: the 06:00 moment, the current step */
+
+  /* Type: --font-sans and --font-mono come from fonts.css */
+  --text-label: 12px; /* mono capitals above values */
+  --text-small: 13px;
+  --text-data: 14px; /* mono times, dates, stamps */
+  --text-control: 15px;
+  --text-body: 16px;
+  --text-lead: 17px; /* the line under a page title */
+  --text-heading-xs: 18px;
+  --text-heading-sm: 22px;
+  --text-heading: 26px; /* section titles, the logo */
+  --text-heading-lg: 30px;
+  --text-slot: 34px; /* a booked slot on its ticket */
+  --text-display-sm: 40px;
+  --text-display: 52px; /* page titles */
+  --text-display-lg: 60px;
+  --text-hero-sm: 96px;
+  --text-hero: 124px; /* the next start time */
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-heavy: 800;
+
+  --leading-hero: 0.92;
+  --leading-solid: 1;
+  --leading-body: 1.4;
+  --leading-text: 1.5; /* paragraphs of several lines */
+
+  --tracking-hero: -0.05em;
+  --tracking-display: -0.04em;
+  --tracking-heading: -0.03em;
+  --tracking-stamp: 0.08em;
+  --tracking-label: 0.1em;
+  --tracking-caps: 0.12em;
+
+  /* Space on a 4 px grid */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-9: 36px;
+  --space-14: 56px;
+
+  /* Shapes */
+  --radius-bar: 2px;
+  --radius-control: 4px;
+  --radius-stamp: 6px; /* stamps, inputs, selects */
+  --radius-button: 8px;
+  --radius-card: 10px;
+  --radius-pill: 999px;
+
+  --border-hairline: 1px;
+  --border: 2px;
+  --border-stamp: 2.5px;
+  --border-heavy: 4px;
+
+  --shadow-card: 0 1px 0 var(--color-shadow);
+  --ring-current: inset 0 0 0 var(--border) var(--color-ink); /* the card of the next step */
+
+  /* Layout and interaction */
+  --page-width: 1080px;
+  --touch-target: 44px; /* smallest height of anything clickable */
+  --focus-ring: 3px solid var(--color-stamp);
+  --focus-offset: 2px;
+}
