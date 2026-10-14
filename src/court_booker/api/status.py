@@ -45,7 +45,7 @@ class SetupSummary(BaseModel):
     left: list[str]
 
 
-class Status(BaseModel):
+class Overview(BaseModel):
     """Everything the Overview shows, in one call."""
 
     version: str
@@ -56,8 +56,8 @@ class Status(BaseModel):
     """Empty until auto setup has run once."""
 
 
-@router.get("/status", response_model=Status)
-def read_status(context: Context, request: Request) -> Status:
+@router.get("/status", response_model=Overview)
+def read_status(context: Context, request: Request) -> Overview:
     """Show what runs now, the schedule and next booking, the last run and the last setup."""
     connection = history_read.open_read_only(context.data.database)
     try:
@@ -65,7 +65,7 @@ def read_status(context: Context, request: Request) -> Status:
         setup = history_read.last_setup(connection)
     finally:
         connection.close()
-    return Status(
+    return Overview(
         version=__version__,
         running=running(context, getattr(request.app.state, "dry_run", None)),
         schedule=schedule_state(context),
