@@ -31,6 +31,12 @@ uses [Semantic Versioning](https://semver.org/).
   and the page language at once, and the choice is remembered on this machine. Vietnamese
   is the default. Both language files must hold the same keys, and a mistyped key fails
   the type check.
+- `tools/export_openapi.py` writes the backend's OpenAPI schema to `ui/openapi.json`, the
+  source of the UI's types; the backend tests fail while it is out of date.
+
+### Changed
+- The OpenAPI schema describes every error response as a `Problem` (also 422, which it
+  listed as FastAPI's own validation error) and names the `/api/status` model `Overview`.
 
 ## [0.5.3] - 2026-10-14
 

@@ -27,3 +27,16 @@ def test_routes_get_the_context(app, client, context):
         "config": str(context.config_path),
         "days": 2,
     }
+
+
+def test_every_route_documents_its_errors_as_a_problem(client):
+    schema = client.get("/api/openapi.json").json()
+    problem = {"$ref": "#/components/schemas/Problem"}
+
+    for path, operations in schema["paths"].items():
+        for method, operation in operations.items():
+            responses = operation["responses"]
+            for status in ("422", "default"):
+                body = responses[status]["content"]["application/json"]["schema"]
+                assert body == problem, f"{method.upper()} {path} {status}"
+    assert "HTTPValidationError" not in schema["components"]["schemas"]
