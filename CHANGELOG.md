@@ -11,6 +11,8 @@ uses [Semantic Versioning](https://semver.org/).
   `npm run build` and served for development with `npm run dev`.
 - `npm run lint` checks the UI code with ESLint (type-aware TypeScript rules, React hooks
   rules); `npm run format` and `npm run format:check` format it with Prettier.
+- `npm test` runs the UI tests with Vitest and Testing Library in a jsdom page;
+  `npm run typecheck` checks the types without building.
 
 ## [0.5.3] - 2026-10-14
 
