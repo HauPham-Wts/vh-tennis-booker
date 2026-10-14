@@ -48,10 +48,16 @@ uses [Semantic Versioning](https://semver.org/).
 - Dates, times, durations, slots and courts are formatted per language ("Thứ Tư 14/10",
   "Wed 14 Oct", "7,0 giây", "18:00–19:00", "S6"). The backend's local times are read as
   written, never shifted by a time zone, and a value that cannot be read is shown as it is.
+- Shared building blocks of the paper design for the screens: buttons, an on/off switch
+  that writes out its state, pill filters, paper cards, a ticket with a torn-off stub, the
+  "ĐÃ ĐẶT" stamp, a dotted ledger table that scrolls when narrow, small capital labels, the
+  page header, and loading, error (with "Thử lại") and empty states.
 
 ### Changed
 - The OpenAPI schema describes every error response as a `Problem` (also 422, which it
   listed as FastAPI's own validation error) and names the `/api/status` model `Overview`.
+- The UI keeps a read fresh for 30 seconds, so returning to the window no longer reads
+  everything again; the live feed still refreshes what each step changes at once.
 
 ## [0.5.3] - 2026-10-14
 

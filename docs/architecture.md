@@ -214,6 +214,16 @@ would move the task away from the runner folder.
   day/month is built by hand (`Intl` writes "14-10"). Unreadable values are returned as
   they are. `useFormat()` binds the functions to the current language and adds the words
   of `format.*` in the language files; `Formatter` is its type.
+- `src/components`: the shared pieces of the paper design, each with a CSS Module on the
+  tokens and a behaviour test. `Button` (`primary`/`secondary`, `normal`/`large`, never
+  submits unless `type` says so), `Switch` (`role="switch"`, state also written out),
+  `PillGroup` (one choice, `aria-pressed`), `Card` and `Ticket` (`as` picks the element;
+  the ticket's stub sits behind a dashed perforation with two notches, `notch="small"` for
+  rows), `Stamp` (`booked`/`failed`, upright), `Ledger` (a named, focusable scroll area
+  around a dotted table), `Overline` (capitals set by CSS, so the language files stay in
+  normal case), `PageHeader` (h1, lead, controls, window title), and `Loading`,
+  `ErrorNotice`, `EmptyState`. `QueryView` shows a read's data first, so data already shown
+  stays when a later refresh fails, then its error with a retry, then loading.
 
 ### Backend connection (`ui/src/api`)
 
@@ -232,7 +242,8 @@ would move the task away from the runner folder.
   per route with its schema return type (the settings are cast: openapi-fetch widens the
   `[x, y]` tuples to `number[]`). `errors.ts`: `ERROR_CODES` and `errorMessage(t, error)`
   from `errors.*` in the locales.
-- `queryClient.ts` retries reads only while `unreachable` (3 times), never mutations;
+- `queryClient.ts` retries reads only while `unreachable` (3 times), never mutations, and
+  keeps reads fresh for `FRESH_MS` (30 s): invalidation still refetches at once;
   `queries.ts` (`queryKeys`, one hook per read) and `mutations.ts` (save settings, auto
   setup, switch schedule, start dry run; each sets its answer in the cache and invalidates
   what it changes).
