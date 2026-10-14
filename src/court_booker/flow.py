@@ -412,14 +412,17 @@ class Booker:
         return screen
 
     def tap(self, node: Node) -> None:
-        self.tap_point(*node.center)
+        self.tap_point(*node.center, label=node.desc)
 
-    def tap_point(self, x: float, y: float) -> None:
+    def tap_point(self, x: float, y: float, label: str = "") -> None:
+        """Tap ``(x, y)``; ``label`` names the element tapped, for the debug log."""
         self.commands += 1
+        logger.debug("Tap %s(%d, %d)", f"{label!r} at " if label else "", x, y)
         self.device.click(x, y)
 
     def press_back(self) -> None:
         self.commands += 1
+        logger.debug("Press Back")
         self.device.press("back")
 
     # Helpers ----------------------------------------------------------------
@@ -467,6 +470,7 @@ class Booker:
         width, height = screen.size
         start, end = (0.62, 0.38) if down else (0.38, 0.62)
         self.commands += 1
+        logger.debug("Swipe %s", "down the list" if down else "up the list")
         self.device.swipe(width * 0.5, height * start, width * 0.5, height * end, _SWIPE_SECONDS)
 
     def _settled_screen(self) -> Screen:

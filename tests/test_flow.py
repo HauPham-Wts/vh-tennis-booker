@@ -268,6 +268,23 @@ def test_every_new_screen_is_logged_once(caplog):
     assert booker.commands == app.ops.count("dump") + len(app.taps)
 
 
+def test_taps_and_back_presses_are_logged(caplog):
+    caplog.set_level(logging.DEBUG, logger="court_booker")
+    app = booking_app()
+    booker = Booker(app, Config())
+
+    booker.book("11:00 - 12:00", TARGET)
+    booker.return_to_utilities()
+
+    messages = [record.getMessage() for record in caplog.records]
+    assert "Tap 'Sân Tennis' at (270, 330)" in messages
+    assert "Tap (57, 1345)" in messages  # the unlabelled consent checkbox
+    assert messages[-2:] == [
+        "Press Back",
+        "Screen (1 elements):\n  [35,300][505,360] clickable 'Sân Tennis'",
+    ]
+
+
 def test_book_waits_for_slow_slot_list():
     app = booking_app(slot_delay=5)
 
