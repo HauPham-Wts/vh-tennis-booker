@@ -1,27 +1,29 @@
+import { useTranslation } from "react-i18next";
 import { NavLink } from "react-router";
 import { paths } from "../paths";
 import styles from "./MainNav.module.css";
 
 /** The screens in the navigation, in the order of the mockups. */
 const ITEMS = [
-  { to: paths.overview, label: "Tổng quan" },
-  { to: paths.schedule, label: "Hẹn giờ" },
-  { to: paths.history, label: "Lịch sử" },
-  { to: paths.activity, label: "Nhật ký" },
-  { to: paths.settings, label: "Cài đặt" },
-  { to: paths.guide, label: "Hướng dẫn" },
+  { to: paths.overview, label: "nav.overview" },
+  { to: paths.schedule, label: "nav.schedule" },
+  { to: paths.history, label: "nav.history" },
+  { to: paths.activity, label: "nav.activity" },
+  { to: paths.settings, label: "nav.settings" },
+  { to: paths.guide, label: "nav.guide" },
 ] as const;
 
 /** Link every screen; NavLink marks the current one with aria-current="page". */
 export function MainNav() {
+  const { t } = useTranslation();
   return (
-    <nav aria-label="Điều hướng chính">
+    <nav aria-label={t("nav.label")}>
       <ul className={styles.list}>
         {ITEMS.map(({ to, label }) => (
           <li key={to}>
             {/* NavLink treats "/" as current on the overview only, not on every address. */}
             <NavLink to={to} className={styles.link}>
-              {label}
+              {t(label)}
             </NavLink>
           </li>
         ))}
