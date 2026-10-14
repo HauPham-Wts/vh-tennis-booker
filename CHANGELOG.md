@@ -33,6 +33,8 @@ uses [Semantic Versioning](https://semver.org/).
   the type check.
 - `tools/export_openapi.py` writes the backend's OpenAPI schema to `ui/openapi.json`, the
   source of the UI's types; the backend tests fail while it is out of date.
+- `npm run api:types` generates the UI's TypeScript types from `ui/openapi.json`; CI fails
+  while they are out of date.
 
 ### Changed
 - The OpenAPI schema describes every error response as a `Problem` (also 422, which it
