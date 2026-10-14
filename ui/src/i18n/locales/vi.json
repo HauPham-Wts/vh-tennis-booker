@@ -204,6 +204,15 @@
       "running": "ĐANG CHẠY"
     }
   },
+  "reasons": {
+    "slotFull": "Hết chỗ",
+    "courtFull": "Sân {{court}} đã kín",
+    "refused": "App từ chối: {{message}}",
+    "notOpen": "Ngày chưa mở đặt",
+    "stuck": "App không chuyển màn hình",
+    "busy": "Đang có lần chạy khác",
+    "other": "Có lỗi, xem nhật ký"
+  },
   "errors": {
     "not_found": "Không tìm thấy dữ liệu này.",
     "lock_held": "Đang có một lần chạy khác. Hãy chờ nó xong rồi thử lại.",

@@ -204,6 +204,15 @@
       "running": "RUNNING"
     }
   },
+  "reasons": {
+    "slotFull": "Fully booked",
+    "courtFull": "Court {{court}} fully booked",
+    "refused": "The app refused: {{message}}",
+    "notOpen": "Not open for booking yet",
+    "stuck": "The app did not move on",
+    "busy": "Another run was in progress",
+    "other": "Error, see the activity log"
+  },
   "errors": {
     "not_found": "This record does not exist.",
     "lock_held": "Another run is in progress. Try again when it has finished.",
