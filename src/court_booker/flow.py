@@ -370,6 +370,9 @@ class Booker:
         if message is not None:
             raise BookingRejectedError(f"The app refused the booking: {message or 'no message'}")
         logger.info("Booking confirmed")
+        # The ticket screen's labels are not known yet; logging it lets a later version
+        # require the ticket instead of only the confirmation page being gone.
+        log_screen(outcome[1], "Screen after confirming")
 
     # Dialogs ----------------------------------------------------------------
 
@@ -478,6 +481,14 @@ class Booker:
             width, height = screen.size
             self.tap_point(width * x_ratio, height * y_ratio)
         logger.debug("Switched to %s month", "next" if forward else "previous")
+
+
+def log_screen(screen: Screen, title: str) -> None:
+    """Log every labelled or clickable element of ``screen`` under ``title`` (debug)."""
+    lines = screen.describe()
+    logger.debug("%s (%d elements):", title, len(lines))
+    for line in lines:
+        logger.debug("  %s", line)
 
 
 def _area(node: Node) -> int:

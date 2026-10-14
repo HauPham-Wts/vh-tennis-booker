@@ -252,6 +252,18 @@ def test_book_reports_each_step_without_extra_commands():
     assert booker.commands == 16
 
 
+def test_screen_after_confirming_is_logged_without_extra_commands(caplog):
+    caplog.set_level(logging.DEBUG, logger="court_booker")
+    booker = Booker(booking_app(), Config())
+
+    booker.book("11:00 - 12:00", TARGET)
+
+    messages = [record.getMessage() for record in caplog.records]
+    start = messages.index("Screen after confirming (1 elements):")
+    assert messages[start + 1] == "  [35,200][505,260] 'Đăng ký thành công'"
+    assert booker.commands == 16
+
+
 def test_book_waits_for_slow_slot_list():
     app = booking_app(slot_delay=5)
 
