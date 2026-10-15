@@ -71,7 +71,13 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   home: that leaves the app).
 - `locate_entry()` opens the utilities list, then reads it again just before the start, so
   the first command at the start is the tap. `return_to_utilities()` presses Back until the
-  utilities list or home appears (home: taps "Tiện ích") and returns that screen.
+  utilities list or home appears (home: taps "Tiện ích") and returns that screen;
+  `return_to_home()` likewise stops on home. Each Back goes through `go_back()`, which
+  returns as soon as the next screen shows: the destination, or a screen with controls
+  (clickable elements smaller than the screen) that lacks a control of the one left. The
+  status bar's labels and a screen that only gains controls do not count, nor does the
+  frame without controls read while a screen is built; nothing new in 2 s presses Back
+  again.
   `open_slot()` re-enters the calendar while the date or slot is missing.
 - `accept_and_confirm` reads the screen after "Xác nhận" until the ticket's title (booked)
   or a notice dialog (`BookingRejectedError` with the message, `Booker.notice_text`) shows;
