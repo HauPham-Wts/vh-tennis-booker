@@ -67,11 +67,14 @@ cd ui && npm run api:types       # writes ui/src/api/schema.d.ts
   for the final summary in the CLI.
 - **Commits:** follow [Conventional Commits](https://www.conventionalcommits.org/),
   e.g. `feat: add retry when a slot is not yet open`, `fix: wait for ticket screen`.
-- **Branches:** each version is prepared on `release/X.Y.Z`, cut from `main`. Work happens
-  on `feat/<topic>`, `fix/<topic>` or `docs/<topic>` branches cut from the release branch
-  and merged back into it via pull request, one PR per branch. `main` only receives the
-  release branch when everything in it is stable. Tooling and CI changes use `chore/<topic>`
-  and `ci/<topic>`.
+- **Branches:** `main` is the development line. Work happens on `feat/<topic>`,
+  `fix/<topic>` or `docs/<topic>` branches cut from `main` and merged back into it via pull
+  request, one PR per branch; tooling and CI changes use `chore/<topic>` and `ci/<topic>`.
+  A branch that builds on another one still open is cut from it and also targets `main`;
+  they are merged in order. Only finished and tested work is merged (a booking flow change
+  is tested with a real booking first), so `main` can be released at any time. `stable`
+  points at the latest release: nobody commits on it, it only moves forward to the next
+  release commit.
 - **Merging:** use "Create a merge commit"; do not squash or rebase, so commits keep their
   identity across branches.
 - **Versioning:** [Semantic Versioning](https://semver.org/). Record changes in
@@ -80,27 +83,23 @@ cd ui && npm run api:types       # writes ui/src/api/schema.d.ts
 
 ## Releasing
 
-1. Start the version from `main`:
-   ```bash
-   git switch -c release/X.Y.Z main
-   git push -u origin release/X.Y.Z
-   ```
-2. For each change, branch from `release/X.Y.Z` and open a pull request into it.
-3. When the release branch is stable, on a branch from it update `__version__` in
+1. On `chore/release-X.Y.Z`, cut from `main`, update `__version__` in
    `src/court_booker/__init__.py` (`pyproject.toml` reads it from there), run
    `python tools/export_openapi.py` (the schema carries the version), move the
    "Unreleased" entries in `CHANGELOG.md` to a new version section, and commit with
-   `chore: release vX.Y.Z`; merge it into the release branch.
-4. Open one pull request `release/X.Y.Z` → `main` and merge it with a merge commit.
-5. Tag the merge commit on `main` and push the tag:
+   `chore: release vX.Y.Z`.
+2. Open a pull request into `main` and merge it with a merge commit.
+3. Move `stable` to that merge commit and tag it (git refuses to move `stable` backwards
+   or sideways without `--force`):
    ```bash
-   git switch main && git pull
-   git tag -a vX.Y.Z -m "vX.Y.Z"
+   git switch main && git pull --ff-only
+   git push origin <merge-commit>:stable
+   git tag -a vX.Y.Z -m "vX.Y.Z" <merge-commit>
    git push origin vX.Y.Z
    ```
-6. Create a GitHub release from the tag using the changelog entry, then delete the
-   release branch.
-7. Once a dry run of the release passes on the emulator, move the runner folder to the new
+4. Create a GitHub release from the tag using the changelog entry, then delete the
+   `chore/release-X.Y.Z` branch.
+5. Once a dry run of the release passes on the emulator, move the runner folder to the new
    tag (see below); until then the daily task keeps the previous release:
    ```bash
    python tools/setup_runner.py vX.Y.Z
