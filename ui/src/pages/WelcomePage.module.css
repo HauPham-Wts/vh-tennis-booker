@@ -5,6 +5,17 @@
   line-height: var(--leading-solid);
 }
 
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.lead {
+  color: var(--color-muted);
+  font-size: var(--text-lead);
+}
+
 /* "Để sau" on the left, back and on to the right, under a dotted rule. */
 .moves {
   display: flex;
@@ -25,8 +36,17 @@
 .buttons {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
   gap: 10px;
   margin-left: auto;
+}
+
+.unsaved {
+  color: var(--color-failed);
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  font-weight: var(--weight-semibold);
 }
 
 @media (max-width: 600px) {

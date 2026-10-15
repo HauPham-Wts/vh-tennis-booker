@@ -313,7 +313,8 @@
       "back": "Quay lại",
       "next": "Tiếp",
       "later": "Để sau",
-      "done": "Xong, về Tổng quan"
+      "done": "Xong, về Tổng quan",
+      "unsaved": "Bấm \"{{save}}\" hoặc \"{{cancel}}\" trước khi tiếp."
     },
     "notFound": {
       "title": "Không tìm thấy trang",

@@ -1,11 +1,12 @@
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import type { Overview } from "../api/types";
+import type { Overview, SetupItem } from "../api/types";
 import i18n from "../i18n";
 import { paths } from "../paths";
 import { renderApp } from "../test/app";
 import { type Reply, reply } from "../test/backend";
 import { overview } from "../test/overview";
+import { settings } from "../test/settings";
 import { welcomeShown } from "../welcome";
 
 /** An app not used yet whose PC wakes at 05:40 and books at 06:00. */
@@ -187,5 +188,95 @@ describe("WelcomePage in English", () => {
     const bar = screen.getByRole("navigation", { name: "Getting started" });
     expect(within(bar).getByRole("link", { name: "2 · Device setup" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Start the setup" })).toBeInTheDocument();
+  });
+});
+
+describe("WelcomePage steps 2 to 4", () => {
+  /** Every check passed, as GET /api/setup gives it. */
+  const CHECKS: SetupItem[] = ["mumu_installed", "mumu_screen", "wake_timers", "app_installed"].map(
+    (item) => ({ item, status: "ok", detail: "" }),
+  );
+
+  function renderStep(step: number) {
+    return renderWelcome(`${paths.welcome}?step=${step}`, {
+      "GET /api/setup": reply(CHECKS),
+      "GET /api/settings": reply(settings()),
+      "PUT /api/settings": reply(settings({ slots: ["07:00 - 08:00"] })),
+      "GET /api/schedule": reply(unused().schedule),
+      "GET /api/runs": reply([]),
+    });
+  }
+
+  function nextLink() {
+    return screen.findByRole("link", { name: "Tiếp" });
+  }
+
+  it("sets up the device on step 2 as Settings does", async () => {
+    renderStep(2);
+
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Thiết lập máy" }),
+    ).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Việc bạn cần làm" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Thiết lập tự động" })).toBeInTheDocument();
+  });
+
+  it("chooses the slots on step 3 as Settings does", async () => {
+    renderStep(3);
+
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Chọn khung giờ và sân" }),
+    ).toBeInTheDocument();
+    expect(await screen.findByRole("group", { name: "Buổi sáng" })).toBeInTheDocument();
+    expect(await nextLink()).toHaveAttribute("href", `${paths.welcome}?step=4`);
+  });
+
+  it("holds Tiếp back while chosen slots are not saved", async () => {
+    renderStep(3);
+    await screen.findByRole("group", { name: "Buổi sáng" });
+
+    fireEvent.click(screen.getByRole("button", { name: "07:00–08:00" }));
+
+    const next = screen.getByRole("button", { name: "Tiếp" });
+    expect(next).toBeDisabled();
+    expect(next).toHaveAccessibleDescription('Bấm "Lưu thay đổi" hoặc "Hủy" trước khi tiếp.');
+
+    fireEvent.click(screen.getByRole("button", { name: "Hủy" }));
+
+    expect(await nextLink()).toBeInTheDocument();
+  });
+
+  it("lets the user go on once the slots are saved", async () => {
+    renderStep(3);
+    await screen.findByRole("group", { name: "Buổi sáng" });
+    fireEvent.click(screen.getByRole("button", { name: "07:00–08:00" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Lưu thay đổi" }));
+
+    expect(await nextLink()).toBeInTheDocument();
+    expect(screen.queryByText(/trước khi tiếp/)).not.toBeInTheDocument();
+  });
+
+  it("forgets a draft left behind on another step", async () => {
+    renderStep(3);
+    await screen.findByRole("group", { name: "Buổi sáng" });
+    fireEvent.click(screen.getByRole("button", { name: "07:00–08:00" }));
+
+    fireEvent.click(screen.getByRole("link", { name: "4 · Hẹn giờ" }));
+
+    expect(await screen.findByRole("link", { name: "Xong, về Tổng quan" })).toBeInTheDocument();
+  });
+
+  it("runs the dry run and switches the schedule on step 4 as the Schedule screen does", async () => {
+    renderStep(4);
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Hẹn giờ" })).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        "Chạy thử một lần cho chắc, rồi bật hẹn giờ để app tự đặt sân lúc 06:00 mỗi sáng.",
+      ),
+    ).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Chạy thử ngay" })).toBeInTheDocument();
+    expect(await screen.findByRole("switch", { name: "Hẹn giờ mỗi sáng" })).toBeDisabled();
   });
 });

@@ -313,7 +313,8 @@
       "back": "Back",
       "next": "Next",
       "later": "Not now",
-      "done": "Done, go to the overview"
+      "done": "Done, go to the overview",
+      "unsaved": "Press \"{{save}}\" or \"{{cancel}}\" before going on."
     },
     "notFound": {
       "title": "Page not found",
