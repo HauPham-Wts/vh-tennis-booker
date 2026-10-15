@@ -160,6 +160,30 @@ setup, the daily schedule (switched on only after a dry run passed), dry runs, a
 and a live feed of new steps over a WebSocket (`/api/live`). Errors are JSON with a stable
 `error` code. Scheduled runs never load it.
 
+### Screens
+
+The screens of the coming desktop app live in `ui/`, in Vietnamese (the default) and
+English. Until 0.7.0 wraps them in an app, run them in a browser beside the backend:
+
+```bash
+court-booker serve --config config.toml   # the backend on 127.0.0.1:8765
+cd ui && npm ci && npm run dev            # http://localhost:5173; /api goes to the backend
+```
+
+- **Tổng quan / Overview**: whether the next start is ready or the one thing to do first,
+  the next booking as a ticket and the last real booking per slot; while a run goes on, its
+  steps as they happen.
+- **Hẹn giờ / Schedule**: a dry run (one must pass), then the daily switch that creates or
+  removes the Windows task.
+- **Lịch sử / History**: the slots booked, month by month.
+- **Nhật ký / Activity**: every step of the 30 newest runs in plain words, with the
+  technical log.
+- **Cài đặt / Settings**: the slots, court and day to book; device setup, with what only the
+  user can do and an auto setup for the rest.
+- **Hướng dẫn / Guide**: four steps to start, what each screen is for, the usual problems.
+- **Chào mừng / Welcome**: an app not used yet opens on four steps: what happens every
+  morning, device setup, slots and schedule.
+
 To inspect a screen whose elements cannot be found:
 
 ```bash
@@ -192,14 +216,14 @@ src/court_booker/
 ├── geometry.py         pure helpers for bounds and dates
 ├── logging_setup.py    console and file logging with step timing
 └── api/                FastAPI backend: app, errors, one module per route group
-ui/src/                 the app's screens: React, TypeScript, Vite (in progress)
+ui/src/                 the app's screens: React, TypeScript, Vite
 ├── main.tsx            entry: languages, styles, router
 ├── paths.ts            the address of every screen
 ├── routes.tsx          addresses mapped to pages
 ├── App.tsx             layout: skip link, header, main area
 ├── api/                backend client: generated types, endpoints, query hooks, live feed
-├── components/         header, navigation, language switch, window title
-├── pages/              one component per screen
+├── components/         shared pieces: header, navigation, buttons, ticket, stamp, ledger
+├── pages/              one component per screen, with its parts in a folder
 ├── i18n/               i18next setup, Vietnamese and English texts
 └── styles/             fonts, design tokens, base styles
 tools/inspect_screen.py UI hierarchy dump
@@ -220,7 +244,7 @@ pre-commit install
 pytest
 ```
 
-The desktop app's screens are being built in `ui/` and need Node.js 22.12 or later:
+The desktop app's screens live in `ui/` and need Node.js 22.12 or later:
 
 ```bash
 cd ui
