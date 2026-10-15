@@ -369,7 +369,7 @@ describe("OverviewPage on an app not used yet", () => {
   it("opens the welcome screen in its place", async () => {
     const { router } = renderOverview(unused());
 
-    expect(await screen.findByRole("heading", { level: 1, name: "Chào mừng" })).toBeInTheDocument();
+    expect(await screen.findByRole("navigation", { name: "Các bước bắt đầu" })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe(paths.welcome);
     // Replaced, so going back does not land on the Overview and send the user on again.
     expect(router.state.historyAction).toBe("REPLACE");
@@ -377,7 +377,7 @@ describe("OverviewPage on an app not used yet", () => {
 
   it("sends the user there only once per opening", async () => {
     const { router } = renderOverview(unused());
-    await screen.findByRole("heading", { level: 1, name: "Chào mừng" });
+    await screen.findByRole("navigation", { name: "Các bước bắt đầu" });
 
     await act(() => router.navigate(paths.overview));
 

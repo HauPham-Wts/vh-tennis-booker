@@ -1,0 +1,191 @@
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import type { Overview } from "../api/types";
+import i18n from "../i18n";
+import { paths } from "../paths";
+import { renderApp } from "../test/app";
+import { type Reply, reply } from "../test/backend";
+import { overview } from "../test/overview";
+import { welcomeShown } from "../welcome";
+
+/** An app not used yet whose PC wakes at 05:40 and books at 06:00. */
+function unused(): Overview {
+  const status = overview();
+  return overview({
+    schedule: { ...status.schedule, enabled: false, dry_run_passed: false, wake_at: "05:40" },
+  });
+}
+
+function renderWelcome(path: string = paths.welcome, extra: Record<string, Reply> = {}) {
+  return renderApp(path, { "GET /api/status": reply(unused()), ...extra });
+}
+
+function stepBar() {
+  return screen.findByRole("navigation", { name: "Các bước bắt đầu" });
+}
+
+describe("WelcomePage step bar", () => {
+  it("lists the four steps with the first one current", async () => {
+    renderWelcome();
+
+    const links = within(await stepBar()).getAllByRole("link");
+    expect(links.map((link) => link.textContent)).toEqual([
+      "1 · Giới thiệu",
+      "2 · Thiết lập máy",
+      "3 · Chọn khung giờ",
+      "4 · Hẹn giờ",
+    ]);
+    expect(links[0]).toHaveAttribute("aria-current", "step");
+    expect(links[1]).not.toHaveAttribute("aria-current");
+    expect(links[2]).toHaveAttribute("href", `${paths.welcome}?step=3`);
+  });
+
+  it("opens the step the address names", async () => {
+    renderWelcome(`${paths.welcome}?step=3`);
+
+    const bar = await stepBar();
+    expect(within(bar).getByRole("link", { name: "3 · Chọn khung giờ" })).toHaveAttribute(
+      "aria-current",
+      "step",
+    );
+  });
+
+  it.each(["0", "5", "two", ""])("opens the first step for step=%s", async (value) => {
+    renderWelcome(`${paths.welcome}?step=${value}`);
+
+    const bar = await stepBar();
+    expect(within(bar).getByRole("link", { name: "1 · Giới thiệu" })).toHaveAttribute(
+      "aria-current",
+      "step",
+    );
+  });
+
+  it("names the window and hides the main navigation", async () => {
+    renderWelcome();
+
+    await stepBar();
+    await waitFor(() => expect(document.title).toBe("Chào mừng · Court Booker"));
+    expect(screen.queryByRole("navigation", { name: "Điều hướng chính" })).not.toBeInTheDocument();
+  });
+
+  it("marks the welcome screen as shown", async () => {
+    renderWelcome();
+
+    await stepBar();
+    expect(welcomeShown()).toBe(true);
+  });
+});
+
+describe("WelcomePage introduction", () => {
+  it("tells what happens every morning with this PC's times", async () => {
+    renderWelcome();
+
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Đặt sân tennis lúc 06:00, kể cả khi bạn đang ngủ",
+      }),
+    ).toBeInTheDocument();
+    const morning = screen.getByRole("region", { name: "Mỗi sáng diễn ra thế nào" });
+    const moments = within(morning).getAllByRole("listitem");
+    expect(moments.map((moment) => moment.textContent)).toEqual([
+      "05:40Máy tính tự thức dậyTừ chế độ Sleep, không cần bạn bật.",
+      "Ngay sau đóMở MuMu và app VinhomesRồi chờ sẵn ở mục Sân Tennis.",
+      "06:00Đặt các khung giờ bạn chọnHai khung giờ thường xong trong khoảng 15 giây.",
+    ]);
+  });
+
+  it("says what to prepare and that passwords stay out of reach", async () => {
+    renderWelcome();
+
+    const need = await screen.findByRole("region", { name: "Bạn cần chuẩn bị" });
+    const items = within(need).getAllByRole("listitem");
+    expect(items.map((item) => item.querySelector("strong")?.textContent)).toEqual([
+      "MuMu Player",
+      "App Vinhomes Resident",
+      "Tài khoản cư dân Vinhomes",
+    ]);
+    expect(need).toHaveTextContent("không bao giờ đọc hay lưu mật khẩu");
+  });
+
+  it("goes on to the device setup and brings its step into view", async () => {
+    const { router } = renderWelcome();
+
+    fireEvent.click(await screen.findByRole("link", { name: "Bắt đầu thiết lập" }));
+
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Thiết lập máy" }),
+    ).toBeInTheDocument();
+    expect(router.state.location.search).toBe("?step=2");
+    const bar = await stepBar();
+    expect(within(bar).getByRole("link", { name: "2 · Thiết lập máy" })).toHaveFocus();
+  });
+
+  it("leaves the focus alone when the screen opens", async () => {
+    renderWelcome();
+
+    await screen.findByRole("link", { name: "Bắt đầu thiết lập" });
+    expect(document.body).toHaveFocus();
+  });
+});
+
+describe("WelcomePage moves", () => {
+  it("offers only a way out on the first step", async () => {
+    renderWelcome();
+
+    await screen.findByRole("link", { name: "Bắt đầu thiết lập" });
+    expect(screen.getByRole("link", { name: "Để sau" })).toHaveAttribute("href", paths.overview);
+    expect(screen.queryByRole("link", { name: "Quay lại" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Tiếp" })).not.toBeInTheDocument();
+  });
+
+  it("goes back and on between the middle steps", async () => {
+    renderWelcome(`${paths.welcome}?step=2`);
+
+    expect(await screen.findByRole("link", { name: "Quay lại" })).toHaveAttribute(
+      "href",
+      `${paths.welcome}?step=1`,
+    );
+    expect(screen.getByRole("link", { name: "Tiếp" })).toHaveAttribute(
+      "href",
+      `${paths.welcome}?step=3`,
+    );
+    expect(screen.getByRole("link", { name: "Để sau" })).toHaveAttribute("href", paths.overview);
+  });
+
+  it("ends on the Overview after the last step", async () => {
+    const { router } = renderWelcome(`${paths.welcome}?step=4`);
+
+    fireEvent.click(await screen.findByRole("link", { name: "Xong, về Tổng quan" }));
+
+    // Already shown in this opening, so the Overview stays.
+    expect(await screen.findByRole("heading", { level: 1, name: "Tổng quan" })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe(paths.overview);
+  });
+
+  it("lets the user leave and stay on the Overview", async () => {
+    const { router } = renderWelcome();
+
+    fireEvent.click(await screen.findByRole("link", { name: "Để sau" }));
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Tổng quan" })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe(paths.overview);
+  });
+});
+
+describe("WelcomePage in English", () => {
+  it("speaks English", async () => {
+    await act(() => i18n.changeLanguage("en"));
+    renderWelcome();
+
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Book a tennis court at 06:00, even while you sleep",
+      }),
+    ).toBeInTheDocument();
+    const bar = screen.getByRole("navigation", { name: "Getting started" });
+    expect(within(bar).getByRole("link", { name: "2 · Device setup" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Start the setup" })).toBeInTheDocument();
+  });
+});

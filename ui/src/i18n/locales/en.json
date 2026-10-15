@@ -265,7 +265,55 @@
       }
     },
     "welcome": {
-      "title": "Welcome"
+      "title": "Welcome",
+      "steps": "Getting started",
+      "step": "{{number}} · {{name}}",
+      "names": {
+        "intro": "Introduction",
+        "device": "Device setup",
+        "booking": "Choose slots",
+        "schedule": "Schedule"
+      },
+      "intro": {
+        "title": "Book a tennis court at {{start}}, even while you sleep",
+        "lead": "The Vinhomes app opens bookings at {{start}} every morning and the good slots are gone in seconds. Court Booker taps for you, in the very first second.",
+        "morning": "What happens every morning",
+        "wake": {
+          "title": "The PC wakes itself up",
+          "text": "From Sleep, without you turning it on."
+        },
+        "open": {
+          "when": "Right after",
+          "title": "Opens MuMu and the Vinhomes app",
+          "text": "Then waits on the Sân Tennis page."
+        },
+        "book": {
+          "title": "Books the slots you chose",
+          "text": "Two slots usually take about 15 seconds."
+        },
+        "need": {
+          "title": "What you need",
+          "mumu": {
+            "name": "MuMu Player",
+            "text": "An Android emulator, installed on this PC."
+          },
+          "app": {
+            "name": "The Vinhomes Resident app",
+            "text": "Installed in MuMu (needs a Google account)."
+          },
+          "account": {
+            "name": "A Vinhomes resident account",
+            "text": "To log in to the app."
+          },
+          "note": "The next steps guide you through each of these. Court Booker does the rest.",
+          "privacy": "Court Booker runs only on your PC and never reads or stores your password.",
+          "start": "Start the setup"
+        }
+      },
+      "back": "Back",
+      "next": "Next",
+      "later": "Not now",
+      "done": "Done, go to the overview"
     },
     "notFound": {
       "title": "Page not found",

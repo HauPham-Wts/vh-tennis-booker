@@ -265,7 +265,55 @@
       }
     },
     "welcome": {
-      "title": "Chào mừng"
+      "title": "Chào mừng",
+      "steps": "Các bước bắt đầu",
+      "step": "{{number}} · {{name}}",
+      "names": {
+        "intro": "Giới thiệu",
+        "device": "Thiết lập máy",
+        "booking": "Chọn khung giờ",
+        "schedule": "Hẹn giờ"
+      },
+      "intro": {
+        "title": "Đặt sân tennis lúc {{start}}, kể cả khi bạn đang ngủ",
+        "lead": "App Vinhomes mở đặt sân lúc {{start}} mỗi sáng và các khung giờ đẹp hết trong vài giây. Court Booker bấm thay bạn, ngay giây đầu tiên.",
+        "morning": "Mỗi sáng diễn ra thế nào",
+        "wake": {
+          "title": "Máy tính tự thức dậy",
+          "text": "Từ chế độ Sleep, không cần bạn bật."
+        },
+        "open": {
+          "when": "Ngay sau đó",
+          "title": "Mở MuMu và app Vinhomes",
+          "text": "Rồi chờ sẵn ở mục Sân Tennis."
+        },
+        "book": {
+          "title": "Đặt các khung giờ bạn chọn",
+          "text": "Hai khung giờ thường xong trong khoảng 15 giây."
+        },
+        "need": {
+          "title": "Bạn cần chuẩn bị",
+          "mumu": {
+            "name": "MuMu Player",
+            "text": "Phần mềm giả lập Android, cài trên máy tính này."
+          },
+          "app": {
+            "name": "App Vinhomes Resident",
+            "text": "Cài trong MuMu (cần tài khoản Google)."
+          },
+          "account": {
+            "name": "Tài khoản cư dân Vinhomes",
+            "text": "Để đăng nhập app."
+          },
+          "note": "Các bước tiếp theo sẽ hướng dẫn từng việc. Phần còn lại Court Booker tự làm.",
+          "privacy": "Court Booker chỉ chạy trên máy của bạn và không bao giờ đọc hay lưu mật khẩu.",
+          "start": "Bắt đầu thiết lập"
+        }
+      },
+      "back": "Quay lại",
+      "next": "Tiếp",
+      "later": "Để sau",
+      "done": "Xong, về Tổng quan"
     },
     "notFound": {
       "title": "Không tìm thấy trang",

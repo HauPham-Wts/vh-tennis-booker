@@ -1,0 +1,36 @@
+.title {
+  font-size: var(--text-display);
+  font-weight: var(--weight-heavy);
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-solid);
+}
+
+/* "Để sau" on the left, back and on to the right, under a dotted rule. */
+.moves {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+  padding-top: var(--space-6);
+  border-top: var(--border-hairline) dotted var(--color-rule);
+}
+
+.later {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-left: auto;
+}
+
+@media (max-width: 600px) {
+  .title {
+    font-size: var(--text-display-sm);
+  }
+}
