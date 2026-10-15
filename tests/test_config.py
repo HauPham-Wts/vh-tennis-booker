@@ -79,6 +79,20 @@ def test_saved_config_loads_back_the_same(tmp_path):
     assert not (tmp_path / "CourtBooker" / "config.toml.tmp").exists()
 
 
+def test_saved_config_holds_only_the_changed_labels(tmp_path):
+    config = Config()
+    path = tmp_path / "config.toml"
+
+    save_config(config, path)
+    assert "[labels]" not in path.read_text(encoding="utf-8")
+
+    config.labels.notice = "Thông báo mới"
+    save_config(config, path)
+    text = path.read_text(encoding="utf-8")
+    assert text.endswith('[labels]\nnotice = "Thông báo mới"\n')
+    assert load_config(path).labels.home == "Tiện ích"
+
+
 def test_invalid_config_is_not_saved(tmp_path):
     path = tmp_path / "config.toml"
     path.write_text('slots = ["18:00 - 19:00"]\n', encoding="utf-8")

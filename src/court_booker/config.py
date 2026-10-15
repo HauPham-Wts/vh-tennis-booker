@@ -137,15 +137,22 @@ def save_config(config: Config, path: str | Path) -> None:
 
     The text goes to a temporary file that then replaces ``path``, so a run reading the
     file at that moment sees the old or the new version, never half of one. Comments of
-    an existing file are not kept.
+    an existing file are not kept. Only the labels that differ from the defaults are
+    written: a runner of an older version refuses a label it does not know, and a later
+    version's fix to a default label then reaches this file too.
     """
     problems = validate_config(config)
     if problems:
         raise ConfigError("; ".join(problems))
+    data = config_to_dict(config)
+    defaults = config_to_dict(Config())["labels"]
+    labels = {key: value for key, value in data.pop("labels").items() if value != defaults[key]}
+    if labels:
+        data["labels"] = labels
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
     temporary = target.with_name(target.name + ".tmp")
-    temporary.write_text(tomli_w.dumps(config_to_dict(config)), encoding="utf-8")
+    temporary.write_text(tomli_w.dumps(data), encoding="utf-8")
     os.replace(temporary, target)
 
 
