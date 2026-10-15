@@ -239,6 +239,7 @@ class Booker:
         """Navigate to the utilities list from the home, ticket or any inner screen."""
         if screen is None:
             screen = self.snapshot()
+        arrived = self._either(self.utility, self.home)
         for _ in range(_BACK_PRESSES):
             if screen.find(self.utility):
                 return screen
@@ -247,10 +248,7 @@ class Booker:
                     screen, self.home, self.config.labels.home, self._finder(self.utility)
                 )
                 return screen
-            self._warn_about_notice(screen)
-            self.press_back()
-            found = self.wait_for(self._either(self.utility, self.home), _NEXT_SCREEN_TIMEOUT)
-            screen = found[1] if found is not None else self.last_screen
+            screen = self.go_back(screen, arrived)
         raise NavigationError("Could not return to the utilities list")
 
     def return_to_home(self, screen: Screen | None = None) -> Screen:
@@ -260,10 +258,7 @@ class Booker:
         for _ in range(_BACK_PRESSES):
             if screen.find(self.home):
                 return screen
-            self._warn_about_notice(screen)
-            self.press_back()
-            found = self.wait_for(self._finder(self.home), _NEXT_SCREEN_TIMEOUT)
-            screen = found[1] if found is not None else self.last_screen
+            screen = self.go_back(screen, self._finder(self.home))
         raise NavigationError("Could not return to the home screen")
 
     # Navigation -------------------------------------------------------------
@@ -288,6 +283,31 @@ class Booker:
             node = self.last_screen.find(target)
             logger.debug("Next screen missing after %r (attempt %d)", name, attempt + 2)
         raise NavigationError(f"Tapped {name!r} but the next screen did not appear")
+
+    def go_back(self, screen: Screen, arrived: Finder[Node]) -> Screen:
+        """Press Back on ``screen`` and return the next screen as soon as it shows.
+
+        That is the first read that shows ``arrived``, or controls of its own while a
+        control of ``screen`` is gone. Each screen shows 0.13-0.24 s after Back
+        (2026-10-15); waiting for the destination alone cost 2 s per screen on the way.
+        Controls are compared, not labels: the status bar's labels change on their own, and
+        a screen that only gains controls, such as a ticket still loading, is the same
+        screen, where a second Back would go one screen too far. The frame read while a
+        screen is built has no controls and is read again. If nothing changed in 2 s, as
+        after a Back the app missed, the last read is returned and Back is pressed again.
+        """
+        self._warn_about_notice(screen)
+        before = _controls(screen)
+
+        def next_screen(shown: Screen) -> bool | None:
+            controls = _controls(shown)
+            if arrived(shown) is not None or (controls and not before <= controls):
+                return True
+            return None
+
+        self.press_back()
+        found = self.wait_for(next_screen, _NEXT_SCREEN_TIMEOUT)
+        return found[1] if found is not None else self.last_screen
 
     def wait_for(
         self, find: Finder[T], timeout: float, screen: Screen | None = None
@@ -605,6 +625,16 @@ def log_screen(screen: Screen, title: str) -> None:
     """
     lines = screen.describe()
     logger.debug("%s (%d elements):%s", title, len(lines), "".join(f"\n  {x}" for x in lines))
+
+
+def _controls(screen: Screen) -> set[Node]:
+    """Return the clickable elements of ``screen``, except one that covers all of it.
+
+    The frame read while a screen is built has none: its only clickable element spans the
+    whole screen (2026-10-15).
+    """
+    whole = (0, 0, *screen.size)
+    return {node for node in screen.nodes if node.clickable and node.box != whole}
 
 
 def _area(node: Node) -> int:

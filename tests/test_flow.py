@@ -220,7 +220,8 @@ def booking_app(
         "confirm": "details",
         "confirm_ticked": "details",
         "details": "courts",
-        "courts": "calendar_selected",
+        "courts": "venue" if via_venue else "calendar_selected",
+        "venue": "calendar_selected",
         "calendar": "utilities",
         "calendar_slots": "utilities",
         "calendar_selected": "utilities",
@@ -419,9 +420,9 @@ def test_book_taps_venue_screen_when_shown():
     assert app.screen == "ticket"
 
 
-def refusing_app():
+def refusing_app(**options):
     """Answer "Xác nhận" with a notice dialog, as when someone else took the slot first."""
-    app = booking_app()
+    app = booking_app(**options)
     app.screens["notice"] = NOTICE
     app.taps_to[("confirm_ticked", "Xác nhận")] = "notice"
     app.backs_to["notice"] = "confirm_ticked"
@@ -504,6 +505,60 @@ def test_return_to_utilities_presses_back_from_ticket():
 
     assert app.calls == ["back"]
     assert app.screen == "utilities"
+
+
+def test_return_after_a_refusal_presses_back_as_soon_as_each_screen_shows(fake_time):
+    app = refusing_app(via_venue=True)
+    # 2026-10-15: each Back shows a frame without labels, then the screen before.
+    app.backs_to = {screen: ["loading", (before, 2)] for screen, before in app.backs_to.items()}
+    app.screen = "notice"
+    booker = Booker(app, Config())
+
+    booker.return_to_utilities()
+
+    assert app.screen == "utilities"
+    # Notice, confirmation page, details, courts, venue, calendar.
+    assert app.calls == ["back"] * 6
+    assert booker.commands == 1 + 6 * 3  # per Back: the Back, the empty frame, the screen
+    assert fake_time[0] < 0.5  # was 2 s per screen on the way
+
+
+@pytest.mark.parametrize(
+    "changed",
+    [
+        [*DAYS, *SLOTS, CONTINUE],  # the slots listed late
+        [*DAYS, CONTINUE, node("6:01 AM", (6, 5, 50, 28), False)],  # the status bar's clock
+    ],
+)
+def test_a_screen_that_changes_in_place_after_back_is_not_taken_for_the_next(changed):
+    app = booking_app(screen="calendar")
+    app.screens["calendar_changed"] = changed
+    app.backs_to["calendar"] = [("calendar_changed", 1), ("utilities", 2)]
+
+    Booker(app, Config()).return_to_utilities()
+
+    assert app.calls == ["back"]  # a second Back would have left the utilities list
+    assert app.taps == []
+    assert app.screen == "utilities"
+
+
+def test_a_back_the_app_missed_is_pressed_again_after_two_seconds(fake_time):
+    app = booking_app(screen="details")
+    press = app.press
+
+    def miss_the_first_back(key):
+        if app.calls:
+            press(key)
+        else:
+            app.calls.append(key)
+
+    app.press = miss_the_first_back
+
+    Booker(app, Config()).return_to_utilities()
+
+    assert app.calls == ["back"] * 4  # missed, then details, courts and calendar
+    assert app.screen == "utilities"
+    assert 2 <= fake_time[0] < 2.5
 
 
 def test_return_to_utilities_warns_about_a_notice_it_closes(caplog):

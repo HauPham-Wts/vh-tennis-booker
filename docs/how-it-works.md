@@ -59,7 +59,10 @@ confirmation page shows, and the ticket's status, are read from screens already 
 logged (a warning when they differ from the target) and kept in the history; neither stops
 the round. Every new screen a run reads, and every tap, is written to the debug
 log, so a failure can be followed screen by screen. From the
-ticket screen, one Back returns to the utilities list, where the next round begins.
+ticket screen, one Back returns to the utilities list, where the next round begins. After a
+failure deeper in the flow, such as a refusal (dialog, confirmation page, details, court
+list, venue, calendar: six Backs), each Back follows as soon as the screen before shows,
+about 0.2 s later, instead of after 2 s on each screen on the way.
 
 ## Lessons learned
 
