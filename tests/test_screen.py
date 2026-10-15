@@ -57,3 +57,14 @@ def test_describe_lists_labelled_and_clickable_elements():
         "[480,180][520,220] clickable ''",
     ]
     assert Screen([]).describe() == []
+
+
+def test_line_after_reads_the_value_under_a_caption():
+    details = Node(
+        "Sân Tennis\nVị trí/dịch vụ\nS6 - Sân tennis\nTổng tiền", (0, 210, 540, 775), False
+    )
+    screen = Screen([Node("Vị trí/dịch vụ", (0, 0, 10, 10), False), details])
+
+    assert screen.line_after("Vị trí/dịch vụ") == "S6 - Sân tennis"
+    assert screen.line_after("Tổng tiền") is None
+    assert screen.line_after("Vị trí") is None
