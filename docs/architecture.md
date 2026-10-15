@@ -268,8 +268,16 @@ would move the task away from the runner folder.
   installed), the login from the runs (`reasons.ts` `isLoggedOut` on the last run's error,
   else `dry_run_passed`); the backend's English `detail` is never shown. `setup/AutoSetup`
   is a `Ticket`: the auto items and their status, the button, and the restart question,
-  shown when a run without `restart_mumu` leaves `mumu_screen` fixable. `format.ts`
-  `addMinutes` gives the end of the quiet time.
+  shown when a run without `restart_mumu` leaves `mumu_screen` fixable. `quiet.ts`
+  `quietEnd` (start + 5 min, `format.ts` `addMinutes`) gives the end of the quiet time.
+- `SchedulePage` reads the Overview (the lock and the times). `schedule/DryRunStep` starts a
+  dry run (`useStartDryRun`) and reads the newest dry run (`dry_run=true`, `limit=1`); it
+  follows nothing itself and links to the Overview while a run goes on.
+  `schedule/ScheduleStep` reads `useSchedule` and switches it (`useSwitchSchedule`, which
+  writes the answer to the cache); the switch is off until `dry_run_passed`. A run's
+  `run_finished` step also marks the schedule stale, for `dry_run_passed`. Tests stand in
+  for the backend: a real `PUT /api/schedule` rewrites the Windows task, so it is never
+  sent from a development backend.
 
 ### Backend connection (`ui/src/api`)
 
