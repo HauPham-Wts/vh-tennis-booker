@@ -46,6 +46,16 @@ class Labels:
     fully_booked: str = "Hết chỗ"
     notice: str = "Thông báo"
     """Title of the app's message dialogs, e.g. the monthly quota or a refused booking."""
+    booked_time: str = "Thời gian đặt lịch"
+    """Caption of the date and slot on the confirmation page and the ticket."""
+    booked_place: str = "Vị trí/dịch vụ"
+    """Caption of the court on the confirmation page and the ticket."""
+    ticket: str = "Chi tiết đặt lịch"
+    """Title of the ticket screen that follows "Xác nhận"."""
+    processing: str = "Đang xử lý"
+    """Ticket status while the server handles the booking (seen at 06:00)."""
+    registered: str = "Đã đăng ký"
+    """Ticket status once the booking is registered."""
 
 
 @dataclass

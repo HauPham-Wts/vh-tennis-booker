@@ -121,8 +121,9 @@ def run_booking(
         report(EventKind.SLOT_STARTED, slot=slot, round=index, rounds=len(config.slots))
         started = time.perf_counter()
         commands = booker.commands
+        shown: dict[str, Any] = {}
         try:
-            booker.book(slot, target, dry_run=dry_run)
+            shown = booker.book(slot, target, dry_run=dry_run).event_data()
         except BookingError as exc:
             logger.error("%s", exc)
             log_last_screen(booker)
@@ -144,6 +145,7 @@ def run_booking(
                 seconds=round(seconds, 1),
                 commands=used,
                 dry_run=dry_run,
+                **shown,
             )
         else:
             report(

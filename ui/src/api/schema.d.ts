@@ -316,6 +316,16 @@ export interface components {
             fully_booked: string;
             /** Notice */
             notice: string;
+            /** Booked Time */
+            booked_time: string;
+            /** Booked Place */
+            booked_place: string;
+            /** Ticket */
+            ticket: string;
+            /** Processing */
+            processing: string;
+            /** Registered */
+            registered: string;
         };
         /**
          * LogLine
