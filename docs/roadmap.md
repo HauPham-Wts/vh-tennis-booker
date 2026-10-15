@@ -1,0 +1,78 @@
+# Roadmap
+
+## Product goal
+
+The only goal is to win the booking race: the app opens bookings at **06:00 every day** and
+the user must not need to be awake. Priority is unattended, scheduled, fastest-possible
+booking (decided 2026-10-07).
+
+- The target date is always today + `days_ahead` (default 2); there is no `--date`.
+- No stop button or cancellation token; Ctrl+C prints the summary instead.
+- The trigger is Windows Task Scheduler at `wake_at` (default 05:45), time-based, not
+  logon. The run itself starts MuMu, connects ADB and restarts the app; MuMu and the app are
+  left open after the run.
+- Each run waits on the home screen and opens the utilities list `warm_up_seconds` (60)
+  before the start time, so only the booking taps happen after 06:00 and the app has loaded
+  its data shortly before (2026-10-14).
+- ADB: reuse a running ADB server if present, then a configured adb path, then adb on
+  PATH; then detect emulator ports (MuMu 7555 and 16384+, LDPlayer/BlueStacks 5555+, Nox
+  62001). MuMu is started with `MuMuManager.exe` in `nx_main`: `info -v 0` returns JSON
+  with `is_android_started`, `adb_host_ip`, `adb_port` (16384 for instance 0);
+  `control -v 0 launch` starts it. MuMu ships its own `adb.exe` in the same folder.
+
+Out of scope: bypassing any app check, and on-device automation (an Android app using
+AccessibilityService). ADB needs Android developer mode, which the app accepts.
+
+## Phases
+
+The 0.x versions go through four phases toward 1.0.0: (1) it runs, (2) it handles every
+situation, (3) it is fast, (4) it has a user-friendly UI. Speed came early (0.3.0) because
+it decides the 06:00 race. On 2026-10-12 the UI phase moved ahead of the remaining speed
+work: 0.4.0 waits for failures in the logs, and the core books reliably.
+
+| Phase | Version | Scope |
+|---|---|---|
+| 1 Runs | 0.1.0 | Label-based booking flow (released) |
+| 1 Runs | 0.2.0 Unattended | Start MuMu, ADB auto-connect, timed start with NTP offset, opening retry, keep awake, log file, Telegram summary, Task Scheduler with wake (released; spec [0.2.0-unattended](specs/0.2.0-unattended.md)) |
+| 3 Fast | 0.3.0 Fast rounds | MuMu 540x1600, one dump per screen, taps by coordinates, entry located before the start, command count (released 2026-10-09; spec [0.3.0-fast-rounds](specs/0.3.0-fast-rounds.md)) |
+| 2 Every situation | 0.4.0 Hardening | Failure screen log; the situations below are fixed as the logs show them (released 2026-10-12) |
+| 4 UI | 0.5.0 Backend | Separate run folder, engine events, data folder, SQLite history and activity, run lock, device setup and auto setup, FastAPI backend (released 2026-10-13; spec [0.5.0-desktop-app](specs/0.5.0-desktop-app.md)) |
+| 2 Every situation | 0.5.1-0.5.3 | Refused bookings fail the round, every screen logged, warm-up on the utilities list (released 2026-10-14) |
+| 4 UI | 0.6.0 UI | React + TypeScript screens in the "Vé giấy" design, Vietnamese and English (released 2026-10-15) |
+| 4 UI | **0.7.0 Desktop app** | Tauri shell with PyInstaller sidecar, installer, release automation |
+| 3 Fast | Later | Tuning from the log files; several MuMu instances with separate accounts in parallel (one account cannot log in twice) |
+
+There is no 0.3.1: its candidate fixes were judged to have no impact.
+
+## Situations (phase 2)
+
+"Done" means handled, or at least reported clearly in the log file. Decided on 2026-10-10:
+failures are fixed as they show up in the log.
+
+| Area | Situation | Today |
+|---|---|---|
+| App | Logged out | Fails early (exit 4) |
+| App | Closed-hours dialog after a too-early tap | Not handled (not seen so far) |
+| App | Update prompt, other dialogs, network error | Not handled |
+| App | App crash or freeze during a round | Not handled |
+| App | Slow server at 06:00 | Re-tap after 2 s |
+| Booking | New date not open yet | Calendar reloaded for `open_retry_seconds` |
+| Booking | Slot fully booked | Round fails; no fallback slot (by decision) |
+| Booking | Court fully booked | Round fails; no fallback court (by decision) |
+| Booking | Slot taken by someone else at "Xác nhận" | Round fails with the app's notice (0.5.1; was logged as booked on 2026-10-14) |
+| Booking | Booked court differs from the tapped one | Seen once (2026-10-13: S6 tapped, S9 booked); a ticket check would catch it |
+| Booking | Target date in the next month | Code exists; untested since 0.3.0. Only testable on the last two days of a month (30/10 → 1/11, 31/10 → 2/11): the calendar does not switch to a month without bookable days |
+| Booking | Booking limit per account | 8 slots per apartment per month; not handled by decision (users track their own quota), the log shows the dialog |
+| Device | MuMu not running / frozen | Started automatically / not handled |
+| Device | ADB lost during a run | Not handled |
+| Device | Wrong MuMu resolution | Works but scrolls; no warning |
+| Device | PC woke late, clock drift | Runs at once if under 10 min late; NTP offset |
+| Reporting | Every failure reported | Log file and history database; Telegram optional, not configured |
+
+## Ruled out
+
+- 2026-10-09: opening the calendar before 06:00, two slots in one booking, pre-recorded
+  coordinates.
+- 2026-10-10: a health check before 06:00, fallback slots and courts (other users book
+  within seconds, a missed slot is lost), Telegram setup (the optional code stays), a run
+  history file (history came with the app's database in 0.5.0).

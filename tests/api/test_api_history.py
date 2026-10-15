@@ -22,6 +22,10 @@ def test_runs_are_listed_newest_first(client, database, record_run):
     assert runs[1]["booked"] == 1
     assert runs[1]["total"] == 2
     assert runs[1]["play_date"] == "2026-10-15"
+    assert [(slot["slot"], slot["ok"]) for slot in runs[1]["slots"]] == [
+        ("18:00 - 19:00", True),
+        ("19:00 - 20:00", False),
+    ]
 
 
 def test_runs_filter_and_page(client, database, record_run):
@@ -33,6 +37,17 @@ def test_runs_filter_and_page(client, database, record_run):
 
     assert [run["id"] for run in october] == [ids[2], ids[1]]
     assert [run["id"] for run in older.json()] == [ids[0]]
+
+
+def test_runs_filter_real_bookings_from_dry_runs(client, database, record_run):
+    real = record_run(database)
+    tested = record_run(database, dry_run=True)
+
+    def ids(flag):
+        return [run["id"] for run in client.get(f"/api/runs?dry_run={flag}").json()]
+
+    assert ids("false") == [real]
+    assert ids("true") == [tested]
 
 
 @pytest.mark.parametrize(
@@ -65,6 +80,16 @@ def test_one_run_in_full(client, database, record_run):
         "run_finished",
     ]
     assert run["log_lines"] == []
+
+
+def test_months_of_real_bookings(client, database, record_run):
+    record_run(database, date="2026-10-15", slots=[("18:00 - 19:00", True)])
+    record_run(database, trigger="dry_run", date="2026-10-16", slots=[("10:00 - 11:00", True)])
+
+    response = client.get("/api/runs/months")
+
+    assert response.status_code == 200
+    assert response.json() == [{"month": "2026-10", "runs": 1, "booked": 1}]
 
 
 def test_an_unknown_run_is_not_found(client):

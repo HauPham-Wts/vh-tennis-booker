@@ -1,0 +1,35 @@
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-5);
+  padding: 14px var(--space-5);
+  border-radius: var(--radius-button);
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+}
+
+.what {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-lead);
+  font-weight: var(--weight-bold);
+}
+
+/* A yellow light; it does not blink, so it never distracts or re-renders. */
+.light {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-highlight);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-highlight) 25%, transparent);
+}
+
+.locked {
+  color: var(--color-on-ink-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+}

@@ -1,0 +1,23 @@
+.stamp {
+  display: inline-block;
+  padding: 6px var(--space-3);
+  border: var(--border-stamp) solid currentcolor;
+  border-radius: var(--radius-stamp);
+  font-family: var(--font-mono);
+  font-size: var(--text-data);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-stamp);
+  white-space: nowrap;
+}
+
+.booked {
+  color: var(--color-stamp);
+}
+
+.failed {
+  color: var(--color-failed);
+}
+
+.muted {
+  color: var(--color-muted);
+}

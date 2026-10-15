@@ -9,6 +9,10 @@ dist/
 .pytest_cache/
 .ruff_cache/
 
+# UI (Node.js)
+node_modules/
+*.tsbuildinfo
+
 # Personal config and device captures (may contain personal data)
 config.toml
 dump.xml

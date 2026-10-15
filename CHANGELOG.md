@@ -6,6 +6,115 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-15
+
+### Added
+- The `ui/` project for the app's screens: React, TypeScript (strict) and Vite, built with
+  `npm run build` and served for development with `npm run dev`.
+- `npm run lint` checks the UI code with ESLint (type-aware TypeScript rules, React hooks
+  rules); `npm run format` and `npm run format:check` format it with Prettier.
+- `npm test` runs the UI tests with Vitest and Testing Library in a jsdom page;
+  `npm run typecheck` checks the types without building.
+- CI type-checks, lints, tests and builds the UI in its own job; Dependabot updates the
+  UI's npm packages monthly.
+- The UI ships its fonts (Bricolage Grotesque, IBM Plex Mono, with Vietnamese) instead of
+  loading them from the internet, so it works offline.
+- Design tokens of the "Vé giấy" design (colors, type, spacing, shapes) and base page
+  styles with a visible keyboard focus ring and reduced motion when Windows asks for it.
+  A test holds every text color pair to WCAG AA contrast; the "failed" color is a little
+  darker than in the mockups to pass it.
+- Every screen has its own address (`/`, `/schedule`, `/history`, `/activity`,
+  `/settings/booking`, `/settings/device`, `/guide`, `/welcome`) and names the window; an
+  unknown address or a screen that fails shows a page with a way back.
+- The page shell of the mockups: the "court booker." name over an ink rule, the navigation
+  with the current screen as a filled ink tab (hidden on the welcome screen), one centred
+  column that narrows with the window, and a skip link for keyboard users.
+- Vietnamese and English: a VI/EN switch in the header changes every text, the window title
+  and the page language at once, and the choice is remembered on this machine. Vietnamese
+  is the default. Both language files must hold the same keys, and a mistyped key fails
+  the type check.
+- `tools/export_openapi.py` writes the backend's OpenAPI schema to `ui/openapi.json`, the
+  source of the UI's types; the backend tests fail while it is out of date.
+- `npm run api:types` generates the UI's TypeScript types from `ui/openapi.json`; CI fails
+  while they are out of date.
+- A typed API client with one function per backend endpoint. Every failure becomes an
+  error with a stable code and a message in Vietnamese or English, also when the
+  backend is not running. In development Vite forwards `/api` to `court-booker serve`.
+- The screens share backend data through a TanStack Query cache: one hook per kind of
+  data and per action. Reads retry only while the backend is out of reach; actions
+  never repeat on their own and refresh the data they change.
+- The UI follows the live feed: one connection for the whole app brings each new step as
+  runs write it and refreshes the data it changes. After a drop, or a socket that never
+  opens, it reconnects and resumes after the last step seen, so no step is lost or
+  repeated (checked with the backend stopped and restarted).
+- Dates, times, durations, slots and courts are formatted per language ("Thứ Tư 14/10",
+  "Wed 14 Oct", "7,0 giây", "18:00–19:00", "S6"). The backend's local times are read as
+  written, never shifted by a time zone, and a value that cannot be read is shown as it is.
+- Shared building blocks of the paper design for the screens: buttons, an on/off switch
+  that writes out its state, pill filters, paper cards, a ticket with a torn-off stub, the
+  "ĐÃ ĐẶT" stamp, a dotted ledger table that scrolls when narrow, small capital labels, the
+  page header, and loading, error (with "Thử lại") and empty states.
+- Every step of a run or of the app has plain words in Vietnamese and English ("Đặt được
+  15:00–16:00", "Chạy thử tới bước xác nhận: 10:00–11:00"), with a ✓/✕ tone, the time a
+  slot took and the engine's own reason kept for the technical details.
+- The Activity screen: the 30 newest runs with when, how and a ✓/✕ mark; the run shown
+  (`?run=`, else the newest) with its stamp, every step in plain words, and its technical
+  log, closed until asked for.
+- The History screen: the real bookings of a month as tickets with their slots, court and
+  stamp, a month picker kept in the address, and the slots booked that month (helps with
+  the quota of 8 per month). Runs from the API carry their slots; `GET /api/runs` filters
+  real bookings or dry runs (`dry_run`), and `GET /api/runs/months` lists the months.
+- The Overview: one status line on whether the next start is ready or what to do first
+  (set up the device, turn the schedule on), the next booking as a ticket (start time,
+  wake time, play date, court, slots), and the last real booking with one card per slot
+  and the reason a slot failed in a few words ("Hết chỗ", "Sân S6 đã kín").
+- While a booking or a dry run goes on, the Overview shows it as it goes: a banner, the slot
+  being booked, every step with the newest marked, the slots still to come and the
+  progress, from the live feed alone. It leaves this view once the run gives the emulator
+  back.
+- Settings > Booking: the resident picks the slots (13 toggles, numbered in the order they
+  are booked), the court (S6, S8, S9, S10) and the day (today, tomorrow or the day after),
+  then saves or cancels. Only these three change: the rest of `config.toml` goes back to the
+  backend as it was. A slot or court set by hand outside the lists is still shown. The two
+  settings tabs are links, so each keeps its address.
+- Settings > Device setup: the three steps only the resident can do (install MuMu, install
+  the Vinhomes app, log in), each marked done, to do or not sure with what to do next in
+  plain words, and "Kiểm tra lại". The login comes from the runs: a run the app did not let
+  in ("check that it is logged in", now also worded on the Overview) asks to log in again.
+  Auto setup shows each item it takes care of and asks before restarting an open MuMu.
+  The checks ask MuMu and adb, so they wait while a run holds the lock.
+- The Schedule screen: step 1 starts a dry run and says how the last one went (passed, or
+  why not in a few words); while a run goes on its button is off and the line points to
+  the Overview. Step 2 switches the daily booking on (once a dry run has passed) or off,
+  with the wake and start times, the next booking and its play date, and the three habits
+  the PC needs (sleep, stay signed in, plugged in).
+- The Guide screen: four steps to get started, each a link to the screen where it is done;
+  what each screen of the menu is for; and answers to the usual problems (no run this
+  morning, "Hết chỗ", the monthly quota, a logged-out app, device setup not done), opened
+  one at a time. It quotes the other screens' labels from their own messages and sends no
+  request.
+- The Welcome screen: an app not used yet (no dry run passed, schedule off, nothing
+  running) opens on it instead of the Overview, once per opening. Four steps in a bar of
+  links: what happens every morning with this PC's wake and start times and what to
+  prepare; then the device setup, the slots and the schedule, the same screens as in
+  Settings and Schedule. Any step can be opened; "Để sau" leads back to the Overview, and
+  slots chosen but not saved hold "Tiếp" back until saved or cancelled.
+
+### Changed
+- The OpenAPI schema describes every error response as a `Problem` (also 422, which it
+  listed as FastAPI's own validation error) and names the `/api/status` model `Overview`.
+- The UI keeps a read fresh for 30 seconds, so returning to the window no longer reads
+  everything again; the live feed still refreshes what each step changes at once.
+- The OpenAPI schema lists every step kind (`EventKind`) and category, so a step the UI
+  has no words for fails its type check.
+- While a run goes on, the UI asks the backend nothing per step: steps come from the live
+  feed, and only a run's start, the end of a slot and the run's end refresh the data. A
+  window left open at 06:00 no longer starts `schtasks` and rereads the run at every step.
+
+### Fixed
+- After a dry run passed, the schedule switch stayed locked for up to 30 seconds: the end
+  of a run now refreshes the schedule too.
+
 ## [0.5.3] - 2026-10-14
 
 ### Changed

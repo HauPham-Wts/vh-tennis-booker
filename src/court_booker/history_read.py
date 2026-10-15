@@ -44,13 +44,15 @@ def list_runs(
     *,
     month: str | None = None,
     trigger: str | None = None,
+    dry_run: bool | None = None,
     before: int | None = None,
     limit: int = DEFAULT_LIMIT,
 ) -> list[dict[str, Any]]:
-    """Return runs newest first, each with its count of booked and of all slots.
+    """Return runs newest first, each with its slots and its count of booked and all slots.
 
-    ``month`` (``YYYY-MM``) keeps runs whose play date falls in it; ``before`` (a run id)
-    returns the page after the one that ended with that run.
+    ``month`` (``YYYY-MM``) keeps runs whose play date falls in it; ``dry_run`` keeps dry
+    runs or real ones (a scheduled run can be a dry run too); ``before`` (a run id) returns
+    the page after the one that ended with that run.
     """
     where, params = [], []
     if month:
@@ -59,6 +61,9 @@ def list_runs(
     if trigger:
         where.append("runs.trigger = ?")
         params.append(trigger)
+    if dry_run is not None:
+        where.append("runs.dry_run = ?")
+        params.append(int(dry_run))
     if before is not None:
         where.append("runs.id < ?")
         params.append(before)
@@ -67,7 +72,9 @@ def list_runs(
         f"SELECT {_RUN_COLUMNS} FROM runs{condition} ORDER BY runs.id DESC LIMIT ?",
         [*params, limit],
     )
-    return [_run(row) for row in rows]
+    runs = [_run(row) for row in rows]
+    _add_slots(db, runs)
+    return runs
 
 
 def get_run(db: sqlite3.Connection, run_id: int) -> dict[str, Any] | None:
@@ -76,14 +83,7 @@ def get_run(db: sqlite3.Connection, run_id: int) -> dict[str, Any] | None:
     if row is None:
         return None
     run = _run(row)
-    run["slots"] = [
-        _slot(slot)
-        for slot in db.execute(
-            "SELECT slot, ok, reason, finished_at, seconds, commands FROM run_slots"
-            " WHERE run_id = ? ORDER BY id",
-            (run_id,),
-        )
-    ]
+    _add_slots(db, [run])
     run["steps"] = [
         _event(event)
         for event in db.execute(
@@ -100,6 +100,21 @@ def get_run(db: sqlite3.Connection, run_id: int) -> dict[str, Any] | None:
         )
     ]
     return run
+
+
+def list_months(db: sqlite3.Connection) -> list[dict[str, Any]]:
+    """Return each month with real bookings, newest first: its runs and its booked slots.
+
+    Months follow the play date; dry runs and runs that never reached a date are left out.
+    """
+    rows = db.execute(
+        "SELECT substr(runs.play_date, 1, 7) AS month, COUNT(DISTINCT runs.id) AS runs,"
+        " COALESCE(SUM(run_slots.ok), 0) AS booked"
+        " FROM runs LEFT JOIN run_slots ON run_slots.run_id = runs.id"
+        " WHERE runs.play_date IS NOT NULL AND NOT runs.dry_run"
+        " GROUP BY month ORDER BY month DESC"
+    )
+    return [dict(row) for row in rows]
 
 
 def list_events(
@@ -159,6 +174,23 @@ def dry_run_passed(db: sqlite3.Connection) -> bool:
     """Return whether any dry run went through every slot; scheduling requires one."""
     row = db.execute("SELECT 1 FROM runs WHERE trigger = 'dry_run' AND status = 'ok' LIMIT 1")
     return row.fetchone() is not None
+
+
+def _add_slots(db: sqlite3.Connection, runs: list[dict[str, Any]]) -> None:
+    """Give each run its slots in the order they were tried, with one query for all."""
+    by_id = {run["id"]: run for run in runs}
+    for run in runs:
+        run["slots"] = []
+    if not by_id:
+        return
+    marks = ", ".join("?" * len(by_id))
+    for row in db.execute(
+        "SELECT run_id, slot, ok, reason, finished_at, seconds, commands FROM run_slots"
+        f" WHERE run_id IN ({marks}) ORDER BY id",
+        list(by_id),
+    ):
+        slot = _slot(row)
+        by_id[slot.pop("run_id")]["slots"].append(slot)
 
 
 def _run(row: sqlite3.Row) -> dict[str, Any]:

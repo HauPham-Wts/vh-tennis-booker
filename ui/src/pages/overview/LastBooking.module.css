@@ -1,0 +1,65 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.title {
+  font-size: var(--text-heading);
+  font-weight: var(--weight-heavy);
+  letter-spacing: var(--tracking-heading);
+}
+
+.when {
+  color: var(--color-muted);
+  font-weight: var(--weight-medium);
+}
+
+.slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.slot {
+  flex: 1 1 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* A narrow card puts the stamp under the slot rather than breaking the slot in two. */
+.slotHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.slotTime {
+  white-space: nowrap;
+  font-size: var(--text-slot);
+  font-weight: var(--weight-heavy);
+  letter-spacing: var(--tracking-heading);
+}
+
+.result {
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-data);
+}
+
+.more {
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: var(--text-data);
+}

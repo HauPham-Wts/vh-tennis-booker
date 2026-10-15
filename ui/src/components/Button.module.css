@@ -1,0 +1,56 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 50px;
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-button);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  cursor: pointer;
+}
+
+.primary {
+  padding: 0 var(--space-6);
+  border: 0;
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+  font-weight: var(--weight-bold);
+}
+
+.secondary {
+  border: var(--border) solid var(--color-ink);
+  background: transparent;
+  color: var(--color-ink);
+  font-weight: var(--weight-semibold);
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--color-paper);
+}
+
+.large {
+  min-height: 52px;
+  padding: 0 var(--space-6);
+  font-size: var(--text-lead);
+  font-weight: var(--weight-bold);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* A ButtonLink keeps the button's colours instead of the blue of links. */
+a.button {
+  text-decoration: none;
+}
+
+a.primary:hover {
+  color: var(--color-on-ink);
+}
+
+a.secondary:hover {
+  color: var(--color-ink);
+}

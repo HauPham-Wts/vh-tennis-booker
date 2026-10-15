@@ -1,0 +1,1640 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Court Booker",
+    "version": "0.6.0"
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "tags": [
+          "app"
+        ],
+        "summary": "Health",
+        "description": "Tell the UI the backend is up, and its version.",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request values, one line per value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error with a stable code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs": {
+      "get": {
+        "tags": [
+          "history"
+        ],
+        "summary": "List Runs",
+        "description": "List runs newest first.\n\n``month`` filters on the play date, ``dry_run`` keeps dry runs or real bookings,\n``before`` pages back.",
+        "operationId": "list_runs_api_runs_get",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Month"
+            }
+          },
+          {
+            "name": "trigger",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "scheduled",
+                    "dry_run",
+                    "manual"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Trigger"
+            }
+          },
+          {
+            "name": "dry_run",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Dry Run"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Before"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RunSummary"
+                  },
+                  "title": "Response List Runs Api Runs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request values, one line per value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error with a stable code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/months": {
+      "get": {
+        "tags": [
+          "history"
+        ],
+        "summary": "List Months",
+        "description": "List the months of real bookings by play date, newest first, with their totals.",
+        "operationId": "list_months_api_runs_months_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MonthSummary"
+                  },
+                  "type": "array",
+                  "title": "Response List Months Api Runs Months Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request values, one line per value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error with a stable code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/{run_id}": {
+      "get": {
+        "tags": [
+          "history"
+        ],
+        "summary": "Get Run",
+        "description": "Show one run with its slots, its steps and its technical log lines.",
+        "operationId": "get_run_api_runs__run_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request values, one line per value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error with a stable code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events": {
+      "get": {
+        "tags": [
+          "history"
+        ],
+        "summary": "List Events",
+        "description": "List activity log steps newest first, of runs and of the app; ``before`` pages back.",
+        "operationId": "list_events_api_events_get",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "step",
+                    "slot",
+                    "setup",
+                    "schedule",
+                    "settings",
+                    "error"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Before"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Step"
+                  },
+                  "title": "Response List Events Api Events Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request values, one line per value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error with a stable code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/settings": {
+      "get": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Read Settings",
+        "description": "Read the settings the next run will use.",
+        "operationId": "read_settings_api_settings_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Settings"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request values, one line per value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error with a stable code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Save Settings",
+        "description": "Check and save the settings; they apply from the next run.\n\nInvalid settings are refused with every problem listed, and the file is left as it\nwas. The file is rewritten without its comments; the hidden Telegram keys are kept.",
+        "operationId": "save_settings_api_settings_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Settings"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Settings"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request values, one line per value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error with a stable code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/setup": {
+      "get": {
+        "tags": [
+          "setup"
+        ],
+        "summary": "Check Setup",
+        "description": "Check every setup item; nothing is changed.",
+        "operationId": "check_setup_api_setup_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SetupItem"
+                  },
+                  "type": "array",
+                  "title": "Response Check Setup Api Setup Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request values, one line per value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error with a stable code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/setup/auto": {
+      "post": {
+        "tags": [
+          "setup"
+        ],
+        "summary": "Run Auto Setup",
+        "description": "Fix every item auto setup can fix, holding the run lock, and record each item.\n\nRefused (400 ``bad_request``) from the wake time to 5 minutes after the start time,\nand (409 ``lock_held``) while a run holds the lock.",
+        "operationId": "run_auto_setup_api_setup_auto_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutoSetupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SetupItem"
+                  },
+                  "type": "array",
+                  "title": "Response Run Auto Setup Api Setup Auto Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request values, one line per value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error with a stable code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/schedule": {
+      "get": {
+        "tags": [
+          "schedule"
+        ],
+        "summary": "Read Schedule",
+        "description": "Show whether the daily booking is on, and the next one.",
+        "operationId": "read_schedule_api_schedule_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request values, one line per value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error with a stable code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "schedule"
+        ],
+        "summary": "Switch Schedule",
+        "description": "Switch the daily booking on or off.\n\nSwitching on needs a passed dry run (409 ``dry_run_required``) and a wake time before\nthe start time (400 ``bad_request``). It installs the task again each time, so a new\nwake time applies. The task runs the Python of this backend; in development, the\nrunner folder keeps its task through ``tools/setup_runner.py`` instead.",
+        "operationId": "switch_schedule_api_schedule_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleSwitch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request values, one line per value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error with a stable code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/runs/dry-run": {
+      "post": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Start Dry Run",
+        "description": "Start a dry run of the saved settings; it stops before \"Xác nhận\".\n\nRefused (400 ``bad_request``) from the wake time to 5 minutes after the start time and\n(409 ``lock_held``) while a run holds the lock, or while the dry run started last is\nstill running (it may not hold the lock yet). The dry run checks again itself.",
+        "operationId": "start_dry_run_api_runs_dry_run_post",
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DryRunStarted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request values, one line per value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error with a stable code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/status": {
+      "get": {
+        "tags": [
+          "status"
+        ],
+        "summary": "Read Status",
+        "description": "Show what runs now, the schedule and next booking, the last run and the last setup.",
+        "operationId": "read_status_api_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Overview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request values, one line per value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error with a stable code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AutoSetupRequest": {
+        "properties": {
+          "restart_mumu": {
+            "type": "boolean",
+            "title": "Restart Mumu",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "AutoSetupRequest",
+        "description": "``restart_mumu`` allows restarting a running MuMu to apply its new screen."
+      },
+      "DryRunStarted": {
+        "properties": {
+          "pid": {
+            "type": "integer",
+            "title": "Pid"
+          },
+          "started_at": {
+            "type": "string",
+            "title": "Started At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pid",
+          "started_at"
+        ],
+        "title": "DryRunStarted",
+        "description": "A dry run has started; its steps show in the history as it goes."
+      },
+      "EventKind": {
+        "type": "string",
+        "enum": [
+          "run_started",
+          "device_ready",
+          "app_ready",
+          "waiting",
+          "booking_started",
+          "run_finished",
+          "slot_started",
+          "calendar_opened",
+          "date_selected",
+          "slot_selected",
+          "court_selected",
+          "terms_accepted",
+          "slot_booked",
+          "slot_failed",
+          "lock_cleared",
+          "lock_waiting",
+          "lock_taken_over",
+          "setup_started",
+          "setup_item",
+          "setup_finished",
+          "settings_saved",
+          "schedule_enabled",
+          "schedule_disabled"
+        ],
+        "title": "EventKind",
+        "description": "What happened. The value is stable: it becomes a database value and a message key."
+      },
+      "Health": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "version"
+        ],
+        "title": "Health",
+        "description": "The backend answers and runs this version."
+      },
+      "LabelSettings": {
+        "properties": {
+          "home": {
+            "type": "string",
+            "title": "Home"
+          },
+          "utility": {
+            "type": "string",
+            "title": "Utility"
+          },
+          "continue": {
+            "type": "string",
+            "title": "Continue"
+          },
+          "confirm": {
+            "type": "string",
+            "title": "Confirm"
+          },
+          "confirm_page": {
+            "type": "string",
+            "title": "Confirm Page"
+          },
+          "prev_month": {
+            "type": "string",
+            "title": "Prev Month"
+          },
+          "next_month": {
+            "type": "string",
+            "title": "Next Month"
+          },
+          "agree": {
+            "type": "string",
+            "title": "Agree"
+          },
+          "fully_booked": {
+            "type": "string",
+            "title": "Fully Booked"
+          },
+          "notice": {
+            "type": "string",
+            "title": "Notice"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "home",
+          "utility",
+          "continue",
+          "confirm",
+          "confirm_page",
+          "prev_month",
+          "next_month",
+          "agree",
+          "fully_booked",
+          "notice"
+        ],
+        "title": "LabelSettings",
+        "description": "Accessibility labels of the Vinhomes app, in its language."
+      },
+      "LogLine": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "time": {
+            "type": "string",
+            "title": "Time"
+          },
+          "level": {
+            "type": "string",
+            "title": "Level"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "time",
+          "level",
+          "message"
+        ],
+        "title": "LogLine",
+        "description": "One technical log line."
+      },
+      "MonthSummary": {
+        "properties": {
+          "month": {
+            "type": "string",
+            "title": "Month"
+          },
+          "runs": {
+            "type": "integer",
+            "title": "Runs"
+          },
+          "booked": {
+            "type": "integer",
+            "title": "Booked"
+          }
+        },
+        "type": "object",
+        "required": [
+          "month",
+          "runs",
+          "booked"
+        ],
+        "title": "MonthSummary",
+        "description": "One month with real bookings: how many runs, how many slots they booked."
+      },
+      "Overview": {
+        "properties": {
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "running": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Running"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/ScheduleState"
+          },
+          "last_run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "setup": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SetupSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "version",
+          "running",
+          "schedule",
+          "last_run",
+          "setup"
+        ],
+        "title": "Overview",
+        "description": "Everything the Overview shows, in one call."
+      },
+      "Problem": {
+        "properties": {
+          "error": {
+            "type": "string",
+            "title": "Error"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "problems": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Problems"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error",
+          "detail"
+        ],
+        "title": "Problem",
+        "description": "An error: ``error`` is a stable code, ``detail`` the English message for the log.\n\n``problems`` lists each invalid value when there are several, one line per value."
+      },
+      "RunDetail": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "trigger": {
+            "type": "string",
+            "title": "Trigger"
+          },
+          "dry_run": {
+            "type": "boolean",
+            "title": "Dry Run"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "started_at": {
+            "type": "string",
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "play_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Play Date"
+          },
+          "court": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Court"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "booked": {
+            "type": "integer",
+            "title": "Booked"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "slots": {
+            "items": {
+              "$ref": "#/components/schemas/SlotResult"
+            },
+            "type": "array",
+            "title": "Slots"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/Step"
+            },
+            "type": "array",
+            "title": "Steps"
+          },
+          "log_lines": {
+            "items": {
+              "$ref": "#/components/schemas/LogLine"
+            },
+            "type": "array",
+            "title": "Log Lines"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "trigger",
+          "dry_run",
+          "version",
+          "started_at",
+          "finished_at",
+          "play_date",
+          "court",
+          "status",
+          "error",
+          "booked",
+          "total",
+          "slots",
+          "steps",
+          "log_lines"
+        ],
+        "title": "RunDetail",
+        "description": "One run in full, for its History page."
+      },
+      "RunSummary": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "trigger": {
+            "type": "string",
+            "title": "Trigger"
+          },
+          "dry_run": {
+            "type": "boolean",
+            "title": "Dry Run"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "started_at": {
+            "type": "string",
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "play_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Play Date"
+          },
+          "court": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Court"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "booked": {
+            "type": "integer",
+            "title": "Booked"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "slots": {
+            "items": {
+              "$ref": "#/components/schemas/SlotResult"
+            },
+            "type": "array",
+            "title": "Slots"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "trigger",
+          "dry_run",
+          "version",
+          "started_at",
+          "finished_at",
+          "play_date",
+          "court",
+          "status",
+          "error",
+          "booked",
+          "total",
+          "slots"
+        ],
+        "title": "RunSummary",
+        "description": "One run as the History list shows it."
+      },
+      "Running": {
+        "properties": {
+          "trigger": {
+            "type": "string",
+            "title": "Trigger"
+          },
+          "pid": {
+            "type": "integer",
+            "title": "Pid"
+          },
+          "since": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Since"
+          }
+        },
+        "type": "object",
+        "required": [
+          "trigger",
+          "pid",
+          "since"
+        ],
+        "title": "Running",
+        "description": "The run that holds the emulator now; ``since`` is empty while a dry run starts."
+      },
+      "ScheduleState": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "wake_at": {
+            "type": "string",
+            "title": "Wake At"
+          },
+          "start_at": {
+            "type": "string",
+            "title": "Start At"
+          },
+          "next_start": {
+            "type": "string",
+            "title": "Next Start"
+          },
+          "next_play_date": {
+            "type": "string",
+            "title": "Next Play Date"
+          },
+          "dry_run_passed": {
+            "type": "boolean",
+            "title": "Dry Run Passed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled",
+          "wake_at",
+          "start_at",
+          "next_start",
+          "next_play_date",
+          "dry_run_passed"
+        ],
+        "title": "ScheduleState",
+        "description": "The schedule and the next booking it makes."
+      },
+      "ScheduleSwitch": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled"
+        ],
+        "title": "ScheduleSwitch",
+        "description": "Switch the daily booking on or off."
+      },
+      "Settings": {
+        "properties": {
+          "slots": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Slots"
+          },
+          "court": {
+            "type": "string",
+            "title": "Court"
+          },
+          "days_ahead": {
+            "type": "integer",
+            "title": "Days Ahead"
+          },
+          "wake_at": {
+            "type": "string",
+            "title": "Wake At"
+          },
+          "start_at": {
+            "type": "string",
+            "title": "Start At"
+          },
+          "venue_keyword": {
+            "type": "string",
+            "title": "Venue Keyword"
+          },
+          "device": {
+            "type": "string",
+            "title": "Device"
+          },
+          "adb_path": {
+            "type": "string",
+            "title": "Adb Path"
+          },
+          "package": {
+            "type": "string",
+            "title": "Package"
+          },
+          "timeout": {
+            "type": "number",
+            "title": "Timeout"
+          },
+          "max_swipes": {
+            "type": "integer",
+            "title": "Max Swipes"
+          },
+          "mumu_manager": {
+            "type": "string",
+            "title": "Mumu Manager"
+          },
+          "mumu_index": {
+            "type": "integer",
+            "title": "Mumu Index"
+          },
+          "boot_timeout": {
+            "type": "number",
+            "title": "Boot Timeout"
+          },
+          "restart_app": {
+            "type": "boolean",
+            "title": "Restart App"
+          },
+          "ntp_server": {
+            "type": "string",
+            "title": "Ntp Server"
+          },
+          "open_retry_seconds": {
+            "type": "number",
+            "title": "Open Retry Seconds"
+          },
+          "warm_up_seconds": {
+            "type": "number",
+            "title": "Warm Up Seconds"
+          },
+          "log_dir": {
+            "type": "string",
+            "title": "Log Dir"
+          },
+          "next_month_xy": {
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array",
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "Next Month Xy"
+          },
+          "prev_month_xy": {
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array",
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "Prev Month Xy"
+          },
+          "labels": {
+            "$ref": "#/components/schemas/LabelSettings"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "slots",
+          "court",
+          "days_ahead",
+          "wake_at",
+          "start_at",
+          "venue_keyword",
+          "device",
+          "adb_path",
+          "package",
+          "timeout",
+          "max_swipes",
+          "mumu_manager",
+          "mumu_index",
+          "boot_timeout",
+          "restart_app",
+          "ntp_server",
+          "open_retry_seconds",
+          "warm_up_seconds",
+          "log_dir",
+          "next_month_xy",
+          "prev_month_xy",
+          "labels"
+        ],
+        "title": "Settings",
+        "description": "Every booking setting; the UI shows the first five, the rest under \"Advanced\"."
+      },
+      "SetupItem": {
+        "properties": {
+          "item": {
+            "type": "string",
+            "title": "Item"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "item",
+          "status",
+          "detail"
+        ],
+        "title": "SetupItem",
+        "description": "One setup item; ``item`` and ``status`` are message keys of the UI."
+      },
+      "SetupSummary": {
+        "properties": {
+          "checked_at": {
+            "type": "string",
+            "title": "Checked At"
+          },
+          "left": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Left"
+          }
+        },
+        "type": "object",
+        "required": [
+          "checked_at",
+          "left"
+        ],
+        "title": "SetupSummary",
+        "description": "When auto setup last ran, and the items it left for the user."
+      },
+      "SlotResult": {
+        "properties": {
+          "slot": {
+            "type": "string",
+            "title": "Slot"
+          },
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "finished_at": {
+            "type": "string",
+            "title": "Finished At"
+          },
+          "seconds": {
+            "type": "number",
+            "title": "Seconds"
+          },
+          "commands": {
+            "type": "integer",
+            "title": "Commands"
+          }
+        },
+        "type": "object",
+        "required": [
+          "slot",
+          "ok",
+          "reason",
+          "finished_at",
+          "seconds",
+          "commands"
+        ],
+        "title": "SlotResult",
+        "description": "The result of one slot of a run."
+      },
+      "Status": {
+        "type": "string",
+        "enum": [
+          "ok",
+          "fixed",
+          "fixable",
+          "user",
+          "unknown"
+        ],
+        "title": "Status",
+        "description": "The state of one setup item; the value is stable, like an event kind."
+      },
+      "Step": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "time": {
+            "type": "string",
+            "title": "Time"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "step",
+              "slot",
+              "setup",
+              "schedule",
+              "settings",
+              "error"
+            ],
+            "title": "Category"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/EventKind"
+          },
+          "data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "run_id",
+          "time",
+          "category",
+          "kind",
+          "data"
+        ],
+        "title": "Step",
+        "description": "One step of the activity log; ``kind`` is the message key, ``data`` its values.\n\n``kind`` and ``category`` are listed in the schema, so the UI's types name every step\nand a step without a message fails its type check."
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 48px;
+  padding: 0 18px 0 var(--space-2);
+  border: var(--border) solid var(--color-ink);
+  border-radius: var(--radius-pill);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  font-size: var(--text-data);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+
+/* Off: an empty ring, like a step not reached yet. */
+.knob {
+  box-sizing: border-box;
+  width: 32px;
+  height: 32px;
+  border: var(--border) solid var(--color-faint);
+  border-radius: 50%;
+}
+
+.switch[aria-checked="true"] {
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+}
+
+.switch[aria-checked="true"] .knob {
+  border-color: var(--color-highlight);
+  background: var(--color-highlight);
+}
+
+.switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
