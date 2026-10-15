@@ -100,10 +100,35 @@
       "meta": "{{trigger}} · chơi {{day}} · sân {{court}}"
     },
     "settings": {
-      "title": "Cài đặt"
+      "title": "Cài đặt",
+      "tabs": "Phần cài đặt"
     },
     "bookingSettings": {
-      "title": "Đặt sân"
+      "title": "Đặt sân",
+      "slots": {
+        "title": "Khung giờ muốn đặt",
+        "lead": "Đặt lần lượt theo thứ tự bạn chọn. Mỗi khung giờ là một lượt đặt riêng.",
+        "morning": "Buổi sáng",
+        "afternoon": "Buổi chiều · tối",
+        "chosen": "{{slot}}, lượt {{order}}"
+      },
+      "place": {
+        "title": "Sân và ngày",
+        "court": "Sân",
+        "day": "Đặt cho ngày",
+        "dayHint": "App mở đặt sân trước tối đa 2 ngày."
+      },
+      "days": {
+        "today": "Hôm nay",
+        "tomorrow": "Ngày mai",
+        "dayAfter": "Ngày kia"
+      },
+      "note": "Thay đổi áp dụng từ lần đặt tiếp theo.",
+      "saved": "Đã lưu. Áp dụng từ lần đặt tiếp theo.",
+      "noSlot": "Chọn ít nhất một khung giờ.",
+      "cancel": "Hủy",
+      "save": "Lưu thay đổi",
+      "saving": "Đang lưu…"
     },
     "deviceSetup": {
       "title": "Thiết lập máy"

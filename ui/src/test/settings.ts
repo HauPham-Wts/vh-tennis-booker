@@ -1,0 +1,41 @@
+import type { Settings } from "../api/types";
+
+/** The booking settings as GET /api/settings gives them, the config of 15/10. */
+export function settings(fields: Partial<Settings> = {}): Settings {
+  return {
+    slots: ["15:00 - 16:00", "16:00 - 17:00"],
+    court: "S6 - Sân tennis",
+    days_ahead: 2,
+    wake_at: "05:50",
+    start_at: "06:00",
+    venue_keyword: "Origami",
+    device: "auto",
+    adb_path: "",
+    package: "com.vinhomes.resident",
+    timeout: 10,
+    max_swipes: 6,
+    mumu_manager: "",
+    mumu_index: 0,
+    boot_timeout: 60,
+    restart_app: true,
+    ntp_server: "pool.ntp.org",
+    open_retry_seconds: 30,
+    warm_up_seconds: 60,
+    log_dir: "logs",
+    next_month_xy: [0.9, 0.3],
+    prev_month_xy: [0.1, 0.3],
+    labels: {
+      home: "Trang chủ",
+      utility: "Sân Tennis",
+      continue: "Tiếp tục",
+      confirm: "Xác nhận",
+      confirm_page: "Xác nhận đăng ký",
+      prev_month: "Tháng trước",
+      next_month: "Tháng sau",
+      agree: "Tôi đồng ý",
+      fully_booked: "Hết chỗ",
+      notice: "Thông báo",
+    },
+    ...fields,
+  };
+}
