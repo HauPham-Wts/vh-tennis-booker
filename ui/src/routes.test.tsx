@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import type { RouteObject } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { paths } from "./paths";
@@ -36,13 +36,19 @@ describe("routes", () => {
     renderAt(path);
 
     expect(await screen.findByRole("heading", { level: 1, name: "Cài đặt" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 2, name: tab })).toBeInTheDocument();
+    const tabs = screen.getByRole("navigation", { name: "Phần cài đặt" });
+    expect(within(tabs).getByRole("link", { name: tab })).toHaveAttribute("aria-current", "page");
+    await waitFor(() => expect(document.title).toBe("Cài đặt · Court Booker"));
   });
 
   it("opens the settings on the booking tab", async () => {
     const router = renderAt(paths.settings);
 
-    expect(await screen.findByRole("heading", { level: 2, name: "Đặt sân" })).toBeInTheDocument();
+    const tabs = await screen.findByRole("navigation", { name: "Phần cài đặt" });
+    expect(within(tabs).getByRole("link", { name: "Đặt sân" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
     expect(router.state.location.pathname).toBe(paths.bookingSettings);
   });
 

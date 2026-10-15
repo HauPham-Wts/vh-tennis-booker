@@ -100,7 +100,8 @@
       "meta": "{{trigger}} · chơi {{day}} · sân {{court}}"
     },
     "settings": {
-      "title": "Cài đặt"
+      "title": "Cài đặt",
+      "tabs": "Phần cài đặt"
     },
     "bookingSettings": {
       "title": "Đặt sân"

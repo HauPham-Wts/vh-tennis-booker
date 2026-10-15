@@ -100,7 +100,8 @@
       "meta": "{{trigger}} · play {{day}} · court {{court}}"
     },
     "settings": {
-      "title": "Settings"
+      "title": "Settings",
+      "tabs": "Settings sections"
     },
     "bookingSettings": {
       "title": "Booking"
