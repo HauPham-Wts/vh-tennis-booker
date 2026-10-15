@@ -13,6 +13,10 @@ uses [Semantic Versioning](https://semver.org/).
 - A round is booked only once the ticket's title shows after "Xác nhận"; frames without
   the ticket or a notice are read again. The `slot_booked` event no longer has `ticket`
   (always true now) and the "No ticket after confirming" warning is gone.
+- Going back to the utilities list (or home) presses the next Back as soon as the screen
+  before shows, instead of waiting 2 s on every screen on the way. After a refusal at
+  "Xác nhận" (six Backs) this took 11 s on 2026-10-14 at 06:00; each screen shows
+  0.13-0.24 s after Back.
 - The clock check asks the configured `ntp_server` twice, then time.google.com,
   time.windows.com and pool.ntp.org in turn, with a 1 s timeout, and logs which one
   answered; only when none does is the PC clock used, with a warning (time.google.com
