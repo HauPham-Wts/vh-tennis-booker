@@ -109,8 +109,9 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
 - `config_from_dict` builds a config from parsed TOML; `validate_config` lists problems
   (slot format and duplicates, empty court, `days_ahead` 0-2, `wake_at` before `start_at`,
   positive timeouts, `_xy` ratios); `save_config` validates, then writes with `tomli-w`
-  through a temporary file and `os.replace` (comments are not kept); `ensure_config` writes
-  the defaults once.
+  through a temporary file and `os.replace` (comments are not kept), with only the labels
+  that differ from the defaults (an older runner refuses a label it does not know);
+  `ensure_config` writes the defaults once.
 - `paths.data_folder()`: the app's data folder, `%LOCALAPPDATA%\CourtBooker` (override with
   `COURT_BOOKER_HOME`), holding `config.toml`, `booker.db`, `logs/` and `run.lock`. The CLI
   writes only `booker.db` there; its config and logs stay beside `--config` until the app.
