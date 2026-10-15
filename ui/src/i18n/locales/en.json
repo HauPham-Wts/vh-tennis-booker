@@ -74,7 +74,21 @@
       }
     },
     "schedule": {
-      "title": "Schedule"
+      "title": "Schedule",
+      "lead": "Do one dry run to be sure, then turn the schedule on so the app books at {{start}} every morning.",
+      "dryRun": {
+        "step": "Step 1",
+        "title": "Dry run",
+        "about": "Goes through every booking step but stops right before \"Xác nhận\", so nothing is booked. Takes about a minute.",
+        "button": "Dry run now",
+        "starting": "Starting…",
+        "none": "No dry run yet.",
+        "passed": "Last dry run: {{when}} at {{time}} · passed",
+        "failed": "Last dry run: {{when}} at {{time}} · did not pass: {{reason}}",
+        "stopped": "Last dry run: {{when}} at {{time}} · stopped halfway",
+        "running": "A dry run is going on.",
+        "follow": "Follow each step on the Overview →"
+      }
     },
     "history": {
       "title": "History",

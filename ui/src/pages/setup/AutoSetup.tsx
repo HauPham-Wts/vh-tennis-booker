@@ -5,14 +5,11 @@ import { useAutoSetup } from "../../api/mutations";
 import type { Overview, SetupItem } from "../../api/types";
 import { Button } from "../../components/Button";
 import { Ticket } from "../../components/Ticket";
-import { addMinutes } from "../../format";
+import { quietEnd } from "../../quiet";
 import styles from "./AutoSetup.module.css";
 
 /** The items auto setup takes care of, in the order it does them. */
 const ITEMS = ["mumu_installed", "mumu_screen", "wake_timers"] as const;
-
-/** No dry run or auto setup may start until this long after the start time. */
-const QUIET_AFTER_START = 5;
 
 interface AutoSetupProps {
   overview: Overview;
@@ -68,7 +65,7 @@ export function AutoSetup({ overview, checks, running }: AutoSetupProps) {
           <p className={styles.note}>
             {t("pages.deviceSetup.auto.quiet", {
               from: wake,
-              to: addMinutes(start, QUIET_AFTER_START),
+              to: quietEnd(start),
             })}
           </p>
         </>
