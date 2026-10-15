@@ -214,9 +214,11 @@ describe("WelcomePage steps 2 to 4", () => {
   it("sets up the device on step 2 as Settings does", async () => {
     renderStep(2);
 
-    expect(
-      await screen.findByRole("heading", { level: 1, name: "Thiết lập máy" }),
-    ).toBeInTheDocument();
+    const title = await screen.findByRole("heading", { level: 1, name: "Thiết lập máy" });
+    // The title and the lead form a group of their own, as close as on step 4.
+    const group = title.parentElement;
+    expect(group?.children).toHaveLength(2);
+    expect(group).toContainElement(screen.getByText("Chuẩn bị máy tính một lần", { exact: false }));
     expect(await screen.findByRole("heading", { name: "Việc bạn cần làm" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Thiết lập tự động" })).toBeInTheDocument();
   });
