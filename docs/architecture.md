@@ -81,6 +81,10 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   they differ from the target, the round still confirms; `read_ticket` notes whether the
   first read after "Xác nhận" shows the ticket title and its status, and only warns
   without it (success still rests on the confirmation page going away).
+- `clock.ntp_offset` asks the configured `ntp_server`, then `NTP_FALLBACKS`
+  (time.google.com, time.windows.com, pool.ntp.org), twice each with a 1 s timeout, and
+  takes the first valid reply (a server's, stratum 1-15); with none it logs a warning and
+  the run uses the PC clock.
 - `geometry.py`, `screen.py` and most of `clock.py` are pure; logic testable without a
   device belongs there.
 
