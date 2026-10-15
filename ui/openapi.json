@@ -870,6 +870,26 @@
           "notice": {
             "type": "string",
             "title": "Notice"
+          },
+          "booked_time": {
+            "type": "string",
+            "title": "Booked Time"
+          },
+          "booked_place": {
+            "type": "string",
+            "title": "Booked Place"
+          },
+          "ticket": {
+            "type": "string",
+            "title": "Ticket"
+          },
+          "processing": {
+            "type": "string",
+            "title": "Processing"
+          },
+          "registered": {
+            "type": "string",
+            "title": "Registered"
           }
         },
         "additionalProperties": false,
@@ -884,7 +904,12 @@
           "next_month",
           "agree",
           "fully_booked",
-          "notice"
+          "notice",
+          "booked_time",
+          "booked_place",
+          "ticket",
+          "processing",
+          "registered"
         ],
         "title": "LabelSettings",
         "description": "Accessibility labels of the Vinhomes app, in its language."

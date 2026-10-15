@@ -40,6 +40,11 @@ class LabelSettings(BaseModel):
     agree: str
     fully_booked: str
     notice: str
+    booked_time: str
+    booked_place: str
+    ticket: str
+    processing: str
+    registered: str
 
 
 class Settings(BaseModel):

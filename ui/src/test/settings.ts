@@ -35,6 +35,11 @@ export function settings(fields: Partial<Settings> = {}): Settings {
       agree: "Tôi đồng ý",
       fully_booked: "Hết chỗ",
       notice: "Thông báo",
+      booked_time: "Thời gian đặt lịch",
+      booked_place: "Vị trí/dịch vụ",
+      ticket: "Chi tiết đặt lịch",
+      processing: "Đang xử lý",
+      registered: "Đã đăng ký",
     },
     ...fields,
   };
