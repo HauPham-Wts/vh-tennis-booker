@@ -221,7 +221,48 @@
       }
     },
     "guide": {
-      "title": "Guide"
+      "title": "Guide",
+      "lead": "How to use each part of Court Booker.",
+      "welcome": "See the introduction again",
+      "where": "{{screen}} › {{part}}",
+      "start": {
+        "title": "Get started in 4 steps",
+        "device": "Set up the device",
+        "booking": "Choose the slots and court",
+        "dryRun": "Do a dry run",
+        "schedule": "Turn the schedule on"
+      },
+      "screens": {
+        "title": "Each screen",
+        "overview": "The next booking, the result of the last one, and whether the PC is ready. While a booking goes on, follow it live here.",
+        "schedule": "Do a dry run to check, then turn the schedule on so the app books every morning.",
+        "history": "The slots booked, by the day of play, filtered by month.",
+        "activity": "Every step the app took. When something goes wrong, open \"{{technical}}\" to see exactly what happened.",
+        "settings": "\"{{booking}}\": the slots, court and day. \"{{device}}\": prepare MuMu, the Vinhomes app and the PC."
+      },
+      "trouble": {
+        "title": "When something goes wrong",
+        "notRunning": {
+          "question": "The app did not run this morning",
+          "answer": "Usually the PC was shut down instead of put to Sleep, or you signed out of Windows. The PC can only wake itself up from Sleep."
+        },
+        "slotFull": {
+          "question": "The result says \"{{slotFull}}\"",
+          "answer": "Someone booked that slot first, or you booked it yourself by hand with another account. You can choose other slots in {{slotsPlace}}."
+        },
+        "quota": {
+          "question": "The Vinhomes app says the flat has used up its bookings",
+          "answer": "Each flat can book up to 8 slots a month. Cancel the bookings you do not need in the Vinhomes app to book again."
+        },
+        "loggedOut": {
+          "question": "The Vinhomes app was logged out",
+          "answer": "The result says \"{{loggedOut}}\". Open the app in MuMu, log in again with the resident account, then do one dry run in {{dryRunPlace}}."
+        },
+        "setup": {
+          "question": "{{device}} says \"{{todo}}\"",
+          "answer": "Follow the instructions of that item, then press \"{{check}}\". For the items Court Booker does itself, press \"{{auto}}\"."
+        }
+      }
     },
     "welcome": {
       "title": "Welcome"
