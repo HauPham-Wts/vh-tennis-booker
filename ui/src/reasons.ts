@@ -22,6 +22,7 @@ const REASONS: [RegExp, Phrase][] = [
     /^The app refused the booking: (.*)$/s,
     (t, _f, match) => t("reasons.refused", { message: match[1] ?? "" }),
   ],
+  [/^Outcome unknown:/, (t) => t("reasons.unknown")],
   [/ not open after \d+ attempt/, (t) => t("reasons.notOpen")],
   [/ but the next screen did not appear$/, (t) => t("reasons.stuck")],
   [/^Another run is in progress/, (t) => t("reasons.busy")],

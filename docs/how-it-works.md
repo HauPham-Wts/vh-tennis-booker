@@ -48,12 +48,15 @@ opens the utilities list `warm_up_seconds` (60 s) before the start time, so the 
 freshly loaded; two seconds before the start it is read once more, so the first command at
 the start time is the tap itself.
 
-After confirming, the script waits until the confirmation screen is gone (the ticket
-screen is shown). A notice dialog hides that screen as well, for example when someone else
-took the slot a moment earlier, so a "Thông báo" dialog with a button fails the round with
-its message instead. The date, slot and court the confirmation page shows, and whether the
-first screen after it shows the ticket, are read from screens already read, logged (a
-warning when they differ or the ticket is missing) and kept in the history; neither stops
+After confirming, the script reads the screen until the ticket's title shows: only then is
+the slot booked. A "Thông báo" dialog with a button, for example when someone else took the
+slot a moment earlier, fails the round with its message instead. Before either, the app
+shows the confirmation page while its server answers and then, for a moment, a screen
+without labels, so the page going away does not tell the outcome. If neither the ticket nor
+a dialog shows within `timeout` (10 s), the round fails as "Outcome unknown": better a
+booking reported missing than a missing one reported booked. The date, slot and court the
+confirmation page shows, and the ticket's status, are read from screens already read,
+logged (a warning when they differ from the target) and kept in the history; neither stops
 the round. Every new screen a run reads, and every tap, is written to the debug
 log, so a failure can be followed screen by screen. From the
 ticket screen, one Back returns to the utilities list, where the next round begins.

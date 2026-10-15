@@ -138,8 +138,10 @@ list. Details in `docs/field-notes.md`.
   elements are absent from the dump).
 - MuMu runs at 540x1600, 220 DPI. Never use hard-coded coordinates: positions come from
   the dump of the screen being tapped (the consent checkbox moves).
-- Success is the confirmation page going away; a "Thông báo" dialog (closed hours, monthly
-  quota of 8 slots, refused booking) also hides it and must be told apart.
+- Success is the ticket's title showing after "Xác nhận"; a "Thông báo" dialog (closed
+  hours, monthly quota of 8 slots, refused booking) fails the round. A frame without labels
+  shows before either, so the confirmation page going away proves nothing; neither within
+  `timeout` fails the round as "Outcome unknown".
 - MuMu can freeze (seen 2026-10-13); a device call then never returns, so the watchdog
   ends the run after 60 s (no restart, no retry).
 

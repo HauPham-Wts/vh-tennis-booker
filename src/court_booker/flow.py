@@ -22,6 +22,7 @@ from court_booker.errors import (
     AppNotReadyError,
     BookingNotOpenError,
     BookingRejectedError,
+    BookingUnconfirmedError,
     ElementNotFoundError,
     NavigationError,
     SlotUnavailableError,
@@ -78,10 +79,8 @@ class Booked:
     """Slot on the confirmation page."""
     shown_court: str | None = None
     """Court on the confirmation page: the one booked, which once differed from the one tapped."""
-    ticket: bool | None = None
-    """Whether the first read after "Xác nhận" showed the ticket's title."""
     ticket_status: str | None = None
-    """The ticket's status in that read, if it showed already."""
+    """The ticket's status in the read that showed the ticket, if it showed already."""
 
     def event_data(self) -> dict[str, Any]:
         """Return the details found, as data of the ``slot_booked`` event."""
@@ -114,7 +113,6 @@ class Booker:
         self.any_court = Match(prefix=config.court, clickable=True)
         self.agree = Match(contains=labels.agree)
         self.confirm_button = Match(desc=labels.confirm, clickable=True)
-        self.confirm_page = Match(desc=labels.confirm_page)
         self.notice = Match(desc=labels.notice)
         self.ticket = Match(desc=labels.ticket)
         self.processing = Match(desc=labels.processing)
@@ -421,27 +419,25 @@ class Booker:
         return booked
 
     def read_ticket(self, screen: Screen, booked: Booked) -> None:
-        """Note what ``screen``, the first read after "Xác nhận", shows of the ticket.
+        """Note the ticket's status on ``screen``, the first read that showed the ticket.
 
         The ticket loads in steps: its title first, then the status (seen "Đang xử lý" at
         06:00), the time and the court. Waiting for the rest would delay the next round, so
-        only this read counts, and success still rests on the confirmation page going away.
+        only this read counts.
         """
-        booked.ticket = screen.find(self.ticket) is not None
         status = screen.find(self.processing) or screen.find(self.registered)
         booked.ticket_status = None if status is None else status.desc
-        if booked.ticket:
-            logger.debug("Ticket shown, status %r", booked.ticket_status)
-        else:
-            logger.warning("No ticket after confirming: %r not shown", self.config.labels.ticket)
+        logger.debug("Ticket shown, status %r", booked.ticket_status)
 
     def accept_and_confirm(self, point: tuple[int, int], dry_run: bool) -> Screen | None:
         """Tick the consent checkbox at ``point`` and submit the booking.
 
         The confirm button only becomes clickable once the box is ticked, which
-        verifies the tick. A notice dialog, such as a slot taken a moment earlier by
-        someone else, also hides the confirmation page, so it fails the round. Returns
-        the first screen read without the confirmation page, or ``None`` in a dry run.
+        verifies the tick. The round is booked only once the ticket shows; a notice
+        dialog, such as a slot taken a moment earlier by someone else, fails it, and so
+        does neither in ``timeout``: better a booking reported missing than a missing one
+        reported booked. Returns the screen that showed the ticket, or ``None`` in a dry
+        run.
         """
         deadline = time.monotonic() + self.config.timeout
         while True:
@@ -461,7 +457,10 @@ class Booker:
         self.tap(found[0])
         outcome = self.wait_for(self._after_confirm, self.config.timeout)
         if outcome is None:
-            raise NavigationError("Confirmation submitted but the ticket screen did not appear")
+            raise BookingUnconfirmedError(
+                "Outcome unknown: neither the ticket nor a notice showed "
+                f"{self.config.timeout:.0f} s after confirming; check the app"
+            )
         message = self.notice_text(outcome[1])
         if message is not None:
             raise BookingRejectedError(f"The app refused the booking: {message or 'no message'}")
@@ -532,8 +531,13 @@ class Booker:
         return lambda screen: screen.find(first) or screen.find(second)
 
     def _after_confirm(self, screen: Screen) -> bool | None:
-        """Return ``True`` once the confirmation page is gone or a notice covers it."""
-        if screen.find(self.confirm_page) is None or self.notice_text(screen) is not None:
+        """Return ``True`` once the ticket's title or a notice shows.
+
+        The confirmation page stays about 1 s while the server answers, then a frame with
+        no labels shows while the next screen is built, before the ticket and before a
+        notice alike (2026-10-15), so the page going away does not tell the outcome.
+        """
+        if screen.find(self.ticket) is not None or self.notice_text(screen) is not None:
             return True
         return None
 

@@ -21,6 +21,11 @@ describe("failureReason", () => {
       "App từ chối: Căn hộ đã hết hạn mức đăng ký tiện ích cho phép.",
     ],
     [
+      "Outcome unknown: neither the ticket nor a notice showed 10 s after confirming; " +
+        "check the app",
+      "Không rõ đã đặt được chưa, xem app Vinhomes",
+    ],
+    [
       "2026-10-17 18:00 - 19:00 not open after 3 attempt(s): Date 2026-10-17 is not bookable",
       "Ngày chưa mở đặt",
     ],
