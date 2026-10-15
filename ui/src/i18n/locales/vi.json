@@ -281,6 +281,7 @@
     "notOpen": "Ngày chưa mở đặt",
     "stuck": "App không chuyển màn hình",
     "busy": "Đang có lần chạy khác",
+    "loggedOut": "App Vinhomes chưa mở được, có thể đã bị đăng xuất",
     "other": "Có lỗi, xem nhật ký"
   },
   "errors": {

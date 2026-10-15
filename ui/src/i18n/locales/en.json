@@ -281,6 +281,7 @@
     "notOpen": "Not open for booking yet",
     "stuck": "The app did not move on",
     "busy": "Another run was in progress",
+    "loggedOut": "The Vinhomes app did not open; it may be logged out",
     "other": "Error, see the activity log"
   },
   "errors": {
