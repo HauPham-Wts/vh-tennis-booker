@@ -77,3 +77,15 @@ def month_index_from_label(label: str) -> int | None:
     if match is None:
         return None
     return month_index(int(match.group(2)), int(match.group(1)))
+
+
+def parse_booked_time(text: str) -> tuple[date, str] | None:
+    """Split a booking time such as ``17/10/2026 15:00 - 16:00`` into its date and slot."""
+    match = re.fullmatch(r"(\d{1,2})/(\d{1,2})/(\d{4}) (\d{2}:\d{2} - \d{2}:\d{2})", text.strip())
+    if match is None:
+        return None
+    day, month, year = (int(group) for group in match.groups()[:3])
+    try:
+        return date(year, month, day), match.group(4)
+    except ValueError:
+        return None
