@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Last updated: 2026-10-14.
+Last updated: 2026-10-15.
 
 ## Project
 
@@ -159,15 +159,13 @@ list. Details in `docs/field-notes.md`.
 - Repo `github.com/servedbyhau/vh-tennis-booker` is **public**; local path
   `D:\VH-Booker\vh-tennis-booker`. GitHub CLI `gh` is installed and logged in.
 
-## Current state and next step
+## Current state
 
-- 0.5.3 is released; the runner moved to v0.5.3 on 2026-10-14. Its first real 06:00 run
-  (2026-10-15) is the 0.5.0 spec's last check: read its history rows, and whether round 1
-  reaches the calendar faster after the warm-up than the 1.3-2.0 s of 10-14/10.
-- Watch each 06:00 run's screen log; a booking fix ships as the next 0.5.x patch from
-  `main`. Open cases: the court booked differs from the one tapped (S9 for S6 on
-  2026-10-13), and the next-month calendar (first on 2026-10-30).
-- 0.6.0 (UI) is on `release/0.6.0`, following the 0.6.0 parts of
-  `docs/specs/0.5.0-desktop-app.md`. Parts 1-3 (the `ui/` project, foundations, backend
-  connection; PRs #62-#78) are merged. Part 4 (the eight screens) is built as stacked
-  branches merged in batches, then part 5 (docs, screenshots, release).
+- Released: 0.5.3 (`main`); the runner is at v0.5.3. A booking fix ships as the next 0.5.x
+  patch from `main`.
+- In progress: 0.6.0 (UI) on `release/0.6.0`, following the 0.6.0 parts of
+  `docs/specs/0.5.0-desktop-app.md`.
+- Progress and the plan for the next part are kept outside the repo, in
+  `D:\VH-Booker\notes\` (`progress.md`, `next.md`): read both at the start of a session and
+  update them when a part ends. Local test tools (scratch backend, screenshots, a stand-in
+  run) are in `D:\VH-Booker\dev-tools\`.
