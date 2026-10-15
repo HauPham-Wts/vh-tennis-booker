@@ -38,8 +38,8 @@ Utilities list, where the next round starts.
 - At 540x1600 it was at `[35,1323][79,1367]` (seen shifted to x=43 once), so it is located
   per run, never stored.
 - "Xác nhận" is disabled until the checkbox is ticked; used to verify the tick.
-- Success is verified by waiting for the confirmation screen to disappear. A notice dialog
-  hides it too: the dialog's title node `'Thông báo'` spans `[0,33][540,1600]` and holds
+- Up to 0.6.1 success was the confirmation screen disappearing; since 0.6.2 it is the
+  ticket's title showing. A notice dialog hides the confirmation screen too: the dialog's title node `'Thông báo'` spans `[0,33][540,1600]` and holds
   the message and a clickable `'Đóng'`; the page beneath leaves the dump (8 elements in
   all, seen 2026-10-10 for the monthly quota). On 2026-10-14 round 1 (18-19) was logged as
   booked but was not: round 2 then needed 11 s and 169 commands to get back to "Sân Tennis"
@@ -63,9 +63,9 @@ and a clickable `'Đặt lịch khác'` at the bottom. At 06:00 on 2026-10-15 th
 (0.8 s after "Xác nhận") already held the title, `'Đặt lịch khác'` and the status
 `'Đang xử lý'` `[407,154][499,177]`, but no time or court yet. In all four real bookings
 seen (2026-10-14 08:32, 10:46, 11:01; 2026-10-15 06:00) the title was in that first read,
-the one that ends the round. Since 0.6.1 the round notes the title and the status from
-that read only (waiting for the full ticket would delay the next round), and a missing
-title is a warning, not a failure, until more runs show whether it can be required.
+the one that ends the round. The round notes the status from that read only (waiting for
+the full ticket would delay the next round). Since 0.6.2 the title is required: a read
+without it, such as the empty frame seen at 16:44 on 2026-10-15, is read again.
 
 ## Dialogs
 
