@@ -7,7 +7,12 @@ import pytest
 
 import court_booker.runner as runner
 from court_booker.config import Config
-from court_booker.errors import AppNotReadyError, NavigationError, SlotUnavailableError
+from court_booker.errors import (
+    AppNotReadyError,
+    DeviceNotRespondingError,
+    NavigationError,
+    SlotUnavailableError,
+)
 from court_booker.events import EventKind, MemorySink, Reporter
 from court_booker.flow import Booked
 from court_booker.screen import Node, Screen
@@ -173,3 +178,21 @@ def test_timed_run_reports_the_wait(monkeypatch):
     assert sink.kinds[:3] == [EventKind.APP_READY, EventKind.WAITING, EventKind.BOOKING_STARTED]
     assert sink.events[1].data == {"until": "2026-10-13T06:00:00"}
     assert sink.events[2].data["date"] == "2026-10-15"
+
+
+def test_a_frozen_device_ends_the_run_after_its_round(monkeypatch):
+    class FrozenBooker(FakeBooker):
+        def book(self, slot, target, dry_run=False):
+            raise DeviceNotRespondingError("MuMu did not answer dump_hierarchy within 60 s")
+
+    monkeypatch.setattr(runner, "Booker", FrozenBooker)
+    sink = MemorySink()
+    results = []
+    config = Config(slots=["18:00 - 19:00", "19:00 - 20:00"])
+
+    with pytest.raises(DeviceNotRespondingError):
+        runner.run_booking(FakeDevice(), config, results=results, report=Reporter(sink))
+
+    assert [(r.slot, r.ok) for r in results] == [("18:00 - 19:00", False)]
+    assert sink.kinds[-1] is EventKind.SLOT_FAILED
+    assert sink.events[-1].data["reason"] == "MuMu did not answer dump_hierarchy within 60 s"
