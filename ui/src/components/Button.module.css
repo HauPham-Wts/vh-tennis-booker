@@ -41,3 +41,16 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* A ButtonLink keeps the button's colours instead of the blue of links. */
+a.button {
+  text-decoration: none;
+}
+
+a.primary:hover {
+  color: var(--color-on-ink);
+}
+
+a.secondary:hover {
+  color: var(--color-ink);
+}
