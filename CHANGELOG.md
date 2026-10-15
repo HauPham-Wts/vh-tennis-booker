@@ -75,6 +75,12 @@ uses [Semantic Versioning](https://semver.org/).
   then saves or cancels. Only these three change: the rest of `config.toml` goes back to the
   backend as it was. A slot or court set by hand outside the lists is still shown. The two
   settings tabs are links, so each keeps its address.
+- Settings > Device setup: the three steps only the resident can do (install MuMu, install
+  the Vinhomes app, log in), each marked done, to do or not sure with what to do next in
+  plain words, and "Kiểm tra lại". The login comes from the runs: a run the app did not let
+  in ("check that it is logged in", now also worded on the Overview) asks to log in again.
+  Auto setup shows each item it takes care of and asks before restarting an open MuMu.
+  The checks ask MuMu and adb, so they wait while a run holds the lock.
 
 ### Changed
 - The OpenAPI schema describes every error response as a `Problem` (also 422, which it

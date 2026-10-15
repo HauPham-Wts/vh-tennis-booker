@@ -1,0 +1,85 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px var(--space-4);
+}
+
+.title {
+  margin-right: auto;
+  font-size: var(--text-heading);
+  font-weight: var(--weight-heavy);
+  letter-spacing: var(--tracking-heading);
+}
+
+.count {
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-data);
+}
+
+.quiet {
+  color: var(--color-muted);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.step {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-6);
+}
+
+/* The next step to do is framed in ink, its number too. */
+.current {
+  box-shadow: var(--ring-current);
+}
+
+.number {
+  width: 44px;
+  color: var(--color-perforation);
+  font-size: 44px;
+  font-weight: var(--weight-heavy);
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-solid);
+}
+
+.current .number {
+  color: var(--color-ink);
+}
+
+.body {
+  flex: 1 1 320px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.name {
+  font-size: 20px;
+  font-weight: var(--weight-bold);
+}
+
+.text {
+  color: var(--color-muted);
+}
+
+.hint {
+  margin-top: var(--space-1);
+  font-weight: var(--weight-semibold);
+}

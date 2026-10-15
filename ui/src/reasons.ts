@@ -8,6 +8,9 @@ import type { Formatter } from "./useFormat";
 
 type Phrase = (t: TFunction, f: Formatter, match: RegExpExecArray) => string;
 
+/** The app never reached its home screen; flow.py asks to check the login. */
+const LOGGED_OUT = /check that it is logged in$/;
+
 /** The reasons the engine gives, as it writes them, and their words. */
 const REASONS: [RegExp, Phrase][] = [
   [/^Slot .+ is fully booked$/, (t) => t("reasons.slotFull")],
@@ -22,7 +25,13 @@ const REASONS: [RegExp, Phrase][] = [
   [/ not open after \d+ attempt/, (t) => t("reasons.notOpen")],
   [/ but the next screen did not appear$/, (t) => t("reasons.stuck")],
   [/^Another run is in progress/, (t) => t("reasons.busy")],
+  [LOGGED_OUT, (t) => t("reasons.loggedOut")],
 ];
+
+/** Return whether a run stopped because the app did not open, as after a logout. */
+export function isLoggedOut(reason: string | null): boolean {
+  return reason !== null && LOGGED_OUT.test(reason);
+}
 
 /** Return a few words for an engine reason; an unknown one says to see the activity log. */
 export function failureReason(t: TFunction, f: Formatter, reason: string | null): string {

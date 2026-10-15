@@ -1,7 +1,37 @@
 import { useTranslation } from "react-i18next";
+import { useOverview, useSetupChecks } from "../api/queries";
+import { QueryView } from "../components/QueryView";
+import styles from "./DeviceSetupPage.module.css";
+import { AutoSetup } from "./setup/AutoSetup";
+import { ManualSteps } from "./setup/ManualSteps";
 
-/** Check MuMu, the app and the wake timers, and fix what can be fixed. */
+/**
+ * Check MuMu, the app and the login, say what is left for the user, and let auto setup do
+ * the rest. The checks ask MuMu and adb, so they wait while a run holds the lock (also
+ * before the Overview has said).
+ */
 export function DeviceSetupPage() {
   const { t } = useTranslation();
-  return <h2>{t("pages.deviceSetup.title")}</h2>;
+  const overview = useOverview();
+  const running = overview.data?.running !== null;
+  const checks = useSetupChecks(!running);
+
+  function check() {
+    void checks.refetch();
+    void overview.refetch();
+  }
+
+  return (
+    <>
+      <p className={styles.lead}>{t("pages.deviceSetup.lead")}</p>
+      <QueryView query={overview}>
+        {(data) => (
+          <>
+            <ManualSteps overview={data} checks={checks} running={running} onCheck={check} />
+            <AutoSetup overview={data} checks={checks} running={running} />
+          </>
+        )}
+      </QueryView>
+    </>
+  );
 }

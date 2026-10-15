@@ -3,7 +3,14 @@ import { describe, expect, it } from "vitest";
 import { reply, requestsTo, stubBackend } from "../test/backend";
 import { createTestQueryClient, withQueryClient } from "../test/queries";
 import { ApiError } from "./client";
-import { SETTLING_POLL_MS, settlingInterval, useOverview, useRunMonths, useRuns } from "./queries";
+import {
+  SETTLING_POLL_MS,
+  settlingInterval,
+  useOverview,
+  useRunMonths,
+  useRuns,
+  useSetupChecks,
+} from "./queries";
 import type { Overview } from "./types";
 import { createQueryClient, shouldRetry, UNREACHABLE_RETRIES } from "./queryClient";
 
@@ -99,6 +106,22 @@ describe("query hooks", () => {
     await waitFor(() => expect(october.result.current.isSuccess).toBe(true));
     await waitFor(() => expect(dryRuns.result.current.isSuccess).toBe(true));
     expect(requestsTo(fetch, "GET /api/runs")).toBe(2);
+  });
+
+  it("read the setup checks only when allowed, as no run holds the lock", async () => {
+    const fetch = stubBackend({ "GET /api/setup": reply([]) });
+    const wrapper = withQueryClient(createTestQueryClient());
+
+    const { result, rerender } = renderHook(({ enabled }) => useSetupChecks(enabled), {
+      wrapper,
+      initialProps: { enabled: false },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(requestsTo(fetch, "GET /api/setup")).toBe(0);
+
+    rerender({ enabled: true });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(requestsTo(fetch, "GET /api/setup")).toBe(1);
   });
 
   it("report a Problem as an ApiError without retrying", async () => {

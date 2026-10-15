@@ -262,6 +262,14 @@ would move the task away from the runner folder.
   them merged into the settings it read (`useSaveSettings`), so the developer's fields go
   back unchanged; the form is keyed on the saved choice, so a save or another change
   starts the draft again from it.
+- `DeviceSetupPage` reads the Overview and `useSetupChecks(enabled)`, enabled only once the
+  Overview says no run holds the lock (the checks ask MuMu and adb). `setup/ManualSteps`
+  derives the three user steps: MuMu and the app from the checks (`fixable` MuMu counts as
+  installed), the login from the runs (`reasons.ts` `isLoggedOut` on the last run's error,
+  else `dry_run_passed`); the backend's English `detail` is never shown. `setup/AutoSetup`
+  is a `Ticket`: the auto items and their status, the button, and the restart question,
+  shown when a run without `restart_mumu` leaves `mumu_screen` fixable. `format.ts`
+  `addMinutes` gives the end of the quiet time.
 
 ### Backend connection (`ui/src/api`)
 

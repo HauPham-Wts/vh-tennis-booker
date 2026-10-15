@@ -2,8 +2,8 @@ import type { ReactNode } from "react";
 import styles from "./Stamp.module.css";
 
 interface StampProps {
-  /** `booked` in stamp blue ("ĐÃ ĐẶT"), `failed` in orange-red. */
-  tone?: "booked" | "failed";
+  /** `booked` in stamp blue ("ĐÃ ĐẶT"), `failed` in orange-red, `muted` for not known yet. */
+  tone?: "booked" | "failed" | "muted";
   children: ReactNode;
 }
 

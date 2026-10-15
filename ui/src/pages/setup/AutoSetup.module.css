@@ -1,0 +1,90 @@
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+}
+
+.title {
+  font-size: var(--text-heading);
+  font-weight: var(--weight-heavy);
+  letter-spacing: var(--tracking-heading);
+}
+
+.lead {
+  color: var(--color-muted);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table tr {
+  border-top: var(--border-hairline) dotted var(--color-rule);
+}
+
+.table tr:last-child {
+  border-bottom: var(--border-hairline) dotted var(--color-rule);
+}
+
+.table th,
+.table td {
+  padding: 14px 0;
+}
+
+.table th {
+  padding-right: var(--space-3);
+  text-align: left;
+  font-weight: var(--weight-semibold);
+}
+
+.table td {
+  padding-left: var(--space-3);
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: var(--text-data);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+}
+
+.ok {
+  color: var(--color-stamp);
+}
+
+/* Just fixed: the ball-yellow highlight of the moment. */
+.fixed span {
+  padding: 3px var(--space-2);
+  background: var(--color-highlight);
+}
+
+.user {
+  color: var(--color-failed);
+}
+
+.unknown {
+  color: var(--color-muted);
+}
+
+.restart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-weight: var(--weight-semibold);
+}
+
+.note,
+.problem {
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  line-height: var(--leading-text);
+}
+
+.note {
+  color: var(--color-muted);
+}
+
+.problem {
+  color: var(--color-failed);
+  font-weight: var(--weight-semibold);
+}

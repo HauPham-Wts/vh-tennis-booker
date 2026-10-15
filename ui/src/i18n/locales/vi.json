@@ -131,7 +131,63 @@
       "saving": "Đang lưu…"
     },
     "deviceSetup": {
-      "title": "Thiết lập máy"
+      "title": "Thiết lập máy",
+      "lead": "Chuẩn bị máy tính một lần. Những việc còn lại Court Booker tự lo mỗi lần đặt sân.",
+      "manual": {
+        "title": "Việc bạn cần làm",
+        "done": "Xong {{done}}/{{total}}",
+        "check": "Kiểm tra lại",
+        "checking": "Đang kiểm tra…",
+        "waitRun": "Đang có một lần chạy. Máy sẽ được kiểm tra khi lần chạy xong."
+      },
+      "items": {
+        "mumu": {
+          "title": "Cài MuMu Player",
+          "text": "Phần mềm giả lập điện thoại Android, để chạy app Vinhomes trên máy tính.",
+          "todo": "Tải MuMu Player ở mumuplayer.com và cài vào máy, rồi bấm Kiểm tra lại."
+        },
+        "app": {
+          "title": "Cài app Vinhomes Resident trong MuMu",
+          "text": "Mở CH Play trong MuMu, đăng nhập tài khoản Google, rồi tìm và cài Vinhomes Resident.",
+          "todo": "Cài xong thì bấm Kiểm tra lại.",
+          "unknown": "Mở MuMu rồi bấm Kiểm tra lại để xem app đã cài chưa."
+        },
+        "login": {
+          "title": "Đăng nhập app Vinhomes",
+          "text": "Mở app trong MuMu và đăng nhập bằng tài khoản cư dân. Court Booker không bao giờ đọc hay lưu mật khẩu.",
+          "todo": "Lần chạy gần nhất không vào được app. Đăng nhập lại rồi chạy thử.",
+          "unknown": "Chạy thử một lần để kiểm tra.",
+          "link": "Mở Hẹn giờ"
+        }
+      },
+      "state": {
+        "done": "ĐÃ XONG",
+        "todo": "CHƯA XONG",
+        "unknown": "CHƯA RÕ",
+        "checking": "ĐANG KIỂM TRA"
+      },
+      "auto": {
+        "title": "Court Booker làm thay bạn",
+        "lead": "Bấm lại bao nhiêu lần cũng được: việc nào đã đúng thì bỏ qua.",
+        "caption": "Các việc thiết lập tự động",
+        "items": {
+          "mumu_installed": "Tìm nơi cài MuMu",
+          "mumu_screen": "Màn hình MuMu 540 × 1600, DPI 220",
+          "wake_timers": "Cho phép máy tự thức dậy"
+        },
+        "statuses": {
+          "ok": "✓ Đã đúng",
+          "fixed": "Vừa sửa",
+          "fixable": "Cần sửa",
+          "user": "Không tự sửa được",
+          "unknown": "Chưa kiểm tra được"
+        },
+        "run": "Thiết lập tự động",
+        "running": "Đang thiết lập…",
+        "restart": "MuMu đang mở nên chưa đổi được màn hình. Cần khởi động lại MuMu.",
+        "restartButton": "Khởi động lại MuMu",
+        "quiet": "Tạm khóa từ {{from}} đến {{to}} để không làm gián đoạn lần đặt sân."
+      }
     },
     "guide": {
       "title": "Hướng dẫn"
@@ -281,6 +337,7 @@
     "notOpen": "Ngày chưa mở đặt",
     "stuck": "App không chuyển màn hình",
     "busy": "Đang có lần chạy khác",
+    "loggedOut": "App Vinhomes chưa mở được, có thể đã bị đăng xuất",
     "other": "Có lỗi, xem nhật ký"
   },
   "errors": {

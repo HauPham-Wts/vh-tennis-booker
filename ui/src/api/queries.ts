@@ -80,9 +80,13 @@ export function useSettings() {
   return useQuery({ queryKey: queryKeys.settings, queryFn: getSettings });
 }
 
-/** Read the device setup checks; they ask Windows and MuMu, so they are not polled. */
-export function useSetupChecks() {
-  return useQuery({ queryKey: queryKeys.setup, queryFn: getSetupChecks });
+/**
+ * Read the device setup checks. They ask Windows, MuMu and adb, so they are never polled,
+ * and a screen turns them off (`enabled` false) while a run holds the lock: a check must
+ * never slow a booking.
+ */
+export function useSetupChecks(enabled = true) {
+  return useQuery({ queryKey: queryKeys.setup, queryFn: getSetupChecks, enabled });
 }
 
 /** Read the daily schedule. */

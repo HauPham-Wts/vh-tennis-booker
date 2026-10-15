@@ -131,7 +131,63 @@
       "saving": "Saving…"
     },
     "deviceSetup": {
-      "title": "Device setup"
+      "title": "Device setup",
+      "lead": "Prepare the PC once. Court Booker takes care of the rest at every booking.",
+      "manual": {
+        "title": "What you need to do",
+        "done": "{{done}} of {{total}} done",
+        "check": "Check again",
+        "checking": "Checking…",
+        "waitRun": "A run is going on. The PC is checked once it ends."
+      },
+      "items": {
+        "mumu": {
+          "title": "Install MuMu Player",
+          "text": "An Android phone emulator, to run the Vinhomes app on the PC.",
+          "todo": "Download MuMu Player from mumuplayer.com and install it, then press Check again."
+        },
+        "app": {
+          "title": "Install Vinhomes Resident in MuMu",
+          "text": "Open the Play Store in MuMu, sign in with a Google account, then find and install Vinhomes Resident.",
+          "todo": "Once installed, press Check again.",
+          "unknown": "Open MuMu, then press Check again to see whether the app is installed."
+        },
+        "login": {
+          "title": "Log in to the Vinhomes app",
+          "text": "Open the app in MuMu and log in with your resident account. Court Booker never reads or stores passwords.",
+          "todo": "The last run could not get into the app. Log in again, then do a dry run.",
+          "unknown": "Do one dry run to check.",
+          "link": "Open Schedule"
+        }
+      },
+      "state": {
+        "done": "DONE",
+        "todo": "TO DO",
+        "unknown": "NOT SURE",
+        "checking": "CHECKING"
+      },
+      "auto": {
+        "title": "Court Booker does it for you",
+        "lead": "Press it as often as you like: whatever is already right is skipped.",
+        "caption": "Auto setup items",
+        "items": {
+          "mumu_installed": "Find where MuMu is installed",
+          "mumu_screen": "MuMu screen 540 × 1600, 220 DPI",
+          "wake_timers": "Let the PC wake itself up"
+        },
+        "statuses": {
+          "ok": "✓ Already right",
+          "fixed": "Just fixed",
+          "fixable": "To fix",
+          "user": "Cannot fix it",
+          "unknown": "Could not check"
+        },
+        "run": "Auto setup",
+        "running": "Setting up…",
+        "restart": "MuMu is open, so its screen could not change yet. MuMu needs a restart.",
+        "restartButton": "Restart MuMu",
+        "quiet": "Locked from {{from}} to {{to}} so it never gets in the way of a booking."
+      }
     },
     "guide": {
       "title": "Guide"
@@ -281,6 +337,7 @@
     "notOpen": "Not open for booking yet",
     "stuck": "The app did not move on",
     "busy": "Another run was in progress",
+    "loggedOut": "The Vinhomes app did not open; it may be logged out",
     "other": "Error, see the activity log"
   },
   "errors": {

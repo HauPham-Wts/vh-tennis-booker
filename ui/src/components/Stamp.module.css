@@ -17,3 +17,7 @@
 .failed {
   color: var(--color-failed);
 }
+
+.muted {
+  color: var(--color-muted);
+}
