@@ -88,6 +88,23 @@
         "stopped": "Lần chạy thử gần nhất: {{when}} lúc {{time}} · đã dừng giữa chừng",
         "running": "Đang chạy thử.",
         "follow": "Xem từng bước ở Tổng quan →"
+      },
+      "daily": {
+        "step": "Bước 2",
+        "title": "Hẹn giờ mỗi sáng",
+        "wake": "Đánh thức máy",
+        "start": "Bắt đầu đặt",
+        "repeat": "Lặp lại",
+        "everyDay": "Mỗi ngày",
+        "next": "Lần tới: {{period}} {{day}} lúc {{time}}, chơi {{play}}.",
+        "off": "Đang tắt: máy sẽ không tự đặt sân.",
+        "change": "Đổi khung giờ hoặc sân"
+      },
+      "habits": {
+        "title": "Để hẹn giờ chạy được khi bạn ngủ",
+        "sleep": "Cho máy Sleep, đừng Shut down",
+        "signedIn": "Không đăng xuất khỏi Windows",
+        "plugged": "Laptop thì cắm sạc"
       }
     },
     "history": {

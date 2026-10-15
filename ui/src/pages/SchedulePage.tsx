@@ -3,6 +3,7 @@ import { useOverview } from "../api/queries";
 import { PageHeader } from "../components/PageHeader";
 import { QueryView } from "../components/QueryView";
 import { DryRunStep } from "./schedule/DryRunStep";
+import { ScheduleStep } from "./schedule/ScheduleStep";
 
 /** Run a dry run, then switch the daily booking on or off. */
 export function SchedulePage() {
@@ -17,7 +18,10 @@ export function SchedulePage() {
       />
       <QueryView query={overview}>
         {({ running, schedule }) => (
-          <DryRunStep running={running} wake={schedule.wake_at} start={schedule.start_at} />
+          <>
+            <DryRunStep running={running} wake={schedule.wake_at} start={schedule.start_at} />
+            <ScheduleStep />
+          </>
         )}
       </QueryView>
     </>

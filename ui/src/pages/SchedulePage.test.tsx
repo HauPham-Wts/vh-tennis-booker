@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Overview, RunSummary } from "../api/types";
+import type { Overview, RunSummary, ScheduleState } from "../api/types";
 import { paths } from "../paths";
 import { renderApp } from "../test/app";
 import { type Reply, reply, requestsTo } from "../test/backend";
@@ -25,10 +25,27 @@ function renderSchedule(
 ) {
   const replies: Record<string, Reply> = {
     "GET /api/status": reply(status),
+    "GET /api/schedule": reply(status.schedule),
     "GET /api/runs": reply(dryRuns),
     ...extra,
   };
   return { replies, ...renderApp(paths.schedule, replies) };
+}
+
+/** The schedule as GET /api/schedule gives it: on, the next start tomorrow at 06:00. */
+function schedule(fields: Partial<ScheduleState> = {}): ScheduleState {
+  return { ...overview().schedule, ...fields };
+}
+
+/** The body of the one PUT the page sent. */
+async function switchBody(fetch: ReturnType<typeof renderSchedule>["fetch"]): Promise<unknown> {
+  const put = fetch.mock.calls.map(([request]) => request).find((r) => r.method === "PUT");
+  expect(put).toBeDefined();
+  return put?.json();
+}
+
+function dailySwitch() {
+  return screen.findByRole("switch", { name: "Hẹn giờ mỗi sáng" });
 }
 
 function dryRunButton() {
@@ -120,6 +137,78 @@ describe("SchedulePage dry run", () => {
       expect(
         screen.getByText("Đang có một lần chạy khác. Hãy chờ nó xong rồi thử lại."),
       ).toBeInTheDocument(),
+    );
+  });
+});
+
+// Only stand-in backends here: a real PUT /api/schedule rewrites the Windows task.
+describe("SchedulePage daily schedule", () => {
+  it("shows the times and the next booking while on", async () => {
+    renderSchedule();
+
+    expect(await dailySwitch()).toHaveAttribute("aria-checked", "true");
+    expect(
+      await screen.findByText(/Lần tới: sáng Thứ Sáu 16\/10 lúc 06:00, chơi Chủ Nhật 18\/10\./),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Đổi khung giờ hoặc sân" })).toHaveAttribute(
+      "href",
+      paths.bookingSettings,
+    );
+    const facts = screen.getByText("Đánh thức máy").closest("dl") as HTMLElement;
+    expect(facts).toHaveTextContent("Đánh thức máy05:50Bắt đầu đặt06:00Lặp lạiMỗi ngày");
+  });
+
+  it("cannot be turned on before a dry run passed", async () => {
+    const off = schedule({ enabled: false, dry_run_passed: false });
+    renderSchedule(overview({ schedule: off }));
+
+    expect(await dailySwitch()).toBeDisabled();
+    expect(screen.getByText("Đang tắt: máy sẽ không tự đặt sân.", { exact: false })).toBeVisible();
+    expect(
+      screen.getByText("Cần chạy thử thành công một lần trước khi bật hẹn giờ."),
+    ).toBeInTheDocument();
+  });
+
+  it("turns the schedule off", async () => {
+    const { fetch } = renderSchedule(overview(), [], {
+      "PUT /api/schedule": reply(schedule({ enabled: false })),
+    });
+
+    fireEvent.click(await dailySwitch());
+
+    await waitFor(async () => expect(await dailySwitch()).toHaveAttribute("aria-checked", "false"));
+    expect(await switchBody(fetch)).toEqual({ enabled: false });
+  });
+
+  it("turns the schedule on once a dry run passed", async () => {
+    const off = schedule({ enabled: false });
+    const { fetch } = renderSchedule(overview({ schedule: off }), [], {
+      "PUT /api/schedule": reply(schedule()),
+    });
+
+    fireEvent.click(await dailySwitch());
+
+    await waitFor(async () => expect(await dailySwitch()).toHaveAttribute("aria-checked", "true"));
+    expect(await switchBody(fetch)).toEqual({ enabled: true });
+  });
+
+  it("says why the switch failed", async () => {
+    const failed = reply({ error: "schedule", detail: "schtasks failed" }, 500);
+    renderSchedule(overview(), [], { "PUT /api/schedule": failed });
+
+    fireEvent.click(await dailySwitch());
+
+    expect(
+      await screen.findByText("Không đọc hoặc đổi được lịch hẹn giờ của Windows."),
+    ).toBeInTheDocument();
+  });
+
+  it("lists the habits the PC needs", async () => {
+    renderSchedule();
+
+    const habits = await screen.findByRole("heading", { name: "Để hẹn giờ chạy được khi bạn ngủ" });
+    expect(habits.nextElementSibling).toHaveTextContent(
+      "Cho máy Sleep, đừng Shut downKhông đăng xuất khỏi WindowsLaptop thì cắm sạc",
     );
   });
 });

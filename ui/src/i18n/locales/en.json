@@ -88,6 +88,23 @@
         "stopped": "Last dry run: {{when}} at {{time}} · stopped halfway",
         "running": "A dry run is going on.",
         "follow": "Follow each step on the Overview →"
+      },
+      "daily": {
+        "step": "Step 2",
+        "title": "Book every morning",
+        "wake": "Wake the PC",
+        "start": "Start booking",
+        "repeat": "Repeat",
+        "everyDay": "Every day",
+        "next": "Next: {{day}} at {{time}} ({{period}}), to play {{play}}.",
+        "off": "Off: the PC will not book by itself.",
+        "change": "Change the slots or court"
+      },
+      "habits": {
+        "title": "So the schedule runs while you sleep",
+        "sleep": "Put the PC to Sleep, never Shut down",
+        "signedIn": "Stay signed in to Windows",
+        "plugged": "Keep a laptop plugged in"
       }
     },
     "history": {
