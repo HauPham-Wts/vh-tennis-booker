@@ -1,3 +1,9 @@
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
 .lead {
   max-width: 680px;
   color: var(--color-muted);
