@@ -8,7 +8,8 @@ afterEach(async () => {
   cleanup();
   // A test that stood in for fetch (the backend) leaves the real one behind.
   vi.unstubAllGlobals();
-  // Every test starts in Vietnamese with nothing stored.
+  // Every test starts in Vietnamese with nothing stored, as a newly opened app.
   await i18n.changeLanguage(DEFAULT_LANGUAGE);
   localStorage.clear();
+  sessionStorage.clear();
 });

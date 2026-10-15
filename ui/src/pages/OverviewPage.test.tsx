@@ -355,3 +355,53 @@ describe("OverviewPage live run", () => {
     expect(await screen.findByRole("region", { name: "Lần đặt tiếp theo" })).toBeInTheDocument();
   });
 });
+
+describe("OverviewPage on an app not used yet", () => {
+  /** No dry run has passed and the schedule is off. */
+  function unused(fields: Partial<Overview> = {}): Overview {
+    const status = overview();
+    return overview({
+      schedule: { ...status.schedule, enabled: false, dry_run_passed: false },
+      ...fields,
+    });
+  }
+
+  it("opens the welcome screen in its place", async () => {
+    const { router } = renderOverview(unused());
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Chào mừng" })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe(paths.welcome);
+    // Replaced, so going back does not land on the Overview and send the user on again.
+    expect(router.state.historyAction).toBe("REPLACE");
+  });
+
+  it("sends the user there only once per opening", async () => {
+    const { router } = renderOverview(unused());
+    await screen.findByRole("heading", { level: 1, name: "Chào mừng" });
+
+    await act(() => router.navigate(paths.overview));
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Tổng quan" })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe(paths.overview);
+  });
+
+  it("stays on the Overview once a dry run has passed", async () => {
+    const status = unused();
+    const { router } = renderOverview({
+      ...status,
+      schedule: { ...status.schedule, dry_run_passed: true },
+    });
+
+    expect(await statusLine()).toHaveTextContent("Bật hẹn giờ");
+    expect(router.state.location.pathname).toBe(paths.overview);
+  });
+
+  it("leaves a run going on in view", async () => {
+    const { router } = renderOverview(
+      unused({ running: { trigger: "setup", pid: 4242, since: "2026-10-15T09:12:00.000" } }),
+    );
+
+    await screen.findByText("Đang thiết lập tự động");
+    expect(router.state.location.pathname).toBe(paths.overview);
+  });
+});
