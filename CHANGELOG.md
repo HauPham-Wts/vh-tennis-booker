@@ -91,6 +91,12 @@ uses [Semantic Versioning](https://semver.org/).
   morning, "Hết chỗ", the monthly quota, a logged-out app, device setup not done), opened
   one at a time. It quotes the other screens' labels from their own messages and sends no
   request.
+- The Welcome screen: an app not used yet (no dry run passed, schedule off, nothing
+  running) opens on it instead of the Overview, once per opening. Four steps in a bar of
+  links: what happens every morning with this PC's wake and start times and what to
+  prepare; then the device setup, the slots and the schedule, the same screens as in
+  Settings and Schedule. Any step can be opened; "Để sau" leads back to the Overview, and
+  slots chosen but not saved hold "Tiếp" back until saved or cancelled.
 
 ### Changed
 - The OpenAPI schema describes every error response as a `Problem` (also 422, which it

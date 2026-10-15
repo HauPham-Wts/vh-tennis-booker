@@ -1,8 +1,11 @@
 import { useTranslation } from "react-i18next";
+import { Navigate } from "react-router";
 import { useOverview } from "../api/queries";
 import type { Running, RunSummary } from "../api/types";
 import { PageHeader } from "../components/PageHeader";
 import { QueryView } from "../components/QueryView";
+import { paths } from "../paths";
+import { isFirstOpen, welcomeShown } from "../welcome";
 import { LastBooking } from "./overview/LastBooking";
 import { LiveRun } from "./overview/LiveRun";
 import { NextBooking } from "./overview/NextBooking";
@@ -21,10 +24,16 @@ function holderRun(running: Running, last: RunSummary | null): number | undefine
   return last.started_at >= running.since ? last.id : undefined;
 }
 
-/** Show whether the next booking is ready, the next booking and the last one. */
+/**
+ * Show whether the next booking is ready, the next booking and the last one. An app not
+ * used yet opens on the welcome screen instead, once per opening.
+ */
 export function OverviewPage() {
   const { t } = useTranslation();
   const overview = useOverview();
+  if (overview.data !== undefined && isFirstOpen(overview.data) && !welcomeShown()) {
+    return <Navigate to={paths.welcome} replace />;
+  }
   return (
     <>
       <PageHeader title={t("pages.overview.title")}>

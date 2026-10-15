@@ -1,4 +1,4 @@
-import { type FormEvent, useId, useState } from "react";
+import { type FormEvent, useEffect, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { errorMessage } from "../api/errors";
 import { useSaveSettings } from "../api/mutations";
@@ -86,17 +86,24 @@ function SlotGroup({ label, slots, chosen, onToggle }: SlotGroupProps) {
 interface BookingFormProps {
   saved: Settings;
   save: ReturnType<typeof useSaveSettings>;
+  onUnsavedChange?: (unsaved: boolean) => void;
 }
 
 /**
  * The slots, court and day to book, changed on a draft until saved. The rest of the
  * settings goes back to the backend as it came, so the developer's values stay.
  */
-function BookingForm({ saved, save }: BookingFormProps) {
+function BookingForm({ saved, save, onUnsavedChange }: BookingFormProps) {
   const { t } = useTranslation();
   const f = useFormat();
   const [draft, setDraft] = useState(() => choiceOf(saved));
   const changed = !sameChoice(draft, choiceOf(saved));
+
+  // A form that goes away takes its draft with it, so it leaves nothing unsaved behind.
+  useEffect(() => {
+    onUnsavedChange?.(changed);
+    return () => onUnsavedChange?.(false);
+  }, [changed, onUnsavedChange]);
   const noSlot = draft.slots.length === 0;
   const choices = slotChoices(draft.slots);
 
@@ -208,13 +215,25 @@ function savedKey(settings: Settings): string {
   return JSON.stringify(choiceOf(settings));
 }
 
+interface BookingSettingsPageProps {
+  /** Told whether the form holds changes not saved yet, for a screen that leads on from it. */
+  onUnsavedChange?: (unsaved: boolean) => void;
+}
+
 /** Choose the slots, court and day to book; they apply from the next run. */
-export function BookingSettingsPage() {
+export function BookingSettingsPage({ onUnsavedChange }: BookingSettingsPageProps) {
   const settings = useSettings();
   const save = useSaveSettings();
   return (
     <QueryView query={settings}>
-      {(saved) => <BookingForm key={savedKey(saved)} saved={saved} save={save} />}
+      {(saved) => (
+        <BookingForm
+          key={savedKey(saved)}
+          saved={saved}
+          save={save}
+          onUnsavedChange={onUnsavedChange}
+        />
+      )}
     </QueryView>
   );
 }

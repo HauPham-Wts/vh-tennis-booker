@@ -184,7 +184,7 @@ would move the task away from the runner folder.
   react-refresh, then eslint-config-prettier); Prettier at 100 columns.
 - Tests sit beside the code (`*.test.tsx`) and run in jsdom with Vitest globals off, so
   `src/test/setup.ts` adds the jest-dom matchers, calls `cleanup` and resets the language
-  and `localStorage` after each test. Helpers in `src/test/`: `stubBackend`/`reply`/
+  and the storage (`localStorage`, `sessionStorage`) after each test. Helpers in `src/test/`: `stubBackend`/`reply`/
   `requestsTo`, `createTestQueryClient`/`withQueryClient`, `FakeSocket`/
   `fakeConnection`/`step`.
 - `main.tsx` loads `i18n`, the styles and `createBrowserRouter(routes)`.
@@ -283,6 +283,19 @@ would move the task away from the runner folder.
   reasons, "Cài đặt › Đặt sân") are passed in from the screens' own keys, so a renamed
   label changes the guide too. `components/ButtonLink` is a `Link` with the `Button`
   classes, for moves to another screen.
+- `welcome.ts` `isFirstOpen(overview)` (no dry run passed, schedule off, no run holding the
+  lock) is read from `/api/status`, never from a stored flag. `OverviewPage` then renders
+  `<Navigate to="/welcome" replace>` unless `welcomeShown()`: `WelcomePage` sets
+  `court-booker.welcomed` in `sessionStorage` when it mounts, so the redirect happens once
+  per opening, and storage that cannot be read counts as shown (no loop back).
+- `WelcomePage` keeps the step in `?step=1..4` (`welcome/steps.ts`, anything else is 1).
+  `welcome/StepBar` links every step (`aria-current="step"`) and moves focus to the new one
+  when the step changes, which scrolls the page back up. Step 1 is `welcome/Intro` (times
+  from the Overview's schedule); steps 2 to 4 render `DeviceSetupPage`,
+  `BookingSettingsPage` and `schedule/ScheduleSteps` (also the body of `SchedulePage`)
+  under their own `h1`; the window title stays "Chào mừng". `BookingSettingsPage`'s
+  `onUnsavedChange` reports a draft not saved (and `false` when the form goes away), and
+  the step's "Tiếp" becomes a disabled button with a note while it is.
 
 ### Backend connection (`ui/src/api`)
 

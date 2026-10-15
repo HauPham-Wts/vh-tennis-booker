@@ -1,0 +1,40 @@
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+}
+
+/* A thick rule over each step: ink for the current one, the perforation grey for the rest. */
+.step {
+  display: block;
+  min-height: var(--touch-target);
+  padding-top: 10px;
+  border-top: var(--border-heavy) solid var(--color-perforation);
+  color: var(--color-muted);
+  text-decoration: none;
+}
+
+.step:hover {
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.step[aria-current="step"] {
+  border-top-color: var(--color-ink);
+  color: var(--color-ink);
+  font-weight: var(--weight-semibold);
+}
+
+/* Four columns are too narrow for "1 · Introduction" on a phone: two rows of two. */
+@media (max-width: 600px) {
+  .steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: var(--space-3);
+  }
+}

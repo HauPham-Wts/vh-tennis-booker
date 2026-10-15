@@ -21,12 +21,18 @@ describe("routes", () => {
     [paths.history, "Lịch sử"],
     [paths.activity, "Nhật ký"],
     [paths.guide, "Hướng dẫn"],
-    [paths.welcome, "Chào mừng"],
   ])("opens %s on the %s screen and names the window", async (path, title) => {
     renderAt(path);
 
     expect(await screen.findByRole("heading", { level: 1, name: title })).toBeInTheDocument();
     await waitFor(() => expect(document.title).toBe(`${title} · Court Booker`));
+  });
+
+  it("opens /welcome on its steps and names the window", async () => {
+    renderAt(paths.welcome);
+
+    expect(await screen.findByRole("navigation", { name: "Các bước bắt đầu" })).toBeInTheDocument();
+    await waitFor(() => expect(document.title).toBe("Chào mừng · Court Booker"));
   });
 
   it.each([
