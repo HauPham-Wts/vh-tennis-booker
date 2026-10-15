@@ -39,6 +39,7 @@ work: 0.4.0 waits for failures in the logs, and the core books reliably.
 | 4 UI | 0.5.0 Backend | Separate run folder, engine events, data folder, SQLite history and activity, run lock, device setup and auto setup, FastAPI backend (released 2026-10-13; spec [0.5.0-desktop-app](specs/0.5.0-desktop-app.md)) |
 | 2 Every situation | 0.5.1-0.5.3 | Refused bookings fail the round, every screen logged, warm-up on the utilities list (released 2026-10-14) |
 | 4 UI | 0.6.0 UI | React + TypeScript screens in the "Vé giấy" design, Vietnamese and English (released 2026-10-15) |
+| 2 Every situation | 0.6.1 | Court and date read on the confirmation page, ticket check (warning only), 60 s limit on device commands, labels saved only when changed (released 2026-10-15) |
 | 4 UI | **0.7.0 Desktop app** | Tauri shell with PyInstaller sidecar, installer, release automation |
 | 3 Fast | Later | Tuning from the log files; several MuMu instances with separate accounts in parallel (one account cannot log in twice) |
 
