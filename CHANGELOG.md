@@ -81,6 +81,11 @@ uses [Semantic Versioning](https://semver.org/).
   in ("check that it is logged in", now also worded on the Overview) asks to log in again.
   Auto setup shows each item it takes care of and asks before restarting an open MuMu.
   The checks ask MuMu and adb, so they wait while a run holds the lock.
+- The Schedule screen: step 1 starts a dry run and says how the last one went (passed, or
+  why not in a few words); while a run goes on its button is off and the line points to
+  the Overview. Step 2 switches the daily booking on (once a dry run has passed) or off,
+  with the wake and start times, the next booking and its play date, and the three habits
+  the PC needs (sleep, stay signed in, plugged in).
 
 ### Changed
 - The OpenAPI schema describes every error response as a `Problem` (also 422, which it
@@ -92,6 +97,10 @@ uses [Semantic Versioning](https://semver.org/).
 - While a run goes on, the UI asks the backend nothing per step: steps come from the live
   feed, and only a run's start, the end of a slot and the run's end refresh the data. A
   window left open at 06:00 no longer starts `schtasks` and rereads the run at every step.
+
+### Fixed
+- After a dry run passed, the schedule switch stayed locked for up to 30 seconds: the end
+  of a run now refreshes the schedule too.
 
 ## [0.5.3] - 2026-10-14
 

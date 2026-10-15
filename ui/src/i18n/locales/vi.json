@@ -74,7 +74,38 @@
       }
     },
     "schedule": {
-      "title": "Hẹn giờ"
+      "title": "Hẹn giờ",
+      "lead": "Chạy thử một lần cho chắc, rồi bật hẹn giờ để app tự đặt sân lúc {{start}} mỗi sáng.",
+      "dryRun": {
+        "step": "Bước 1",
+        "title": "Chạy thử",
+        "about": "Đi hết các bước đặt sân nhưng dừng ngay trước nút \"Xác nhận\", nên không đặt thật. Mất khoảng một phút.",
+        "button": "Chạy thử ngay",
+        "starting": "Đang bắt đầu…",
+        "none": "Chưa chạy thử lần nào.",
+        "passed": "Lần chạy thử gần nhất: {{when}} lúc {{time}} · thành công",
+        "failed": "Lần chạy thử gần nhất: {{when}} lúc {{time}} · không qua: {{reason}}",
+        "stopped": "Lần chạy thử gần nhất: {{when}} lúc {{time}} · đã dừng giữa chừng",
+        "running": "Đang chạy thử.",
+        "follow": "Xem từng bước ở Tổng quan →"
+      },
+      "daily": {
+        "step": "Bước 2",
+        "title": "Hẹn giờ mỗi sáng",
+        "wake": "Đánh thức máy",
+        "start": "Bắt đầu đặt",
+        "repeat": "Lặp lại",
+        "everyDay": "Mỗi ngày",
+        "next": "Lần tới: {{period}} {{day}} lúc {{time}}, chơi {{play}}.",
+        "off": "Đang tắt: máy sẽ không tự đặt sân.",
+        "change": "Đổi khung giờ hoặc sân"
+      },
+      "habits": {
+        "title": "Để hẹn giờ chạy được khi bạn ngủ",
+        "sleep": "Cho máy Sleep, đừng Shut down",
+        "signedIn": "Không đăng xuất khỏi Windows",
+        "plugged": "Laptop thì cắm sạc"
+      }
     },
     "history": {
       "title": "Lịch sử",

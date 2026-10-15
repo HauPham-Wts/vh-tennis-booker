@@ -1,0 +1,69 @@
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.title {
+  font-size: var(--text-heading-lg);
+  font-weight: var(--weight-heavy);
+  letter-spacing: var(--tracking-heading);
+}
+
+.facts {
+  margin: 10px 0 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  font-family: var(--font-mono);
+}
+
+.facts dd {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-heading-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.next {
+  margin-top: 10px;
+  padding-top: var(--space-4);
+  border-top: var(--border-hairline) dotted var(--color-rule);
+  line-height: var(--leading-text);
+}
+
+.note,
+.problem {
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+}
+
+.note {
+  color: var(--color-muted);
+}
+
+.problem {
+  color: var(--color-failed);
+  font-weight: var(--weight-semibold);
+}
+
+.habitsTitle {
+  font-size: var(--text-heading-xs);
+  font-weight: var(--weight-bold);
+}
+
+.habits {
+  margin: 0;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  line-height: var(--leading-body);
+}
