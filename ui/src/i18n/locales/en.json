@@ -455,6 +455,7 @@
     "slotFull": "Fully booked",
     "courtFull": "Court {{court}} fully booked",
     "refused": "The app refused: {{message}}",
+    "unknown": "Outcome unknown, check the Vinhomes app",
     "notOpen": "Not open for booking yet",
     "stuck": "The app did not move on",
     "busy": "Another run was in progress",
