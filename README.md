@@ -130,7 +130,7 @@ start time. No dry run starts from `wake_at` to 5 minutes after `start_at`.
 | 0 | every round succeeded |
 | 1 | a round failed |
 | 2 | bad arguments or config, the start time has passed, or a dry run around the scheduled run |
-| 3 | emulator or ADB error |
+| 3 | emulator or ADB error, or the emulator stopped answering (frozen) |
 | 4 | the app did not reach its home screen (e.g. logged out) |
 | 5 | another run holds the run lock |
 | 130 | interrupted with Ctrl+C |
@@ -196,6 +196,7 @@ python tools/inspect_screen.py --near "Tôi đã hiểu"
 src/court_booker/
 ├── cli.py              command-line entry point and exit codes
 ├── runner.py           one run: connect, prepare, wait, book every slot
+├── watchdog.py         time limit on every device command
 ├── emulator.py         start MuMu through MuMuManager.exe
 ├── adb.py              find adb and connect the emulator
 ├── flow.py             booking flow, one method per screen

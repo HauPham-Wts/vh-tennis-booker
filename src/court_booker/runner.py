@@ -13,9 +13,10 @@ from court_booker.adb import Adb, find_adb, resolve_device
 from court_booker.clock import wait_until
 from court_booker.config import Config
 from court_booker.emulator import MuMu
-from court_booker.errors import BookingError, DeviceConnectionError
+from court_booker.errors import BookingError, DeviceConnectionError, DeviceNotRespondingError
 from court_booker.events import EventKind, Reporter
 from court_booker.flow import Booker, log_screen
+from court_booker.watchdog import GuardedDevice, Watchdog
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +44,11 @@ def log_last_screen(booker: Booker) -> None:
 
 
 def connect_device(config: Config) -> Any:
-    """Start the emulator if configured and return a uiautomator2 device."""
+    """Start the emulator if configured and return a uiautomator2 device.
+
+    The connection and every command on the device returned are time-limited
+    (:mod:`court_booker.watchdog`), so a frozen emulator ends the run instead of hanging it.
+    """
     import uiautomator2  # deferred so tests do not require the dependency
 
     preferred = None
@@ -57,10 +62,14 @@ def connect_device(config: Config) -> Any:
     adb = Adb(find_adb(config.adb_path, extra_dirs))
     serial = resolve_device(adb, config.device, preferred)
     logger.info("Connecting to %s", serial)
+    watchdog = Watchdog()
     try:
-        return uiautomator2.connect(serial)
+        device = watchdog.run("connect", lambda: uiautomator2.connect(serial))
+    except DeviceNotRespondingError:
+        raise
     except Exception as exc:  # uiautomator2 raises several unrelated types
         raise DeviceConnectionError(f"Could not connect to {serial}: {exc}") from exc
+    return GuardedDevice(device, watchdog)
 
 
 def run_booking(
@@ -122,8 +131,13 @@ def run_booking(
         started = time.perf_counter()
         commands = booker.commands
         shown: dict[str, Any] = {}
+        frozen: DeviceNotRespondingError | None = None
         try:
             shown = booker.book(slot, target, dry_run=dry_run).event_data()
+        except DeviceNotRespondingError as exc:
+            # A frozen emulator answers no later round either: end the run after this one.
+            log_last_screen(booker)
+            ok, detail, frozen = False, str(exc), exc
         except BookingError as exc:
             logger.error("%s", exc)
             log_last_screen(booker)
@@ -155,4 +169,6 @@ def run_booking(
                 seconds=round(seconds, 1),
                 commands=used,
             )
+        if frozen is not None:
+            raise frozen
     return results

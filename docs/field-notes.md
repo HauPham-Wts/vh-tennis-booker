@@ -93,8 +93,11 @@ title is a warning, not a failure, until more runs show whether it can be requir
 - MuMu froze twice on 2026-10-13 during dry runs (11:13, and 11:58 right after a restart),
   both times around the court list and booking details screens: `MuMuNxDevice` showed "Not
   responding", `dumpsys window` and app starts hung, and `MuMuManager control shutdown` did
-  not end it; the user restarted MuMu by hand. A run then hangs inside uiautomator2 calls
-  (not handled).
+  not end it; the user restarted MuMu by hand. A run then hung inside a uiautomator2 call
+  (11:58: five reads 10 s apart, then nothing) until Task Scheduler ended it, and the
+  history showed it as interrupted without a reason. Since 0.6.1 a device command that
+  takes over 60 s ends the run with "MuMu did not answer ..." (log and history, lock
+  released, exit code 3); MuMu is not restarted and the round is not retried.
 
 ## App and server timings
 

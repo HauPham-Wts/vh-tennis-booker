@@ -1,6 +1,7 @@
 """Flow tests against a scripted fake app; no emulator required."""
 
 import logging
+import threading
 from datetime import date
 from xml.sax.saxutils import quoteattr
 
@@ -12,12 +13,14 @@ from court_booker.errors import (
     AppNotReadyError,
     BookingNotOpenError,
     BookingRejectedError,
+    DeviceNotRespondingError,
     ElementNotFoundError,
     SlotUnavailableError,
 )
 from court_booker.events import EventKind, MemorySink, Reporter
 from court_booker.flow import Booked, Booker
 from court_booker.screen import Node, Screen
+from court_booker.watchdog import GuardedDevice, Watchdog
 
 WIDTH, HEIGHT = 540, 1600
 TARGET = date(2026, 10, 11)
@@ -438,6 +441,29 @@ def test_located_entry_makes_the_first_command_a_tap():
     booker.book("11:00 - 12:00", TARGET)
 
     assert app.ops[0] == ("click", "Sân Tennis")
+
+
+def test_a_frozen_device_fails_the_round_instead_of_hanging_it():
+    app = booking_app()
+    frozen = threading.Event()
+    app.taps_to[("details", "Tiếp tục")] = "frozen"  # MuMu froze after this tap on 2026-10-13
+    app.screens["frozen"] = []
+    reads = app.dump_hierarchy
+
+    def dump_hierarchy(compressed=False):
+        if app.screen == "frozen":
+            frozen.wait()
+        return reads(compressed)
+
+    app.dump_hierarchy = dump_hierarchy
+    booker = Booker(GuardedDevice(app, Watchdog(timeout=0.05)), Config())
+    try:
+        with pytest.raises(DeviceNotRespondingError, match="did not answer dump_hierarchy"):
+            booker.book("11:00 - 12:00", TARGET)
+    finally:
+        frozen.set()
+
+    assert app.taps == FULL_ROUND[:6]
 
 
 def test_return_to_utilities_presses_back_from_ticket():
