@@ -51,7 +51,10 @@ the start time is the tap itself.
 After confirming, the script waits until the confirmation screen is gone (the ticket
 screen is shown). A notice dialog hides that screen as well, for example when someone else
 took the slot a moment earlier, so a "Thông báo" dialog with a button fails the round with
-its message instead. Every new screen a run reads, and every tap, is written to the debug
+its message instead. The date, slot and court the confirmation page shows, and whether the
+first screen after it shows the ticket, are read from screens already read, logged (a
+warning when they differ or the ticket is missing) and kept in the history; neither stops
+the round. Every new screen a run reads, and every tap, is written to the debug
 log, so a failure can be followed screen by screen. From the
 ticket screen, one Back returns to the utilities list, where the next round begins.
 

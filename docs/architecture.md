@@ -68,6 +68,12 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   `open_slot()` re-enters the calendar while the date or slot is missing.
 - `accept_and_confirm` fails a round whose confirmation is answered by a notice dialog
   (`BookingRejectedError` with the message, `Booker.notice_text`).
+- `book()` returns a `Booked`, read from screens the round reads anyway (no extra
+  command): `read_confirmation` takes the date, slot and court from the confirmation page
+  (`Screen.line_after` the `booked_time` and `booked_place` captions) and only warns when
+  they differ from the target, the round still confirms; `read_ticket` notes whether the
+  first read after "Xác nhận" shows the ticket title and its status, and only warns
+  without it (success still rests on the confirmation page going away).
 - `geometry.py`, `screen.py` and most of `clock.py` are pure; logic testable without a
   device belongs there.
 
@@ -80,8 +86,10 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   `MultiSink`, `NullSink`. The CLI emits `run_started` (trigger `scheduled`/`dry_run`/
   `manual`), `device_ready` and `run_finished` (status `ok`/`partial`/`failed`/
   `interrupted`) on every path; `run_booking` emits `app_ready`, `waiting`,
-  `booking_started`, `slot_started`, `slot_booked`/`slot_failed`; `Booker` emits
-  `calendar_opened`, `date_selected`, `slot_selected`, `court_selected`, `terms_accepted`.
+  `booking_started`, `slot_started`, `slot_booked`/`slot_failed` (`slot_booked` adds the
+  `Booked` details found: `shown_date`, `shown_slot`, `shown_court`, `ticket`,
+  `ticket_status`); `Booker` emits `calendar_opened`, `date_selected`, `slot_selected`,
+  `court_selected`, `terms_accepted`.
   Reporting sends no device command.
 - `history.py`: the history database `booker.db` in the data folder (spec part 4; stdlib
   `sqlite3`, `MIGRATIONS` counted in `PRAGMA user_version`, WAL, 0.5 s busy timeout).
