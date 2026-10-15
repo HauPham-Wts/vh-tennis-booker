@@ -25,7 +25,9 @@ MuMu Player emulator, using only the app's user interface.
   screen does not load.
 - **Scroll into view.** On screens too short for the whole slot list, a slot is scrolled
   to until it is shown clear of the sticky bottom button.
-- **Verified results.** A round succeeds only after the app leaves the confirmation screen.
+- **Verified results.** A round succeeds only once the app shows the ticket; a refusal
+  dialog fails it with the app's message, and neither within the timeout fails it as an
+  unknown outcome to check in the app.
 - **Step timing.** Each log line shows the time elapsed since the previous step.
 - **Configurable labels.** All app strings live in `config.toml`.
 - **Unattended.** A daily scheduled task wakes the PC, starts the emulator, connects ADB,
