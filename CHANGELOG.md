@@ -70,6 +70,11 @@ uses [Semantic Versioning](https://semver.org/).
   being booked, every step with the newest marked, the slots still to come and the
   progress, from the live feed alone. It leaves this view once the run gives the emulator
   back.
+- Settings > Booking: the resident picks the slots (13 toggles, numbered in the order they
+  are booked), the court (S6, S8, S9, S10) and the day (today, tomorrow or the day after),
+  then saves or cancels. Only these three change: the rest of `config.toml` goes back to the
+  backend as it was. A slot or court set by hand outside the lists is still shown. The two
+  settings tabs are links, so each keeps its address.
 
 ### Changed
 - The OpenAPI schema describes every error response as a `Problem` (also 422, which it

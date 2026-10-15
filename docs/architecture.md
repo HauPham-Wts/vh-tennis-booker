@@ -253,6 +253,15 @@ would move the task away from the runner folder.
   from the steps alone. `useOverview` polls every 2 s (`settlingInterval`) only while a run
   holds the lock without a running row, or during auto setup: a run gives the lock back
   after its last step, and no step marks that moment.
+- `SettingsPage` holds the title and the two tabs as `NavLink`s (`aria-current`), above
+  the `Outlet`; the window keeps the name "Cài đặt". `booking.ts` keeps the choices the
+  developer maintains with the Vinhomes app: `SLOTS` (13), `COURTS` (S6, S8, S9, S10),
+  `DAYS_AHEAD`; `slotChoices` and `courtChoices` also offer a value the config holds outside
+  them, and `toggleSlot` appends, so the list order is the booking order.
+  `BookingSettingsPage` edits only `slots`, `court` and `days_ahead` on a draft and saves
+  them merged into the settings it read (`useSaveSettings`), so the developer's fields go
+  back unchanged; the form is keyed on the saved choice, so a save or another change
+  starts the draft again from it.
 
 ### Backend connection (`ui/src/api`)
 
