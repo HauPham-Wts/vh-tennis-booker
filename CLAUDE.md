@@ -161,10 +161,10 @@ list. Details in `docs/field-notes.md`.
 
 ## Current state
 
-- Released: 0.5.3 (`main`); the runner is at v0.5.3. A booking fix ships as the next 0.5.x
-  patch from `main`.
-- In progress: 0.6.0 (UI) on `release/0.6.0`, following the 0.6.0 parts of
-  `docs/specs/0.5.0-desktop-app.md`.
+- Released: 0.6.0 (`main`); the runner stays at v0.5.3 until the user moves it. A booking
+  fix ships as the next 0.6.x patch from `main`.
+- Next: 0.7.0 (desktop app, the 0.7.0 parts of `docs/specs/0.5.0-desktop-app.md`), not
+  planned yet.
 - Progress and the plan for the next part are kept outside the repo, in
   `D:\VH-Booker\notes\` (`progress.md`, `next.md`): read both at the start of a session and
   update them when a part ends. Local test tools (scratch backend, screenshots, a stand-in

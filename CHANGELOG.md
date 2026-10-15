@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-15
+
 ### Added
 - The `ui/` project for the app's screens: React, TypeScript (strict) and Vite, built with
   `npm run build` and served for development with `npm run dev`.
