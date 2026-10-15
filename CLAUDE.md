@@ -163,7 +163,7 @@ list. Details in `docs/field-notes.md`.
 
 ## Current state
 
-- Released: 0.6.0 (`main`); the runner stays at v0.5.3 until the user moves it. A booking
+- Released: 0.6.1 (`main`); the runner stays at v0.5.3 until the user moves it. A booking
   fix ships as the next 0.6.x patch from `main`.
 - Next: 0.7.0 (desktop app, the 0.7.0 parts of `docs/specs/0.5.0-desktop-app.md`), not
   planned yet.

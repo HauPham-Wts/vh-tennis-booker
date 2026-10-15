@@ -119,4 +119,5 @@ title is a warning, not a failure, until more runs show whether it can be requir
 | 0.4.0 | 2026-10-14 | 06:00 run logged 18-19 as booked, but the app had refused it (fixed in 0.5.1) |
 | 0.5.2 | 2026-10-14 | Real booking 16/10 10:00-11:00 (cancelled afterwards) logged all 24 screens up to the ticket |
 | 0.5.3 | 2026-10-14 | Timed real booking 16/10 11:00-12:00 (cancelled afterwards): start 10:46:21, "Tiện ích" at start - 60 s (list loaded in 0.63 s), read at start - 2 s, "Sân Tennis" tapped 1 ms after the start, booked in 6.0 s. The runner moved to v0.5.3 the same day |
+| 0.6.1 code | 2026-10-15 | Timed real booking 17/10 at 16:44 (cancelled afterwards): 09:00-10:00 failed (court S6 fully booked), 10:00-11:00 booked in 8.6 s; the confirmation page read "2026-10-17 10:00 - 11:00 on S6"; the first read 0.9 s after "Xác nhận" was blank (5 elements), so the ticket warning showed. A run at 16:40 found both evening slots fully booked |
 | UI part 3 | 2026-10-14 | Requests through the Vite proxy, and the live feed across a backend stop and restart (no step lost or repeated), against a scratch backend |
