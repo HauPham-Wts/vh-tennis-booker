@@ -9,6 +9,7 @@ import court_booker.runner as runner
 from court_booker.config import Config
 from court_booker.errors import AppNotReadyError, NavigationError, SlotUnavailableError
 from court_booker.events import EventKind, MemorySink, Reporter
+from court_booker.flow import Booked
 from court_booker.screen import Node, Screen
 
 FULL_SLOT = Node("18:00 - 19:00\nHết chỗ", (38, 1178, 263, 1262), True)
@@ -31,6 +32,7 @@ class FakeBooker:
         if slot == "18:00 - 19:00":
             raise SlotUnavailableError("Slot 18:00 - 19:00 is fully booked")
         self.booked.append(slot)
+        return Booked(shown_court="S9 - Sân tennis")
 
 
 class FakeDevice:
@@ -154,6 +156,8 @@ def test_events_follow_the_run(monkeypatch):
     assert failed.data["reason"] == "Slot 18:00 - 19:00 is fully booked"
     assert booked.data["slot"] == "19:00 - 20:00"
     assert booked.data["commands"] == 0
+    assert booked.data["shown_court"] == "S9 - Sân tennis"
+    assert "ticket" not in booked.data  # details not found are left out
 
 
 def test_timed_run_reports_the_wait(monkeypatch):
