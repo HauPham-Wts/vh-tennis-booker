@@ -6,6 +6,7 @@ import logging
 import socket
 import struct
 import time
+from collections.abc import Sequence
 from datetime import datetime, timedelta
 from datetime import time as time_of_day
 from typing import Callable
@@ -16,12 +17,18 @@ logger = logging.getLogger(__name__)
 
 LATE_START_GRACE = timedelta(minutes=10)
 """A start time missed by less than this (e.g. the PC woke late) still runs at once."""
+NTP_FALLBACKS = ("time.google.com", "time.windows.com", "pool.ntp.org")
+"""Servers asked in turn when the configured one does not answer (time.google.com timed
+out once, 2026-10-15)."""
 
 _TIME_FORMATS = ("%H:%M:%S", "%H:%M")
 _NTP_PORT = 123
-_NTP_TIMEOUT = 2.0
+_NTP_TIMEOUT = 1.0
+_NTP_ATTEMPTS = 2
 _NTP_EPOCH_OFFSET = 2_208_988_800  # seconds from 1900-01-01 to 1970-01-01
 _NTP_PACKET_SIZE = 48
+_NTP_SERVER_MODE = 4
+_NTP_MAX_STRATUM = 15
 _COARSE_STEP = 30.0
 _FINE_WINDOW = 1.0
 _FINE_STEP = 0.001
@@ -52,28 +59,65 @@ def parse_time(text: str, name: str) -> time_of_day:
     raise RequestError(f"Invalid {name} {text!r}; use HH:MM or HH:MM:SS")
 
 
-def ntp_offset(server: str, timeout: float = _NTP_TIMEOUT) -> float | None:
-    """Return seconds to add to the local clock to match ``server``, or ``None``."""
+def _udp_socket() -> socket.socket:
+    return socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+
+def query_ntp(
+    server: str,
+    timeout: float = _NTP_TIMEOUT,
+    open_socket: Callable[[], socket.socket] = _udp_socket,
+) -> float | None:
+    """Ask ``server`` once; return the clock offset, or ``None`` with the reason logged."""
     request = b"\x1b" + bytes(_NTP_PACKET_SIZE - 1)  # version 3, client mode
     try:
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        with open_socket() as sock:
             sock.settimeout(timeout)
             sent = time.time()
             sock.sendto(request, (server, _NTP_PORT))
             reply, _ = sock.recvfrom(_NTP_PACKET_SIZE)
             received = time.time()
     except OSError as exc:
-        logger.warning("Clock check against %s failed (%s); using the local clock", server, exc)
+        logger.info("Clock check against %s failed (%s)", server, str(exc) or type(exc).__name__)
         return None
     offset = offset_from_reply(reply, sent, received)
     if offset is None:
-        logger.warning("Invalid reply from %s; using the local clock", server)
+        logger.info("Invalid reply from %s", server)
     return offset
 
 
+def ntp_offset(
+    server: str,
+    fallbacks: Sequence[str] = NTP_FALLBACKS,
+    attempts: int = _NTP_ATTEMPTS,
+    query: Callable[[str], float | None] = query_ntp,
+) -> float | None:
+    """Return seconds to add to the local clock to match NTP time, or ``None``.
+
+    Asks ``server``, then each fallback not asked yet, ``attempts`` times each, and stops
+    at the first valid answer. A run measures it before waiting for the start time, so the
+    few seconds lost when every server fails cost no booking time.
+    """
+    servers = list(dict.fromkeys([server, *fallbacks]))
+    for name in servers:
+        for attempt in range(1, attempts + 1):
+            offset = query(name)
+            if offset is not None:
+                logger.info("Clock checked against %s (attempt %d)", name, attempt)
+                return offset
+    logger.warning("No time server answered (%s); using the local clock", ", ".join(servers))
+    return None
+
+
 def offset_from_reply(reply: bytes, sent: float, received: float) -> float | None:
-    """Return the clock offset from an NTP reply and the local send/receive times."""
+    """Return the clock offset from an NTP reply and the local send/receive times.
+
+    ``None`` for a reply that is short, not from a server, or from a server that is not
+    synchronised (stratum 0, as in a refusal), whose timestamps are not the time.
+    """
     if len(reply) < _NTP_PACKET_SIZE:
+        return None
+    if reply[0] & 0x07 != _NTP_SERVER_MODE or not 1 <= reply[1] <= _NTP_MAX_STRATUM:
         return None
     server_received = _ntp_timestamp(reply, 32)
     server_sent = _ntp_timestamp(reply, 40)
