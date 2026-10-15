@@ -278,6 +278,11 @@ would move the task away from the runner folder.
   `run_finished` step also marks the schedule stale, for `dry_run_passed`. Tests stand in
   for the backend: a real `PUT /api/schedule` rewrites the Windows task, so it is never
   sent from a development backend.
+- `GuidePage` is static and sends no request: the four start steps (`Link` cards), the
+  screens as a `dl` and the problems as `<details>`. The labels it quotes (buttons, tabs,
+  reasons, "Cài đặt › Đặt sân") are passed in from the screens' own keys, so a renamed
+  label changes the guide too. `components/ButtonLink` is a `Link` with the `Button`
+  classes, for moves to another screen.
 
 ### Backend connection (`ui/src/api`)
 

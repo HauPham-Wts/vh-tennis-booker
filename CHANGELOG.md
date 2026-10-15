@@ -86,6 +86,11 @@ uses [Semantic Versioning](https://semver.org/).
   the Overview. Step 2 switches the daily booking on (once a dry run has passed) or off,
   with the wake and start times, the next booking and its play date, and the three habits
   the PC needs (sleep, stay signed in, plugged in).
+- The Guide screen: four steps to get started, each a link to the screen where it is done;
+  what each screen of the menu is for; and answers to the usual problems (no run this
+  morning, "Hết chỗ", the monthly quota, a logged-out app, device setup not done), opened
+  one at a time. It quotes the other screens' labels from their own messages and sends no
+  request.
 
 ### Changed
 - The OpenAPI schema describes every error response as a `Problem` (also 422, which it
