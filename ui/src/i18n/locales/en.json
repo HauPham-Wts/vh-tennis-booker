@@ -104,7 +104,31 @@
       "tabs": "Settings sections"
     },
     "bookingSettings": {
-      "title": "Booking"
+      "title": "Booking",
+      "slots": {
+        "title": "Slots to book",
+        "lead": "Booked one after another, in the order you pick them. Each slot is a booking of its own.",
+        "morning": "Morning",
+        "afternoon": "Afternoon · evening",
+        "chosen": "{{slot}}, round {{order}}"
+      },
+      "place": {
+        "title": "Court and day",
+        "court": "Court",
+        "day": "Book for",
+        "dayHint": "The app opens bookings up to two days ahead."
+      },
+      "days": {
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "dayAfter": "The day after tomorrow"
+      },
+      "note": "Changes apply from the next booking.",
+      "saved": "Saved. It applies from the next booking.",
+      "noSlot": "Choose at least one slot.",
+      "cancel": "Cancel",
+      "save": "Save changes",
+      "saving": "Saving…"
     },
     "deviceSetup": {
       "title": "Device setup"

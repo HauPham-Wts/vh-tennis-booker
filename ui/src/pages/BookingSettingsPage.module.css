@@ -1,0 +1,142 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.title {
+  font-size: var(--text-heading);
+  font-weight: var(--weight-heavy);
+  letter-spacing: var(--tracking-heading);
+}
+
+.lead {
+  color: var(--color-muted);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* A slot not chosen is a grey outline; a chosen one is filled with ink. */
+.slot {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 46px;
+  padding: 0 14px;
+  border: var(--border) solid var(--color-perforation);
+  border-radius: var(--radius-stamp);
+  background: transparent;
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  font-size: var(--text-data);
+  cursor: pointer;
+}
+
+.slot:hover {
+  border-color: var(--color-ink);
+}
+
+.slot[aria-pressed="true"] {
+  padding-left: var(--space-2);
+  border-color: var(--color-ink);
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+  font-weight: var(--weight-semibold);
+}
+
+/* The order of booking, on a ball-yellow disc. */
+.order {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  border-radius: 50%;
+  background: var(--color-highlight);
+  color: var(--color-ink);
+  font-size: var(--text-small);
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px var(--space-6);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: var(--weight-semibold);
+}
+
+.select {
+  min-height: 46px;
+  padding: 0 var(--space-3);
+  border: var(--border) solid var(--color-ink);
+  border-radius: var(--radius-stamp);
+  background: var(--color-field);
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  font-size: var(--text-control);
+  font-weight: var(--weight-regular);
+}
+
+.hint {
+  color: var(--color-muted);
+  font-size: var(--text-small);
+  font-weight: var(--weight-regular);
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-top: 18px;
+  border-top: var(--border) solid var(--color-ink);
+}
+
+.note,
+.problem {
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+}
+
+.note {
+  color: var(--color-muted);
+}
+
+.problem {
+  color: var(--color-failed);
+  font-weight: var(--weight-semibold);
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
