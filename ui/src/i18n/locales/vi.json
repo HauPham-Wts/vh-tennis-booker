@@ -221,7 +221,48 @@
       }
     },
     "guide": {
-      "title": "Hướng dẫn"
+      "title": "Hướng dẫn",
+      "lead": "Cách dùng từng phần của Court Booker.",
+      "welcome": "Xem lại phần giới thiệu",
+      "where": "{{screen}} › {{part}}",
+      "start": {
+        "title": "Bắt đầu trong 4 bước",
+        "device": "Thiết lập máy",
+        "booking": "Chọn khung giờ và sân",
+        "dryRun": "Chạy thử",
+        "schedule": "Bật hẹn giờ"
+      },
+      "screens": {
+        "title": "Từng màn hình",
+        "overview": "Lần đặt tiếp theo, kết quả lần gần nhất, và máy đã sẵn sàng chưa. Khi đang đặt sân, xem tiến độ trực tiếp tại đây.",
+        "schedule": "Chạy thử để kiểm tra, rồi bật hẹn giờ để app tự đặt sân mỗi sáng.",
+        "history": "Những khung giờ đã đặt được, theo ngày chơi, lọc theo tháng.",
+        "activity": "Từng bước app đã làm. Khi có lỗi, mở \"{{technical}}\" để biết chính xác chuyện gì đã xảy ra.",
+        "settings": "\"{{booking}}\": khung giờ, sân và ngày. \"{{device}}\": chuẩn bị MuMu, app Vinhomes và máy tính."
+      },
+      "trouble": {
+        "title": "Khi có sự cố",
+        "notRunning": {
+          "question": "Sáng nay app không chạy",
+          "answer": "Thường do máy đã Shut down thay vì Sleep, hoặc bạn đã đăng xuất khỏi Windows. Máy chỉ tự thức dậy được từ Sleep."
+        },
+        "slotFull": {
+          "question": "Kết quả báo \"{{slotFull}}\"",
+          "answer": "Khung giờ đó đã có người đặt trước, hoặc chính bạn đã đặt tay bằng một tài khoản khác. Có thể chọn khung giờ khác ở {{slotsPlace}}."
+        },
+        "quota": {
+          "question": "App Vinhomes báo căn hộ đã hết hạn mức",
+          "answer": "Mỗi căn hộ đặt được tối đa 8 khung giờ mỗi tháng. Hủy những lượt không cần trong app Vinhomes để đặt tiếp."
+        },
+        "loggedOut": {
+          "question": "App Vinhomes bị đăng xuất",
+          "answer": "Kết quả báo \"{{loggedOut}}\". Mở app trong MuMu, đăng nhập lại bằng tài khoản cư dân, rồi chạy thử một lần ở {{dryRunPlace}}."
+        },
+        "setup": {
+          "question": "{{device}} báo \"{{todo}}\"",
+          "answer": "Làm theo hướng dẫn ở đúng mục đó, rồi bấm \"{{check}}\". Với các mục Court Booker tự làm, bấm \"{{auto}}\"."
+        }
+      }
     },
     "welcome": {
       "title": "Chào mừng"
