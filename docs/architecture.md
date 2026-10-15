@@ -30,13 +30,20 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   Windows), so a later process that reuses a pid is never taken for the holder or stopped.
 - `runner.connect_device`: `emulator.MuMu.ensure_started` (MuMuManager `info`/`control
   launch`), `adb.find_adb` + `adb.resolve_device` (prefers the serial MuMu reports),
-  `uiautomator2.connect` (imported lazily so tests do not need it).
+  `uiautomator2.connect` (imported lazily so tests do not need it). The connection and
+  every call on the device it returns (`watchdog.GuardedDevice`) run on one daemon worker
+  thread (`watchdog.Watchdog`, about 0.04 ms per call) and end with
+  `DeviceNotRespondingError` (a `DeviceError`) after `COMMAND_TIMEOUT` (60 s); later calls
+  then fail at once. `run_booking` reports the round as failed and re-raises, so no later
+  round runs; the CLI logs it, records the run, releases the lock and then exits with
+  `end_process` (`os._exit`, code 3), since the exit hook of uiautomator2 could wait for
+  the stuck thread.
 - `runner.run_booking`: `Booker.prepare()` (ends on the home screen),
   `wait_until(start - warm_up_seconds)`, `Booker.locate_entry()` (taps "Tiện ích", loads
   the utilities list; a failure is logged and retried by the next call),
   `wait_until(start - LOCATE_AHEAD)`, `locate_entry()` again (read only),
   `wait_until(start)`, then one round per slot; a `BookingError` (or any exception) fails
-  that round only. Results are appended to a caller-owned list; the debug log counts
+  that round only, except `DeviceNotRespondingError`, which ends the run after it. Results are appended to a caller-owned list; the debug log counts
   device commands per round. When a round, `prepare()` or `locate_entry()` fails,
   `log_last_screen` writes `Booker.last_screen` to the debug log, so a failure seen once at
   06:00 can be fixed from the log alone.

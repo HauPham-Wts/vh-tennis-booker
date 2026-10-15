@@ -92,6 +92,7 @@ npm run api:types                                    # src/api/schema.d.ts from 
   (`RequestError` 2, `DeviceError` 3, `AppNotReadyError` 4, `LockHeldError` 5, Ctrl+C 130).
 - `runner.py` connects the device (`emulator.py` MuMuManager, `adb.py`, uiautomator2) and
   runs the rounds: prepare, warm up `warm_up_seconds` before the start, one round per slot.
+  `watchdog.py` limits every device call to 60 s (a frozen MuMu ends the run, exit 3).
 - `flow.py` `Booker`: the booking flow; device use only through `snapshot()`, `tap()`,
   `press_back()`, `_scroll()`, each counted in `commands`. `screen.py` (one dump parsed into
   nodes, matched locally), `geometry.py` and most of `clock.py` are pure.
@@ -135,7 +136,8 @@ list. Details in `docs/field-notes.md`.
   the dump of the screen being tapped (the consent checkbox moves).
 - Success is the confirmation page going away; a "Thông báo" dialog (closed hours, monthly
   quota of 8 slots, refused booking) also hides it and must be told apart.
-- MuMu can freeze (seen 2026-10-13); a run then hangs inside uiautomator2 (not handled).
+- MuMu can freeze (seen 2026-10-13); a device call then never returns, so the watchdog
+  ends the run after 60 s (no restart, no retry).
 
 ## Environment
 

@@ -63,7 +63,7 @@ failures are fixed as they show up in the log.
 | Booking | Booked court differs from the tapped one | Seen once (2026-10-13: S6 tapped, S9 booked). Since 0.6.1 the court on the confirmation page is logged (a warning when it differs) and kept in the history; the round still confirms |
 | Booking | Target date in the next month | Code exists; untested since 0.3.0. Only testable on the last two days of a month (30/10 → 1/11, 31/10 → 2/11): the calendar does not switch to a month without bookable days |
 | Booking | Booking limit per account | 8 slots per apartment per month; not handled by decision (users track their own quota), the log shows the dialog |
-| Device | MuMu not running / frozen | Started automatically / not handled |
+| Device | MuMu not running / frozen | Started automatically / since 0.6.1 a command over 60 s ends the run with an error (exit code 3); no restart, no retry (by decision) |
 | Device | ADB lost during a run | Not handled |
 | Device | Wrong MuMu resolution | Works but scrolls; no warning |
 | Device | PC woke late, clock drift | Runs at once if under 10 min late; NTP offset |
