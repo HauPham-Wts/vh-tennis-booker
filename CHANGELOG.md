@@ -6,6 +6,30 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-10-15
+
+### Added
+- Each round reads the date, slot and court on the confirmation page, from the screen it
+  has already read (still 16 commands per round), and logs them; a difference from the
+  target is a warning and the round still confirms. The first read after "Xác nhận" also
+  tells whether the ticket title and status show; a missing title is a warning only. The
+  `slot_booked` event keeps them as `shown_date`, `shown_slot`, `shown_court`, `ticket`
+  and `ticket_status`.
+- Five app labels for this: `booked_time`, `booked_place`, `ticket`, `processing`,
+  `registered`.
+- A time limit of 60 s on the connection and every device command (`watchdog.py`). A frozen
+  emulator fails the round, ends the run with "MuMu did not answer ...", is recorded in the
+  history, releases the run lock and exits with code 3, instead of hanging until Task
+  Scheduler ends it an hour later.
+
+### Changed
+- Saving the settings writes only the labels that differ from the defaults, so a runner of
+  an older version never meets a label it does not know.
+- ruff 0.17.0, also in pre-commit.
+
+### Fixed
+- Welcome step 2: the title sat 40 px above its lead line; it is now as close as on step 4.
+
 ## [0.6.0] - 2026-10-15
 
 ### Added

@@ -71,6 +71,10 @@ class DeviceConnectionError(DeviceError):
     """The configured device could not be connected."""
 
 
+class DeviceNotRespondingError(DeviceError):
+    """A command to the device did not end in time: the emulator froze."""
+
+
 class AppNotReadyError(CourtBookerError):
     """The app did not reach its home or utilities screen, e.g. after a logout."""
 

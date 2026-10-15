@@ -82,10 +82,7 @@ export function WelcomePage() {
         <QueryView query={overview}>{({ schedule }) => <Intro schedule={schedule} />}</QueryView>
       )}
       {step === 2 && (
-        <>
-          <h1 className={styles.title}>{t("pages.deviceSetup.title")}</h1>
-          <DeviceSetupPage />
-        </>
+        <DeviceSetupPage title={<h1 className={styles.title}>{t("pages.deviceSetup.title")}</h1>} />
       )}
       {step === 3 && (
         <>

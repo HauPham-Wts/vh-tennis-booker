@@ -93,6 +93,19 @@ class Screen:
         """Return every element that satisfies ``match``."""
         return [node for node in self.nodes if match(node)]
 
+    def line_after(self, caption: str) -> str | None:
+        """Return the line that follows ``caption`` within an element's label.
+
+        The app puts a caption and its value on two lines of one label, such as
+        ``Vị trí/dịch vụ\\nS6 - Sân tennis``; ``None`` if no label has ``caption`` on a
+        line of its own with a line after it.
+        """
+        for node in self.nodes:
+            lines = node.desc.split("\n")
+            if caption in lines[:-1]:
+                return lines[lines.index(caption) + 1]
+        return None
+
     def describe(self) -> list[str]:
         """Return one log line per labelled or clickable element, in document order.
 

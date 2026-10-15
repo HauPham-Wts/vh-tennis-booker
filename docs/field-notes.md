@@ -45,6 +45,12 @@ Utilities list, where the next round starts.
   booked but was not: round 2 then needed 11 s and 169 commands to get back to "Sân Tennis"
   (other days 0.6-0.8 s, one Back from the ticket), so a dialog had replaced the page.
   Since 0.5.1 such a round fails with the app's message.
+- Before "Xác nhận" the page already names what it books, in one label `[0,210][540,775]`
+  (2026-10-14 and 15, every read):
+  `'Sân Tennis\nThời gian đặt lịch\n17/10/2026 15:00 - 16:00\nVị trí/dịch vụ\n'`
+  `'S6 - Sân tennis\nThông tin thanh toán\n...'`. Since 0.6.1 the round reads the date,
+  slot and court there (no extra command), logs them, and only warns when they differ from
+  the target; it confirms anyway, and the court shown goes into the `slot_booked` event.
 
 ## Ticket screen
 
@@ -53,9 +59,13 @@ the title `'Chi tiết đặt lịch'` `[99,52][311,89]` and a back button; once
 `'qr code'`, `'Thông tin dịch vụ'`, the status `'Đã đăng ký'`, one node `[0,642][540,1463]`
 whose label lists the utility, booking and transaction codes,
 `'Thời gian đặt lịch\n16/10/2026 10:00 - 11:00'` and `'Vị trí/dịch vụ\nS6 - Sân tennis'`,
-and a clickable `'Đặt lịch khác'` at the bottom. A later version can require this screen
-and check the booked date, slot and court on it (on 2026-10-13 S6 was tapped but S9 was
-booked).
+and a clickable `'Đặt lịch khác'` at the bottom. At 06:00 on 2026-10-15 the first read
+(0.8 s after "Xác nhận") already held the title, `'Đặt lịch khác'` and the status
+`'Đang xử lý'` `[407,154][499,177]`, but no time or court yet. In all four real bookings
+seen (2026-10-14 08:32, 10:46, 11:01; 2026-10-15 06:00) the title was in that first read,
+the one that ends the round. Since 0.6.1 the round notes the title and the status from
+that read only (waiting for the full ticket would delay the next round), and a missing
+title is a warning, not a failure, until more runs show whether it can be required.
 
 ## Dialogs
 
@@ -83,8 +93,11 @@ booked).
 - MuMu froze twice on 2026-10-13 during dry runs (11:13, and 11:58 right after a restart),
   both times around the court list and booking details screens: `MuMuNxDevice` showed "Not
   responding", `dumpsys window` and app starts hung, and `MuMuManager control shutdown` did
-  not end it; the user restarted MuMu by hand. A run then hangs inside uiautomator2 calls
-  (not handled).
+  not end it; the user restarted MuMu by hand. A run then hung inside a uiautomator2 call
+  (11:58: five reads 10 s apart, then nothing) until Task Scheduler ended it, and the
+  history showed it as interrupted without a reason. Since 0.6.1 a device command that
+  takes over 60 s ends the run with "MuMu did not answer ..." (log and history, lock
+  released, exit code 3); MuMu is not restarted and the round is not retried.
 
 ## App and server timings
 
@@ -106,4 +119,5 @@ booked).
 | 0.4.0 | 2026-10-14 | 06:00 run logged 18-19 as booked, but the app had refused it (fixed in 0.5.1) |
 | 0.5.2 | 2026-10-14 | Real booking 16/10 10:00-11:00 (cancelled afterwards) logged all 24 screens up to the ticket |
 | 0.5.3 | 2026-10-14 | Timed real booking 16/10 11:00-12:00 (cancelled afterwards): start 10:46:21, "Tiện ích" at start - 60 s (list loaded in 0.63 s), read at start - 2 s, "Sân Tennis" tapped 1 ms after the start, booked in 6.0 s. The runner moved to v0.5.3 the same day |
+| 0.6.1 code | 2026-10-15 | Timed real booking 17/10 at 16:44 (cancelled afterwards): 09:00-10:00 failed (court S6 fully booked), 10:00-11:00 booked in 8.6 s; the confirmation page read "2026-10-17 10:00 - 11:00 on S6"; the first read 0.9 s after "Xác nhận" was blank (5 elements), so the ticket warning showed. A run at 16:40 found both evening slots fully booked |
 | UI part 3 | 2026-10-14 | Requests through the Vite proxy, and the live feed across a backend stop and restart (no step lost or repeated), against a scratch backend |

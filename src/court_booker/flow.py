@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 import time
+from dataclasses import asdict, dataclass
 from datetime import date
 from typing import Any, Callable, Optional, TypeVar
 
@@ -34,6 +35,7 @@ from court_booker.geometry import (
     is_inside,
     month_index,
     month_index_from_label,
+    parse_booked_time,
 )
 from court_booker.screen import Match, Node, Screen
 
@@ -60,6 +62,30 @@ ANIMATION_SCALES = (
     "animator_duration_scale",
 )
 """Android settings that Accessibility > Remove animations sets to 0."""
+
+
+@dataclass
+class Booked:
+    """What the app showed for a round that went through, for the log and the history.
+
+    Read from screens the round reads anyway, so it costs no device command. A detail not
+    found stays ``None``; so do the ticket's in a dry run.
+    """
+
+    shown_date: str | None = None
+    """ISO date on the confirmation page."""
+    shown_slot: str | None = None
+    """Slot on the confirmation page."""
+    shown_court: str | None = None
+    """Court on the confirmation page: the one booked, which once differed from the one tapped."""
+    ticket: bool | None = None
+    """Whether the first read after "Xác nhận" showed the ticket's title."""
+    ticket_status: str | None = None
+    """The ticket's status in that read, if it showed already."""
+
+    def event_data(self) -> dict[str, Any]:
+        """Return the details found, as data of the ``slot_booked`` event."""
+        return {key: value for key, value in asdict(self).items() if value is not None}
 
 
 class Booker:
@@ -90,6 +116,9 @@ class Booker:
         self.confirm_button = Match(desc=labels.confirm, clickable=True)
         self.confirm_page = Match(desc=labels.confirm_page)
         self.notice = Match(desc=labels.notice)
+        self.ticket = Match(desc=labels.ticket)
+        self.processing = Match(desc=labels.processing)
+        self.registered = Match(desc=labels.registered)
 
     # Public API -------------------------------------------------------------
 
@@ -150,8 +179,11 @@ class Booker:
         self._entry = self.return_to_utilities()
         logger.info("On the utilities list ahead of the start time")
 
-    def book(self, slot: str, target: date, dry_run: bool = False) -> None:
-        """Book ``slot`` on ``target``, starting from the home or utilities screen."""
+    def book(self, slot: str, target: date, dry_run: bool = False) -> Booked:
+        """Book ``slot`` on ``target``, starting from the home or utilities screen.
+
+        Returns what the confirmation page and the ticket showed.
+        """
         labels = self.config.labels
         screen = self.open_slot(slot, target)
         court, screen = self.tap_and_advance(
@@ -167,10 +199,14 @@ class Booker:
             screen, self.court, self.config.court, self._finder(self.continue_button)
         )
         self.report(EventKind.COURT_SELECTED, court=self.config.court)
-        point, _ = self.tap_and_advance(
+        point, screen = self.tap_and_advance(
             screen, self.continue_button, labels.continue_, self.locate_checkbox
         )
-        self.accept_and_confirm(point, dry_run)
+        booked = self.read_confirmation(screen, slot, target)
+        after = self.accept_and_confirm(point, dry_run)
+        if after is not None:
+            self.read_ticket(after, booked)
+        return booked
 
     def open_slot(self, slot: str, target: date) -> Screen:
         """Open the calendar and select ``target`` and ``slot``.
@@ -358,12 +394,54 @@ class Booker:
         logger.debug("Checkbox found beside caption at %s", node.box)
         return node.center
 
-    def accept_and_confirm(self, point: tuple[int, int], dry_run: bool) -> None:
+    def read_confirmation(self, screen: Screen, slot: str, target: date) -> Booked:
+        """Read the date, slot and court that the confirmation page on ``screen`` books.
+
+        The court booked once differed from the one tapped (2026-10-13). Seen only once,
+        so a difference is logged as a warning and the round still confirms.
+        """
+        labels = self.config.labels
+        booked = Booked(shown_court=screen.line_after(labels.booked_place))
+        time_text = screen.line_after(labels.booked_time)
+        parsed = None if time_text is None else parse_booked_time(time_text)
+        if parsed is not None:
+            booked.shown_date, booked.shown_slot = parsed[0].isoformat(), parsed[1]
+        shown = (booked.shown_date, booked.shown_slot, booked.shown_court)
+        wanted = (target.isoformat(), slot, self.config.court)
+        if None in shown:
+            logger.warning("Could not read the date, slot and court on the confirmation page")
+        elif shown != wanted:
+            logger.warning(
+                "The confirmation page books %s %s on %s, not %s %s on %s; confirming anyway",
+                *shown,
+                *wanted,
+            )
+        else:
+            logger.info("Confirmation page: %s %s on %s", *shown)
+        return booked
+
+    def read_ticket(self, screen: Screen, booked: Booked) -> None:
+        """Note what ``screen``, the first read after "Xác nhận", shows of the ticket.
+
+        The ticket loads in steps: its title first, then the status (seen "Đang xử lý" at
+        06:00), the time and the court. Waiting for the rest would delay the next round, so
+        only this read counts, and success still rests on the confirmation page going away.
+        """
+        booked.ticket = screen.find(self.ticket) is not None
+        status = screen.find(self.processing) or screen.find(self.registered)
+        booked.ticket_status = None if status is None else status.desc
+        if booked.ticket:
+            logger.debug("Ticket shown, status %r", booked.ticket_status)
+        else:
+            logger.warning("No ticket after confirming: %r not shown", self.config.labels.ticket)
+
+    def accept_and_confirm(self, point: tuple[int, int], dry_run: bool) -> Screen | None:
         """Tick the consent checkbox at ``point`` and submit the booking.
 
         The confirm button only becomes clickable once the box is ticked, which
         verifies the tick. A notice dialog, such as a slot taken a moment earlier by
-        someone else, also hides the confirmation page, so it fails the round.
+        someone else, also hides the confirmation page, so it fails the round. Returns
+        the first screen read without the confirmation page, or ``None`` in a dry run.
         """
         deadline = time.monotonic() + self.config.timeout
         while True:
@@ -379,7 +457,7 @@ class Booker:
 
         if dry_run:
             logger.info("Dry run: skipping final confirmation")
-            return
+            return None
         self.tap(found[0])
         outcome = self.wait_for(self._after_confirm, self.config.timeout)
         if outcome is None:
@@ -388,6 +466,7 @@ class Booker:
         if message is not None:
             raise BookingRejectedError(f"The app refused the booking: {message or 'no message'}")
         logger.info("Booking confirmed")
+        return outcome[1]
 
     # Dialogs ----------------------------------------------------------------
 

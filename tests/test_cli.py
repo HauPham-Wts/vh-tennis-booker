@@ -13,7 +13,7 @@ from pathlib import Path
 import court_booker.cli as cli
 from court_booker import device_setup, processes
 from court_booker.device_setup import Check, Status
-from court_booker.errors import EmulatorError
+from court_booker.errors import DeviceNotRespondingError, EmulatorError
 from court_booker.history import HistoryHandler
 from court_booker.lock import Holder
 from court_booker.runner import RoundResult
@@ -140,6 +140,37 @@ def test_run_finished_is_reported_on_a_device_error(monkeypatch, tmp_path):
     run_cli(monkeypatch, tmp_path, connect=connect)
 
     assert "Event run_finished status='failed' booked=0 total=0" in read_log(tmp_path)
+
+
+def test_a_frozen_device_is_reported_then_ends_the_process(monkeypatch, tmp_path, data_home):
+    ended = []
+    monkeypatch.setattr(cli, "end_process", ended.append)
+    error = "MuMu did not answer click within 60 s"
+
+    def run_booking(device, config, *, results, **kwargs):
+        raise DeviceNotRespondingError(error)
+
+    monkeypatch.setattr(cli, "connect_device", lambda config: object())
+    monkeypatch.setattr(cli, "run_booking", run_booking)
+    monkeypatch.setattr(cli, "datetime", FixedDatetime)
+
+    code = cli.main(["--config", str(tmp_path / "missing.toml")])
+
+    assert code == cli.EXIT_DEVICE
+    assert ended == [cli.EXIT_DEVICE]
+    assert f"run_finished status='failed' booked=0 total=0 error={error!r}" in read_log(tmp_path)
+    assert not (data_home / "run.lock").exists()
+
+
+def test_other_device_errors_end_the_process_normally(monkeypatch, tmp_path):
+    ended = []
+    monkeypatch.setattr(cli, "end_process", ended.append)
+
+    def connect(config):
+        raise EmulatorError("MuMu did not start")
+
+    assert run_cli(monkeypatch, tmp_path, connect=connect) == cli.EXIT_DEVICE
+    assert ended == []
 
 
 def test_a_run_is_recorded_in_the_history(monkeypatch, tmp_path, data_home):

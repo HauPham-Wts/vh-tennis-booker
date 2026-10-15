@@ -7,6 +7,7 @@ from court_booker.geometry import (
     is_inside,
     month_index,
     month_index_from_label,
+    parse_booked_time,
     parse_bounds,
 )
 
@@ -62,3 +63,10 @@ def test_day_pattern_across_month_and_year():
 def test_month_index_from_label():
     assert month_index_from_label("2, Thứ Sáu, 2 tháng 10, 2026") == month_index(2026, 10)
     assert month_index_from_label("no date") is None
+
+
+def test_parse_booked_time_splits_date_and_slot():
+    assert parse_booked_time("17/10/2026 15:00 - 16:00") == (date(2026, 10, 17), "15:00 - 16:00")
+    assert parse_booked_time("1/11/2026 06:00 - 07:00") == (date(2026, 11, 1), "06:00 - 07:00")
+    assert parse_booked_time("31/11/2026 15:00 - 16:00") is None
+    assert parse_booked_time("S6 - Sân tennis") is None

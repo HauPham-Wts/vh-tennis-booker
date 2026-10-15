@@ -39,6 +39,7 @@ work: 0.4.0 waits for failures in the logs, and the core books reliably.
 | 4 UI | 0.5.0 Backend | Separate run folder, engine events, data folder, SQLite history and activity, run lock, device setup and auto setup, FastAPI backend (released 2026-10-13; spec [0.5.0-desktop-app](specs/0.5.0-desktop-app.md)) |
 | 2 Every situation | 0.5.1-0.5.3 | Refused bookings fail the round, every screen logged, warm-up on the utilities list (released 2026-10-14) |
 | 4 UI | 0.6.0 UI | React + TypeScript screens in the "Vé giấy" design, Vietnamese and English (released 2026-10-15) |
+| 2 Every situation | 0.6.1 | Court and date read on the confirmation page, ticket check (warning only), 60 s limit on device commands, labels saved only when changed (released 2026-10-15) |
 | 4 UI | **0.7.0 Desktop app** | Tauri shell with PyInstaller sidecar, installer, release automation |
 | 3 Fast | Later | Tuning from the log files; several MuMu instances with separate accounts in parallel (one account cannot log in twice) |
 
@@ -60,10 +61,10 @@ failures are fixed as they show up in the log.
 | Booking | Slot fully booked | Round fails; no fallback slot (by decision) |
 | Booking | Court fully booked | Round fails; no fallback court (by decision) |
 | Booking | Slot taken by someone else at "Xác nhận" | Round fails with the app's notice (0.5.1; was logged as booked on 2026-10-14) |
-| Booking | Booked court differs from the tapped one | Seen once (2026-10-13: S6 tapped, S9 booked); a ticket check would catch it |
+| Booking | Booked court differs from the tapped one | Seen once (2026-10-13: S6 tapped, S9 booked). Since 0.6.1 the court on the confirmation page is logged (a warning when it differs) and kept in the history; the round still confirms |
 | Booking | Target date in the next month | Code exists; untested since 0.3.0. Only testable on the last two days of a month (30/10 → 1/11, 31/10 → 2/11): the calendar does not switch to a month without bookable days |
 | Booking | Booking limit per account | 8 slots per apartment per month; not handled by decision (users track their own quota), the log shows the dialog |
-| Device | MuMu not running / frozen | Started automatically / not handled |
+| Device | MuMu not running / frozen | Started automatically / since 0.6.1 a command over 60 s ends the run with an error (exit code 3); no restart, no retry (by decision) |
 | Device | ADB lost during a run | Not handled |
 | Device | Wrong MuMu resolution | Works but scrolls; no warning |
 | Device | PC woke late, clock drift | Runs at once if under 10 min late; NTP offset |

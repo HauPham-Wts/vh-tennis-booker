@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import NoReturn
 
 from court_booker import __version__, device_setup, schedule
 from court_booker.clock import ntp_offset, resolve_start
@@ -16,6 +18,7 @@ from court_booker.errors import (
     AppNotReadyError,
     CourtBookerError,
     DeviceError,
+    DeviceNotRespondingError,
     LockHeldError,
     RequestError,
 )
@@ -94,6 +97,20 @@ def exit_code(error: CourtBookerError) -> int:
     if isinstance(error, LockHeldError):
         return EXIT_BUSY
     return EXIT_ROUND_FAILED
+
+
+def end_process(code: int) -> NoReturn:
+    """Exit at once with ``code``, skipping the exit hooks.
+
+    After the emulator froze, a thread may still wait on it, and the exit hook of
+    uiautomator2 can wait for that thread: a normal exit could hang until Task Scheduler
+    ends the task an hour later.
+    """
+    logging.shutdown()
+    for stream in (sys.stdout, sys.stderr):  # None under pythonw
+        if stream is not None:
+            stream.flush()
+    os._exit(code)
 
 
 def run_trigger(args: argparse.Namespace) -> str:
@@ -198,6 +215,7 @@ def main(argv: list[str] | None = None) -> int:
     results: list[RoundResult] = []
     config: Config | None = None
     error: str | None = None
+    frozen = False
     try:
         config = apply_overrides(load_config(args.config), args)
         if config.log_dir:
@@ -256,6 +274,7 @@ def main(argv: list[str] | None = None) -> int:
     except CourtBookerError as exc:
         logger.error("%s", exc)
         error, code = str(exc), exit_code(exc)
+        frozen = isinstance(exc, DeviceNotRespondingError)
     except Exception as exc:  # an unattended run must still log and report
         logger.exception("Unexpected error")
         error, code = repr(exc), EXIT_ROUND_FAILED
@@ -276,4 +295,6 @@ def main(argv: list[str] | None = None) -> int:
         lock.release()
     if history is not None:
         close_history(history)
+    if frozen:
+        end_process(code)
     return code

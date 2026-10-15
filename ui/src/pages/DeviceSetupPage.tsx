@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useOverview, useSetupChecks } from "../api/queries";
 import { QueryView } from "../components/QueryView";
@@ -10,7 +11,7 @@ import { ManualSteps } from "./setup/ManualSteps";
  * the rest. The checks ask MuMu and adb, so they wait while a run holds the lock (also
  * before the Overview has said).
  */
-export function DeviceSetupPage() {
+export function DeviceSetupPage({ title }: { title?: ReactNode }) {
   const { t } = useTranslation();
   const overview = useOverview();
   const running = overview.data?.running !== null;
@@ -23,7 +24,11 @@ export function DeviceSetupPage() {
 
   return (
     <>
-      <p className={styles.lead}>{t("pages.deviceSetup.lead")}</p>
+      {/* A title of the screen's own (the Welcome step) stays as close as a page header's. */}
+      <div className={styles.heading}>
+        {title}
+        <p className={styles.lead}>{t("pages.deviceSetup.lead")}</p>
+      </div>
       <QueryView query={overview}>
         {(data) => (
           <>

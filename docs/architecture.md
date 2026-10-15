@@ -30,13 +30,20 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   Windows), so a later process that reuses a pid is never taken for the holder or stopped.
 - `runner.connect_device`: `emulator.MuMu.ensure_started` (MuMuManager `info`/`control
   launch`), `adb.find_adb` + `adb.resolve_device` (prefers the serial MuMu reports),
-  `uiautomator2.connect` (imported lazily so tests do not need it).
+  `uiautomator2.connect` (imported lazily so tests do not need it). The connection and
+  every call on the device it returns (`watchdog.GuardedDevice`) run on one daemon worker
+  thread (`watchdog.Watchdog`, about 0.04 ms per call) and end with
+  `DeviceNotRespondingError` (a `DeviceError`) after `COMMAND_TIMEOUT` (60 s); later calls
+  then fail at once. `run_booking` reports the round as failed and re-raises, so no later
+  round runs; the CLI logs it, records the run, releases the lock and then exits with
+  `end_process` (`os._exit`, code 3), since the exit hook of uiautomator2 could wait for
+  the stuck thread.
 - `runner.run_booking`: `Booker.prepare()` (ends on the home screen),
   `wait_until(start - warm_up_seconds)`, `Booker.locate_entry()` (taps "Tiện ích", loads
   the utilities list; a failure is logged and retried by the next call),
   `wait_until(start - LOCATE_AHEAD)`, `locate_entry()` again (read only),
   `wait_until(start)`, then one round per slot; a `BookingError` (or any exception) fails
-  that round only. Results are appended to a caller-owned list; the debug log counts
+  that round only, except `DeviceNotRespondingError`, which ends the run after it. Results are appended to a caller-owned list; the debug log counts
   device commands per round. When a round, `prepare()` or `locate_entry()` fails,
   `log_last_screen` writes `Booker.last_screen` to the debug log, so a failure seen once at
   06:00 can be fixed from the log alone.
@@ -68,6 +75,12 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   `open_slot()` re-enters the calendar while the date or slot is missing.
 - `accept_and_confirm` fails a round whose confirmation is answered by a notice dialog
   (`BookingRejectedError` with the message, `Booker.notice_text`).
+- `book()` returns a `Booked`, read from screens the round reads anyway (no extra
+  command): `read_confirmation` takes the date, slot and court from the confirmation page
+  (`Screen.line_after` the `booked_time` and `booked_place` captions) and only warns when
+  they differ from the target, the round still confirms; `read_ticket` notes whether the
+  first read after "Xác nhận" shows the ticket title and its status, and only warns
+  without it (success still rests on the confirmation page going away).
 - `geometry.py`, `screen.py` and most of `clock.py` are pure; logic testable without a
   device belongs there.
 
@@ -80,8 +93,10 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   `MultiSink`, `NullSink`. The CLI emits `run_started` (trigger `scheduled`/`dry_run`/
   `manual`), `device_ready` and `run_finished` (status `ok`/`partial`/`failed`/
   `interrupted`) on every path; `run_booking` emits `app_ready`, `waiting`,
-  `booking_started`, `slot_started`, `slot_booked`/`slot_failed`; `Booker` emits
-  `calendar_opened`, `date_selected`, `slot_selected`, `court_selected`, `terms_accepted`.
+  `booking_started`, `slot_started`, `slot_booked`/`slot_failed` (`slot_booked` adds the
+  `Booked` details found: `shown_date`, `shown_slot`, `shown_court`, `ticket`,
+  `ticket_status`); `Booker` emits `calendar_opened`, `date_selected`, `slot_selected`,
+  `court_selected`, `terms_accepted`.
   Reporting sends no device command.
 - `history.py`: the history database `booker.db` in the data folder (spec part 4; stdlib
   `sqlite3`, `MIGRATIONS` counted in `PRAGMA user_version`, WAL, 0.5 s busy timeout).
@@ -109,8 +124,9 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
 - `config_from_dict` builds a config from parsed TOML; `validate_config` lists problems
   (slot format and duplicates, empty court, `days_ahead` 0-2, `wake_at` before `start_at`,
   positive timeouts, `_xy` ratios); `save_config` validates, then writes with `tomli-w`
-  through a temporary file and `os.replace` (comments are not kept); `ensure_config` writes
-  the defaults once.
+  through a temporary file and `os.replace` (comments are not kept), with only the labels
+  that differ from the defaults (an older runner refuses a label it does not know);
+  `ensure_config` writes the defaults once.
 - `paths.data_folder()`: the app's data folder, `%LOCALAPPDATA%\CourtBooker` (override with
   `COURT_BOOKER_HOME`), holding `config.toml`, `booker.db`, `logs/` and `run.lock`. The CLI
   writes only `booker.db` there; its config and logs stay beside `--config` until the app.

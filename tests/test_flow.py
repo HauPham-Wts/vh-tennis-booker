@@ -1,6 +1,7 @@
 """Flow tests against a scripted fake app; no emulator required."""
 
 import logging
+import threading
 from datetime import date
 from xml.sax.saxutils import quoteattr
 
@@ -12,12 +13,14 @@ from court_booker.errors import (
     AppNotReadyError,
     BookingNotOpenError,
     BookingRejectedError,
+    DeviceNotRespondingError,
     ElementNotFoundError,
     SlotUnavailableError,
 )
 from court_booker.events import EventKind, MemorySink, Reporter
-from court_booker.flow import Booker
+from court_booker.flow import Booked, Booker
 from court_booker.screen import Node, Screen
+from court_booker.watchdog import GuardedDevice, Watchdog
 
 WIDTH, HEIGHT = 540, 1600
 TARGET = date(2026, 10, 11)
@@ -55,6 +58,21 @@ CONFIRM_PAGE = [
     node("", CHECKBOX),
     node("Tôi đã hiểu và đồng ý với ", (79, 1322, 313, 1355), False),
 ]
+TICKET = [node("Chi tiết đặt lịch", (99, 52, 311, 89), False)]  # first read, 2026-10-14
+PROCESSING = node("Đang xử lý", (407, 154, 499, 177), False)  # status at 06:00 on 2026-10-15
+
+
+def details(when="11/10/2026 11:00 - 12:00", court="S10 - Sân tennis"):
+    """Return the booking details of the confirmation page: one label, as read on 2026-10-15."""
+    return node(
+        f"Sân Tennis\nThời gian đặt lịch\n{when}\nVị trí/dịch vụ\n{court}\n"
+        "Thông tin thanh toán\nNhà cung cấp\nVinhomes\nTổng tiền\n0 VND",
+        (0, 210, 540, 775),
+        False,
+    )
+
+
+DETAILS = details()
 
 
 class FakeApp:
@@ -154,7 +172,14 @@ class FakeApp:
         self.shells.append(command)
 
 
-def booking_app(screen="utilities", courts=COURTS, via_venue=False, slot_delay=0):
+def booking_app(
+    screen="utilities",
+    courts=COURTS,
+    via_venue=False,
+    slot_delay=0,
+    shown=(DETAILS,),
+    ticket=TICKET,
+):
     screens = {
         "loading": [],
         "home": [node("Tiện ích", (200, 1500, 340, 1580))],
@@ -165,9 +190,9 @@ def booking_app(screen="utilities", courts=COURTS, via_venue=False, slot_delay=0
         "venue": [node("Origami Grand Park", (35, 600, 505, 700))],
         "courts": courts,
         "details": [node("S10 - Sân tennis", (116, 975, 274, 1004), False), CONTINUE],
-        "confirm": [*CONFIRM_PAGE, node("Xác nhận", (35, 1490, 505, 1584), False)],
-        "confirm_ticked": [*CONFIRM_PAGE, node("Xác nhận", (35, 1490, 505, 1584))],
-        "ticket": [node("Đăng ký thành công", (35, 200, 505, 260), False)],
+        "confirm": [*CONFIRM_PAGE, *shown, node("Xác nhận", (35, 1490, 505, 1584), False)],
+        "confirm_ticked": [*CONFIRM_PAGE, *shown, node("Xác nhận", (35, 1490, 505, 1584))],
+        "ticket": ticket,
     }
     taps_to = {
         ("home", "Tiện ích"): "utilities",
@@ -265,7 +290,7 @@ def test_every_new_screen_is_logged_once(caplog):
     # ticket; the slot list after the slot tap reads the same and is not logged again.
     assert len(screens) == len(set(screens)) == 8
     assert screens[0].startswith("Screen (1 elements):\n  [35,300][505,360] clickable 'Sân")
-    assert screens[-1] == "Screen (1 elements):\n  [35,200][505,260] 'Đăng ký thành công'"
+    assert screens[-1] == "Screen (1 elements):\n  [99,52][311,89] 'Chi tiết đặt lịch'"
     assert booker.commands == app.ops.count("dump") + len(app.taps)
 
 
@@ -297,10 +322,61 @@ def test_book_waits_for_slow_slot_list():
 def test_dry_run_stops_before_final_confirmation():
     app = booking_app()
 
-    Booker(app, Config()).book("11:00 - 12:00", TARGET, dry_run=True)
+    booked = Booker(app, Config()).book("11:00 - 12:00", TARGET, dry_run=True)
 
     assert app.taps == FULL_ROUND[:-1]
     assert app.screen == "confirm_ticked"
+    assert booked.event_data() == {
+        "shown_date": "2026-10-11",
+        "shown_slot": "11:00 - 12:00",
+        "shown_court": "S10 - Sân tennis",
+    }
+
+
+def test_book_returns_what_the_confirmation_page_and_ticket_showed(caplog):
+    caplog.set_level(logging.INFO, logger="court_booker")
+    app = booking_app(ticket=[*TICKET, PROCESSING])
+    booker = Booker(app, Config())
+
+    booked = booker.book("11:00 - 12:00", TARGET)
+
+    assert booked == Booked("2026-10-11", "11:00 - 12:00", "S10 - Sân tennis", True, "Đang xử lý")
+    assert "Confirmation page: 2026-10-11 11:00 - 12:00 on S10 - Sân tennis" in caplog.text
+    assert booker.commands == 16
+
+
+def test_other_court_on_the_confirmation_page_is_booked_with_a_warning(caplog):
+    app = booking_app(shown=[details(court="S9 - Sân tennis")])
+
+    booked = Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert app.taps == FULL_ROUND
+    assert booked.shown_court == "S9 - Sân tennis"
+    [warning] = [r for r in caplog.records if r.levelno == logging.WARNING]
+    assert warning.getMessage() == (
+        "The confirmation page books 2026-10-11 11:00 - 12:00 on S9 - Sân tennis, "
+        "not 2026-10-11 11:00 - 12:00 on S10 - Sân tennis; confirming anyway"
+    )
+
+
+def test_confirmation_page_without_details_only_warns(caplog):
+    app = booking_app(shown=[])
+
+    booked = Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert app.screen == "ticket"
+    assert booked == Booked(ticket=True)
+    assert "Could not read the date, slot and court on the confirmation page" in caplog.text
+
+
+def test_missing_ticket_only_warns(caplog):
+    app = booking_app(ticket=[node("", (6, 38, 72, 104))])
+
+    booked = Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert booked.ticket is False
+    assert booked.ticket_status is None
+    assert "No ticket after confirming: 'Chi tiết đặt lịch' not shown" in caplog.text
 
 
 def test_book_taps_venue_screen_when_shown():
@@ -365,6 +441,29 @@ def test_located_entry_makes_the_first_command_a_tap():
     booker.book("11:00 - 12:00", TARGET)
 
     assert app.ops[0] == ("click", "Sân Tennis")
+
+
+def test_a_frozen_device_fails_the_round_instead_of_hanging_it():
+    app = booking_app()
+    frozen = threading.Event()
+    app.taps_to[("details", "Tiếp tục")] = "frozen"  # MuMu froze after this tap on 2026-10-13
+    app.screens["frozen"] = []
+    reads = app.dump_hierarchy
+
+    def dump_hierarchy(compressed=False):
+        if app.screen == "frozen":
+            frozen.wait()
+        return reads(compressed)
+
+    app.dump_hierarchy = dump_hierarchy
+    booker = Booker(GuardedDevice(app, Watchdog(timeout=0.05)), Config())
+    try:
+        with pytest.raises(DeviceNotRespondingError, match="did not answer dump_hierarchy"):
+            booker.book("11:00 - 12:00", TARGET)
+    finally:
+        frozen.set()
+
+    assert app.taps == FULL_ROUND[:6]
 
 
 def test_return_to_utilities_presses_back_from_ticket():
