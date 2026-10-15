@@ -10,6 +10,11 @@ uses [Semantic Versioning](https://semver.org/).
 - Branches: every branch is cut from `main` and merged back into it; `main` is the
   development line and the new `stable` branch points at the latest release. Versions no
   longer get a `release/X.Y.Z` branch (CONTRIBUTING.md).
+- The clock check asks the configured `ntp_server` twice, then time.google.com,
+  time.windows.com and pool.ntp.org in turn, with a 1 s timeout, and logs which one
+  answered; only when none does is the PC clock used, with a warning (time.google.com
+  timed out once on 2026-10-15). A reply that does not carry the time (not from a server,
+  or stratum 0) is no longer taken as an offset. No new setting.
 
 ## [0.6.1] - 2026-10-15
 

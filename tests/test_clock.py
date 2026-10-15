@@ -1,11 +1,14 @@
 """Start-time tests with fake clocks; no network required."""
 
+import logging
+import socket
 import struct
+import time
 from datetime import datetime, timedelta
 
 import pytest
 
-from court_booker.clock import offset_from_reply, resolve_start, wait_until
+from court_booker.clock import ntp_offset, offset_from_reply, query_ntp, resolve_start, wait_until
 from court_booker.errors import RequestError
 
 NOW = datetime(2026, 10, 8, 5, 45, 0)
@@ -69,11 +72,11 @@ def test_wait_until_past_target_returns_at_once():
     assert clock.sleeps == []
 
 
-def ntp_reply(server_seconds):
+def ntp_reply(server_seconds, mode=4, stratum=2):
     seconds = int(server_seconds) + 2_208_988_800
     fraction = int((server_seconds % 1) * 2**32)
     timestamp = struct.pack("!II", seconds, fraction)
-    return bytes(32) + timestamp + timestamp
+    return bytes([0x18 | mode, stratum]) + bytes(30) + timestamp + timestamp  # version 3
 
 
 def test_offset_from_reply():
@@ -84,3 +87,95 @@ def test_offset_from_reply():
 
 def test_offset_from_short_reply_is_none():
     assert offset_from_reply(b"\x00" * 10, 0.0, 0.0) is None
+
+
+@pytest.mark.parametrize(
+    ("mode", "stratum"),
+    [(3, 2), (4, 0), (4, 16)],  # a client's packet, a refusal, a server without a clock
+)
+def test_offset_from_a_reply_without_the_time_is_none(mode, stratum):
+    assert offset_from_reply(ntp_reply(1001.6, mode, stratum), 1000.0, 1000.2) is None
+
+
+class FakeSocket:
+    """One UDP exchange; ``answer`` is the reply or the error ``recvfrom`` raises."""
+
+    def __init__(self, answer):
+        self.answer = answer
+        self.timeout = None
+        self.addresses = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_info):
+        return False
+
+    def settimeout(self, seconds):
+        self.timeout = seconds
+
+    def sendto(self, data, address):
+        self.addresses.append(address)
+
+    def recvfrom(self, size):
+        if isinstance(self.answer, Exception):
+            raise self.answer
+        return self.answer, ("192.0.2.1", 123)
+
+
+def test_query_ntp_returns_the_offset_of_a_reply():
+    sock = FakeSocket(ntp_reply(time.time() + 1.5))
+
+    offset = query_ntp("time.google.com", open_socket=lambda: sock)
+
+    assert offset == pytest.approx(1.5, abs=0.5)
+    assert sock.addresses == [("time.google.com", 123)]
+    assert sock.timeout == 1.0
+
+
+@pytest.mark.parametrize(
+    ("answer", "logged"),
+    [
+        (socket.timeout("timed out"), "Clock check against time.google.com failed (timed out)"),
+        (TimeoutError(), "Clock check against time.google.com failed (TimeoutError)"),
+        (socket.gaierror(11001, "getaddrinfo failed"), "failed ([Errno 11001] getaddrinfo"),
+        (b"\x00" * 10, "Invalid reply from time.google.com"),
+        (ntp_reply(1001.6, stratum=0), "Invalid reply from time.google.com"),
+    ],
+)
+def test_query_ntp_logs_why_it_has_no_offset(answer, logged, caplog):
+    caplog.set_level(logging.INFO, logger="court_booker")
+
+    assert query_ntp("time.google.com", open_socket=lambda: FakeSocket(answer)) is None
+    assert logged in caplog.text
+
+
+def test_ntp_offset_asks_each_server_twice_until_one_answers(caplog):
+    caplog.set_level(logging.INFO, logger="court_booker")
+    asked = []
+
+    def query(server):
+        asked.append(server)
+        return 0.128 if len(asked) == 4 else None
+
+    assert ntp_offset("time.google.com", query=query) == 0.128
+    assert asked == ["time.google.com"] * 2 + ["time.windows.com"] * 2
+    assert "Clock checked against time.windows.com (attempt 2)" in caplog.text
+
+
+def test_ntp_offset_without_any_answer_is_none(caplog):
+    asked = []
+
+    def query(server):
+        asked.append(server)
+
+    assert ntp_offset("ntp.example.org", query=query) is None
+    assert asked == [
+        server
+        for server in ("ntp.example.org", "time.google.com", "time.windows.com", "pool.ntp.org")
+        for _ in range(2)
+    ]
+    assert (
+        "No time server answered (ntp.example.org, time.google.com, time.windows.com, "
+        "pool.ntp.org); using the local clock"
+    ) in caplog.text
