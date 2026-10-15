@@ -40,6 +40,8 @@ class Labels:
     continue_: str = "Tiếp tục"
     confirm: str = "Xác nhận"
     confirm_page: str = "Xác nhận đăng ký"
+    """Title of the confirmation page. Unused since the ticket tells success (0.6.2); kept
+    so a config that sets it still loads."""
     prev_month: str = "Tháng trước"
     next_month: str = "Tháng sau"
     agree: str = "Tôi đã hiểu"

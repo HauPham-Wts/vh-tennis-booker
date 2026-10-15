@@ -13,6 +13,7 @@ from court_booker.errors import (
     AppNotReadyError,
     BookingNotOpenError,
     BookingRejectedError,
+    BookingUnconfirmedError,
     DeviceNotRespondingError,
     ElementNotFoundError,
     SlotUnavailableError,
@@ -60,6 +61,11 @@ CONFIRM_PAGE = [
 ]
 TICKET = [node("Chi tiết đặt lịch", (99, 52, 311, 89), False)]  # first read, 2026-10-14
 PROCESSING = node("Đang xử lý", (407, 154, 499, 177), False)  # status at 06:00 on 2026-10-15
+LOADING = [  # read while the next screen is built, 2026-10-15: only the status bar is labelled
+    node("", (0, 0, 540, 1600)),
+    node("4:44 PM", (6, 5, 50, 28), False),
+    node("Wifi signal full.", (439, 5, 460, 26), False),
+]
 
 
 def details(when="11/10/2026 11:00 - 12:00", court="S10 - Sân tennis"):
@@ -79,7 +85,8 @@ class FakeApp:
     """Scripted app: each screen is a list of nodes; taps and Back switch screens.
 
     A switch takes effect at once, like a tap the app handles before the next
-    one, or after ``delay`` dumps, like a screen that is still loading.
+    one, or after ``delay`` dumps, like a screen that is still loading. A list of
+    switches is followed in turn, each ``delay`` counted from the one before.
     """
 
     def __init__(self, screens, taps_to, backs_to, screen, launches_to=None, current=""):
@@ -89,7 +96,7 @@ class FakeApp:
         self.screen = screen
         self.launches_to = launches_to
         self.current = current
-        self.pending = None
+        self.pending = []
         self.swallow = {}
         self.on_swipe = None
         self.ops = []
@@ -100,18 +107,19 @@ class FakeApp:
         self.shells = []
 
     def go(self, target):
-        name, delay = (target, 0) if isinstance(target, str) else target
-        if delay == 0:
-            self.screen, self.pending = name, None
-        else:
-            self.pending = [name, delay]
+        steps = target if isinstance(target, list) else [target]
+        self.pending = [[step, 0] if isinstance(step, str) else list(step) for step in steps]
+        self.switch()
+
+    def switch(self):
+        while self.pending and self.pending[0][1] <= 0:
+            self.screen = self.pending.pop(0)[0]
 
     def dump_hierarchy(self, compressed=False):
         self.ops.append("dump")
-        if self.pending is not None:
-            self.pending[1] -= 1
-            if self.pending[1] <= 0:
-                self.screen, self.pending = self.pending[0], None
+        if self.pending:
+            self.pending[0][1] -= 1
+            self.switch()
         children = "".join(
             f"<node content-desc={quoteattr(desc, {chr(10): '&#10;'})} "
             f'bounds="[{box[0]},{box[1]}][{box[2]},{box[3]}]" '
@@ -181,7 +189,7 @@ def booking_app(
     ticket=TICKET,
 ):
     screens = {
-        "loading": [],
+        "loading": LOADING,
         "home": [node("Tiện ích", (200, 1500, 340, 1580))],
         "utilities": [node("Sân Tennis", (35, 300, 505, 360))],
         "calendar": [*DAYS, CONTINUE],
@@ -340,7 +348,7 @@ def test_book_returns_what_the_confirmation_page_and_ticket_showed(caplog):
 
     booked = booker.book("11:00 - 12:00", TARGET)
 
-    assert booked == Booked("2026-10-11", "11:00 - 12:00", "S10 - Sân tennis", True, "Đang xử lý")
+    assert booked == Booked("2026-10-11", "11:00 - 12:00", "S10 - Sân tennis", "Đang xử lý")
     assert "Confirmation page: 2026-10-11 11:00 - 12:00 on S10 - Sân tennis" in caplog.text
     assert booker.commands == 16
 
@@ -365,18 +373,41 @@ def test_confirmation_page_without_details_only_warns(caplog):
     booked = Booker(app, Config()).book("11:00 - 12:00", TARGET)
 
     assert app.screen == "ticket"
-    assert booked == Booked(ticket=True)
+    assert booked == Booked()
     assert "Could not read the date, slot and court on the confirmation page" in caplog.text
 
 
-def test_missing_ticket_only_warns(caplog):
-    app = booking_app(ticket=[node("", (6, 38, 72, 104))])
+def test_frames_without_the_ticket_are_read_again_until_it_shows():
+    app = booking_app()
+    # 2026-10-15: the page stays while the server answers, then a frame without labels.
+    app.taps_to[("confirm_ticked", "Xác nhận")] = [("loading", 2), ("ticket", 2)]
+    booker = Booker(app, Config())
 
-    booked = Booker(app, Config()).book("11:00 - 12:00", TARGET)
+    booked = booker.book("11:00 - 12:00", TARGET)
 
-    assert booked.ticket is False
+    assert app.screen == "ticket"
     assert booked.ticket_status is None
-    assert "No ticket after confirming: 'Chi tiết đặt lịch' not shown" in caplog.text
+    assert booker.commands == 16 + 3  # the page and the empty frame were read too
+
+
+def test_notice_after_a_frame_without_labels_fails_the_round():
+    app = refusing_app()
+    app.taps_to[("confirm_ticked", "Xác nhận")] = ["loading", ("notice", 2)]
+
+    with pytest.raises(BookingRejectedError, match=f"refused the booking: {QUOTA_MESSAGE}"):
+        Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+
+@pytest.mark.parametrize("after", ["loading", "confirm_ticked"])
+def test_neither_ticket_nor_notice_in_time_fails_the_round_as_unknown(after, fake_time):
+    app = booking_app()
+    app.taps_to[("confirm_ticked", "Xác nhận")] = after
+
+    with pytest.raises(BookingUnconfirmedError, match=r"Outcome unknown: .* 10 s after confirming"):
+        Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert app.taps == FULL_ROUND  # "Xác nhận" is never tapped again
+    assert fake_time[0] >= 10
 
 
 def test_book_taps_venue_screen_when_shown():

@@ -10,11 +10,21 @@ uses [Semantic Versioning](https://semver.org/).
 - Branches: every branch is cut from `main` and merged back into it; `main` is the
   development line and the new `stable` branch points at the latest release. Versions no
   longer get a `release/X.Y.Z` branch (CONTRIBUTING.md).
+- A round is booked only once the ticket's title shows after "Xác nhận"; frames without
+  the ticket or a notice are read again. The `slot_booked` event no longer has `ticket`
+  (always true now) and the "No ticket after confirming" warning is gone.
 - The clock check asks the configured `ntp_server` twice, then time.google.com,
   time.windows.com and pool.ntp.org in turn, with a 1 s timeout, and logs which one
   answered; only when none does is the PC clock used, with a warning (time.google.com
   timed out once on 2026-10-15). A reply that does not carry the time (not from a server,
   or stratum 0) is no longer taken as an offset. No new setting.
+
+### Fixed
+- A round could be reported booked when the screen was read in the moment without labels
+  that follows "Xác nhận", although the app then refused the booking (seen 2026-10-15 with
+  the slot taken by another account). The round now waits for the ticket or the notice.
+- Neither the ticket nor a notice within `timeout` (10 s) fails the round as "Outcome
+  unknown ... check the app" (in the UI: "Không rõ đã đặt được chưa, xem app Vinhomes").
 
 ## [0.6.1] - 2026-10-15
 
