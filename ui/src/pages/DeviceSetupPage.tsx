@@ -2,11 +2,13 @@ import { useTranslation } from "react-i18next";
 import { useOverview, useSetupChecks } from "../api/queries";
 import { QueryView } from "../components/QueryView";
 import styles from "./DeviceSetupPage.module.css";
+import { AutoSetup } from "./setup/AutoSetup";
 import { ManualSteps } from "./setup/ManualSteps";
 
 /**
- * Check MuMu, the app and the login, and say what is left to do. The checks ask MuMu and
- * adb, so they wait while a run holds the lock (also before the Overview has said).
+ * Check MuMu, the app and the login, say what is left for the user, and let auto setup do
+ * the rest. The checks ask MuMu and adb, so they wait while a run holds the lock (also
+ * before the Overview has said).
  */
 export function DeviceSetupPage() {
   const { t } = useTranslation();
@@ -24,7 +26,10 @@ export function DeviceSetupPage() {
       <p className={styles.lead}>{t("pages.deviceSetup.lead")}</p>
       <QueryView query={overview}>
         {(data) => (
-          <ManualSteps overview={data} checks={checks} running={running} onCheck={check} />
+          <>
+            <ManualSteps overview={data} checks={checks} running={running} onCheck={check} />
+            <AutoSetup overview={data} checks={checks} running={running} />
+          </>
         )}
       </QueryView>
     </>

@@ -165,6 +165,28 @@
         "todo": "TO DO",
         "unknown": "NOT SURE",
         "checking": "CHECKING"
+      },
+      "auto": {
+        "title": "Court Booker does it for you",
+        "lead": "Press it as often as you like: whatever is already right is skipped.",
+        "caption": "Auto setup items",
+        "items": {
+          "mumu_installed": "Find where MuMu is installed",
+          "mumu_screen": "MuMu screen 540 × 1600, 220 DPI",
+          "wake_timers": "Let the PC wake itself up"
+        },
+        "statuses": {
+          "ok": "✓ Already right",
+          "fixed": "Just fixed",
+          "fixable": "To fix",
+          "user": "Cannot fix it",
+          "unknown": "Could not check"
+        },
+        "run": "Auto setup",
+        "running": "Setting up…",
+        "restart": "MuMu is open, so its screen could not change yet. MuMu needs a restart.",
+        "restartButton": "Restart MuMu",
+        "quiet": "Locked from {{from}} to {{to}} so it never gets in the way of a booking."
       }
     },
     "guide": {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  addMinutes,
   courtName,
   formatClock,
   formatDateTime,
@@ -108,6 +109,19 @@ describe("times", () => {
   it("shows a text it cannot read as it is", () => {
     expect(formatClock("06:00")).toBe("06:00");
     expect(formatTime("later")).toBe("later");
+  });
+});
+
+describe("addMinutes", () => {
+  it("moves a config time on, round the clock", () => {
+    expect(addMinutes("06:00", 5)).toBe("06:05");
+    expect(addMinutes("05:58", 5)).toBe("06:03");
+    expect(addMinutes("23:58", 5)).toBe("00:03");
+    expect(addMinutes("00:02", -5)).toBe("23:57");
+  });
+
+  it("leaves a text it cannot read as it is", () => {
+    expect(addMinutes("6 am", 5)).toBe("6 am");
   });
 });
 

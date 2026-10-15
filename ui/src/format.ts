@@ -179,6 +179,20 @@ export function localToday(now: Date = new Date()): string {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
+const HH_MM = /^(\d{1,2}):(\d{2})$/;
+const DAY_MINUTES = 24 * 60;
+
+/** Return a config time ("06:00") `minutes` later, round the clock; another text as it is. */
+export function addMinutes(time: string, minutes: number): string {
+  const match = HH_MM.exec(time);
+  if (match === null) {
+    return time;
+  }
+  const total = (Number(match[1]) * 60 + Number(match[2]) + minutes) % DAY_MINUTES;
+  const wrapped = total < 0 ? total + DAY_MINUTES : total;
+  return `${pad(Math.floor(wrapped / 60))}:${pad(wrapped % 60)}`;
+}
+
 /** Write a slot as "18:00–19:00"; the app and the config write "18:00 - 19:00". */
 export function formatSlot(slot: string): string {
   return slot.replace(/\s*-\s*/, "–");

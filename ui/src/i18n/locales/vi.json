@@ -165,6 +165,28 @@
         "todo": "CHƯA XONG",
         "unknown": "CHƯA RÕ",
         "checking": "ĐANG KIỂM TRA"
+      },
+      "auto": {
+        "title": "Court Booker làm thay bạn",
+        "lead": "Bấm lại bao nhiêu lần cũng được: việc nào đã đúng thì bỏ qua.",
+        "caption": "Các việc thiết lập tự động",
+        "items": {
+          "mumu_installed": "Tìm nơi cài MuMu",
+          "mumu_screen": "Màn hình MuMu 540 × 1600, DPI 220",
+          "wake_timers": "Cho phép máy tự thức dậy"
+        },
+        "statuses": {
+          "ok": "✓ Đã đúng",
+          "fixed": "Vừa sửa",
+          "fixable": "Cần sửa",
+          "user": "Không tự sửa được",
+          "unknown": "Chưa kiểm tra được"
+        },
+        "run": "Thiết lập tự động",
+        "running": "Đang thiết lập…",
+        "restart": "MuMu đang mở nên chưa đổi được màn hình. Cần khởi động lại MuMu.",
+        "restartButton": "Khởi động lại MuMu",
+        "quiet": "Tạm khóa từ {{from}} đến {{to}} để không làm gián đoạn lần đặt sân."
       }
     },
     "guide": {
