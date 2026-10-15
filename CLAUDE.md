@@ -76,12 +76,16 @@ npm run api:types                                    # src/api/schema.d.ts from 
 - All code, comments, logs, commits and docs in English; app labels stay Vietnamese in the
   config. Type hints, short imperative docstrings, comments explain why, module loggers,
   `BookingError` subclasses, named constants, Ruff line length 100.
-- Git: each version lives on `release/X.Y.Z` cut from `main`; `feat/`, `fix/`, `docs/`
-  branches are cut from it and PR'd into it (merge commit, never squash); one PR
-  `release/X.Y.Z` → `main` (protected) when stable, then tag `vX.Y.Z`. Conventional
-  Commits, Semantic Versioning, CHANGELOG (Keep a Changelog). The user opens and merges PRs
-  on GitHub: give a compare link, title and description. `gh` is for reading GitHub state
-  only.
+- Git: `main` (protected) is the development line. `feat/`, `fix/`, `docs/`, `chore/`
+  branches are cut from `main` and PR'd into it (merge commit, never squash); a branch
+  stacked on another still targets `main`, merged in order. Only finished, tested work is
+  merged (a booking flow change: a real booking first), so `main` can be released any time.
+  `stable` is the latest release and only moves forward: a release is a
+  `chore/release-X.Y.Z` PR into `main`, then `stable` moves to that commit, tagged `vX.Y.Z`.
+  No `release/X.Y.Z` branches. Conventional Commits, Semantic Versioning, CHANGELOG (Keep a
+  Changelog; each PR adds its line under "Unreleased"). The user opens and merges PRs on
+  GitHub: give a compare link (`compare/main...<branch>`), title and description. `gh` is
+  for reading GitHub state only.
 - Write code only when the user asks for it.
 
 ## Code map
@@ -163,10 +167,10 @@ list. Details in `docs/field-notes.md`.
 
 ## Current state
 
-- Released: 0.6.1 (`main`); the runner stays at v0.5.3 until the user moves it. A booking
-  fix ships as the next 0.6.x patch from `main`.
-- Next: 0.7.0 (desktop app, the 0.7.0 parts of `docs/specs/0.5.0-desktop-app.md`), not
-  planned yet.
+- Released: 0.6.1 (`stable`, tag `v0.6.1`); the runner is at v0.6.1. A booking fix is
+  merged into `main` once tested and released as the next 0.6.x patch.
+- Now: 0.6.x fixes before 0.7.0 (desktop app, the 0.7.0 parts of
+  `docs/specs/0.5.0-desktop-app.md`), which is not planned yet.
 - Progress and the plan for the next part are kept outside the repo, in
   `D:\VH-Booker\notes\` (`progress.md`, `next.md`): read both at the start of a session and
   update them when a part ends. Local test tools (scratch backend, screenshots, a stand-in
