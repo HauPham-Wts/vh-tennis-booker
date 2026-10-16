@@ -27,7 +27,7 @@ def launch(config_path: Path) -> "subprocess.Popen[bytes]":
     """Start ``court-booker --dry-run`` in its own process, as the scheduled task starts a run.
 
     The dry run then takes the exact code path of the 06:00 run, writes its own history and
-    log file, and a crash in it cannot take the backend down. The packaged app (0.7.0)
+    log file, and a crash in it cannot take the backend down. The packaged desktop app
     will start its own executable instead of ``python -m``.
     """
     return subprocess.Popen(

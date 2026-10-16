@@ -20,7 +20,7 @@ Read the matching doc before changing an area; these notes hold only the essenti
 | `docs/field-notes.md` | App screens, labels, dialogs, MuMu facts, timings, verified runs |
 | `docs/roadmap.md` | Product decisions, phases, situations table, ruled-out ideas |
 | `docs/how-it-works.md` | How the flow reads the app (dumps, matching, navigation) |
-| `docs/specs/0.5.0-desktop-app.md` | Desktop app design (0.5.0-0.7.0), parts of 0.6.0 |
+| `docs/specs/0.5.0-desktop-app.md` | Desktop app design: backend, screens, parts of 0.5.0 and 0.6.0, packaging (last) |
 | `CONTRIBUTING.md` | Setup, checks, branches, releasing, runner folder |
 
 ## Commands
@@ -172,8 +172,9 @@ list. Details in `docs/field-notes.md`.
 - Released: 0.6.3 (`stable`, tag `v0.6.3`); the runner is at v0.6.2 (0.6.3 changed only
   the UI and a read route). A booking fix is merged into `main` once tested and released
   as the next 0.6.x patch.
-- Now: 0.6.x fixes before 0.7.0 (desktop app, the 0.7.0 parts of
-  `docs/specs/0.5.0-desktop-app.md`), which is not planned yet.
+- Now: 0.6.x fixes and docs. Packaging the desktop app (Tauri, PyInstaller, installer;
+  "Packaging" in `docs/specs/0.5.0-desktop-app.md`) is the last step before 1.0.0, after the
+  speed work; it is not planned yet and has no version number yet (it was 0.7.0).
 - Progress and the plan for the next part are kept outside the repo, in
   `D:\VH-Booker\notes\` (`progress.md`, `next.md`): read both at the start of a session and
   update them when a part ends. Local test tools (scratch backend, screenshots, a stand-in
