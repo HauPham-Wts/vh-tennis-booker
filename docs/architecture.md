@@ -16,6 +16,12 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   exit codes (`RequestError` 2, `DeviceError` 3, `AppNotReadyError` 4, `LockHeldError` 5,
   Ctrl+C 130); the summary is logged and optionally sent with `notify.send_telegram` on
   every path. A dry run is refused (exit 2) from `wake_at` to 5 minutes after `start_at`.
+  After the summary, while still holding the lock, `cli.close_emulator` shuts MuMu down
+  (`emulator.MuMu.shutdown`, MuMuManager `control shutdown`) when `mumu_manager` is set,
+  the run is not a dry run and ran at least one round, and neither Ctrl+C nor a frozen
+  device ended it; a failure only logs a warning (exit code and history unchanged). Tests
+  replace it (`closed_mumu` fixture in `tests/conftest.py`), since the default
+  `mumu_manager` is the real one.
 - `lock.py`: the run lock `run.lock` in the data folder (spec part 5), a JSON `Holder` (pid,
   process start time, trigger, since) published with `os.link` so it is created atomically
   and never read half-written. `RunLock.acquire` raises `LockHeldError` while a running

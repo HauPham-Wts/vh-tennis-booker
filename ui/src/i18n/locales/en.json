@@ -289,7 +289,7 @@
         },
         "book": {
           "title": "Books the slots you chose",
-          "text": "Two slots usually take about 15 seconds."
+          "text": "Two slots usually take about 15 seconds, then MuMu closes."
         },
         "need": {
           "title": "What you need",

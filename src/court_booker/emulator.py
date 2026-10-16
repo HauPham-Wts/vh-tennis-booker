@@ -85,6 +85,10 @@ class MuMu:
         """Ask MuMu to restart the instance; returns before Android has booted."""
         self._call("control", "restart")
 
+    def shutdown(self) -> None:
+        """Ask MuMu to shut the instance down."""
+        self._call("control", "shutdown")
+
     def settings(self, *keys: str) -> dict[str, str]:
         """Return the instance settings named ``keys``; readable while the instance is off."""
         output = self._call("setting", *[arg for key in keys for arg in ("-k", key)])

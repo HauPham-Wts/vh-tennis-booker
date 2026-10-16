@@ -74,3 +74,13 @@ def restore_package_logger():
         if handler not in saved[0]:
             handler.close()
     logger.handlers[:], logger.level, logger.propagate = saved
+
+
+@pytest.fixture(autouse=True)
+def closed_mumu(monkeypatch):
+    """Record the configs a run would close MuMu for, so tests never close the real MuMu."""
+    from court_booker import cli
+
+    closed = []
+    monkeypatch.setattr(cli, "close_emulator", closed.append)
+    return closed

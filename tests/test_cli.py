@@ -10,10 +10,14 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+import pytest
+
 import court_booker.cli as cli
 from court_booker import device_setup, processes
+from court_booker.cli import close_emulator
+from court_booker.config import Config
 from court_booker.device_setup import Check, Status
-from court_booker.errors import DeviceNotRespondingError, EmulatorError
+from court_booker.errors import AppNotReadyError, DeviceNotRespondingError, EmulatorError
 from court_booker.history import HistoryHandler
 from court_booker.lock import Holder
 from court_booker.runner import RoundResult
@@ -171,6 +175,95 @@ def test_other_device_errors_end_the_process_normally(monkeypatch, tmp_path):
 
     assert run_cli(monkeypatch, tmp_path, connect=connect) == cli.EXIT_DEVICE
     assert ended == []
+
+
+def test_a_real_run_closes_mumu_after_its_rounds(monkeypatch, tmp_path, closed_mumu):
+    outcomes = [("18:00 - 19:00", False), ("19:00 - 20:00", True)]
+
+    assert run_cli(monkeypatch, tmp_path, outcomes) == cli.EXIT_ROUND_FAILED
+    assert [config.mumu_index for config in closed_mumu] == [0]
+
+
+@pytest.mark.parametrize(
+    "outcomes, args",
+    [
+        ([("18:00 - 19:00", True)], ["--dry-run"]),
+        ([("18:00 - 19:00", True), ("19:00 - 20:00", KeyboardInterrupt)], []),
+        ([], []),
+    ],
+    ids=["dry run", "Ctrl+C", "no round"],
+)
+def test_mumu_stays_open(monkeypatch, tmp_path, closed_mumu, outcomes, args):
+    run_cli(monkeypatch, tmp_path, outcomes, args=args)
+
+    assert closed_mumu == []
+
+
+def test_an_error_before_the_rounds_leaves_mumu_open(monkeypatch, tmp_path, closed_mumu):
+    def run_booking(device, config, *, results, **kwargs):
+        raise AppNotReadyError("The app is logged out")
+
+    monkeypatch.setattr(cli, "connect_device", lambda config: object())
+    monkeypatch.setattr(cli, "run_booking", run_booking)
+    monkeypatch.setattr(cli, "datetime", FixedDatetime)
+
+    assert cli.main(["--config", str(tmp_path / "missing.toml")]) == cli.EXIT_APP_NOT_READY
+    assert closed_mumu == []
+
+
+def test_a_frozen_mumu_is_not_closed(monkeypatch, tmp_path, closed_mumu):
+    monkeypatch.setattr(cli, "end_process", lambda code: None)
+
+    def run_booking(device, config, *, results, **kwargs):
+        results.append(RoundResult("18:00 - 19:00", False, "MuMu did not answer", 60.0))
+        raise DeviceNotRespondingError("MuMu did not answer click within 60 s")
+
+    monkeypatch.setattr(cli, "connect_device", lambda config: object())
+    monkeypatch.setattr(cli, "run_booking", run_booking)
+    monkeypatch.setattr(cli, "datetime", FixedDatetime)
+
+    assert cli.main(["--config", str(tmp_path / "missing.toml")]) == cli.EXIT_DEVICE
+    assert closed_mumu == []
+
+
+def test_without_mumu_manager_mumu_is_left_alone(monkeypatch, tmp_path, closed_mumu):
+    path = tmp_path / "config.toml"
+    path.write_text('mumu_manager = ""\n', encoding="utf-8")
+
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)], args=["--config", str(path)])
+
+    assert closed_mumu == []
+
+
+def test_close_emulator_shuts_the_configured_instance_down(monkeypatch):
+    shut = []
+
+    class FakeMuMu:
+        def __init__(self, manager, index):
+            self.manager, self.index = manager, index
+
+        def shutdown(self):
+            shut.append((self.manager, self.index))
+
+    monkeypatch.setattr(cli, "MuMu", FakeMuMu)
+
+    close_emulator(Config(mumu_manager="C:/MuMu/MuMuManager.exe", mumu_index=1))
+
+    assert shut == [(Path("C:/MuMu/MuMuManager.exe"), 1)]
+
+
+def test_a_failed_close_only_warns(monkeypatch, tmp_path):
+    path = tmp_path / "config.toml"
+    path.write_text(f'mumu_manager = "{(tmp_path / "none.exe").as_posix()}"\n', encoding="utf-8")
+    monkeypatch.setattr(cli, "close_emulator", close_emulator)
+
+    code = run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)], args=["--config", str(path)])
+
+    assert code == cli.EXIT_OK
+    text = read_log(tmp_path)
+    assert "Closing MuMu instance 0" in text
+    assert "WARNING" in text
+    assert "Could not close MuMu: MuMuManager not found at" in text
 
 
 def test_a_run_is_recorded_in_the_history(monkeypatch, tmp_path, data_home):

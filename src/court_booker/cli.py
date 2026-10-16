@@ -14,11 +14,13 @@ from court_booker import __version__, device_setup, schedule
 from court_booker.clock import ntp_offset, resolve_start
 from court_booker.config import Config, load_config
 from court_booker.device_setup import Check, Status, Tools, find_tools, run_checks
+from court_booker.emulator import MuMu
 from court_booker.errors import (
     AppNotReadyError,
     CourtBookerError,
     DeviceError,
     DeviceNotRespondingError,
+    EmulatorError,
     LockHeldError,
     RequestError,
 )
@@ -111,6 +113,15 @@ def end_process(code: int) -> NoReturn:
         if stream is not None:
             stream.flush()
     os._exit(code)
+
+
+def close_emulator(config: Config) -> None:
+    """Shut the MuMu instance down; a failure only logs a warning, as the run is over."""
+    logger.info("Closing MuMu instance %d", config.mumu_index)
+    try:
+        MuMu(Path(config.mumu_manager), config.mumu_index).shutdown()
+    except EmulatorError as exc:
+        logger.warning("Could not close MuMu: %s", exc)
 
 
 def run_trigger(args: argparse.Namespace) -> str:
@@ -291,6 +302,18 @@ def main(argv: list[str] | None = None) -> int:
     if config is not None and config.telegram_token and config.telegram_chat_id:
         text = format_summary(results, error, dry_run=args.dry_run)
         send_telegram(config.telegram_token, config.telegram_chat_id, text)
+    # A real run closes MuMu once its rounds ran; the next run starts it again. MuMu stays
+    # open after a dry run, Ctrl+C or an error before the rounds, for whoever is at the PC,
+    # and when frozen, since MuMuManager does not shut a frozen instance down.
+    if (
+        config is not None
+        and config.mumu_manager
+        and not args.dry_run
+        and results
+        and code != EXIT_INTERRUPTED
+        and not frozen
+    ):
+        close_emulator(config)
     if lock is not None:
         lock.release()
     if history is not None:
