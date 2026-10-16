@@ -41,6 +41,10 @@
   gap: var(--space-3);
 }
 
+.more {
+  align-self: center;
+}
+
 .title {
   font-size: var(--text-heading);
   font-weight: var(--weight-heavy);

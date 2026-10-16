@@ -5,6 +5,7 @@
   "common": {
     "loading": "Loading…",
     "retry": "Try again",
+    "more": "Show more",
     "on": "On",
     "off": "Off"
   },
