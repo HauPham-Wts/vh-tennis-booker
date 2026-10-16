@@ -127,6 +127,12 @@ without it, such as the empty frame seen at 16:44 on 2026-10-15, is read again.
   history showed it as interrupted without a reason. Since 0.6.1 a device command that
   takes over 60 s ends the run with "MuMu did not answer ..." (log and history, lock
   released, exit code 3); MuMu is not restarted and the round is not retried.
+- `MuMuManager control -v 0 shutdown` on a running MuMu (2026-10-16 16:08, after a timed
+  real run): the command returned at once and the run exited 0.6 s after "Closing MuMu";
+  `MuMuNxDevice` was gone within 18 s, and the next run started MuMu again in 24 s. On a
+  frozen MuMu it answers errcode 0 but does nothing (16/10 15:14 and 17:36, both during
+  heavy test runs): `MuMuNxDevice` must be ended by hand. Since 0.7.0 a real run closes
+  MuMu this way; a frozen run never tries.
 
 ## App and server timings
 
