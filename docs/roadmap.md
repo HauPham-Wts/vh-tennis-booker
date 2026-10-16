@@ -46,7 +46,8 @@ what has proven itself; it gets its version number when it starts.
 | 2 Every situation | 0.6.1 | Court and date read on the confirmation page, ticket check (warning only), 60 s limit on device commands, labels saved only when changed (released 2026-10-15) |
 | 2 Every situation | 0.6.2 | Booked only once the ticket shows (unknown outcome fails the round), Back pressed as soon as each screen shows, clock check with fallback servers; `main`/`stable` branch flow (released 2026-10-16) |
 | 4 UI | 0.6.3 | Activity becomes the second tab of History (five menu items); both list ten days and "Xem thêm" (`GET /api/runs?days=`) (released 2026-10-16) |
-| 2 Every situation | **0.6.x** | Fixes as the 06:00 logs and daily use show them (now) |
+| 3 Fast | 0.7.0 | Taps as a bare touch down and up (about 0.5-0.7 s less a round); a real run closes MuMu once its rounds are done (released 2026-10-16) |
+| 2 Every situation | **0.7.x** | Fixes as the 06:00 logs and daily use show them; first the court list that moves while it loads (see the situations below) (now) |
 | 3 Fast | Later | Tuning from the log files; several MuMu instances with separate accounts in parallel (one account cannot log in twice) |
 | 4 UI | Desktop app, last before 1.0.0 | Tauri shell with PyInstaller sidecar, installer, release automation; version number set when it starts (spec [0.5.0-desktop-app](specs/0.5.0-desktop-app.md), "Packaging") |
 
@@ -68,7 +69,7 @@ failures are fixed as they show up in the log.
 | Booking | Slot fully booked | Round fails; no fallback slot (by decision) |
 | Booking | Court fully booked | Round fails; no fallback court (by decision) |
 | Booking | Slot taken by someone else at "Xác nhận" | Round fails with the app's notice (0.5.1; was logged as booked on 2026-10-14) |
-| Booking | Booked court differs from the tapped one | Seen once (2026-10-13: S6 tapped, S9 booked). Since 0.6.1 the court on the confirmation page is logged (a warning when it differs) and kept in the history; the round still confirms |
+| Booking | Booked court differs from the tapped one | Seen 2026-10-13 (S6 tapped, S9 booked), 2026-10-15 at 06:00 (the tap hit S9, fully booked: 2.45 s lost) and 2026-10-16 (confirmation page on S9, refused by the quota). Cause: the court list moves up 232 px when the service info above it finishes loading (field notes). Since 0.6.1 the court on the confirmation page is logged (a warning when it differs) and kept in the history; the round still confirms. Fix planned for 0.7.x |
 | Booking | Target date in the next month | Code exists; untested since 0.3.0. Only testable on the last two days of a month (30/10 → 1/11, 31/10 → 2/11): the calendar does not switch to a month without bookable days |
 | Booking | Booking limit per account | 8 slots per apartment per month; not handled by decision (users track their own quota), the log shows the dialog |
 | Device | MuMu not running / frozen | Started automatically / since 0.6.1 a command over 60 s ends the run with an error (exit code 3); no restart, no retry (by decision) |
