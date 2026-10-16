@@ -15,6 +15,9 @@ uses [Semantic Versioning](https://semver.org/).
   schedule), the web UI, the command line, and a real 06:00 log; the internal details moved
   out to the docs it links. CONTRIBUTING asks for a real booking, not a dry run, after a
   booking flow change.
+- Taps are a touch down and up instead of uiautomator2's `click`, which holds the touch
+  about 100 ms: a tap takes 83-91 ms instead of 151-165 ms on MuMu, about 0.5-0.7 s less a
+  round (measured 2026-10-16).
 
 ### Added
 - Screenshots of the web UI in the README (the Overview during a dry run, History,

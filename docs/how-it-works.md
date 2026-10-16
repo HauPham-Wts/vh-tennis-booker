@@ -36,7 +36,8 @@ Every tap on Android is ultimately a touch at (x, y). The difference is where th
 comes from: here it is taken from the latest dump of the screen, never stored across
 screens. Waiting for the next screen and locating the next element are the same read, so
 pre-recorded coordinates would not save a command: the screen must be read anyway to know
-it has appeared.
+it has appeared. The tap itself is a touch down and up at that point (`runner.QuickTap`):
+uiautomator2's `click` holds the touch about 100 ms, which the app does not need.
 
 ## Navigation
 

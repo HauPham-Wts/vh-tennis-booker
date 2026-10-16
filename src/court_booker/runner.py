@@ -43,11 +43,31 @@ def log_last_screen(booker: Booker) -> None:
     log_screen(booker.last_screen, "Last screen read")
 
 
+class QuickTap:
+    """Pass every call on to ``device``, except taps, sent as a bare touch down and up.
+
+    uiautomator2's ``click`` holds the touch for about 100 ms (Android ``UiDevice.click``):
+    151-165 ms a tap on MuMu, against 83-91 ms for a touch down and up, which the app took
+    every time (2026-10-16).
+    """
+
+    def __init__(self, device: Any) -> None:
+        self._device = device
+
+    def click(self, x: int, y: int) -> None:
+        """Tap ``(x, y)``; both events in one call, so the watchdog limits the whole tap."""
+        self._device.touch.down(x, y).up(x, y)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._device, name)
+
+
 def connect_device(config: Config) -> Any:
     """Start the emulator if configured and return a uiautomator2 device.
 
     The connection and every command on the device returned are time-limited
     (:mod:`court_booker.watchdog`), so a frozen emulator ends the run instead of hanging it.
+    Taps skip uiautomator2's hold (:class:`QuickTap`).
     """
     import uiautomator2  # deferred so tests do not require the dependency
 
@@ -69,7 +89,7 @@ def connect_device(config: Config) -> Any:
         raise
     except Exception as exc:  # uiautomator2 raises several unrelated types
         raise DeviceConnectionError(f"Could not connect to {serial}: {exc}") from exc
-    return GuardedDevice(device, watchdog)
+    return GuardedDevice(QuickTap(device), watchdog)
 
 
 def run_booking(

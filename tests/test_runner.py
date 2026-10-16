@@ -1,6 +1,7 @@
 """Runner tests with a fake booker; no device required."""
 
 import logging
+import threading
 from datetime import datetime, timedelta
 
 import pytest
@@ -16,6 +17,7 @@ from court_booker.errors import (
 from court_booker.events import EventKind, MemorySink, Reporter
 from court_booker.flow import Booked
 from court_booker.screen import Node, Screen
+from court_booker.watchdog import GuardedDevice, Watchdog
 
 FULL_SLOT = Node("18:00 - 19:00\nHết chỗ", (38, 1178, 263, 1262), True)
 
@@ -196,3 +198,59 @@ def test_a_frozen_device_ends_the_run_after_its_round(monkeypatch):
     assert [(r.slot, r.ok) for r in results] == [("18:00 - 19:00", False)]
     assert sink.kinds[-1] is EventKind.SLOT_FAILED
     assert sink.events[-1].data["reason"] == "MuMu did not answer dump_hierarchy within 60 s"
+
+
+class TouchDevice:
+    """Record taps the way uiautomator2 takes them: ``touch.down(x, y).up(x, y)``."""
+
+    serial = "127.0.0.1:16384"
+
+    def __init__(self, release=None):
+        self.events = []
+        self.touch = self
+        self.release = release
+        """An event ``up`` waits for, to stand for a frozen emulator."""
+
+    def down(self, x, y):
+        self.events.append(("down", x, y))
+        return self
+
+    def up(self, x, y):
+        if self.release is not None:
+            self.release.wait()
+        self.events.append(("up", x, y))
+        return self
+
+    def click(self, x, y):
+        self.events.append(("click", x, y))
+
+    def press(self, key):
+        self.events.append(("press", key))
+        return True
+
+
+def test_quick_tap_touches_down_then_up_at_the_point():
+    device = TouchDevice()
+
+    runner.QuickTap(device).click(270, 1537)
+
+    assert device.events == [("down", 270, 1537), ("up", 270, 1537)]
+
+
+def test_quick_tap_passes_everything_else_to_the_device():
+    device = TouchDevice()
+    quick = runner.QuickTap(device)
+
+    assert quick.press("back") is True
+    assert quick.serial == "127.0.0.1:16384"
+    assert device.events == [("press", "back")]
+
+
+def test_a_quick_tap_is_one_time_limited_call():
+    release = threading.Event()
+    device = GuardedDevice(runner.QuickTap(TouchDevice(release)), Watchdog(timeout=0.05))
+    try:
+        with pytest.raises(DeviceNotRespondingError, match="did not answer click within"):
+            device.click(270, 1537)
+    finally:
+        release.set()
