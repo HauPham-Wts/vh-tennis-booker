@@ -30,8 +30,11 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   Windows), so a later process that reuses a pid is never taken for the holder or stopped.
 - `runner.connect_device`: `emulator.MuMu.ensure_started` (MuMuManager `info`/`control
   launch`), `adb.find_adb` + `adb.resolve_device` (prefers the serial MuMu reports),
-  `uiautomator2.connect` (imported lazily so tests do not need it). The connection and
-  every call on the device it returns (`watchdog.GuardedDevice`) run on one daemon worker
+  `uiautomator2.connect` (imported lazily so tests do not need it). `runner.QuickTap` wraps
+  the device: `click(x, y)` sends `touch.down(x, y).up(x, y)` instead of uiautomator2's
+  `click`, which holds the touch about 100 ms; every other attribute passes through. The
+  connection and every call on the device it returns (`watchdog.GuardedDevice`, around
+  `QuickTap`, so a tap's two events are one limited call) run on one daemon worker
   thread (`watchdog.Watchdog`, about 0.04 ms per call) and end with
   `DeviceNotRespondingError` (a `DeviceError`) after `COMMAND_TIMEOUT` (60 s); later calls
   then fail at once. `run_booking` reports the round as failed and re-raises, so no later

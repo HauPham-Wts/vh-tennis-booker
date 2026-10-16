@@ -104,6 +104,15 @@ without it, such as the empty frame seen at 16:44 on 2026-10-15, is read again.
 - Command cost: `dump_hierarchy` 69 ms (whole screen), `exists` 41 ms, `info` 60 ms, regex
   `info_list` 105-177 ms, `window_size` 125 ms. uiautomator2 `click()` on a selector is
   wait + info + click.
+- Taps (measured 2026-10-16, quiet hours): uiautomator2 `click(x, y)` takes 151-165 ms,
+  since Android's `UiDevice.click` holds the touch about 100 ms; `touch.down` + `touch.up`
+  takes 83-91 ms, and the app took every such tap (20/20 on "Tiện ích", 24/24 dry rounds to
+  the confirmation page, 2/2 real bookings with the ticket 0.92 and 0.81 s after "Xác
+  nhận"). Dry round 1 median 3.39 s vs 4.16 s with `click`. Used since 0.7.0.
+- Tried the same day and dropped: a kept-alive HTTP connection to the uiautomator server
+  (screen read 90 ms vs 75 ms), compressed dumps (63 vs 61 ms, same 91 nodes), waiting with
+  `waitForWindowUpdate` (on a still screen it either timed out or reported a change after
+  50 ms). A screen read is the dump (60-75 ms); parsing it takes 1.2 ms.
 - The MuMu clock follows the PC clock (+15 ms measured); the NTP offset of the PC varies
   (+0.035 to +0.144 s; +0.34 s on 2026-10-15 at 22:00 from time.google.com,
   time.windows.com and pool.ntp.org alike). time.google.com timed out once (2026-10-15
