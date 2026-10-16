@@ -8,7 +8,7 @@ pre-commit install
 ```
 
 `pre-commit` runs Ruff (lint and format) and basic file checks on every commit. The `app`
-extra (FastAPI, Uvicorn) is the desktop app's backend; without it the backend tests are
+extra (FastAPI, Uvicorn) is the backend of the web UI; without it the backend tests are
 skipped. The runner folder installs the package without it.
 
 The app's screens live in `ui/` (React, TypeScript, Vite) and need Node.js 22.12 or later:
@@ -27,7 +27,13 @@ ruff format .
 pytest
 ```
 
-If the booking flow changed, also run `court-booker --dry-run --verbose` against the emulator.
+If the booking flow changed, also book for real against the emulator, timed like the 06:00
+run, and cancel the bookings in the app afterwards: a dry run stops before "Xác nhận", so it
+cannot test the end of the flow.
+
+```bash
+court-booker --verbose --slots "<slot>" "<next slot>" --at <a few minutes from now>
+```
 
 If the UI changed, run its checks in `ui/` (CI runs the same scripts):
 

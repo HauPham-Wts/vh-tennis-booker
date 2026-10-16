@@ -10,6 +10,11 @@ uses [Semantic Versioning](https://semver.org/).
 - Roadmap: packaging the desktop app (Tauri, PyInstaller, installer) is now the last step
   before 1.0.0, after the speed work, and gets its version number when it starts; it was
   planned as 0.7.0.
+- README rewritten for a first visit: what the project does and for whom, highlights by
+  outcome, a quick start in five steps (install, configure, device setup, dry run,
+  schedule), the web UI, the command line, and a real 06:00 log; the internal details moved
+  out to the docs it links. CONTRIBUTING asks for a real booking, not a dry run, after a
+  booking flow change.
 
 ## [0.6.3] - 2026-10-16
 

@@ -5,127 +5,212 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Code style: Ruff](https://img.shields.io/badge/code%20style-ruff-261230)
 
-A UI-automation case study: driving the tennis-court booking flow of a third-party
-**Flutter** Android app (Vinhomes Resident) with **Python** and **uiautomator2** on the
-MuMu Player emulator, using only the app's user interface.
+Books a tennis court the moment bookings open. The Vinhomes Resident app opens each day's
+courts at 06:00, and the popular slots are gone within seconds. This project books them
+while its owner sleeps: a Windows scheduled task wakes the PC, starts the MuMu Player
+emulator and taps through the app's own booking screens with Python and uiautomator2, as a
+person would. It uses no private API and does not modify the app.
+
+It is a UI-automation case study built as a real product: a booking engine that has booked
+real courts at 06:00 since 2026-10-10, a local FastAPI backend and a web UI in React and
+TypeScript. Today it runs from the command line and, for the web UI, in a browser; a
+packaged desktop app with an installer is the last step before 1.0.0.
 
 > [!IMPORTANT]
-> This is an educational project, not affiliated with or endorsed by Vinhomes.
+> An educational, personal project, not affiliated with or endorsed by Vinhomes.
 
-## Features
+## Highlights
 
-- **Label-based element lookup.** Buttons are located at runtime by their accessibility
-  labels, so the automation works at any screen resolution.
-- **One read per screen.** Each screen is read with a single hierarchy dump that returns
-  every element; waiting for a screen and locating its buttons is the same read, and taps
-  go to the coordinates from that read. A round costs about 16 device commands.
-- **Unlabeled widgets.** The consent checkbox is identified as the small clickable node
-  level with its caption; no other node is ever tapped.
-- **Lag tolerance.** Each step taps as soon as the button appears and retries if the next
-  screen does not load.
-- **Scroll into view.** On screens too short for the whole slot list, a slot is scrolled
-  to until it is shown clear of the sticky bottom button.
-- **Verified results.** A round succeeds only once the app shows the ticket; a refusal
-  dialog fails it with the app's message, and neither within the timeout fails it as an
-  unknown outcome to check in the app.
-- **Step timing.** Each log line shows the time elapsed since the previous step.
-- **Configurable labels.** All app strings live in `config.toml`.
-- **Unattended.** A daily scheduled task wakes the PC, starts the emulator, connects ADB,
-  restarts the app and books at the exact opening time.
-- **Precise start.** The PC clock is corrected against an NTP server; the first tap lands
-  within about a millisecond of the start time, and the calendar is reloaded until the new
-  date is listed.
-- **Reporting.** Daily log files, exit codes per failure type and an optional Telegram summary.
-- **History.** Every run, each slot's result and every step is recorded in a SQLite database,
-  without slowing the booking down (about 0.13 ms per write).
-- **One run at a time.** A run lock keeps two runs off the emulator; the scheduled run takes
-  over from any other run two minutes before the start time.
-- **Device setup.** One command checks the PC and the emulator and fixes what it can.
-- **Backend.** A local FastAPI app serves the history, settings, setup, schedule and a live
-  feed for the coming desktop app.
+- **Unattended at 06:00.** The daily task wakes the PC from sleep, starts MuMu, restarts the
+  app and waits on the utilities list. The clock is corrected against NTP, so the first tap
+  goes out about a millisecond after 06:00:00.
+- **Reports only what the app showed.** A slot counts as booked only once the app shows its
+  ticket. A refusal fails the round with the app's own message, and a round that shows
+  neither within 10 s is reported as "outcome unknown", never as booked.
+- **Built for a slow app.** Each step taps as soon as its button appears and taps again if
+  the next screen has not come within 2 s. A frozen emulator ends the run after 60 s with a
+  clear error instead of hanging until the next morning.
+- **One read per screen.** A screen is read in a single accessibility dump (about 70 ms)
+  and every button is found in it locally; waiting for a screen and finding its buttons is
+  the same read. At the real 06:00 opening, the first slot has been booked 7 to 11 s after
+  06:00.
+- **Local web UI and full history.** Overview, schedule, history and settings screens in
+  Vietnamese and English, over a FastAPI backend on 127.0.0.1. Every run, slot and step is
+  kept in SQLite (about 0.13 ms per write), beside a daily log of every screen read.
+- **Tested without a device.** The Python tests replace the emulator, ADB, the clock and
+  Task Scheduler with fakes, and the UI has component tests. CI runs Ruff, pytest on
+  Python 3.9 to 3.14, and the UI's type check, lint, tests and build.
 
 ## How it works
 
 ```mermaid
-flowchart LR
-    A[Home] -->|Tiện ích| B[Utilities]
-    B -->|Sân Tennis| C[Calendar]
-    C -->|date, slot, Tiếp tục| D[Courts]
-    D -->|S10| E[Booking details]
-    E -->|Tiếp tục| F[Confirmation]
-    F -->|accept, Xác nhận| G[Ticket]
-    G -->|Back| B
+flowchart TD
+    A["Home: tap Tiện ích"] --> B["Utilities: tap Sân Tennis"]
+    B --> C["Calendar: pick the date and slot, tap Tiếp tục"]
+    C --> V["Venue, if shown: tap Origami"]
+    V --> D["Courts: tap the court"]
+    D --> E["Booking details: tap Tiếp tục"]
+    E --> F["Confirmation: tick the consent, tap Xác nhận"]
+    F --> G["Ticket: booked"]
+    G -->|Back, next slot| B
 ```
 
-Each configured slot is booked in its own round. See [docs/how-it-works.md](docs/how-it-works.md)
-for design notes, [docs/architecture.md](docs/architecture.md) for the code and
-[docs/roadmap.md](docs/roadmap.md) for what comes next.
+The app is built with Flutter, which publishes its widgets to Android's accessibility tree
+with their text in `content-desc`. The booker reads each screen in one dump, finds the
+buttons by their Vietnamese labels and taps the coordinates from that dump; no position is
+hard-coded. Each slot in `config.toml` is booked in its own round, and one Back from the
+ticket returns to the utilities list for the next one. The labels live in `config.toml`,
+so a change of wording in the app needs no code change.
 
-## Requirements
+A real 06:00 run, abridged (times are the PC clock, which was 0.161 s behind: the first
+tap went out at 06:00:00.001 and is logged once the calendar showed):
 
-- Windows with [MuMu Player](https://www.mumuplayer.com/) and the Vinhomes app logged in
-- ADB: Google platform-tools on `PATH`, or the `adb.exe` that ships with MuMu
+```text
+05:50:02.583 INFO    court-booker 0.6.1
+05:50:02.718 INFO    Clock offset +0.161 s
+05:50:04.894 INFO    Launching MuMu instance 0
+05:50:29.704 INFO    Android started after 24.8 s
+05:50:38.583 INFO    Ready on the home screen
+05:59:00.694 INFO    Tapped 'Tiện ích'
+05:59:59.839 INFO    Round 1/2: 15:00 - 16:00
+06:00:01.427 INFO    Tapped 'Sân Tennis'
+06:00:01.594 INFO    Selected date 2026-10-18
+06:00:03.360 INFO    Selected slot 15:00 - 16:00 (0 swipe(s))
+06:00:05.954 INFO    Tapped 'S6 - Sân tennis'
+06:00:06.232 INFO    Confirmation page: 2026-10-18 15:00 - 16:00 on S6 - Sân tennis
+06:00:06.439 INFO    Accepted terms
+06:00:07.979 INFO    Booking confirmed
+06:00:07.981 INFO    Round 2/2: 16:00 - 17:00
+...
+06:00:10.564 INFO      OK   15:00 - 16:00  booked  (8.1s)
+06:00:10.564 INFO      FAIL 16:00 - 17:00  Court S6 - Sân tennis is fully booked  (2.6s)
+```
+
+Further reading:
+
+- [docs/how-it-works.md](docs/how-it-works.md): reading a Flutter app from the outside,
+  navigation, lessons learned
+- [docs/architecture.md](docs/architecture.md): every module, backend route and UI layer
+- [docs/field-notes.md](docs/field-notes.md): what the app and the emulator were seen to
+  do, and the verified runs
+- [docs/roadmap.md](docs/roadmap.md): product decisions, phases and the situations handled
+
+## Quick start
+
+### Requirements
+
+- Windows (used on Windows 11) with [MuMu Player](https://www.mumuplayer.com/); ADB ships
+  with MuMu
+- The Vinhomes Resident app installed in MuMu and logged in
 - Python 3.9 or later
+- Node.js 22.12 or later, only for the web UI
 
-## Installation
+### 1. Install
 
 ```bash
 git clone https://github.com/servedbyhau/vh-tennis-booker.git
 cd vh-tennis-booker
-pip install -e .
+pip install -e ".[app]"            # "app" adds the backend of the web UI
 cp config.example.toml config.toml
 ```
 
-## Usage
+If `court-booker` is not found afterwards (Python's `Scripts` folder is not on `PATH`), use
+`python -m court_booker` instead.
 
-The emulator and the app are started automatically. Run:
+### 2. Configure
 
-```bash
-court-booker --dry-run          # stop before the final confirmation
-court-booker                    # book the slots from config.toml now
-court-booker --at 06:00         # prepare now, start booking at 06:00:00
-court-booker --scheduled        # same, using start_at from config.toml
-court-booker --slots "18:00 - 19:00" "19:00 - 20:00" --days 2
-court-booker --verbose          # include retries and element positions
-```
+Edit `config.toml`, or later use Settings in the web UI. The keys you usually change:
 
-Slots are booked one after another, so list the most wanted slot first.
+| Key | Example | Meaning |
+|---|---|---|
+| `slots` | `["18:00 - 19:00", "19:00 - 20:00"]` | Slots to book, one round each, in this order: put the most wanted first |
+| `court` | `"S10 - Sân tennis"` | The court, as the app names it (S6, S8, S9 or S10) |
+| `days_ahead` | `2` | Book for today plus 0, 1 or 2 days (the app opens bookings two days ahead) |
+| `start_at` | `"06:00"` | When the app opens bookings |
+| `wake_at` | `"05:45"` | When the daily task wakes the PC and starts preparing |
 
-### Unattended daily booking
+Everything else (the app's labels, timeouts, the MuMu folder) has a working default,
+explained in `config.example.toml`.
 
-```bash
-court-booker schedule install   # daily task at wake_at (05:45) running --scheduled
-court-booker schedule status    # show the task, its last and next run
-court-booker schedule remove    # delete the task
-```
-
-One-time Windows setup:
+### 3. Set up the PC and the emulator
 
 ```bash
-court-booker setup                  # check MuMu, its screen, wake timers and the app
-court-booker setup --auto           # fix what can be fixed
+court-booker setup                         # check MuMu, its screen, wake timers and the app
+court-booker setup --auto                  # fix what can be fixed
 court-booker setup --auto --restart-mumu   # also restart a running MuMu to apply its screen
 ```
 
-`setup --auto` finds MuMu, gives it a custom resolution of **540x1600** (220 DPI), so the
-whole slot list fits without scrolling, and allows wake timers plugged in and on battery.
-It does not run from `wake_at` to 5 minutes after `start_at`. The rest is up to you:
+Auto setup saves the MuMu folder to `config.toml`, sets MuMu's screen to 540x1600 at
+220 DPI (the whole slot list then fits without scrolling) and allows wake timers on mains
+and battery. The rest is up to you:
 
-- Install MuMu Player and the Vinhomes app, and keep the app logged in inside MuMu
-  (a dry run fails with exit code 4 when it is not).
-- Leave the PC on or in **Sleep**; a shut-down PC cannot be woken.
+- Keep the app logged in inside MuMu.
+- Leave the PC on or in **Sleep**: a PC that is shut down cannot be woken.
 - Keep it plugged in.
-- Stay signed in to Windows (a locked screen is fine); MuMu needs the desktop session.
+- Stay signed in to Windows (a locked screen is fine): MuMu needs the desktop session.
 
-Test the whole chain first with `court-booker --at <in 3 minutes> --dry-run` and MuMu
-closed. Each run is logged to `logs/court-booker-YYYY-MM-DD.log`; set `telegram_token` and
-`telegram_chat_id` to receive the summary on your phone.
+### 4. Try a dry run
 
-Every run is also recorded in the history database `booker.db` in the data folder,
-`%LOCALAPPDATA%\CourtBooker` (set `COURT_BOOKER_HOME` to move it), beside the run lock
-`run.lock`. Only one run drives the emulator at a time: a second dry run or manual run is
-refused, and the scheduled run waits for another run, then stops it two minutes before the
-start time. No dry run starts from `wake_at` to 5 minutes after `start_at`.
+```bash
+court-booker --dry-run --at 14:05     # a time a few minutes from now
+```
+
+A dry run walks the whole flow and stops before "Xác nhận", so nothing is booked. Close MuMu
+first to test the whole chain, as at 06:00. Exit code 4 usually means the app is logged
+out.
+
+### 5. Book every morning
+
+```bash
+court-booker schedule install   # daily task at wake_at; it books for real at start_at
+court-booker schedule status    # the task, its last and next run
+```
+
+The Schedule screen of the web UI does the same with a switch, once a dry run has passed.
+`court-booker schedule remove` deletes the task.
+
+## Web UI
+
+```bash
+court-booker serve --config config.toml   # backend on http://127.0.0.1:8765, API docs at /api/docs
+cd ui && npm ci && npm run dev            # then open http://localhost:5173
+```
+
+`--config config.toml` makes the UI read and save the same file as the command line. The
+backend listens on 127.0.0.1 only, and the 06:00 run does not need it; watching a run in
+the UI does not slow it down. Vietnamese is the default language, English is one click
+away.
+
+- **Tổng quan / Overview**: whether the next start is ready, or the one thing to do first;
+  the next booking as a ticket; the last booking of each slot. During a run, its steps as
+  they happen.
+- **Hẹn giờ / Schedule**: a dry run (one must pass), then the daily switch that creates or
+  removes the Windows task.
+- **Lịch sử / History**: the courts booked, month by month, and the activity log of every
+  run in plain steps, with the technical log one click away.
+- **Cài đặt / Settings**: the slots, court and day to book; device setup, with an auto
+  setup for what the app can fix.
+- **Hướng dẫn / Guide**: four steps to start, what each screen is for, the usual problems.
+
+An app not used yet opens on a four-step Welcome instead. Saving settings rewrites
+`config.toml` (its comments are dropped); the next run reads it.
+
+## Command line
+
+| Command | What it does |
+|---|---|
+| `court-booker` | Book the slots in `config.toml` now |
+| `court-booker --dry-run` | Walk the whole flow and stop before "Xác nhận" |
+| `court-booker --at 06:00` | Prepare now, start booking at 06:00:00 |
+| `court-booker --scheduled` | The same at `start_at` (what the daily task runs) |
+| `court-booker --slots "18:00 - 19:00" --days 1` | Other slots or another day, for this run only |
+| `court-booker --verbose` | Also print every screen read and every tap |
+| `court-booker setup [--auto]` | Check the PC and the emulator, or fix them |
+| `court-booker schedule install` / `status` / `remove` | The daily task |
+| `court-booker serve --config config.toml` | The backend of the web UI |
+
+Every command takes `--config` (default: `config.toml` in the current folder; for `serve`,
+the one in the data folder).
 
 | Exit code | Meaning |
 |---|---|
@@ -133,111 +218,30 @@ start time. No dry run starts from `wake_at` to 5 minutes after `start_at`.
 | 1 | a round failed |
 | 2 | bad arguments or config, the start time has passed, or a dry run around the scheduled run |
 | 3 | emulator or ADB error, or the emulator stopped answering (frozen) |
-| 4 | the app did not reach its home screen (e.g. logged out) |
+| 4 | the app did not reach its home screen (for example, logged out) |
 | 5 | another run holds the run lock |
 | 130 | interrupted with Ctrl+C |
 
-If `court-booker` is not on `PATH`, use `python -m court_booker` instead.
+- **Logs**: each run appends to `logs/court-booker-YYYY-MM-DD.log` beside `config.toml`,
+  with every screen it read and every tap.
+- **Data folder**: the history database `booker.db` and the run lock `run.lock` are in
+  `%LOCALAPPDATA%\CourtBooker`; set `COURT_BOOKER_HOME` to move them.
+- **One run at a time**: a second run is refused (exit code 5), and the scheduled run waits
+  for a run already going, then stops it two minutes before the start time. No dry run or
+  auto setup starts from `wake_at` to five minutes after `start_at`.
 
-Sample output:
-
-```text
-11:12:05.231 +0.42s INFO    Tapped 'Sân Tennis'
-11:12:06.010 +0.78s INFO    Selected date 2026-10-03
-11:12:07.402 +1.39s INFO    Selected slot 14:00 - 15:00 (0 swipe(s))
-11:12:09.118 +1.72s INFO    Accepted terms
-```
-
-### Backend
-
-The backend of the coming desktop app needs the `app` extra:
-
-```bash
-pip install -e ".[app]"
-court-booker serve --config config.toml   # http://127.0.0.1:8765, docs at /api/docs
-```
-
-It listens on 127.0.0.1 only and serves the runs and activity log, the settings, device
-setup, the daily schedule (switched on only after a dry run passed), dry runs, an overview,
-and a live feed of new steps over a WebSocket (`/api/live`). Errors are JSON with a stable
-`error` code. Scheduled runs never load it.
-
-### Screens
-
-The screens of the coming desktop app live in `ui/`, in Vietnamese (the default) and
-English. Until 0.7.0 wraps them in an app, run them in a browser beside the backend:
-
-```bash
-court-booker serve --config config.toml   # the backend on 127.0.0.1:8765
-cd ui && npm ci && npm run dev            # http://localhost:5173; /api goes to the backend
-```
-
-- **Tổng quan / Overview**: whether the next start is ready or the one thing to do first,
-  the next booking as a ticket and the last real booking per slot; while a run goes on, its
-  steps as they happen.
-- **Hẹn giờ / Schedule**: a dry run (one must pass), then the daily switch that creates or
-  removes the Windows task.
-- **Lịch sử / History**: two tabs. "Lịch sử" shows the slots booked, month by month;
-  "Nhật ký" (Activity) shows every step of each run in plain words, with the technical
-  log. Both list the newest ten days, and ten more with "Xem thêm".
-- **Cài đặt / Settings**: the slots, court and day to book; device setup, with what only the
-  user can do and an auto setup for the rest.
-- **Hướng dẫn / Guide**: four steps to start, what each screen is for, the usual problems.
-- **Chào mừng / Welcome**: an app not used yet opens on four steps: what happens every
-  morning, device setup, slots and schedule.
-
-To inspect a screen whose elements cannot be found:
-
-```bash
-python tools/inspect_screen.py --near "Tôi đã hiểu"
-```
-
-## Project structure
+## Project layout
 
 ```text
-src/court_booker/
-├── cli.py              command-line entry point and exit codes
-├── runner.py           one run: connect, prepare, wait, book every slot
-├── watchdog.py         time limit on every device command
-├── emulator.py         start MuMu through MuMuManager.exe
-├── adb.py              find adb and connect the emulator
-├── flow.py             booking flow, one method per screen
-├── screen.py           parsed hierarchy dump and label matching
-├── clock.py            start time, NTP offset, precise wait
-├── power.py            keep Windows awake during a run
-├── notify.py           Telegram summary
-├── schedule.py         Windows scheduled task
-├── config.py           defaults, config.toml loading, checking and saving
-├── paths.py            the data folder
-├── events.py           progress events and their sinks
-├── history.py          history database: schema, migrations, event sink
-├── history_read.py     read-only queries for the backend
-├── lock.py             run lock and the quiet time around the scheduled run
-├── processes.py        process identity by pid and start time
-├── device_setup.py     device setup checks and auto setup
-├── errors.py           exception hierarchy
-├── geometry.py         pure helpers for bounds and dates
-├── logging_setup.py    console and file logging with step timing
-└── api/                FastAPI backend: app, errors, one module per route group
-ui/src/                 the app's screens: React, TypeScript, Vite
-├── main.tsx            entry: languages, styles, router
-├── paths.ts            the address of every screen
-├── routes.tsx          addresses mapped to pages
-├── App.tsx             layout: skip link, header, main area
-├── api/                backend client: generated types, endpoints, query hooks, live feed
-├── components/         shared pieces: header, navigation, buttons, ticket, stamp, ledger
-├── pages/              one component per screen, with its parts in a folder
-├── i18n/               i18next setup, Vietnamese and English texts
-└── styles/             fonts, design tokens, base styles
-tools/inspect_screen.py UI hierarchy dump
-tools/setup_runner.py   runner folder for the daily task on a development machine
-tools/export_openapi.py the backend's OpenAPI schema for the UI's types
-tests/                  unit tests with fake devices, adb, clocks and schtasks
-docs/architecture.md    every module, backend route and UI layer
-docs/field-notes.md     what the app and the emulator were seen to do, verified runs
-docs/roadmap.md         product decisions, phases and the situations handled
-docs/specs/             one design spec per version
+src/court_booker/       booking engine and command line: emulator, ADB, flow, clock, history
+src/court_booker/api/   FastAPI backend of the web UI
+ui/                     web UI: React, TypeScript, Vite
+tests/                  Python tests with a fake device, ADB, clock and Task Scheduler
+tools/                  screen inspector, runner folder, OpenAPI export
+docs/                   how it works, architecture, field notes, roadmap, design specs
 ```
+
+[docs/architecture.md](docs/architecture.md) describes every module.
 
 ## Development
 
@@ -245,20 +249,21 @@ docs/specs/             one design spec per version
 pip install -e ".[dev,app]"
 pre-commit install
 pytest
+cd ui && npm ci && npm test
 ```
 
-The desktop app's screens live in `ui/` and need Node.js 22.12 or later:
+When the app changes its screens, `python tools/inspect_screen.py --near "Tôi đã hiểu"`
+prints the elements around a label. [CONTRIBUTING.md](CONTRIBUTING.md) covers the checks,
+conventions, branches and releases, and the runner folder that keeps the daily task off
+work in progress.
 
-```bash
-cd ui
-npm ci
-npm run dev    # http://localhost:5173
-npm test
-```
+## Roadmap
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions and the release process. On a
-development machine the daily task runs a separate runner folder, so work in progress never
-books (see "Runner folder" there).
+The 0.x versions go through four phases toward 1.0.0: it runs, it handles every situation,
+it is fast, it is friendly to use. Now: 0.6.x fixes from the daily 06:00 logs. Then speed
+tuning from the logs, and several accounts booking in parallel (one MuMu each). Last before
+1.0.0: the desktop app with an installer. See [docs/roadmap.md](docs/roadmap.md) and the
+[changelog](CHANGELOG.md).
 
 ## Credits
 
