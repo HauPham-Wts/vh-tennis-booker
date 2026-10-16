@@ -171,10 +171,11 @@ list. Details in `docs/field-notes.md`.
 
 ## Current state
 
-- Released: 0.6.3 (`stable`, tag `v0.6.3`); the runner is at v0.6.2 (0.6.3 changed only
-  the UI and a read route). A booking fix is merged into `main` once tested and released
-  as the next 0.6.x patch.
-- Now: 0.6.x fixes and docs. Packaging the desktop app (Tauri, PyInstaller, installer;
+- Released: 0.7.0 (`stable`, tag `v0.7.0`): taps as a bare touch down + up, MuMu closed
+  after a real run; the runner is at v0.7.0. A booking fix is merged into `main` once
+  tested and released as the next 0.7.x patch.
+- Now: 0.7.x fixes, first the court list that moves while it loads (a tap meant for S6
+  can land on S9; `docs/field-notes.md`, "Booking flow"). Packaging the desktop app (Tauri, PyInstaller, installer;
   "Packaging" in `docs/specs/0.5.0-desktop-app.md`) is the last step before 1.0.0, after the
   speed work; it is not planned yet and has no version number yet (it was 0.7.0).
 - Progress and the plan for the next part are kept outside the repo, in

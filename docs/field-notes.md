@@ -32,6 +32,15 @@ never tell one screen from another.
   `"18:00 - 19:00\nHết chỗ"`. Bookable range: today to today + 2.
 - Slot selection is not exposed in the tree (no `selected`/`checked`); "Tiếp tục" is always
   clickable. Courts can be "Hết chỗ" (e.g. `"S9 - Sân tennis\nHết chỗ"`).
+- The court list can show before the "Thông tin dịch vụ" block above it has loaded: the
+  block is an empty clickable `[34,501][504,666]`, "Chọn vị trí/dịch vụ" sits at y=958
+  and S6 at `[35,1157][505,1277]`. Once the block loads it shows "Xem thêm" and the whole
+  list moves up 232 px (header y=725, S6 `[35,925][505,1045]`, S9 `[35,1193][505,1313]`),
+  so a tap at S6's first centre (y=1217) lands on S9, two courts lower. Of 28 taps made on
+  the first layout (14-16/10), two landed on S9 (15/10 06:00, 16/10 16:08), besides the S9
+  booking of 13/10. In 12 dry rounds (16/10, quiet hours) "Xem thêm" was still missing
+  over a second later. The reads just before and just after the wrong tap of 16/10 both
+  showed the first layout, so a dump can lag behind the screen.
 - Calendar at 540x1600 (failure log, 2026-10-10): two non-clickable nodes labelled
   `"Chọn năm"` at `[22,160][170,229]` and `[177,160][285,229]`, then a day grid from
   y=344; no node labelled "Tháng sau"/"Tháng trước" and no clickable unlabelled node near
@@ -156,4 +165,5 @@ without it, such as the empty frame seen at 16:44 on 2026-10-15, is read again.
 | 0.5.3 | 2026-10-14 | Timed real booking 16/10 11:00-12:00 (cancelled afterwards): start 10:46:21, "Tiện ích" at start - 60 s (list loaded in 0.63 s), read at start - 2 s, "Sân Tennis" tapped 1 ms after the start, booked in 6.0 s. The runner moved to v0.5.3 the same day |
 | 0.6.1 code | 2026-10-15 | Timed real booking 17/10 at 16:44 (cancelled afterwards): 09:00-10:00 failed (court S6 fully booked), 10:00-11:00 booked in 8.6 s; the confirmation page read "2026-10-17 10:00 - 11:00 on S6"; the first read 0.9 s after "Xác nhận" was blank (5 elements), so the ticket warning showed. A run at 16:40 found both evening slots fully booked |
 | 0.6.2 code | 2026-10-16 | Timed real booking 18/10 at 11:38 (cancelled afterwards): 10:00-11:00 booked in 5.7 s, the ticket's title in the first read 0.92 s after "Xác nhận" (status "Đang xử lý"); round 2 left the ticket with one Back and tapped "Sân Tennis" 0.32 s after it started; 11:00-12:00 reached "Xác nhận" and the app refused it with the monthly quota dialog 0.72 s later, which failed the round with the dialog's message. The clock check answered on the first try |
+| 0.7.0 code | 2026-10-16 | Dry run at 16:04 (MuMu left open), then a timed real booking 18/10 at 16:08 (a test booking): 10:00-11:00 booked in 5.7 s with touch down + up taps; 11:00-12:00 reached "Xác nhận" and the app refused it with the monthly quota dialog. In that round the tap on S6 landed on S9 (the court list moved, see "Booking flow"). "Closing MuMu instance 0" after the summary; the process exited 0.6 s later and `MuMuNxDevice` was gone within 18 s |
 | UI part 3 | 2026-10-14 | Requests through the Vite proxy, and the live feed across a backend stop and restart (no step lost or repeated), against a scratch backend |

@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-16
+
 ### Changed
 - Roadmap: packaging the desktop app (Tauri, PyInstaller, installer) is now the last step
   before 1.0.0, after the speed work, and gets its version number when it starts; it was
