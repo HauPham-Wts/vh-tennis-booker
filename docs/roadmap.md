@@ -40,6 +40,7 @@ work: 0.4.0 waits for failures in the logs, and the core books reliably.
 | 2 Every situation | 0.5.1-0.5.3 | Refused bookings fail the round, every screen logged, warm-up on the utilities list (released 2026-10-14) |
 | 4 UI | 0.6.0 UI | React + TypeScript screens in the "Vé giấy" design, Vietnamese and English (released 2026-10-15) |
 | 2 Every situation | 0.6.1 | Court and date read on the confirmation page, ticket check (warning only), 60 s limit on device commands, labels saved only when changed (released 2026-10-15) |
+| 2 Every situation | 0.6.2 | Booked only once the ticket shows (unknown outcome fails the round), Back pressed as soon as each screen shows, clock check with fallback servers; `main`/`stable` branch flow (released 2026-10-16) |
 | 4 UI | **0.7.0 Desktop app** | Tauri shell with PyInstaller sidecar, installer, release automation |
 | 3 Fast | Later | Tuning from the log files; several MuMu instances with separate accounts in parallel (one account cannot log in twice) |
 

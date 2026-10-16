@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Last updated: 2026-10-15.
+Last updated: 2026-10-16.
 
 ## Project
 
@@ -169,7 +169,7 @@ list. Details in `docs/field-notes.md`.
 
 ## Current state
 
-- Released: 0.6.1 (`stable`, tag `v0.6.1`); the runner is at v0.6.1. A booking fix is
+- Released: 0.6.2 (`stable`, tag `v0.6.2`); the runner is at v0.6.2. A booking fix is
   merged into `main` once tested and released as the next 0.6.x patch.
 - Now: 0.6.x fixes before 0.7.0 (desktop app, the 0.7.0 parts of
   `docs/specs/0.5.0-desktop-app.md`), which is not planned yet.

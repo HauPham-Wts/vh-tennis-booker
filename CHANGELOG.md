@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-10-16
+
 ### Changed
 - Branches: every branch is cut from `main` and merged back into it; `main` is the
   development line and the new `stable` branch points at the latest release. Versions no

@@ -13,6 +13,14 @@ appears; pick slot; "Tiếp tục") → optional venue screen ("Origami…") →
 tick consent checkbox, "Xác nhận") → Ticket screen. One Back from the ticket returns to the
 Utilities list, where the next round starts.
 
+Back from inside the flow (2026-10-15 20:50): a notice dialog closes to the confirmation
+page, with `'Đóng'` and with Back alike. From there Back goes to the booking details, the
+court list, the venue ("Origami…"), the calendar and the Utilities list (5 Backs); one more
+leaves to the home screen. Each screen shows 0.13-0.24 s after Back, at times after an
+empty frame (only the full-screen root and the status bar). The status bar's labels change
+on their own (the clock, a "Google Play services notification" seen at 20:13), so they
+never tell one screen from another.
+
 ## Reading the app
 
 - Flutter exposes text via `content-desc`, not `text`; select with `description=...`.
@@ -39,9 +47,17 @@ Utilities list, where the next round starts.
   per run, never stored.
 - "Xác nhận" is disabled until the checkbox is ticked; used to verify the tick.
 - Up to 0.6.1 success was the confirmation screen disappearing; since 0.6.2 it is the
-  ticket's title showing. A notice dialog hides the confirmation screen too: the dialog's title node `'Thông báo'` spans `[0,33][540,1600]` and holds
-  the message and a clickable `'Đóng'`; the page beneath leaves the dump (8 elements in
-  all, seen 2026-10-10 for the monthly quota). On 2026-10-14 round 1 (18-19) was logged as
+  ticket's title showing. A notice dialog hides the confirmation screen too: the dialog's
+  title node `'Thông báo'` spans `[0,33][540,1600]` and holds the message and a clickable
+  `'Đóng'`; the page beneath leaves the dump (8 elements in all, seen 2026-10-10 for the
+  monthly quota).
+- After "Xác nhận" (two accounts on 2026-10-15 20:50, the second one booking the slot
+  first): the confirmation page stays about 0.75-1.0 s while the server answers, then a
+  frame without any label of the app shows (5 elements: the full-screen root and the
+  status bar; +0.94 s), then either the ticket or, here, the notice "Tiện ích đã hết chỗ,
+  vui lòng chọn vị trí/thời gian khác" with `'Đóng'` (+1.04 s). The same empty frame was
+  the first read at 16:44 on a booking that went through, so it says nothing about the
+  outcome. On 2026-10-14 round 1 (18-19) was logged as
   booked but was not: round 2 then needed 11 s and 169 commands to get back to "Sân Tennis"
   (other days 0.6-0.8 s, one Back from the ticket), so a dialog had replaced the page.
   Since 0.5.1 such a round fails with the app's message.
@@ -76,7 +92,9 @@ without it, such as the empty frame seen at 16:44 on 2026-10-15, is read again.
 - Each apartment may book 8 slots per month (1 hour = 1 slot). Once they are used, tapping
   "Tiếp tục" on the calendar opens a dialog "Thông báo": "Căn hộ đã hết hạn mức đăng ký
   tiện ích cho phép." with a "Đóng" button (seen 2026-10-10); the round then fails after
-  the re-taps with "Tapped 'Tiếp tục' but the next screen did not appear".
+  the re-taps with "Tapped 'Tiếp tục' but the next screen did not appear". On 2026-10-16
+  the same dialog showed only after "Xác nhận" (0.72 s after the tap), so the round failed
+  with its message.
 
 ## Emulator (MuMu)
 
@@ -87,7 +105,9 @@ without it, such as the empty frame seen at 16:44 on 2026-10-15, is read again.
   `info_list` 105-177 ms, `window_size` 125 ms. uiautomator2 `click()` on a selector is
   wait + info + click.
 - The MuMu clock follows the PC clock (+15 ms measured); the NTP offset of the PC varies
-  (+0.035 to +0.144 s).
+  (+0.035 to +0.144 s; +0.34 s on 2026-10-15 at 22:00 from time.google.com,
+  time.windows.com and pool.ntp.org alike). time.google.com timed out once (2026-10-15
+  20:09) and the run used the PC clock; since 0.6.2 other servers are asked.
 - Android animations were already off (removed in MuMu's Android settings on 2026-10-12);
   `Booker.prepare` turns them off anyway.
 - MuMu froze twice on 2026-10-13 during dry runs (11:13, and 11:58 right after a restart),
@@ -120,4 +140,5 @@ without it, such as the empty frame seen at 16:44 on 2026-10-15, is read again.
 | 0.5.2 | 2026-10-14 | Real booking 16/10 10:00-11:00 (cancelled afterwards) logged all 24 screens up to the ticket |
 | 0.5.3 | 2026-10-14 | Timed real booking 16/10 11:00-12:00 (cancelled afterwards): start 10:46:21, "Tiện ích" at start - 60 s (list loaded in 0.63 s), read at start - 2 s, "Sân Tennis" tapped 1 ms after the start, booked in 6.0 s. The runner moved to v0.5.3 the same day |
 | 0.6.1 code | 2026-10-15 | Timed real booking 17/10 at 16:44 (cancelled afterwards): 09:00-10:00 failed (court S6 fully booked), 10:00-11:00 booked in 8.6 s; the confirmation page read "2026-10-17 10:00 - 11:00 on S6"; the first read 0.9 s after "Xác nhận" was blank (5 elements), so the ticket warning showed. A run at 16:40 found both evening slots fully booked |
+| 0.6.2 code | 2026-10-16 | Timed real booking 18/10 at 11:38 (cancelled afterwards): 10:00-11:00 booked in 5.7 s, the ticket's title in the first read 0.92 s after "Xác nhận" (status "Đang xử lý"); round 2 left the ticket with one Back and tapped "Sân Tennis" 0.32 s after it started; 11:00-12:00 reached "Xác nhận" and the app refused it with the monthly quota dialog 0.72 s later, which failed the round with the dialog's message. The clock check answered on the first try |
 | UI part 3 | 2026-10-14 | Requests through the Vite proxy, and the live feed across a backend stop and restart (no step lost or repeated), against a scratch backend |
