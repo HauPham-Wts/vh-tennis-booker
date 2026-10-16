@@ -90,6 +90,46 @@ describe("BookingsPage", () => {
     expect(await screen.findByRole("combobox", { name: "Tháng" })).toHaveValue("2026-09");
   });
 
+  it("shows the newest ten days of play, then ten more on request", async () => {
+    // Twelve days of play, 1-12/10, the newest one booked twice.
+    const days = Array.from({ length: 12 }, (_, index) => 12 - index);
+    const runs = [
+      runSummary(113, { play_date: "2026-10-12" }),
+      ...days.map((day, index) =>
+        runSummary(112 - index, { play_date: `2026-10-${String(day).padStart(2, "0")}` }),
+      ),
+    ];
+    const { fetch, router } = renderApp(paths.bookings, {
+      "GET /api/runs/months": reply(MONTHS),
+      "GET /api/runs": reply(runs),
+    });
+    const main = screen.getByRole("main");
+    const tickets = () =>
+      within(main)
+        .getAllByText(/^Chơi /)
+        .map((title) => title.textContent);
+    const reads = () => fetch.mock.calls.filter(([request]) => request.url.endsWith("limit=200"));
+
+    await within(main).findAllByText("Chơi Thứ Hai 12/10");
+    expect(tickets()).toHaveLength(11);
+    expect(tickets().at(-1)).toBe("Chơi Thứ Bảy 03/10");
+
+    fireEvent.click(screen.getByRole("button", { name: "Xem thêm" }));
+
+    expect(tickets()).toHaveLength(13);
+    expect(tickets().at(-1)).toBe("Chơi Thứ Năm 01/10");
+    expect(screen.queryByRole("button", { name: "Xem thêm" })).not.toBeInTheDocument();
+    expect(reads()).toHaveLength(1);
+
+    // Another month starts again from its newest days.
+    fireEvent.change(screen.getByRole("combobox", { name: "Tháng" }), {
+      target: { value: "2026-09" },
+    });
+    await waitFor(() => expect(router.state.location.search).toBe("?month=2026-09"));
+    expect(await screen.findByRole("button", { name: "Xem thêm" })).toBeInTheDocument();
+    expect(tickets()).toHaveLength(11);
+  });
+
   it("says when there is no real booking yet, or none in the month", async () => {
     renderApp(paths.bookings, { "GET /api/runs/months": reply([]) });
     expect(await screen.findByText("Chưa có lần đặt thật nào.")).toBeInTheDocument();

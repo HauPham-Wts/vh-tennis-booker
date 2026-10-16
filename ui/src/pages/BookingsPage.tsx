@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router";
 import { useRunMonths, useRuns } from "../api/queries";
 import type { MonthSummary, RunSummary } from "../api/types";
+import { Button } from "../components/Button";
 import { QueryView } from "../components/QueryView";
 import { Stamp } from "../components/Stamp";
 import { Ticket } from "../components/Ticket";
+import { DAYS_SHOWN, newestDays, playDay } from "../days";
 import { paths } from "../paths";
 import { runStamp } from "../runs";
 import { useFormat } from "../useFormat";
@@ -45,23 +48,37 @@ function RunRow({ run }: { run: RunSummary }) {
   );
 }
 
-/** The real bookings of one month, newest first. */
+/**
+ * The real bookings of one month, newest first: those of the newest days of play, and more
+ * days on request. The month is read whole, so showing more sends no request.
+ */
 function MonthRuns({ month }: { month: string }) {
   const { t } = useTranslation();
   const runs = useRuns({ month, dry_run: false, limit: MONTH_LIMIT });
+  const [days, setDays] = useState(DAYS_SHOWN);
   return (
     <QueryView
       query={runs}
       isEmpty={(list) => list.length === 0}
       empty={t("pages.history.emptyMonth")}
     >
-      {(list) => (
-        <ol className={styles.list}>
-          {list.map((run) => (
-            <RunRow key={run.id} run={run} />
-          ))}
-        </ol>
-      )}
+      {(list) => {
+        const { shown, more } = newestDays(list, playDay, days);
+        return (
+          <>
+            <ol className={styles.list}>
+              {shown.map((run) => (
+                <RunRow key={run.id} run={run} />
+              ))}
+            </ol>
+            {more && (
+              <Button className={styles.more} onClick={() => setDays(days + DAYS_SHOWN)}>
+                {t("common.more")}
+              </Button>
+            )}
+          </>
+        );
+      }}
     </QueryView>
   );
 }
@@ -117,7 +134,7 @@ export function BookingsPage() {
         isEmpty={(found) => found.length === 0}
         empty={t("pages.history.empty")}
       >
-        {() => shown && <MonthRuns month={shown.month} />}
+        {() => shown && <MonthRuns key={shown.month} month={shown.month} />}
       </QueryView>
     </>
   );

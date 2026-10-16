@@ -12,6 +12,9 @@ uses [Semantic Versioning](https://semver.org/).
   addresses (`/history/bookings`, `/history/activity`); `/history` and the old `/activity`
   lead to them, keeping the month or the run asked for. The Guide describes both tabs
   under History.
+- The History tab shows the bookings of the newest ten days of play in the month picked,
+  and ten days more with "Xem thêm"; the month is still read in one request, so showing
+  more asks the backend nothing.
 
 ## [0.6.2] - 2026-10-16
 
