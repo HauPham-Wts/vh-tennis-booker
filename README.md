@@ -44,7 +44,7 @@ packaged desktop app with an installer is the last step before 1.0.0.
 ## How it works
 
 ```mermaid
-flowchart LR
+flowchart TD
     A[Home] -->|Tiện ích| B[Utilities]
     B -->|Sân Tennis| C[Calendar]
     C -->|date, slot, Tiếp tục| V["Venue (if shown)"]
