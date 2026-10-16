@@ -36,7 +36,8 @@ export interface paths {
          * @description List runs newest first.
          *
          *     ``month`` filters on the play date, ``dry_run`` keeps dry runs or real bookings,
-         *     ``before`` pages back.
+         *     ``before`` pages back, ``days`` keeps every run of the newest days that have runs (by
+         *     the day a run started; ``limit`` still applies).
          */
         get: operations["list_runs_api_runs_get"];
         put?: never;
@@ -664,6 +665,7 @@ export interface operations {
                 trigger?: ("scheduled" | "dry_run" | "manual") | null;
                 dry_run?: boolean | null;
                 before?: number | null;
+                days?: number | null;
                 limit?: number;
             };
             header?: never;
