@@ -92,7 +92,9 @@ without it, such as the empty frame seen at 16:44 on 2026-10-15, is read again.
 - Each apartment may book 8 slots per month (1 hour = 1 slot). Once they are used, tapping
   "Tiếp tục" on the calendar opens a dialog "Thông báo": "Căn hộ đã hết hạn mức đăng ký
   tiện ích cho phép." with a "Đóng" button (seen 2026-10-10); the round then fails after
-  the re-taps with "Tapped 'Tiếp tục' but the next screen did not appear".
+  the re-taps with "Tapped 'Tiếp tục' but the next screen did not appear". On 2026-10-16
+  the same dialog showed only after "Xác nhận" (0.72 s after the tap), so the round failed
+  with its message.
 
 ## Emulator (MuMu)
 
@@ -138,4 +140,5 @@ without it, such as the empty frame seen at 16:44 on 2026-10-15, is read again.
 | 0.5.2 | 2026-10-14 | Real booking 16/10 10:00-11:00 (cancelled afterwards) logged all 24 screens up to the ticket |
 | 0.5.3 | 2026-10-14 | Timed real booking 16/10 11:00-12:00 (cancelled afterwards): start 10:46:21, "Tiện ích" at start - 60 s (list loaded in 0.63 s), read at start - 2 s, "Sân Tennis" tapped 1 ms after the start, booked in 6.0 s. The runner moved to v0.5.3 the same day |
 | 0.6.1 code | 2026-10-15 | Timed real booking 17/10 at 16:44 (cancelled afterwards): 09:00-10:00 failed (court S6 fully booked), 10:00-11:00 booked in 8.6 s; the confirmation page read "2026-10-17 10:00 - 11:00 on S6"; the first read 0.9 s after "Xác nhận" was blank (5 elements), so the ticket warning showed. A run at 16:40 found both evening slots fully booked |
+| 0.6.2 code | 2026-10-16 | Timed real booking 18/10 at 11:38 (cancelled afterwards): 10:00-11:00 booked in 5.7 s, the ticket's title in the first read 0.92 s after "Xác nhận" (status "Đang xử lý"); round 2 left the ticket with one Back and tapped "Sân Tennis" 0.32 s after it started; 11:00-12:00 reached "Xác nhận" and the app refused it with the monthly quota dialog 0.72 s later, which failed the round with the dialog's message. The clock check answered on the first try |
 | UI part 3 | 2026-10-14 | Requests through the Vite proxy, and the live feed across a backend stop and restart (no step lost or repeated), against a scratch backend |
