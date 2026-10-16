@@ -28,7 +28,10 @@ AccessibilityService). ADB needs Android developer mode, which the app accepts.
 The 0.x versions go through four phases toward 1.0.0: (1) it runs, (2) it handles every
 situation, (3) it is fast, (4) it has a user-friendly UI. Speed came early (0.3.0) because
 it decides the 06:00 race. On 2026-10-12 the UI phase moved ahead of the remaining speed
-work: 0.4.0 waits for failures in the logs, and the core books reliably.
+work: 0.4.0 waits for failures in the logs, and the core books reliably. Since 0.6.0 the
+0.6.x patches fix what the 06:00 logs and daily use show. On 2026-10-16 packaging the
+desktop app (the installer) moved to the very end, after the speed work, so it only wraps
+what has proven itself; it gets its version number when it starts.
 
 | Phase | Version | Scope |
 |---|---|---|
@@ -42,8 +45,9 @@ work: 0.4.0 waits for failures in the logs, and the core books reliably.
 | 2 Every situation | 0.6.1 | Court and date read on the confirmation page, ticket check (warning only), 60 s limit on device commands, labels saved only when changed (released 2026-10-15) |
 | 2 Every situation | 0.6.2 | Booked only once the ticket shows (unknown outcome fails the round), Back pressed as soon as each screen shows, clock check with fallback servers; `main`/`stable` branch flow (released 2026-10-16) |
 | 4 UI | 0.6.3 | Activity becomes the second tab of History (five menu items); both list ten days and "Xem thêm" (`GET /api/runs?days=`) (released 2026-10-16) |
-| 4 UI | **0.7.0 Desktop app** | Tauri shell with PyInstaller sidecar, installer, release automation |
+| 2 Every situation | **0.6.x** | Fixes as the 06:00 logs and daily use show them (now) |
 | 3 Fast | Later | Tuning from the log files; several MuMu instances with separate accounts in parallel (one account cannot log in twice) |
+| 4 UI | Desktop app, last before 1.0.0 | Tauri shell with PyInstaller sidecar, installer, release automation; version number set when it starts (spec [0.5.0-desktop-app](specs/0.5.0-desktop-app.md), "Packaging") |
 
 There is no 0.3.1: its candidate fixes were judged to have no impact.
 
