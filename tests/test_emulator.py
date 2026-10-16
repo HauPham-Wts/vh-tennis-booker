@@ -139,6 +139,18 @@ def test_restart_asks_mumu(manager_path):
     assert fake.calls == ["control"]
 
 
+def test_shutdown_asks_mumu_to_shut_the_instance_down(manager_path):
+    calls = []
+
+    def run(argv):
+        calls.append(argv)
+        return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+
+    MuMu(manager_path, 1, run=run).shutdown()
+
+    assert calls == [[str(manager_path), "control", "-v", "1", "shutdown"]]
+
+
 def test_failed_command_raises(manager_path):
     def run(argv):
         return subprocess.CompletedProcess(argv, 1, stdout="", stderr="no such player")

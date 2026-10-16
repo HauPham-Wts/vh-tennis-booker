@@ -92,7 +92,7 @@ describe("WelcomePage introduction", () => {
     expect(moments.map((moment) => moment.textContent)).toEqual([
       "05:40Máy tính tự thức dậyTừ chế độ Sleep, không cần bạn bật.",
       "Ngay sau đóMở MuMu và app VinhomesRồi chờ sẵn ở mục Sân Tennis.",
-      "06:00Đặt các khung giờ bạn chọnHai khung giờ thường xong trong khoảng 15 giây.",
+      "06:00Đặt các khung giờ bạn chọnHai khung giờ thường xong trong khoảng 15 giây, rồi MuMu tự đóng.",
     ]);
   });
 

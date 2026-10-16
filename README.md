@@ -172,7 +172,8 @@ court-booker schedule status    # the task, its last and next run
 ```
 
 The Schedule screen of the web UI does the same with a switch, once a dry run has passed.
-`court-booker schedule remove` deletes the task.
+`court-booker schedule remove` deletes the task. A real run closes MuMu once its rounds are
+done; the next run starts it again. A dry run leaves it open.
 
 ## Web UI
 

@@ -20,6 +20,10 @@ uses [Semantic Versioning](https://semver.org/).
   round (measured 2026-10-16).
 
 ### Added
+- A real run closes MuMu once its rounds are done (`MuMuManager control shutdown`); the next
+  run starts it again. MuMu stays open after a dry run, Ctrl+C, an error before the rounds
+  (such as a logged-out app) or a frozen MuMu. A failure to close it is only a warning. The
+  welcome screen says so.
 - Screenshots of the web UI in the README (the Overview during a dry run, History,
   Settings › Booking), with made-up data, in `docs/img/`. The rule against committing
   screenshots now covers screenshots of the Vinhomes app and of real data.

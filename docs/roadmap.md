@@ -9,8 +9,9 @@ booking (decided 2026-10-07).
 - The target date is always today + `days_ahead` (default 2); there is no `--date`.
 - No stop button or cancellation token; Ctrl+C prints the summary instead.
 - The trigger is Windows Task Scheduler at `wake_at` (default 05:45), time-based, not
-  logon. The run itself starts MuMu, connects ADB and restarts the app; MuMu and the app are
-  left open after the run.
+  logon. The run itself starts MuMu, connects ADB and restarts the app. A real run that ran
+  its rounds closes MuMu at the end (since 0.7.0, no setting); MuMu stays open after a dry
+  run, Ctrl+C, an error before the rounds, or a freeze.
 - Each run waits on the home screen and opens the utilities list `warm_up_seconds` (60)
   before the start time, so only the booking taps happen after 06:00 and the app has loaded
   its data shortly before (2026-10-14).
