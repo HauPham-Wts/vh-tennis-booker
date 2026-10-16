@@ -4,6 +4,8 @@ import { reply, requestsTo, stubBackend } from "../test/backend";
 import { createTestQueryClient, withQueryClient } from "../test/queries";
 import { ApiError } from "./client";
 import {
+  nextRunDays,
+  RUN_DAYS_LIMIT,
   SETTLING_POLL_MS,
   settlingInterval,
   useOverview,
@@ -11,6 +13,7 @@ import {
   useRuns,
   useSetupChecks,
 } from "./queries";
+import { runSummary } from "../test/runs";
 import type { Overview } from "./types";
 import { createQueryClient, shouldRetry, UNREACHABLE_RETRIES } from "./queryClient";
 
@@ -137,5 +140,24 @@ describe("query hooks", () => {
     expect(result.current.error).toBeInstanceOf(ApiError);
     expect((result.current.error as ApiError).code).toBe("engine");
     expect(requestsTo(fetch, "GET /api/status")).toBe(1);
+  });
+});
+
+describe("nextRunDays", () => {
+  const onDay = (id: number, day: number) =>
+    runSummary(id, { started_at: `2026-10-${String(day).padStart(2, "0")}T05:50:02.120` });
+
+  it("goes on from the last run of a page that holds all ten days asked for", () => {
+    const page = [onDay(30, 15), ...Array.from({ length: 10 }, (_, i) => onDay(29 - i, 14 - i))];
+
+    expect(nextRunDays(page.slice(0, 10))).toBe(21);
+    expect(nextRunDays(page.slice(0, 9))).toBeUndefined();
+    expect(nextRunDays([])).toBeUndefined();
+  });
+
+  it("goes on from a page cut by the limit, whatever its days", () => {
+    const page = Array.from({ length: RUN_DAYS_LIMIT }, (_, i) => onDay(1000 - i, 15));
+
+    expect(nextRunDays(page)).toBe(501);
   });
 });
