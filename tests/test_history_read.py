@@ -139,6 +139,22 @@ def test_runs_page_back_from_a_run(path, read, record_run):
     assert [run["id"] for run in page] == [ids[2], ids[1]]
 
 
+def test_runs_of_the_newest_days_come_whole(path, read, record_run):
+    oldest = record_run(path, day="2026-10-10")
+    middle = [record_run(path, day="2026-10-12") for _ in range(2)]
+    newest = record_run(path, day="2026-10-14")
+    tested = record_run(path, trigger="dry_run", day="2026-10-15")
+
+    def ids(**filters):
+        return [run["id"] for run in history_read.list_runs(read(), **filters)]
+
+    assert ids(days=2) == [tested, newest]
+    assert ids(days=2, dry_run=False) == [newest, *reversed(middle)]
+    assert ids(days=2, dry_run=False, before=middle[1]) == [middle[0], oldest]
+    assert ids(days=9) == [tested, newest, *reversed(middle), oldest]
+    assert ids(days=1, dry_run=False, limit=1) == [newest]
+
+
 def test_one_run_comes_with_slots_steps_and_log_lines(path, read, record_run):
     run_id = record_run(path, slots=[("18:00 - 19:00", True), ("19:00 - 20:00", False)])
 

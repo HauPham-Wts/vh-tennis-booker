@@ -50,8 +50,27 @@ def test_runs_filter_real_bookings_from_dry_runs(client, database, record_run):
     assert ids("true") == [tested]
 
 
+def test_runs_of_the_newest_days(client, database, record_run):
+    older = record_run(database, day="2026-10-12")
+    newer = [record_run(database, day="2026-10-14") for _ in range(2)]
+
+    def ids(**params):
+        return [run["id"] for run in client.get("/api/runs", params=params).json()]
+
+    assert ids(days=1) == [newer[1], newer[0]]
+    assert ids(days=1, before=newer[0]) == [older]
+
+
 @pytest.mark.parametrize(
-    "params", [{"month": "October"}, {"trigger": "nightly"}, {"limit": 0}, {"limit": 501}]
+    "params",
+    [
+        {"month": "October"},
+        {"trigger": "nightly"},
+        {"limit": 0},
+        {"limit": 501},
+        {"days": 0},
+        {"days": 61},
+    ],
 )
 def test_bad_run_filters_are_refused(client, params):
     assert client.get("/api/runs", params=params).status_code == 422

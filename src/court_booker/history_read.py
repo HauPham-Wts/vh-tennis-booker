@@ -22,6 +22,9 @@ _RUN_COLUMNS = """
     (SELECT COUNT(*) FROM run_slots WHERE run_slots.run_id = runs.id) AS total
 """
 
+_RUN_DAY = "substr(runs.started_at, 1, 10)"
+"""The day a run started; ``started_at`` is local time, ``YYYY-MM-DDTHH:MM:SS.mmm``."""
+
 
 def open_read_only(path: Path) -> sqlite3.Connection:
     """Open the history at ``path`` for reading; rows come back as ``sqlite3.Row``.
@@ -46,13 +49,15 @@ def list_runs(
     trigger: str | None = None,
     dry_run: bool | None = None,
     before: int | None = None,
+    days: int | None = None,
     limit: int = DEFAULT_LIMIT,
 ) -> list[dict[str, Any]]:
     """Return runs newest first, each with its slots and its count of booked and all slots.
 
     ``month`` (``YYYY-MM``) keeps runs whose play date falls in it; ``dry_run`` keeps dry
     runs or real ones (a scheduled run can be a dry run too); ``before`` (a run id) returns
-    the page after the one that ended with that run.
+    the page after the one that ended with that run. ``days`` keeps every run of the newest
+    ``days`` days the other filters leave runs on, by the day a run started.
     """
     where, params = [], []
     if month:
@@ -67,6 +72,13 @@ def list_runs(
     if before is not None:
         where.append("runs.id < ?")
         params.append(before)
+    if days is not None:
+        # The days are counted among the runs the other filters keep, so none comes up empty.
+        kept = f" WHERE {' AND '.join(where)}" if where else ""
+        where.append(
+            f"{_RUN_DAY} IN (SELECT DISTINCT {_RUN_DAY} FROM runs{kept} ORDER BY 1 DESC LIMIT ?)"
+        )
+        params.extend([*params, days])
     condition = f" WHERE {' AND '.join(where)}" if where else ""
     rows = db.execute(
         f"SELECT {_RUN_COLUMNS} FROM runs{condition} ORDER BY runs.id DESC LIMIT ?",

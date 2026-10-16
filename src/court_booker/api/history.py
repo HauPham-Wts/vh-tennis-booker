@@ -19,6 +19,9 @@ router = APIRouter(prefix="/api", tags=["history"])
 Trigger = Literal["scheduled", "dry_run", "manual"]
 Category = Literal["step", "slot", "setup", "schedule", "settings", "error"]
 
+MAX_DAYS = 60
+"""The most days of runs one request may ask for; the app asks for ten at a time."""
+
 
 def history_db(context: Context) -> Iterator[sqlite3.Connection]:
     """Open the history read-only for one request."""
@@ -100,15 +103,23 @@ def list_runs(
     trigger: Optional[Trigger] = None,
     dry_run: Optional[bool] = None,
     before: Optional[int] = None,
+    days: Annotated[Optional[int], Query(ge=1, le=MAX_DAYS)] = None,
     limit: Annotated[int, Query(ge=1, le=500)] = history_read.DEFAULT_LIMIT,
 ) -> list[dict[str, Any]]:
     """List runs newest first.
 
     ``month`` filters on the play date, ``dry_run`` keeps dry runs or real bookings,
-    ``before`` pages back.
+    ``before`` pages back, ``days`` keeps every run of the newest days that have runs (by
+    the day a run started; ``limit`` still applies).
     """
     return history_read.list_runs(
-        db, month=month, trigger=trigger, dry_run=dry_run, before=before, limit=limit
+        db,
+        month=month,
+        trigger=trigger,
+        dry_run=dry_run,
+        before=before,
+        days=days,
+        limit=limit,
     )
 
 

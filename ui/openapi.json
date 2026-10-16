@@ -53,7 +53,7 @@
           "history"
         ],
         "summary": "List Runs",
-        "description": "List runs newest first.\n\n``month`` filters on the play date, ``dry_run`` keeps dry runs or real bookings,\n``before`` pages back.",
+        "description": "List runs newest first.\n\n``month`` filters on the play date, ``dry_run`` keeps dry runs or real bookings,\n``before`` pages back, ``days`` keeps every run of the newest days that have runs (by\nthe day a run started; ``limit`` still applies).",
         "operationId": "list_runs_api_runs_get",
         "parameters": [
           {
@@ -124,6 +124,24 @@
                 }
               ],
               "title": "Before"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 60,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Days"
             }
           },
           {

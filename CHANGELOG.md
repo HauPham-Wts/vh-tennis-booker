@@ -16,6 +16,10 @@ uses [Semantic Versioning](https://semver.org/).
   and ten days more with "Xem thêm"; the month is still read in one request, so showing
   more asks the backend nothing.
 
+### Added
+- `GET /api/runs` takes `days` (1-60): every run of the newest days that have runs, by
+  the day a run started, after the other filters; with `before` it pages back by days.
+
 ## [0.6.2] - 2026-10-16
 
 ### Changed
