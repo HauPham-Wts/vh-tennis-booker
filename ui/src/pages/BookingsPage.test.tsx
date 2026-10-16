@@ -40,9 +40,9 @@ async function bookingRows() {
   return within(main).getAllByRole("listitem");
 }
 
-describe("HistoryPage", () => {
+describe("BookingsPage", () => {
   it("sums up the newest month and lists its real bookings as tickets", async () => {
-    const { fetch } = renderApp(paths.history, REPLIES);
+    const { fetch } = renderApp(paths.bookings, REPLIES);
 
     expect(
       await screen.findByText("Tháng 10/2026: đặt được 3 khung giờ trong 2 lần."),
@@ -54,7 +54,7 @@ describe("HistoryPage", () => {
     expect(rows[0]).toHaveTextContent("ĐẶT ĐƯỢC 2/2");
     expect(within(rows[0]!).getByRole("link", { name: "nhật ký" })).toHaveAttribute(
       "href",
-      "/activity?run=26",
+      "/history/activity?run=26",
     );
     const query = runsQuery(fetch);
     expect(query?.get("month")).toBe("2026-10");
@@ -63,7 +63,7 @@ describe("HistoryPage", () => {
   });
 
   it("shows a run without a play date or slots in plain words", async () => {
-    renderApp(paths.history, REPLIES);
+    renderApp(paths.bookings, REPLIES);
 
     const rows = await bookingRows();
     expect(rows[1]).toHaveTextContent("Lần chạy Thứ Hai 12/10");
@@ -73,7 +73,7 @@ describe("HistoryPage", () => {
   });
 
   it("keeps the month picked in the address and reads that month", async () => {
-    const { fetch, router } = renderApp(paths.history, REPLIES);
+    const { fetch, router } = renderApp(paths.bookings, REPLIES);
 
     fireEvent.change(await screen.findByRole("combobox", { name: "Tháng" }), {
       target: { value: "2026-09" },
@@ -85,19 +85,22 @@ describe("HistoryPage", () => {
   });
 
   it("opens the month in the address", async () => {
-    renderApp(`${paths.history}?month=2026-09`, REPLIES);
+    renderApp(`${paths.bookings}?month=2026-09`, REPLIES);
 
     expect(await screen.findByRole("combobox", { name: "Tháng" })).toHaveValue("2026-09");
   });
 
   it("says when there is no real booking yet, or none in the month", async () => {
-    renderApp(paths.history, { "GET /api/runs/months": reply([]) });
+    renderApp(paths.bookings, { "GET /api/runs/months": reply([]) });
     expect(await screen.findByText("Chưa có lần đặt thật nào.")).toBeInTheDocument();
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   });
 
   it("says when the month has no booking left to show", async () => {
-    renderApp(paths.history, { "GET /api/runs/months": reply(MONTHS), "GET /api/runs": reply([]) });
+    renderApp(paths.bookings, {
+      "GET /api/runs/months": reply(MONTHS),
+      "GET /api/runs": reply([]),
+    });
 
     expect(await screen.findByText("Không có lần đặt nào trong tháng này.")).toBeInTheDocument();
   });

@@ -13,7 +13,6 @@
     "overview": "Tổng quan",
     "schedule": "Hẹn giờ",
     "history": "Lịch sử",
-    "activity": "Nhật ký",
     "settings": "Cài đặt",
     "guide": "Hướng dẫn"
   },
@@ -109,6 +108,7 @@
     },
     "history": {
       "title": "Lịch sử",
+      "tabs": "Phần lịch sử",
       "month": "Tháng",
       "summary": "{{month}}: đặt được {{slots}} khung giờ trong {{runs}} lần.",
       "play": "Chơi {{day}}",
@@ -236,8 +236,7 @@
         "title": "Từng màn hình",
         "overview": "Lần đặt tiếp theo, kết quả lần gần nhất, và máy đã sẵn sàng chưa. Khi đang đặt sân, xem tiến độ trực tiếp tại đây.",
         "schedule": "Chạy thử để kiểm tra, rồi bật hẹn giờ để app tự đặt sân mỗi sáng.",
-        "history": "Những khung giờ đã đặt được, theo ngày chơi, lọc theo tháng.",
-        "activity": "Từng bước app đã làm. Khi có lỗi, mở \"{{technical}}\" để biết chính xác chuyện gì đã xảy ra.",
+        "history": "\"{{bookings}}\": những khung giờ đã đặt được, theo ngày chơi, lọc theo tháng. \"{{activity}}\": từng bước app đã làm; khi có lỗi, mở \"{{technical}}\" để biết chính xác chuyện gì đã xảy ra.",
         "settings": "\"{{booking}}\": khung giờ, sân và ngày. \"{{device}}\": chuẩn bị MuMu, app Vinhomes và máy tính."
       },
       "trouble": {

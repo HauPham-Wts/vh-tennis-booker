@@ -64,8 +64,10 @@ describe("GuidePage", () => {
     const names = within(list)
       .getAllByRole("term")
       .map((term) => term.textContent);
-    expect(names).toEqual(["Tổng quan", "Hẹn giờ", "Lịch sử", "Nhật ký", "Cài đặt"]);
-    expect(within(list).getByText(/mở "Chi tiết kỹ thuật"/)).toBeInTheDocument();
+    expect(names).toEqual(["Tổng quan", "Hẹn giờ", "Lịch sử", "Cài đặt"]);
+    expect(
+      within(list).getByText(/^"Lịch sử": .* "Nhật ký": .* mở "Chi tiết kỹ thuật"/),
+    ).toBeInTheDocument();
     expect(within(list).getByText(/^"Đặt sân": .* "Thiết lập máy": /)).toBeInTheDocument();
   });
 

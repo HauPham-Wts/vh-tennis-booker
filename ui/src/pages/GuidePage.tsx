@@ -34,7 +34,7 @@ const STEPS = [
   },
 ] as const;
 
-const SCREENS = ["overview", "schedule", "history", "activity", "settings"] as const;
+const SCREENS = ["overview", "schedule", "history", "settings"] as const;
 
 const TROUBLES = ["notRunning", "slotFull", "quota", "loggedOut", "setup"] as const;
 
@@ -51,6 +51,8 @@ export function GuidePage() {
 
   // The labels the texts quote come from the screens' own messages, so they always match.
   const labels = {
+    bookings: t("pages.history.title"),
+    activity: t("pages.activity.title"),
     technical: t("pages.activity.technical"),
     booking: t("pages.bookingSettings.title"),
     device: t("pages.deviceSetup.title"),

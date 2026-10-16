@@ -77,7 +77,7 @@ export function LastBooking() {
       ) : (
         <p className={styles.result}>{failureReason(t, f, run.error)}</p>
       )}
-      <Link to={paths.history} className={styles.more}>
+      <Link to={paths.bookings} className={styles.more}>
         {t("pages.overview.last.history")}
       </Link>
     </section>

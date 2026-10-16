@@ -18,8 +18,6 @@ describe("routes", () => {
   it.each([
     [paths.overview, "Tổng quan"],
     [paths.schedule, "Hẹn giờ"],
-    [paths.history, "Lịch sử"],
-    [paths.activity, "Nhật ký"],
     [paths.guide, "Hướng dẫn"],
   ])("opens %s on the %s screen and names the window", async (path, title) => {
     renderAt(path);
@@ -45,6 +43,30 @@ describe("routes", () => {
     const tabs = screen.getByRole("navigation", { name: "Phần cài đặt" });
     expect(within(tabs).getByRole("link", { name: tab })).toHaveAttribute("aria-current", "page");
     await waitFor(() => expect(document.title).toBe("Cài đặt · Court Booker"));
+  });
+
+  it.each([
+    [paths.bookings, "Lịch sử"],
+    [paths.activity, "Nhật ký"],
+  ])("opens %s as the %s tab of the history", async (path, tab) => {
+    renderAt(path);
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Lịch sử" })).toBeInTheDocument();
+    const tabs = screen.getByRole("navigation", { name: "Phần lịch sử" });
+    expect(within(tabs).getByRole("link", { name: tab })).toHaveAttribute("aria-current", "page");
+    await waitFor(() => expect(document.title).toBe("Lịch sử · Court Booker"));
+  });
+
+  it.each([
+    [`${paths.history}?month=2026-09`, `${paths.bookings}?month=2026-09`],
+    ["/activity?run=25", `${paths.activity}?run=25`],
+  ])("sends %s on to %s", async (path, to) => {
+    const router = renderAt(path);
+
+    await screen.findByRole("navigation", { name: "Phần lịch sử" });
+    const { pathname, search } = router.state.location;
+    expect(pathname + search).toBe(to);
+    expect(router.state.historyAction).toBe("REPLACE");
   });
 
   it("opens the settings on the booking tab", async () => {

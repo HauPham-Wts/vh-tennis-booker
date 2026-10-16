@@ -6,6 +6,13 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- The menu has five items: Activity (Nhật ký) is now the second tab of History (Lịch sử),
+  next to the real bookings, as Settings holds its two tabs. The tabs have their own
+  addresses (`/history/bookings`, `/history/activity`); `/history` and the old `/activity`
+  lead to them, keeping the month or the run asked for. The Guide describes both tabs
+  under History.
+
 ## [0.6.2] - 2026-10-16
 
 ### Changed

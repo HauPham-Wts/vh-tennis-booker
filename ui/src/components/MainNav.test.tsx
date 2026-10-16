@@ -30,7 +30,6 @@ describe("MainNav", () => {
       ["Tổng quan", paths.overview],
       ["Hẹn giờ", paths.schedule],
       ["Lịch sử", paths.history],
-      ["Nhật ký", paths.activity],
       ["Cài đặt", paths.settings],
       ["Hướng dẫn", paths.guide],
     ]);
@@ -39,8 +38,8 @@ describe("MainNav", () => {
   it.each([
     [paths.overview, "Tổng quan"],
     [paths.schedule, "Hẹn giờ"],
-    [paths.history, "Lịch sử"],
-    [paths.activity, "Nhật ký"],
+    [paths.bookings, "Lịch sử"],
+    [paths.activity, "Lịch sử"],
     [paths.bookingSettings, "Cài đặt"],
     [paths.deviceSetup, "Cài đặt"],
     [paths.guide, "Hướng dẫn"],
