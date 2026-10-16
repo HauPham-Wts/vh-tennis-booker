@@ -49,7 +49,7 @@ round 2 shows as it happens](docs/img/overview.png)
 ## How it works
 
 ```mermaid
-flowchart LR
+flowchart TD
     A[Home] -->|Tiện ích| B[Utilities]
     B -->|Sân Tennis| C[Calendar]
     C -->|date, slot, Tiếp tục| V["Venue (if shown)"]
