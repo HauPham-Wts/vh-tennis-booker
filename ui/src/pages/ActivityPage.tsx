@@ -1,15 +1,13 @@
 import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router";
-import { useRuns } from "../api/queries";
+import { useRunDays } from "../api/queries";
 import type { RunSummary } from "../api/types";
+import { Button } from "../components/Button";
 import { QueryView } from "../components/QueryView";
 import { runResult, triggerName } from "../runs";
 import { useFormat } from "../useFormat";
 import styles from "./ActivityPage.module.css";
 import { RunDetail } from "./RunDetail";
-
-/** How many recent runs the list shows; older ones are reached from History. */
-const RECENT_RUNS = 30;
 
 /** Return the run asked for in the address (`?run=12`), if it is a run id. */
 function requestedRun(params: URLSearchParams): number | undefined {
@@ -17,8 +15,17 @@ function requestedRun(params: URLSearchParams): number | undefined {
   return Number.isInteger(id) && id > 0 ? id : undefined;
 }
 
-/** The recent runs; the one shown is marked, and each opens its steps. */
-function RunList({ runs, selected }: { runs: RunSummary[]; selected: number }) {
+interface RunListProps {
+  runs: RunSummary[];
+  selected: number;
+  /** Read the ten days before the oldest run shown; absent when no older run is left. */
+  onMore?: () => void;
+  /** Whether those days are being read. */
+  loadingMore: boolean;
+}
+
+/** The runs of the newest days; the one shown is marked, and each opens its steps. */
+function RunList({ runs, selected, onMore, loadingMore }: RunListProps) {
   const { t } = useTranslation();
   const f = useFormat();
   return (
@@ -42,6 +49,11 @@ function RunList({ runs, selected }: { runs: RunSummary[]; selected: number }) {
           );
         })}
       </ul>
+      {onMore && (
+        <Button className={styles.more} onClick={onMore} disabled={loadingMore}>
+          {t(loadingMore ? "common.loading" : "common.more")}
+        </Button>
+      )}
     </nav>
   );
 }
@@ -50,7 +62,7 @@ function RunList({ runs, selected }: { runs: RunSummary[]; selected: number }) {
 export function ActivityPage() {
   const { t } = useTranslation();
   const [params] = useSearchParams();
-  const runs = useRuns({ limit: RECENT_RUNS });
+  const runs = useRunDays();
   return (
     <>
       <p className={styles.lead}>{t("pages.activity.lead")}</p>
@@ -63,7 +75,12 @@ export function ActivityPage() {
           const selected = requestedRun(params) ?? list[0]?.id ?? 0;
           return (
             <div className={styles.layout}>
-              <RunList runs={list} selected={selected} />
+              <RunList
+                runs={list}
+                selected={selected}
+                onMore={runs.hasNextPage ? () => void runs.fetchNextPage() : undefined}
+                loadingMore={runs.isFetchingNextPage}
+              />
               <RunDetail runId={selected} />
             </div>
           );

@@ -15,6 +15,9 @@ uses [Semantic Versioning](https://semver.org/).
 - The History tab shows the bookings of the newest ten days of play in the month picked,
   and ten days more with "Xem thêm"; the month is still read in one request, so showing
   more asks the backend nothing.
+- The Activity tab lists the runs of the newest ten days (it was the last 30 runs, and
+  older ones could not be opened); "Xem thêm" reads the ten days before, one request each
+  (`GET /api/runs?days=10`).
 
 ### Added
 - `GET /api/runs` takes `days` (1-60): every run of the newest days that have runs, by

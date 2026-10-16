@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-import type { Overview } from "./types";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { DAYS_SHOWN, runDay } from "../days";
+import type { Overview, RunSummary } from "./types";
 import {
   type EventsQuery,
   getOverview,
@@ -21,6 +22,7 @@ export const queryKeys = {
   overview: ["overview"] as const,
   runs: (query: RunsQuery = {}) => ["runs", query] as const,
   months: ["runs", "months"] as const,
+  runDays: ["runs", "days"] as const,
   run: (runId: number) => ["run", runId] as const,
   events: (query: EventsQuery = {}) => ["events", query] as const,
   settings: ["settings"] as const,
@@ -58,6 +60,34 @@ export function useOverview() {
 /** Read the runs of the History list. */
 export function useRuns(query: RunsQuery = {}) {
   return useQuery({ queryKey: queryKeys.runs(query), queryFn: () => listRuns(query) });
+}
+
+/** The most runs a page of days may bring: far more than ten days ever hold. */
+export const RUN_DAYS_LIMIT = 500;
+
+/**
+ * Return where the page after `page` starts (its last run), or undefined when no older
+ * run is left: a page holds fewer days than asked only once the oldest day is in it.
+ */
+export function nextRunDays(page: RunSummary[]): number | undefined {
+  const full = new Set(page.map(runDay)).size === DAYS_SHOWN || page.length === RUN_DAYS_LIMIT;
+  return full ? page.at(-1)?.id : undefined;
+}
+
+/**
+ * Read every run, newest first, ten days of runs at a time; `fetchNextPage` reads the ten
+ * days before. A run starting or finishing marks `["runs"]` stale, so the pages shown are
+ * read again.
+ */
+export function useRunDays() {
+  return useInfiniteQuery({
+    queryKey: queryKeys.runDays,
+    queryFn: ({ pageParam }) =>
+      listRuns({ days: DAYS_SHOWN, limit: RUN_DAYS_LIMIT, before: pageParam }),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: nextRunDays,
+    select: (data) => data.pages.flat(),
+  });
 }
 
 /** Read the months of real bookings; a finished run refreshes them with the runs. */

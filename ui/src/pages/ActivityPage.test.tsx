@@ -1,4 +1,4 @@
-import { act, screen, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { paths } from "../paths";
 import { renderApp } from "../test/app";
@@ -74,7 +74,35 @@ describe("ActivityPage", () => {
     ]);
     expect(links[0]).toHaveAttribute("aria-current", "true");
     expect(links[1]).not.toHaveAttribute("aria-current");
-    expect(new URL(fetch.mock.calls[0]![0].url).searchParams.get("limit")).toBe("30");
+    const query = new URL(fetch.mock.calls[0]![0].url).searchParams;
+    expect(Object.fromEntries(query)).toEqual({ days: "10", limit: "500" });
+    expect(screen.queryByRole("button", { name: "Xem thêm" })).not.toBeInTheDocument();
+  });
+
+  it("reads the ten days before the oldest run shown on request", async () => {
+    // Ten days of runs, 6-15/10, then two older days.
+    const newest = Array.from({ length: 10 }, (_, index) =>
+      runSummary(120 - index, {
+        started_at: `2026-10-${String(15 - index).padStart(2, "0")}T05:50:02.120`,
+      }),
+    );
+    const older = [
+      runSummary(105, { started_at: "2026-10-04T05:50:02.120" }),
+      runSummary(104, { started_at: "2026-10-02T05:50:02.120" }),
+    ];
+    const replies = { "GET /api/runs": reply(newest) };
+    const { fetch } = renderApp(paths.activity, replies);
+    const list = await screen.findByRole("navigation", { name: "Các lần chạy" });
+    expect(within(list).getAllByRole("link")).toHaveLength(10);
+
+    replies["GET /api/runs"] = reply(older);
+    fireEvent.click(within(list).getByRole("button", { name: "Xem thêm" }));
+
+    await waitFor(() => expect(within(list).getAllByRole("link")).toHaveLength(12));
+    expect(within(list).getAllByRole("link").at(-1)).toHaveTextContent("02/10 05:50");
+    const query = new URL(fetch.mock.calls.at(-1)![0].url).searchParams;
+    expect(Object.fromEntries(query)).toEqual({ days: "10", limit: "500", before: "111" });
+    expect(within(list).queryByRole("button")).not.toBeInTheDocument();
   });
 
   it("shows the run asked for in the address", async () => {
