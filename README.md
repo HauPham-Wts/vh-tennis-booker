@@ -177,9 +177,9 @@ cd ui && npm ci && npm run dev            # http://localhost:5173; /api goes to 
   steps as they happen.
 - **Hẹn giờ / Schedule**: a dry run (one must pass), then the daily switch that creates or
   removes the Windows task.
-- **Lịch sử / History**: the slots booked, month by month.
-- **Nhật ký / Activity**: every step of the 30 newest runs in plain words, with the
-  technical log.
+- **Lịch sử / History**: two tabs. "Lịch sử" shows the slots booked, month by month;
+  "Nhật ký" (Activity) shows every step of each run in plain words, with the technical
+  log. Both list the newest ten days, and ten more with "Xem thêm".
 - **Cài đặt / Settings**: the slots, court and day to book; device setup, with what only the
   user can do and an auto setup for the rest.
 - **Hướng dẫn / Guide**: four steps to start, what each screen is for, the usual problems.
