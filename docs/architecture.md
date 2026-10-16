@@ -225,7 +225,9 @@ would move the task away from the runner folder.
   `#b53c0b`, darker than the mockups' `#c2410c` (4.14:1 on the ground).
 - `paths.ts` names every address once (English paths); `routes.tsx` maps them to `pages/*`
   under `App` (errorElement `ErrorPage`, `*` `NotFoundPage`, `/settings` redirects to
-  `/settings/booking`) and is shared by the tests through `createMemoryRouter`. `App` lays
+  `/settings/booking`, `/history` to `/history/bookings` and the old `/activity` to
+  `/history/activity`, the last two through `components/Redirect`, which keeps `?month=`
+  and `?run=`) and is shared by the tests through `createMemoryRouter`. `App` lays
   out the skip link, `components/SiteHeader` (brand, `MainNav` with `NavLink`
   `aria-current="page"`, hidden on `/welcome` via `useMatch`, and `LanguageSwitch`) and
   `<main id="main">`. Pages set the window title with `components/PageTitle` (React 19
@@ -262,13 +264,22 @@ would move the task away from the runner folder.
   are `triggers.*` and `setup.items.*`/`setup.statuses.*`, shared with the screens.
 - `src/runs.ts`: `runStamp` (the run's stamp, blue only when every slot went through; a
   dry run says "CHẠY THỬ ĐẠT"), `runResult` (✓/✕ mark for lists), `triggerName`.
-- Screens (`src/pages`): `ActivityPage` lists the 30 newest runs (no paging; older runs
-  open from History through `?run=`) beside `RunDetail` (header, stamp, step lines from
-  `stepMessage`, `<details>` technical log). Tests render the whole app with
+  `src/days.ts`: `newestDays` keeps every item of the newest `DAYS_SHOWN` (10) days that
+  have items, `playDay` (play date, else start day) and `runDay` (start day).
+- Screens (`src/pages`): `HistoryPage` and `SettingsPage` are `components/TabbedPage`s:
+  the title and the tabs as `NavLink`s (`aria-current`) above the `Outlet`; the window
+  keeps the screen's name. `ActivityPage` (second tab of History, `/history/activity`)
+  lists the runs of the newest ten days beside `RunDetail` (header, stamp, step lines from
+  `stepMessage`, `<details>` technical log). `useRunDays` is a `useInfiniteQuery` over
+  `GET /api/runs?days=10&limit=500` (`select` flattens the pages); "Xem thêm" reads the
+  ten days before (`before=` the last run), and a page with fewer days (`nextRunDays`)
+  ends the list. A `?run=` older than the pages read still shows, unmarked in the list. Tests render the whole app with
   `test/app.tsx` `renderApp(path, replies)`: test cache, live feed on fake sockets and
   `stubBackend`.
-- `HistoryPage` shows the real bookings of one month (`?month=`, else the newest from
-  `useRunMonths`), read in one request (`limit=200`), as small `Ticket`s with `runStamp`.
+- `BookingsPage` (first tab of History, `/history/bookings`) shows the real bookings of
+  one month (`?month=`, else the newest from `useRunMonths`), read in one request
+  (`limit=200`), as small `Ticket`s with `runStamp`: those of the newest ten days of play,
+  and ten days more per "Xem thêm" without a request; another month starts again.
 - `OverviewPage` reads three things: `/api/status` (`StatusLine`: no setup, setup items
   left, schedule off, or ready; `NextBooking` ticket), the settings (court and slots on
   the stub) and the newest real run (`LastBooking`, hidden before one). `useFormat().when`
@@ -281,8 +292,7 @@ would move the task away from the runner folder.
   from the steps alone. `useOverview` polls every 2 s (`settlingInterval`) only while a run
   holds the lock without a running row, or during auto setup: a run gives the lock back
   after its last step, and no step marks that moment.
-- `SettingsPage` holds the title and the two tabs as `NavLink`s (`aria-current`), above
-  the `Outlet`; the window keeps the name "Cài đặt". `booking.ts` keeps the choices the
+- `SettingsPage` holds "Đặt sân" and "Thiết lập máy" as tabs. `booking.ts` keeps the choices the
   developer maintains with the Vinhomes app: `SLOTS` (13), `COURTS` (S6, S8, S9, S10),
   `DAYS_AHEAD`; `slotChoices` and `courtChoices` also offer a value the config holds outside
   them, and `toggleSlot` appends, so the list order is the booking order.
