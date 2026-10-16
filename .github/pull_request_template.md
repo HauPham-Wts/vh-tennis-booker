@@ -13,4 +13,4 @@
 ## Checklist
 
 - [ ] `CHANGELOG.md` updated under "Unreleased"
-- [ ] No screenshots, UI dumps or personal data included
+- [ ] No UI dumps, personal data, or screenshots of the Vinhomes app or of real data
