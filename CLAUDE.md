@@ -71,8 +71,10 @@ npm run api:types                                    # src/api/schema.d.ts from 
   then `npm run dev` (Vite forwards `/api` to 127.0.0.1:8765). Headless Edge `--dump-dom`
   captures the page before any request answers; read the DOM over the DevTools protocol
   after a real wait instead.
-- Never commit `config.toml`, screenshots or UI dumps (they may hold personal data; the
-  repo is public).
+- Never commit `config.toml`, UI dumps, or screenshots of the Vinhomes app or of real data
+  (they may hold personal data; the repo is public). The only images in the repo are the
+  README's screenshots of this project's UI with made-up data, in `docs/img/` (English
+  UI, 1280 wide, under 200 KB each).
 - All code, comments, logs, commits and docs in English; app labels stay Vietnamese in the
   config. Type hints, short imperative docstrings, comments explain why, module loggers,
   `BookingError` subclasses, named constants, Ruff line length 100.

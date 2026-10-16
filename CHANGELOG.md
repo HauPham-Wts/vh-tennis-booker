@@ -16,6 +16,11 @@ uses [Semantic Versioning](https://semver.org/).
   out to the docs it links. CONTRIBUTING asks for a real booking, not a dry run, after a
   booking flow change.
 
+### Added
+- Screenshots of the web UI in the README (the Overview during a dry run, History,
+  Settings › Booking), with made-up data, in `docs/img/`. The rule against committing
+  screenshots now covers screenshots of the Vinhomes app and of real data.
+
 ## [0.6.3] - 2026-10-16
 
 ### Changed
