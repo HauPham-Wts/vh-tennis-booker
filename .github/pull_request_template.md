@@ -8,7 +8,7 @@
 - [ ] `pytest` passes
 - [ ] In `ui/`: `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm test` and
       `npm run build` pass (if the UI changed)
-- [ ] Verified on the emulator with `court-booker --dry-run` (if the flow changed)
+- [ ] Booked for real to the ticket, timed with `--at` (if the booking flow changed)
 
 ## Checklist
 
