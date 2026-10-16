@@ -85,7 +85,9 @@ cd ui && npm run api:types       # writes ui/src/api/schema.d.ts
   identity across branches.
 - **Versioning:** [Semantic Versioning](https://semver.org/). Record changes in
   `CHANGELOG.md` under "Unreleased" and move them to a version section when releasing.
-- **Privacy:** never commit screenshots, UI dumps or `config.toml`.
+- **Privacy:** never commit `config.toml`, UI dumps, or screenshots of the Vinhomes app or
+  of real data. The README's screenshots in `docs/images/` show this project's UI with
+  made-up data only.
 
 ## Releasing
 
