@@ -45,14 +45,14 @@ packaged desktop app with an installer is the last step before 1.0.0.
 
 ```mermaid
 flowchart TD
-    A[Home] -->|Tiện ích| B[Utilities]
-    B -->|Sân Tennis| C[Calendar]
-    C -->|date, slot, Tiếp tục| V["Venue (if shown)"]
-    V -->|Origami| D[Courts]
-    D -->|court| E[Booking details]
-    E -->|Tiếp tục| F[Confirmation]
-    F -->|consent, Xác nhận| G[Ticket]
-    G -->|Back| B
+    A["Home: tap Tiện ích"] --> B["Utilities: tap Sân Tennis"]
+    B --> C["Calendar: pick the date and slot, tap Tiếp tục"]
+    C --> V["Venue, if shown: tap Origami"]
+    V --> D["Courts: tap the court"]
+    D --> E["Booking details: tap Tiếp tục"]
+    E --> F["Confirmation: tick the consent, tap Xác nhận"]
+    F --> G["Ticket: booked"]
+    G -->|Back, next slot| B
 ```
 
 The app is built with Flutter, which publishes its widgets to Android's accessibility tree
