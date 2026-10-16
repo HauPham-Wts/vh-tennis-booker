@@ -151,7 +151,7 @@ describe("OverviewPage last booking", () => {
     expect(cards[1]).toHaveTextContent("Hết chỗ");
     expect(within(section).getByRole("link", { name: "Xem lịch sử →" })).toHaveAttribute(
       "href",
-      paths.history,
+      paths.bookings,
     );
     const query = fetch.mock.calls
       .map(([request]) => new URL(request.url))
@@ -265,7 +265,7 @@ describe("OverviewPage live run", () => {
     expect(within(live).getByText("khung giờ đã đặt xong")).toBeInTheDocument();
     expect(within(live).getByRole("link", { name: "Xem nhật ký trực tiếp →" })).toHaveAttribute(
       "href",
-      "/activity?run=30",
+      "/history/activity?run=30",
     );
     expect(screen.getByText(/Bạn có thể đóng cửa sổ này/)).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Lần đặt tiếp theo" })).not.toBeInTheDocument();

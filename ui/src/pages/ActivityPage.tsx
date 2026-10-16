@@ -2,7 +2,6 @@ import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router";
 import { useRuns } from "../api/queries";
 import type { RunSummary } from "../api/types";
-import { PageHeader } from "../components/PageHeader";
 import { QueryView } from "../components/QueryView";
 import { runResult, triggerName } from "../runs";
 import { useFormat } from "../useFormat";
@@ -47,14 +46,14 @@ function RunList({ runs, selected }: { runs: RunSummary[]; selected: number }) {
   );
 }
 
-/** Show every step the app took, for finding out what went wrong. */
+/** Show every step the app took, for finding out what went wrong: the second tab of History. */
 export function ActivityPage() {
   const { t } = useTranslation();
   const [params] = useSearchParams();
   const runs = useRuns({ limit: RECENT_RUNS });
   return (
     <>
-      <PageHeader title={t("pages.activity.title")} lead={t("pages.activity.lead")} />
+      <p className={styles.lead}>{t("pages.activity.lead")}</p>
       <QueryView
         query={runs}
         isEmpty={(list) => list.length === 0}

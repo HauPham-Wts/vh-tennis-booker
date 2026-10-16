@@ -13,7 +13,6 @@
     "overview": "Overview",
     "schedule": "Schedule",
     "history": "History",
-    "activity": "Activity",
     "settings": "Settings",
     "guide": "Guide"
   },
@@ -109,6 +108,7 @@
     },
     "history": {
       "title": "History",
+      "tabs": "History sections",
       "month": "Month",
       "summary": "{{month}}: {{slots}} slots booked in {{runs}} runs.",
       "play": "Play {{day}}",
@@ -236,8 +236,7 @@
         "title": "Each screen",
         "overview": "The next booking, the result of the last one, and whether the PC is ready. While a booking goes on, follow it live here.",
         "schedule": "Do a dry run to check, then turn the schedule on so the app books every morning.",
-        "history": "The slots booked, by the day of play, filtered by month.",
-        "activity": "Every step the app took. When something goes wrong, open \"{{technical}}\" to see exactly what happened.",
+        "history": "\"{{bookings}}\": the slots booked, by the day of play, filtered by month. \"{{activity}}\": every step the app took; when something goes wrong, open \"{{technical}}\" to see exactly what happened.",
         "settings": "\"{{booking}}\": the slots, court and day. \"{{device}}\": prepare MuMu, the Vinhomes app and the PC."
       },
       "trouble": {
