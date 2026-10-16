@@ -20,7 +20,7 @@ packaged desktop app with an installer is the last step before 1.0.0.
 > An educational, personal project, not affiliated with or endorsed by Vinhomes.
 
 ![The Overview of the web UI during a dry run: round 1 of 2 is through, and each step of
-round 2 shows as it happens](docs/images/overview.png)
+round 2 shows as it happens](docs/img/overview.png)
 
 <sub>The web UI during a dry run. All screenshots show made-up data.</sub>
 
@@ -201,9 +201,9 @@ An app not used yet opens on a four-step Welcome instead. Saving settings rewrit
 `config.toml` (its comments are dropped); the next run reads it.
 
 <p>
-  <img src="docs/images/history.png" width="49%" alt="History: the bookings of September,
+  <img src="docs/img/history.png" width="49%" alt="History: the bookings of September,
   one card per day of play with its slots, court and how many slots were booked">
-  <img src="docs/images/settings.png" width="49%" alt="Settings, Booking tab: the thirteen
+  <img src="docs/img/settings.png" width="49%" alt="Settings, Booking tab: the thirteen
   slots as toggles numbered in booking order, then the court and the day to book">
 </p>
 
