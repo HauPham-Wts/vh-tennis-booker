@@ -49,6 +49,10 @@ Finder = Callable[[Screen], Optional[T]]
 _POLL_INTERVAL = 0.02
 _NEXT_SCREEN_TIMEOUT = 2.0
 _TAP_RETRIES = 5
+_MOVED_COURT_WAIT = 0.6
+"""A court list still shown this long after a court tap, with the court moved, missed it.
+
+A tap that opens a court shows the booking details page 0.23-0.45 s later (14-17/10)."""
 _BACK_PRESSES = 8
 _FIRST_DATE_WAIT = 1.5
 _NEXT_DATE_WAIT = 0.8
@@ -111,6 +115,8 @@ class Booker:
         self.venue = Match(contains=config.venue_keyword) if config.venue_keyword else None
         self.court = Match(desc=config.court, clickable=True)
         self.any_court = Match(prefix=config.court, clickable=True)
+        self.opened_court = Match(desc=config.court, clickable=False)
+        """The court named on the booking details page."""
         self.agree = Match(contains=labels.agree)
         self.confirm_button = Match(desc=labels.confirm, clickable=True)
         self.notice = Match(desc=labels.notice)
@@ -193,9 +199,7 @@ class Booker:
             )
         if labels.fully_booked in court.desc:
             raise SlotUnavailableError(f"Court {self.config.court} is fully booked")
-        _, screen = self.tap_and_advance(
-            screen, self.court, self.config.court, self._finder(self.continue_button)
-        )
+        screen = self.select_court(screen)
         self.report(EventKind.COURT_SELECTED, court=self.config.court)
         point, screen = self.tap_and_advance(
             screen, self.continue_button, labels.continue_, self.locate_checkbox
@@ -234,6 +238,50 @@ class Booker:
                     ) from exc
                 logger.info("Not open yet (%s); reloading the calendar", exc)
             attempt += 1
+
+    def select_court(self, screen: Screen) -> Screen:
+        """Tap the court on the court list ``screen`` and return the booking details page.
+
+        The list moves up 232 px when the service info above it has loaded, and a read
+        cannot tell that it is about to (field notes), so a tap placed from the read before
+        can land two courts lower: the app opens that court if it is free (S9 booked instead
+        of S6 on 2026-10-13 and 17) and does nothing if it is full. The details page names
+        the court it opened; another court is left with Back, and the court is tapped again
+        where the list shows it then, as it is when the list moved under a tap that opened
+        nothing. A tap the app swallowed is tapped again after 2 s, as in
+        :meth:`tap_and_advance`.
+        """
+        name = self.config.court
+        node = screen.find(self.court)
+        if node is None:
+            raise ElementNotFoundError(f"Button not found: {name!r}")
+        wrong = 0
+        for attempt in range(_TAP_RETRIES):
+            if node is not None:
+                self.tap(node)
+            found = self.wait_for(self._court_tapped(node), _NEXT_SCREEN_TIMEOUT)
+            if found is None:
+                node = self.last_screen.find(self.court)
+                logger.debug("Next screen missing after %r (attempt %d)", name, attempt + 2)
+                continue
+            shown, screen = found
+            if screen.find(self.continue_button) is None:
+                logger.warning("%r moved on the court list under the tap; tapping it again", name)
+                node = shown
+                continue
+            if screen.find(self.opened_court) is not None:
+                logger.info("Tapped %r", name)
+                return screen
+            wrong += 1
+            logger.warning("The app opened another court than %r; going back to the list", name)
+            screen = self.go_back(screen, self._finder(self.court))
+            back = self.wait_for(self._finder(self.court), _NEXT_SCREEN_TIMEOUT, screen)
+            if back is None:
+                raise NavigationError(f"Could not return to the court list for {name!r}")
+            node = back[0]
+        if wrong:
+            raise NavigationError(f"The app opened another court than {name!r} {wrong} time(s)")
+        raise NavigationError(f"Tapped {name!r} but the next screen did not appear")
 
     def return_to_utilities(self, screen: Screen | None = None) -> Screen:
         """Navigate to the utilities list from the home, ticket or any inner screen."""
@@ -415,8 +463,8 @@ class Booker:
     def read_confirmation(self, screen: Screen, slot: str, target: date) -> Booked:
         """Read the date, slot and court that the confirmation page on ``screen`` books.
 
-        The court booked once differed from the one tapped (2026-10-13). Seen only once,
-        so a difference is logged as a warning and the round still confirms.
+        The court is checked on the booking details page already (:meth:`select_court`),
+        so a difference here is only logged as a warning and the round still confirms.
         """
         labels = self.config.labels
         booked = Booked(shown_court=screen.line_after(labels.booked_place))
@@ -567,6 +615,30 @@ class Booker:
             or screen.find(self.prev_month)
             or screen.find(self.next_month)
         )
+
+    def _court_tapped(self, tapped: Node | None) -> Finder[Node]:
+        """Find the details page's continue button, or the court moved on a list left as is.
+
+        A list still shown :data:`_MOVED_COURT_WAIT` after the tap, with the court somewhere
+        else than ``tapped``, ignored the tap; the court is returned where it shows now.
+        """
+        since = time.monotonic()
+
+        def find(screen: Screen) -> Node | None:
+            button = screen.find(self.continue_button)
+            if button is not None:
+                return button
+            court = screen.find(self.court)
+            if (
+                court is not None
+                and tapped is not None
+                and court.box != tapped.box
+                and time.monotonic() - since >= _MOVED_COURT_WAIT
+            ):
+                return court
+            return None
+
+        return find
 
     def _find_court(self, screen: Screen) -> Node | None:
         court = screen.find(self.any_court)

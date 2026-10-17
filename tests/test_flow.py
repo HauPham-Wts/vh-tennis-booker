@@ -16,6 +16,7 @@ from court_booker.errors import (
     BookingUnconfirmedError,
     DeviceNotRespondingError,
     ElementNotFoundError,
+    NavigationError,
     SlotUnavailableError,
 )
 from court_booker.events import EventKind, MemorySink, Reporter
@@ -462,6 +463,78 @@ def test_swallowed_tap_is_retried():
 
     assert app.taps.count("Sân Tennis") == 2
     assert app.screen == "ticket"
+
+
+COURTS_MOVED = [  # the court list once the service info above it has loaded, 232 px higher
+    node("S10 - Sân tennis", (35, 792, 505, 912)),
+    node("S9 - Sân tennis\nHết chỗ", (35, 925, 505, 1045)),
+]
+OTHER_DETAILS = [node("S8 - Sân tennis", (116, 975, 274, 1004), False), CONTINUE]
+
+
+def moving_courts_app(first_tap):
+    """Move the court list under the first court tap, which leads to ``first_tap``.
+
+    That is the details page of the court two places lower if it is free, as on 2026-10-17
+    (S6 tapped, S9 opened), or the moved list if it is full and the tap did nothing.
+    """
+    app = booking_app()
+    app.screens["courts_moved"] = COURTS_MOVED
+    app.screens["details_other"] = OTHER_DETAILS
+    app.taps_to[("courts", "S10 - Sân tennis")] = first_tap
+    app.taps_to[("courts_moved", "S10 - Sân tennis")] = "details"
+    app.backs_to["details_other"] = "courts_moved"
+    return app
+
+
+def test_another_court_opened_is_left_and_the_court_tapped_where_it_moved(caplog):
+    caplog.set_level(logging.DEBUG, logger="court_booker.flow")
+    app = moving_courts_app("details_other")
+    booker = Booker(app, Config())
+
+    booked = booker.book("11:00 - 12:00", TARGET)
+
+    assert app.taps == [*FULL_ROUND[:5], "S10 - Sân tennis", *FULL_ROUND[5:]]
+    assert app.calls == ["back"]
+    assert "Tap 'S10 - Sân tennis' at (270, 852)" in caplog.text
+    assert "The app opened another court than 'S10 - Sân tennis'" in caplog.text
+    assert booked.shown_court == "S10 - Sân tennis"
+    assert booker.commands == 16 + 4  # the other court's page, Back, the list, the tap
+
+
+def test_court_moved_under_a_tap_that_opened_nothing_is_tapped_again_at_once(fake_time, caplog):
+    caplog.set_level(logging.DEBUG, logger="court_booker.flow")
+    app = moving_courts_app(("courts_moved", 2))
+
+    Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert app.taps.count("S10 - Sân tennis") == 2
+    assert "Tap 'S10 - Sân tennis' at (270, 852)" in caplog.text
+    assert "moved on the court list under the tap" in caplog.text
+    assert 0.6 <= fake_time[0] < 1.0  # not the 2 s a swallowed tap waits
+    assert app.screen == "ticket"
+
+
+def test_swallowed_court_tap_on_a_list_that_did_not_move_waits_two_seconds(fake_time):
+    app = booking_app()
+    app.swallow = {"S10 - Sân tennis": 1}
+
+    Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert app.taps.count("S10 - Sân tennis") == 2
+    assert fake_time[0] >= 2.0
+    assert app.screen == "ticket"
+
+
+def test_a_court_the_app_keeps_mixing_up_fails_the_round():
+    app = moving_courts_app("details_other")
+    app.taps_to[("courts_moved", "S10 - Sân tennis")] = "details_other"
+
+    with pytest.raises(NavigationError, match=r"another court than 'S10 - Sân tennis' 5 time"):
+        Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert app.taps.count("S10 - Sân tennis") == 5
+    assert app.screen == "courts_moved"
 
 
 def test_located_entry_makes_the_first_command_a_tap():

@@ -6,6 +6,13 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- A court tap that the moving court list sends to another court no longer books that court
+  (S9 instead of S6 on 2026-10-13 and 17). The booking details page names the court it
+  opened: another court is left with Back and the court tapped again where the list shows
+  it then (about 1 s more, only then). A list that moved under a tap that opened nothing,
+  such as one landing on a full court, gets the tap again after 0.6 s instead of 2 s.
+
 ## [0.7.0] - 2026-10-16
 
 ### Changed
