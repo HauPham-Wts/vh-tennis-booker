@@ -44,7 +44,10 @@ uiautomator2's `click` holds the touch about 100 ms, which the app does not need
 `Booker.tap_and_advance()` taps an element of the current dump, then reads the screen every
 20 ms until a finder returns what the next step needs (for example the target day). If the
 next screen does not appear within 2 s (tap swallowed by lag), it taps again while the
-element is still shown, up to 5 times. A timed run waits on the app's home screen and
+element is still shown, up to 5 times. The court tap is checked as well: the court list
+can move up while it loads, so the tap may open another court; the booking details page
+names the court, and another one is left with Back and the court tapped again. A timed run
+waits on the app's home screen and
 opens the utilities list `warm_up_seconds` (60 s) before the start time, so the list is
 freshly loaded; two seconds before the start it is read once more, so the first command at
 the start time is the tap itself.

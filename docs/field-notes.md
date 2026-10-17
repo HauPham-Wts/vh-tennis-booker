@@ -40,7 +40,14 @@ never tell one screen from another.
   the first layout (14-16/10), two landed on S9 (15/10 06:00, 16/10 16:08), besides the S9
   booking of 13/10. In 12 dry rounds (16/10, quiet hours) "Xem thêm" was still missing
   over a second later. The reads just before and just after the wrong tap of 16/10 both
-  showed the first layout, so a dump can lag behind the screen.
+  showed the first layout, so a dump can lag behind the screen. On 17/10 at 06:00 it booked
+  S9 again: round 1 read the first layout and tapped y=1217, which opened S9; round 2 read
+  the same layout, tapped the same point and opened S6. By position the first court is no
+  safer: S10's centre (y=1084) lies on S8 once the list has moved.
+- The booking details page names the court it opened as a non-clickable label
+  (`'S9 - Sân tennis'` at `[116,975][264,1004]`, above a clickable "Chỉ đường"). In the 19
+  court taps of 14-17/10 it showed 0.23-0.45 s after the tap, always before "Tiếp tục"
+  (0.53-1.11 s). Back from it returns to the court list.
 - Calendar at 540x1600 (failure log, 2026-10-10): two non-clickable nodes labelled
   `"Chọn năm"` at `[22,160][170,229]` and `[177,160][285,229]`, then a day grid from
   y=344; no node labelled "Tháng sau"/"Tháng trước" and no clickable unlabelled node near
