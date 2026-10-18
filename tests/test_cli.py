@@ -35,7 +35,26 @@ def fake_run(outcomes):
     return run_booking
 
 
-def run_cli(monkeypatch, tmp_path, outcomes=(), connect=lambda config: object(), args=(), now=None):
+class FakeDevice:
+    """A device driven the way ``driver`` asks; ``closed`` counts ``close()`` calls."""
+
+    def __init__(self, driver, error=None):
+        self.driver = driver
+        self.error = error
+        self.closed = 0
+
+    def close(self):
+        self.closed += 1
+        if self.error is not None:
+            raise self.error
+
+
+def fake_connect(config, driver="auto"):
+    """Stand in for ``connect_device``."""
+    return FakeDevice("instrumentation" if driver == "auto" else driver)
+
+
+def run_cli(monkeypatch, tmp_path, outcomes=(), connect=fake_connect, args=(), now=None):
     """Run the CLI with a fake device; the time is 05:40 unless ``now`` gives a class."""
     monkeypatch.setattr(cli, "connect_device", connect)
     monkeypatch.setattr(cli, "run_booking", fake_run(outcomes))
@@ -52,15 +71,32 @@ def test_failed_round_exits_1(monkeypatch, tmp_path):
     assert run_cli(monkeypatch, tmp_path, outcomes) == cli.EXIT_ROUND_FAILED
 
 
+def test_the_driver_flag_reaches_the_device_and_the_history(monkeypatch, tmp_path):
+    asked = []
+
+    def connect(config, driver):
+        asked.append(driver)
+        return fake_connect(config, driver)
+
+    events = []
+    monkeypatch.setattr(
+        cli, "Reporter", lambda sink: lambda kind, **data: events.append((kind, data))
+    )
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)], connect, ["--driver", "uiautomator2"])
+
+    assert asked == ["uiautomator2"]
+    assert ("device_ready", {"driver": "uiautomator2"}) in [(k.value, d) for k, d in events]
+
+
 def test_bad_config_exits_2(monkeypatch, tmp_path):
     path = tmp_path / "config.toml"
     path.write_text("unknown = 1\n", encoding="utf-8")
-    monkeypatch.setattr(cli, "connect_device", lambda config: object())
+    monkeypatch.setattr(cli, "connect_device", fake_connect)
     assert cli.main(["--config", str(path)]) == cli.EXIT_BAD_REQUEST
 
 
 def test_device_error_exits_3(monkeypatch, tmp_path):
-    def connect(config):
+    def connect(config, driver):
         raise EmulatorError("MuMu did not start")
 
     assert run_cli(monkeypatch, tmp_path, connect=connect) == cli.EXIT_DEVICE
@@ -76,7 +112,7 @@ def test_ctrl_c_prints_finished_rounds_and_exits_130(monkeypatch, tmp_path, caps
 
 
 def test_passed_start_time_exits_2_before_connecting(monkeypatch, tmp_path):
-    def connect(config):
+    def connect(config, driver):
         raise AssertionError("must not connect")
 
     monkeypatch.setattr(cli, "datetime", FixedDatetime)
@@ -88,7 +124,7 @@ def test_scheduled_uses_config_start_and_clock_offset(monkeypatch, tmp_path):
     monkeypatch.setattr(cli, "datetime", FixedDatetime)
     monkeypatch.setattr(cli, "ntp_offset", lambda server: 0.25)
     run = fake_run([("18:00 - 19:00", True)])
-    monkeypatch.setattr(cli, "connect_device", lambda config: object())
+    monkeypatch.setattr(cli, "connect_device", fake_connect)
     monkeypatch.setattr(cli, "run_booking", run)
 
     assert cli.main(["--config", str(tmp_path / "missing.toml"), "--scheduled"]) == 0
@@ -108,7 +144,7 @@ def test_summary_is_sent_to_telegram_even_on_device_error(monkeypatch, tmp_path)
     sent = []
     monkeypatch.setattr(cli, "send_telegram", lambda token, chat, text: sent.append(text))
 
-    def connect(config):
+    def connect(config, driver):
         raise EmulatorError("MuMu did not start")
 
     monkeypatch.setattr(cli, "connect_device", connect)
@@ -138,7 +174,7 @@ def test_run_events_reach_the_log(monkeypatch, tmp_path):
 
 
 def test_run_finished_is_reported_on_a_device_error(monkeypatch, tmp_path):
-    def connect(config):
+    def connect(config, driver):
         raise EmulatorError("MuMu did not start")
 
     run_cli(monkeypatch, tmp_path, connect=connect)
@@ -154,7 +190,7 @@ def test_a_frozen_device_is_reported_then_ends_the_process(monkeypatch, tmp_path
     def run_booking(device, config, *, results, **kwargs):
         raise DeviceNotRespondingError(error)
 
-    monkeypatch.setattr(cli, "connect_device", lambda config: object())
+    monkeypatch.setattr(cli, "connect_device", fake_connect)
     monkeypatch.setattr(cli, "run_booking", run_booking)
     monkeypatch.setattr(cli, "datetime", FixedDatetime)
 
@@ -170,11 +206,58 @@ def test_other_device_errors_end_the_process_normally(monkeypatch, tmp_path):
     ended = []
     monkeypatch.setattr(cli, "end_process", ended.append)
 
-    def connect(config):
+    def connect(config, driver):
         raise EmulatorError("MuMu did not start")
 
     assert run_cli(monkeypatch, tmp_path, connect=connect) == cli.EXIT_DEVICE
     assert ended == []
+
+
+@pytest.mark.parametrize(
+    "outcomes, args",
+    [
+        ([("18:00 - 19:00", True)], []),
+        ([("18:00 - 19:00", False)], ["--dry-run"]),
+        ([("18:00 - 19:00", KeyboardInterrupt)], []),
+    ],
+    ids=["real run", "dry run", "Ctrl+C"],
+)
+def test_the_driver_stops_after_every_run(monkeypatch, tmp_path, outcomes, args):
+    devices = []
+
+    def connect(config, driver):
+        devices.append(fake_connect(config, driver))
+        return devices[-1]
+
+    run_cli(monkeypatch, tmp_path, outcomes, connect, args)
+
+    # uiautomator2 and the other tools need UiAutomation, which the driver holds.
+    assert [device.closed for device in devices] == [1]
+
+
+def test_a_driver_that_does_not_stop_only_warns(monkeypatch, tmp_path):
+    def connect(config, driver):
+        return FakeDevice("instrumentation", OSError("adb is gone"))
+
+    assert run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)], connect) == cli.EXIT_OK
+    assert "Could not stop the driver" in read_log(tmp_path)
+
+
+def test_a_frozen_device_is_not_closed(monkeypatch, tmp_path):
+    monkeypatch.setattr(cli, "end_process", lambda code: None)
+    device = FakeDevice("instrumentation")
+
+    def run_booking(device, config, *, results, **kwargs):
+        raise DeviceNotRespondingError("MuMu did not answer click within 60 s")
+
+    monkeypatch.setattr(cli, "connect_device", lambda config, driver: device)
+    monkeypatch.setattr(cli, "run_booking", run_booking)
+    monkeypatch.setattr(cli, "datetime", FixedDatetime)
+
+    cli.main(["--config", str(tmp_path / "missing.toml")])
+
+    # Each call would wait the watchdog's 60 s.
+    assert device.closed == 0
 
 
 def test_a_real_run_closes_mumu_after_its_rounds(monkeypatch, tmp_path, closed_mumu):
@@ -203,7 +286,7 @@ def test_an_error_before_the_rounds_leaves_mumu_open(monkeypatch, tmp_path, clos
     def run_booking(device, config, *, results, **kwargs):
         raise AppNotReadyError("The app is logged out")
 
-    monkeypatch.setattr(cli, "connect_device", lambda config: object())
+    monkeypatch.setattr(cli, "connect_device", fake_connect)
     monkeypatch.setattr(cli, "run_booking", run_booking)
     monkeypatch.setattr(cli, "datetime", FixedDatetime)
 
@@ -218,7 +301,7 @@ def test_a_frozen_mumu_is_not_closed(monkeypatch, tmp_path, closed_mumu):
         results.append(RoundResult("18:00 - 19:00", False, "MuMu did not answer", 60.0))
         raise DeviceNotRespondingError("MuMu did not answer click within 60 s")
 
-    monkeypatch.setattr(cli, "connect_device", lambda config: object())
+    monkeypatch.setattr(cli, "connect_device", fake_connect)
     monkeypatch.setattr(cli, "run_booking", run_booking)
     monkeypatch.setattr(cli, "datetime", FixedDatetime)
 
@@ -309,7 +392,7 @@ def test_a_run_is_refused_while_another_holds_the_lock(monkeypatch, tmp_path, da
     data_home.mkdir(parents=True)
     (data_home / "run.lock").write_text(json.dumps(vars(holder)), encoding="utf-8")
 
-    def connect(config):
+    def connect(config, driver):
         raise AssertionError("must not touch the device")
 
     code = run_cli(monkeypatch, tmp_path, connect=connect, args=["--dry-run"])
@@ -361,7 +444,7 @@ def at(hour, minute):
 
 
 def test_no_dry_run_while_the_scheduled_run_uses_the_emulator(monkeypatch, tmp_path, data_home):
-    def connect(config):
+    def connect(config, driver):
         raise AssertionError("must not touch the device")
 
     code = run_cli(monkeypatch, tmp_path, connect=connect, args=["--dry-run"], now=at(5, 55))

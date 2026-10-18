@@ -32,12 +32,19 @@ Two consequences of Flutter shaped the design:
 
 ## "Coordinates" vs. elements
 
-Every tap on Android is ultimately a touch at (x, y). The difference is where the point
-comes from: here it is taken from the latest dump of the screen, never stored across
-screens. Waiting for the next screen and locating the next element are the same read, so
-pre-recorded coordinates would not save a command: the screen must be read anyway to know
-it has appeared. The tap itself is a touch down and up at that point (`runner.QuickTap`):
-uiautomator2's `click` holds the touch about 100 ms, which the app does not need.
+A tap names its element by label. With the driver (`docs/architecture.md`, "Driver") no
+position is involved at all: the driver looks the label up in the screen's tree of that
+moment and clicks the element with an accessibility click, so a list that moved since the
+last read (the court list does, while it loads) cannot send the click to another element.
+The consent checkbox has no label; it is the smallest clickable element at the point the
+latest dump shows it. Waiting for the next screen and locating the next element are the
+same read, so pre-recorded coordinates would not save a command: the screen must be read
+anyway to know it has appeared.
+
+With uiautomator2, the fallback when the driver does not start, a tap is a touch at the
+point taken from the latest dump, never stored across screens: a touch down and up
+(`runner.QuickTap`), since uiautomator2's `click` holds the touch about 100 ms, which the
+app does not need.
 
 ## Navigation
 

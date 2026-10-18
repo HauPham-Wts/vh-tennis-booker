@@ -191,6 +191,39 @@ What the experiment showed, kept in case the numbers matter:
   out like the other ways to tap once the same change detection was used (402, 417 and
   428 ms from the tap to the next screen).
 
+## Instrumentation driver (2026-10-18)
+
+The agent's place went to an instrumentation (`docs/architecture.md`, "Driver"): its own
+APK started with `am instrument`, which gets UiAutomation, the connection uiautomator2
+uses. It is not an accessibility service: while it runs, `enabled_accessibility_services`
+stays `null` and `dumpsys accessibility` lists no bound or enabled service;
+`accessibility_enabled` reads 1 (0 once it stops), as with uiautomator2.
+
+- **The app books with it running.** A probe (touch taps) booked 20/10 10:00-11:00 at
+  18:44 without the `'Cảnh báo'` dialog, the ticket 0.86 s after "Xác nhận"; the driver
+  itself (accessibility clicks by label) booked 10:00-11:00 and 11:00-12:00 at 19:26.
+- Reading the screen took 13 ms to the PC with the XML parsed (median of 10, 8-31 ms, 72
+  elements), against 99 ms with uiautomator2 (87-202) the same evening; a command round
+  trip 2.3 ms. The first read after the app started took 175 ms, and a read after clearing
+  UiAutomation's node cache 67 ms. From the tap on "Tiện ích" to "Sân Tennis" showing:
+  443 ms reading every 20 ms as the flow does, 417 ms waiting on accessibility events on
+  the device, 495 ms with uiautomator2 (n=10 each): events gain little over fast reads.
+- `am instrument -w` must keep running: its process holds the UiAutomation connection.
+  Started with `setsid nohup ... &` it outlives the adb shell. Only one UiAutomation runs at
+  a time: a uiautomator2 server running must be ended first, and uiautomator2 cannot
+  connect while the driver runs. After a run stops it, uiautomator2 reads the screen again.
+- Start: the first install took 4.1 s, the driver answered 1.0-1.4 s after `am instrument`
+  (0.8-2.5 s in the probe). An installed APK is the file sent (`sha256sum` of `base.apk`).
+- **"Xác nhận" 65 ms after the consent tick did nothing** (probe round 2, the page stayed
+  for 10 s, no dialog); 97 ms after it booked. uiautomator2 reads too slowly to come that
+  close (0.14-0.23 s). With 0.2 s from the tick, accessibility clicks on "Xác nhận" booked
+  both rounds at 19:26, so the agent's "page stayed" after one such click (14:25) was this,
+  not the click.
+- A real round at 19:26 took 4.8 s (138 commands; reads are cheap, so there are more of
+  them) and 3.9 s (77), against 7.0 s and 4.9 s for uiautomator2 at 19:08 (S6, not S10):
+  the steps that only wait for a screen to show (calendar, day, details, confirmation)
+  came 0.1-0.6 s sooner each.
+
 ## App and server timings
 
 - Calendar 0.14 s after "Sân Tennis", slot list ~2.1 s after the date tap, court list
@@ -216,4 +249,5 @@ What the experiment showed, kept in case the numbers matter:
 | 0.7.0 code | 2026-10-16 | Dry run at 16:04 (MuMu left open), then a timed real booking 18/10 at 16:08 (a test booking): 10:00-11:00 booked in 5.7 s with touch down + up taps; 11:00-12:00 reached "Xác nhận" and the app refused it with the monthly quota dialog. In that round the tap on S6 landed on S9 (the court list moved, see "Booking flow"). "Closing MuMu instance 0" after the summary; the process exited 0.6 s later and `MuMuNxDevice` was gone within 18 s |
 | 0.7.0 + court check (`main`) | 2026-10-18 | Timed real booking 20/10 at 13:25 (test bookings): 10:00-11:00 booked in 9.4 s (50 commands) and 11:00-12:00 in 6.9 s (39), both on S6. In both rounds the tap on S6 opened S9; the details page check went back and tapped S6 where the moved list showed it (see "Booking flow"). MuMu closed after the summary |
 | 0.7.1 | 2026-10-18 | Dry run at 19:03: round 1 found S6 fully booked (a test booking held it), round 2 reached the accepted terms on S6. Then a timed real booking 20/10 at 19:08 (test bookings): 10:00-11:00 booked in 7.0 s (54 commands) and 11:00-12:00 in 4.9 s (38), both on S6 with no court opened by mistake. MuMu closed after the summary |
+| 0.8.0 code (driver) | 2026-10-18 | Dry run at 19:20 that started MuMu: the driver installed in 4.1 s and answered 1.4 s after its start; every step to "Tiếp tục" by accessibility clicks, then the monthly quota dialog (test bookings). After a cancellation, a timed real booking 20/10 at 19:26 on S10 (test bookings): 10:00-11:00 booked in 4.8 s and 11:00-12:00 in 3.9 s, every click an accessibility click by label, "Xác nhận" 0.20 s after the tick. The driver stopped after the run; MuMu closed after the summary |
 | UI part 3 | 2026-10-14 | Requests through the Vite proxy, and the live feed across a backend stop and restart (no step lost or repeated), against a scratch backend |

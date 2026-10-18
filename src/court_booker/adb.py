@@ -123,6 +123,31 @@ class Adb:
         """Run ``adb -s serial shell args`` and return its output."""
         return self._call("-s", serial, "shell", *args)
 
+    def forward(self, serial: str, remote: str) -> int:
+        """Return a local TCP port forwarded to ``remote`` on ``serial``, reusing one if set."""
+        for line in self._call("forward", "--list").splitlines():
+            parts = line.split()
+            if len(parts) == 3 and parts[0] == serial and parts[2] == remote:
+                kind, _, port = parts[1].partition(":")
+                if kind == "tcp" and port.isdigit():
+                    return int(port)
+        output = self._call("-s", serial, "forward", "tcp:0", remote).strip()
+        if not output.isdigit():
+            raise DeviceConnectionError(f"adb forward to {remote} failed: {output or 'no port'}")
+        return int(output)
+
+    def forward_remove(self, serial: str, port: int) -> None:
+        """Drop the forward of local TCP ``port``."""
+        self._call("-s", serial, "forward", "--remove", f"tcp:{port}")
+
+    def install(self, serial: str, apk: Path) -> str:
+        """Install or update ``apk`` and return what adb printed, errors included."""
+        try:
+            result = self._run([str(self.path), "-s", serial, "install", "-r", str(apk)])
+        except (OSError, subprocess.SubprocessError) as exc:
+            raise DeviceConnectionError(f"adb install failed: {exc}") from exc
+        return result.stdout + result.stderr
+
     def discover(self, ports: Sequence[int] = EMULATOR_PORTS) -> list[str]:
         """Return online devices, connecting the first open emulator port if none is."""
         serials = self.devices()

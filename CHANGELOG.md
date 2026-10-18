@@ -6,6 +6,23 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- The driver: the project's own APK (`android/`), run in MuMu as an instrumentation with
+  `am instrument`, which gets UiAutomation as uiautomator2 does; it is not an accessibility
+  service, and the app books with it running (2026-10-18). It reads the screen in about
+  13 ms instead of 100 ms and clicks elements by their label in the tree of the moment,
+  with no coordinates, so a list that moves while it loads cannot send a click to another
+  court. A run installs it when missing or different (the APK ships in the package, built
+  by `tools/build_driver.py`), starts it, and stops it at the end; it falls back to
+  uiautomator2 when the driver does not start. `--driver instrumentation|uiautomator2`
+  asks for one. First real booking: rounds of 4.8 s and 3.9 s against 7.0 s and 4.9 s with
+  uiautomator2 the same evening.
+
+### Changed
+- "Tiếp tục" comes at least 0.1 s after the slot tap and "Xác nhận" at least 0.2 s after
+  the consent tick: sooner, the app books the slot selected before or ignores the
+  confirmation (seen with fast reads, 2026-10-18).
+
 ## [0.7.1] - 2026-10-18
 
 ### Changed

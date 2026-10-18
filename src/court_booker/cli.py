@@ -8,7 +8,7 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import NoReturn
+from typing import Any, NoReturn
 
 from court_booker import __version__, device_setup, schedule
 from court_booker.clock import ntp_offset, resolve_start
@@ -31,7 +31,7 @@ from court_booker.logging_setup import LOGGER_NAME, add_file_handler, configure_
 from court_booker.notify import format_summary, send_telegram
 from court_booker.paths import data_folder
 from court_booker.power import keep_awake
-from court_booker.runner import RoundResult, connect_device, run_booking
+from court_booker.runner import AUTO_DRIVER, DRIVERS, RoundResult, connect_device, run_booking
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -56,6 +56,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--days", type=int, help="days ahead of today to book")
     parser.add_argument("--slots", nargs="+", metavar="SLOT", help='e.g. "18:00 - 19:00"')
     parser.add_argument("--device", help='ADB serial, e.g. 127.0.0.1:16384, or "auto"')
+    parser.add_argument(
+        "--driver",
+        choices=DRIVERS,
+        default=AUTO_DRIVER,
+        help="drive the device with the instrumentation driver, else uiautomator2 if it does "
+        "not start (default: %(default)s), or with one of them only",
+    )
     timing = parser.add_mutually_exclusive_group()
     timing.add_argument(
         "--at", metavar="HH:MM[:SS]", help="prepare now, start booking at this time today"
@@ -122,6 +129,14 @@ def close_emulator(config: Config) -> None:
         MuMu(Path(config.mumu_manager), config.mumu_index).shutdown()
     except EmulatorError as exc:
         logger.warning("Could not close MuMu: %s", exc)
+
+
+def close_device(device: Any) -> None:
+    """Stop the driver after the run, so uiautomator2 and other tools can use the device."""
+    try:
+        device.close()
+    except Exception:  # the rounds are over: a failure here only goes to the log
+        logger.warning("Could not stop the driver", exc_info=True)
 
 
 def run_trigger(args: argparse.Namespace) -> str:
@@ -225,6 +240,7 @@ def main(argv: list[str] | None = None) -> int:
     started = False
     results: list[RoundResult] = []
     config: Config | None = None
+    device: Any = None
     error: str | None = None
     frozen = False
     try:
@@ -267,8 +283,9 @@ def main(argv: list[str] | None = None) -> int:
             if start is not None and config.ntp_server:
                 offset = ntp_offset(config.ntp_server) or 0.0
                 logger.info("Clock offset %+.3f s", offset)
-            device = connect_device(config)
-            report(EventKind.DEVICE_READY)
+            device = connect_device(config, args.driver)
+            logger.info("Driving the device with %s", device.driver)
+            report(EventKind.DEVICE_READY, driver=device.driver)
             run_booking(
                 device,
                 config,
@@ -290,6 +307,8 @@ def main(argv: list[str] | None = None) -> int:
         logger.exception("Unexpected error")
         error, code = repr(exc), EXIT_ROUND_FAILED
 
+    if device is not None and not frozen:
+        close_device(device)
     print_summary(results)
     if started:
         report(
