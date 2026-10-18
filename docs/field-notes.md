@@ -196,6 +196,25 @@ socket `court-agent`, reached from the PC with `adb forward tcp:<port> localabst
   can still land on S9 when the court list has moved. A point is only for elements without
   a label (the consent checkbox).
 
+The agent of `android/` (protocol 1), tried the same afternoon on MuMu, no booking:
+
+- Its dump of the Vinhomes home screen held the same 62 elements as the uiautomator2 dump
+  (label, bounds, clickable), and nothing else; uiautomator2 adds 24 elements of the status
+  bar, a separate window the agent leaves out. A dump took 6.7 ms to the PC (median of 30,
+  5.6-10.8), a command round trip 2.4 ms.
+- A click by label on "Tiện ích" answered in 10 ms and "Sân Tennis" showed 430 ms after it
+  (five reads, each after `wait_change`); `click_at`, `swipe` and `back` worked too.
+- uiautomator2 unbound the agent as before; after `stop_uiautomator()` the new instance was
+  bound 0.06 s later and answered on the socket.
+- **After a MuMu restart the agent is not bound**, although it stays in the enabled
+  services (twice: `control shutdown` + `launch`, 39 and 43 s to boot). During boot Android
+  logs "Unable to launch app dev.courtbooker.agent ... user 0 is stopped" and never tries
+  again; `accessibility_enabled` reads 0. Writing the same setting value does nothing, and
+  clearing and setting it again does nothing either until the package's activity has been
+  opened. Opening the activity, then clearing and setting
+  `enabled_accessibility_services` bound it 0.13 s later (0.8 s on the first try). Since
+  a real run closes MuMu, every run has to do this after starting MuMu.
+
 ## App and server timings
 
 - Calendar 0.14 s after "Sân Tennis", slot list ~2.1 s after the date tap, court list
