@@ -9,9 +9,7 @@ Last updated: 2026-10-18.
 Python code on Windows that drives the **Vinhomes Resident** Android app (Flutter) inside
 the **MuMu Player** emulator to book a tennis court. A learning project meant to be a
 realistic, CV-worthy product; personal use only. The only product goal is to win the race
-when bookings open at **06:00 every day**, unattended. Bypassing any app check and
-on-device automation (AccessibilityService) are out of scope: the app refuses to book while
-an accessibility service is enabled (seen 2026-10-18).
+when bookings open at **06:00 every day**, unattended.
 
 Read the matching doc before changing an area; these notes hold only the essentials:
 
