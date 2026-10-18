@@ -6,6 +6,12 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- Branches: `develop` is the development line and `main` holds releases only, each commit
+  on it tagged; work branches are cut from `develop` and merged back into it, and a release
+  is a pull request from `develop` into `main`. The `stable` branch is gone (CONTRIBUTING).
+  CI also runs on pushes to `develop`, and Dependabot opens its pull requests there.
+
 ## [0.8.0] - 2026-10-18
 
 ### Added

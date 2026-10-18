@@ -77,16 +77,18 @@ npm run api:types                                    # src/api/schema.d.ts from 
 - All code, comments, logs, commits and docs in English; app labels stay Vietnamese in the
   config. Type hints, short imperative docstrings, comments explain why, module loggers,
   `BookingError` subclasses, named constants, Ruff line length 100.
-- Git: `main` (protected) is the development line. `feat/`, `fix/`, `docs/`, `chore/`
-  branches are cut from `main` and PR'd into it (merge commit, never squash); a branch
-  stacked on another still targets `main`, merged in order. Only finished, tested work is
-  merged (a booking flow change: a real booking first), so `main` can be released any time.
-  `stable` is the latest release and only moves forward: a release is a
-  `chore/release-X.Y.Z` PR into `main`, then `stable` moves to that commit, tagged `vX.Y.Z`.
-  No `release/X.Y.Z` branches. Conventional Commits, Semantic Versioning, CHANGELOG (Keep a
-  Changelog; each PR adds its line under "Unreleased"). The user opens and merges PRs on
-  GitHub: give a compare link (`compare/main...<branch>`), title and description. `gh` is
-  for reading GitHub state only.
+- Git: `develop` (protected) is the development line; `main` (protected) holds releases
+  only, every commit on it tagged `vX.Y.Z`. `feat/`, `fix/`, `docs/`, `chore/` branches are
+  cut from `develop` and PR'd into it (merge commit, never squash); a branch stacked on
+  another still targets `develop`, merged in order. Only finished, tested work is merged (a
+  booking flow change: a real booking first), so `develop` can be released any time. A
+  release: a `chore/release-X.Y.Z` PR into `develop`, then a PR from `develop` into `main`,
+  whose merge commit is tagged `vX.Y.Z` (CONTRIBUTING, "Releasing"); an urgent fix takes the
+  same way. No `release/X.Y.Z` branches. Conventional Commits, Semantic Versioning,
+  CHANGELOG (Keep a Changelog; each PR adds its line under "Unreleased"). The user opens and
+  merges PRs on GitHub: give a compare link (`compare/develop...<branch>`, or
+  `compare/main...develop` for a release), title and description. `gh` is for reading
+  GitHub state only.
 - Write code only when the user asks for it.
 
 ## Code map
@@ -170,12 +172,12 @@ list. Details in `docs/field-notes.md`.
 
 ## Current state
 
-- Released: 0.7.0 (`stable`, tag `v0.7.0`): taps as a bare touch down + up, MuMu closed
-  after a real run; the runner is at v0.7.0. `main` also holds the court check on the
-  booking details page (PR #121, booked for real 2026-10-18); it ships with 0.7.1.
-- Now: release 0.7.1 (the court check). Then the speed work: MuMu tuning, several MuMu
-  instances in parallel. The on-device agent was tried and dropped (`docs/field-notes.md`,
-  "Accessibility agent"). Packaging the desktop app (Tauri, PyInstaller, installer;
+- Released: 0.8.0 (`main`, tag `v0.8.0`): the instrumentation driver, which clicks
+  elements by label with no coordinates (`docs/architecture.md`, "Driver"); the runner is
+  at v0.8.0.
+- Now: watching the 06:00 runs on the driver. Then the speed work goes on: MuMu tuning,
+  several MuMu instances in parallel. The on-device accessibility agent was tried and
+  dropped (`docs/field-notes.md`, "Accessibility agent"). Packaging the desktop app (Tauri, PyInstaller, installer;
   "Packaging" in `docs/specs/0.5.0-desktop-app.md`) is the last step before 1.0.0; it is
   not planned yet and has no version number yet.
 - Progress and the plan for the next part are kept outside the repo, in
