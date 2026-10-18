@@ -6,14 +6,10 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Added
-- The on-device agent (`android/`): an AccessibilityService APK that reads the screen and
-  taps by label over a local socket, built by `tools/build_agent.py` without Gradle and in
-  CI. Runs do not use it yet.
-
 ### Changed
-- Scope: an on-device AccessibilityService agent (our own APK, the official accessibility
-  API) is now in scope and planned for 0.8.0; modifying the Vinhomes app stays out of scope.
+- An on-device AccessibilityService agent was tried and dropped: the Vinhomes app refuses
+  to book while an accessibility service is enabled (field notes, "Accessibility agent").
+  On-device automation stays out of scope.
 
 ### Fixed
 - A court tap that the moving court list sends to another court no longer books that court
