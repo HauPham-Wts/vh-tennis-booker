@@ -6,10 +6,11 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-10-18
+
 ### Changed
 - An on-device AccessibilityService agent was tried and dropped: the Vinhomes app refuses
   to book while an accessibility service is enabled (field notes, "Accessibility agent").
-  On-device automation stays out of scope.
 
 ### Fixed
 - A court tap that the moving court list sends to another court no longer books that court
