@@ -21,8 +21,11 @@ booking (decided 2026-10-07).
   with `is_android_started`, `adb_host_ip`, `adb_port` (16384 for instance 0);
   `control -v 0 launch` starts it. MuMu ships its own `adb.exe` in the same folder.
 
-Out of scope: bypassing any app check, and on-device automation (an Android app using
-AccessibilityService). ADB needs Android developer mode, which the app accepts.
+Out of scope: bypassing any app check, and modifying the Vinhomes app. ADB needs Android
+developer mode, which the app accepts. In scope since 2026-10-18: an on-device agent, our
+own APK using Android's accessibility API (as screen readers do), which reads the app's
+screen and taps it like uiautomator2 does, only faster (field notes, "Accessibility
+agent"). It was out of scope until an experiment that day showed it works.
 
 ## Phases
 
@@ -32,7 +35,11 @@ it decides the 06:00 race. On 2026-10-12 the UI phase moved ahead of the remaini
 work: 0.4.0 waits for failures in the logs, and the core books reliably. Since 0.6.0 the
 0.6.x patches fix what the 06:00 logs and daily use show. On 2026-10-16 packaging the
 desktop app (the installer) moved to the very end, after the speed work, so it only wraps
-what has proven itself; it gets its version number when it starts.
+what has proven itself; it gets its version number when it starts. On 2026-10-18 the
+accessibility agent replaced the planned 0.7.x patches: it is faster and taps by label,
+which ends the taps that land on a court that moved. The speed work then goes on in this
+order: the agent, MuMu tuning, several MuMu instances in parallel (the last step for two
+slots); each round is made as fast as it can be before rounds run side by side.
 
 | Phase | Version | Scope |
 |---|---|---|
@@ -47,8 +54,8 @@ what has proven itself; it gets its version number when it starts.
 | 2 Every situation | 0.6.2 | Booked only once the ticket shows (unknown outcome fails the round), Back pressed as soon as each screen shows, clock check with fallback servers; `main`/`stable` branch flow (released 2026-10-16) |
 | 4 UI | 0.6.3 | Activity becomes the second tab of History (five menu items); both list ten days and "Xem thêm" (`GET /api/runs?days=`) (released 2026-10-16) |
 | 3 Fast | 0.7.0 | Taps as a bare touch down and up (about 0.5-0.7 s less a round); a real run closes MuMu once its rounds are done (released 2026-10-16) |
-| 2 Every situation | **0.7.x** | Fixes as the 06:00 logs and daily use show them; first the court list that moves while it loads (see the situations below) (now) |
-| 3 Fast | Later | Tuning from the log files; several MuMu instances with separate accounts in parallel (one account cannot log in twice) |
+| 3 Fast | **0.8.0 Agent** | Our own AccessibilityService APK in MuMu reads the screen (3 ms, uiautomator2 80 ms) and taps by label, so a court list that moves cannot send a tap to another court; uiautomator2 stays as the fallback, removed after a few good 06:00 runs. Ships with the court check on the booking details page (merged 2026-10-17, no 0.7.1) (now) |
+| 3 Fast | Later | MuMu tuning (frame rate, performance, hidden bottlenecks); then several MuMu instances with separate accounts in parallel (one account cannot log in twice), the last speed step |
 | 4 UI | Desktop app, last before 1.0.0 | Tauri shell with PyInstaller sidecar, installer, release automation; version number set when it starts (spec [0.5.0-desktop-app](specs/0.5.0-desktop-app.md), "Packaging") |
 
 There is no 0.3.1: its candidate fixes were judged to have no impact.
@@ -69,7 +76,7 @@ failures are fixed as they show up in the log.
 | Booking | Slot fully booked | Round fails; no fallback slot (by decision) |
 | Booking | Court fully booked | Round fails; no fallback court (by decision) |
 | Booking | Slot taken by someone else at "Xác nhận" | Round fails with the app's notice (0.5.1; was logged as booked on 2026-10-14) |
-| Booking | Booked court differs from the tapped one | Seen 2026-10-13 (S6 tapped, S9 booked), 2026-10-15 at 06:00 (the tap hit S9, fully booked: 2.45 s lost), 2026-10-16 (confirmation page on S9, refused by the quota) and 2026-10-17 at 06:00 (S9 booked). Cause: the court list moves up 232 px when the service info above it finishes loading (field notes). Since 0.6.1 the court on the confirmation page is logged (a warning when it differs) and kept in the history. Fixed (unreleased): the booking details page must name the configured court, another one is left with Back and the court tapped again; a list that moved under a tap that opened nothing gets the tap again after 0.6 s |
+| Booking | Booked court differs from the tapped one | Seen 2026-10-13 (S6 tapped, S9 booked), 2026-10-15 at 06:00 (the tap hit S9, fully booked: 2.45 s lost), 2026-10-16 (confirmation page on S9, refused by the quota) and 2026-10-17 at 06:00 (S9 booked). Cause: the court list moves up 232 px when the service info above it finishes loading (field notes). Since 0.6.1 the court on the confirmation page is logged (a warning when it differs) and kept in the history. Fixed (unreleased, ships with 0.8.0): the booking details page must name the configured court, another one is left with Back and the court tapped again; a list that moved under a tap that opened nothing gets the tap again after 0.6 s. On 2026-10-18 both rounds of a real booking opened S9 and were set right this way (about 1.5 s each). The 0.8.0 agent taps by label, so the tap itself no longer misses |
 | Booking | Target date in the next month | Code exists; untested since 0.3.0. Only testable on the last two days of a month (30/10 → 1/11, 31/10 → 2/11): the calendar does not switch to a month without bookable days |
 | Booking | Booking limit per account | 8 slots per apartment per month; not handled by decision (users track their own quota), the log shows the dialog |
 | Device | MuMu not running / frozen | Started automatically / since 0.6.1 a command over 60 s ends the run with an error (exit code 3); no restart, no retry (by decision) |
@@ -85,3 +92,7 @@ failures are fixed as they show up in the log.
 - 2026-10-10: a health check before 06:00, fallback slots and courts (other users book
   within seconds, a missed slot is lost), Telegram setup (the optional code stays), a run
   history file (history came with the app's database in 0.5.0).
+- 2026-10-18: taps written straight to `/dev/input/event4`. The ADB shell may write there,
+  and a tap took 0.1 ms instead of 83-91 ms, but with the agent's change detection the
+  three ways to tap came out alike (accessibility click 402 ms, event4 417 ms, gesture
+  428 ms from the tap to the next screen); a tap by position can still hit a moved list.

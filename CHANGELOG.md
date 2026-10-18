@@ -6,6 +6,10 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- Scope: an on-device AccessibilityService agent (our own APK, the official accessibility
+  API) is now in scope and planned for 0.8.0; modifying the Vinhomes app stays out of scope.
+
 ### Fixed
 - A court tap that the moving court list sends to another court no longer books that court
   (S9 instead of S6 on 2026-10-13 and 17). The booking details page names the court it

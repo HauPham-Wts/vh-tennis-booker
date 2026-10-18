@@ -48,6 +48,12 @@ never tell one screen from another.
   (`'S9 - Sân tennis'` at `[116,975][264,1004]`, above a clickable "Chỉ đường"). In the 19
   court taps of 14-17/10 it showed 0.23-0.45 s after the tap, always before "Tiếp tục"
   (0.53-1.11 s). Back from it returns to the court list.
+- On 2026-10-18 at 13:25 (a real booking with the court check) both rounds tapped S6's
+  first centre (y=1217) and opened S9. The court's name was in the first read of the
+  details page (0.56 and 0.93 s after the tap); the check decides once "Tiếp tục" shows
+  (0.3-0.5 s later). Back showed the court list 0.34-0.38 s later, already moved ("Xem
+  thêm" loaded, S6 at `[35,925][505,1045]`), and the tap at y=985 opened S6. Each wrong
+  court cost about 1.5 s.
 - Calendar at 540x1600 (failure log, 2026-10-10): two non-clickable nodes labelled
   `"Chọn năm"` at `[22,160][170,229]` and `[177,160][285,229]`, then a day grid from
   y=344; no node labelled "Tháng sau"/"Tháng trước" and no clickable unlabelled node near
@@ -150,6 +156,46 @@ without it, such as the empty frame seen at 16:44 on 2026-10-15, is read again.
   heavy test runs): `MuMuNxDevice` must be ended by hand. Since 0.7.0 a real run closes
   MuMu this way; a frozen run never tries.
 
+## Accessibility agent (experiment 2026-10-18)
+
+A throwaway AccessibilityService APK (Java, built with the SDK tools alone, 25 KB) on MuMu's
+Android 15, quiet hours, no booking. It took one JSON line per command on the abstract
+socket `court-agent`, reached from the PC with `adb forward tcp:<port> localabstract:...`.
+
+- Switching it on over ADB works: `adb install` (not flagged as restricted), then open the
+  package's activity once, then wait about 1 s and set
+  `settings put secure enabled_accessibility_services <pkg>/<pkg>.AgentService` and
+  `accessibility_enabled 1`; `dumpsys accessibility` then lists it under "Bound services".
+  A package never opened is "stopped" and is not bound (Android refuses to start it: "user 0
+  is stopped"), and setting the service before that first open does not bind it later: the
+  setting must be written again. `install -r` of a new APK binds it again by itself.
+- It cannot run beside uiautomator2: when uiautomator2 (3.x, a server started with
+  `app_process`) connects, Android unbinds the service; when uiautomator2 stops, Android
+  binds it again within 1 s, but as a new instance, while the old one still holds the
+  socket and reads an empty screen. A run uses one or the other, and the socket must belong
+  to the bound instance (closed in `onUnbind`/`onDestroy`, opened in `onServiceConnected`).
+- The Vinhomes app showed no reaction to it (home, utilities, calendar, slots, court list,
+  booking details, confirmation page).
+- `findAccessibilityNodeInfosByText` finds nothing in the Flutter app; walking the tree
+  takes 2 ms. Labels are in `contentDescription`, as in the uiautomator2 dump.
+- `ACTION_CLICK` worked on every element tried: "Tiện ích", "Sân Tennis", a day, a slot,
+  "Tiếp tục" on the calendar, a court (S9's details page 625 ms later), "Tiếp tục" on the
+  details page, and the unlabelled consent checkbox, found as the smallest clickable element
+  holding a point ("Xác nhận" then became clickable). "Xác nhận" and "Đóng" were not tried.
+  A click can wait 4-123 ms while the app is busy (longest while the home screen scrolls).
+  A click on "Sân Tennis" sent right after the tap on "Tiện ích", while the page was
+  changing, also worked.
+- With `notificationTimeout=0` the first accessibility event came 2-20 ms after a tap, at
+  most 15 ms late (the first events after the service started: 720 and 153 ms).
+- Speed, same session: reading the whole screen 3 ms on the device and 9 ms to the PC
+  (uiautomator2: 80 ms, 75-108), a command round trip 1.5 ms. From the tap on "Tiện ích" to
+  "Sân Tennis" showing: about 365 ms with the agent (click plus events, n=25) against
+  515 ms with uiautomator2 (n=15, quartiles 490-549), about 150 ms a step, so an estimated
+  1.0-1.4 s a round of nine steps (to be measured on real rounds).
+- A tap must find its element by label in the current tree: a point from the read before
+  can still land on S9 when the court list has moved. A point is only for elements without
+  a label (the consent checkbox).
+
 ## App and server timings
 
 - Calendar 0.14 s after "Sân Tennis", slot list ~2.1 s after the date tap, court list
@@ -173,4 +219,5 @@ without it, such as the empty frame seen at 16:44 on 2026-10-15, is read again.
 | 0.6.1 code | 2026-10-15 | Timed real booking 17/10 at 16:44 (cancelled afterwards): 09:00-10:00 failed (court S6 fully booked), 10:00-11:00 booked in 8.6 s; the confirmation page read "2026-10-17 10:00 - 11:00 on S6"; the first read 0.9 s after "Xác nhận" was blank (5 elements), so the ticket warning showed. A run at 16:40 found both evening slots fully booked |
 | 0.6.2 code | 2026-10-16 | Timed real booking 18/10 at 11:38 (cancelled afterwards): 10:00-11:00 booked in 5.7 s, the ticket's title in the first read 0.92 s after "Xác nhận" (status "Đang xử lý"); round 2 left the ticket with one Back and tapped "Sân Tennis" 0.32 s after it started; 11:00-12:00 reached "Xác nhận" and the app refused it with the monthly quota dialog 0.72 s later, which failed the round with the dialog's message. The clock check answered on the first try |
 | 0.7.0 code | 2026-10-16 | Dry run at 16:04 (MuMu left open), then a timed real booking 18/10 at 16:08 (a test booking): 10:00-11:00 booked in 5.7 s with touch down + up taps; 11:00-12:00 reached "Xác nhận" and the app refused it with the monthly quota dialog. In that round the tap on S6 landed on S9 (the court list moved, see "Booking flow"). "Closing MuMu instance 0" after the summary; the process exited 0.6 s later and `MuMuNxDevice` was gone within 18 s |
+| 0.7.0 + court check (`main`) | 2026-10-18 | Timed real booking 20/10 at 13:25 (test bookings): 10:00-11:00 booked in 9.4 s (50 commands) and 11:00-12:00 in 6.9 s (39), both on S6. In both rounds the tap on S6 opened S9; the details page check went back and tapped S6 where the moved list showed it (see "Booking flow"). MuMu closed after the summary |
 | UI part 3 | 2026-10-14 | Requests through the Vite proxy, and the live feed across a backend stop and restart (no step lost or repeated), against a scratch backend |
