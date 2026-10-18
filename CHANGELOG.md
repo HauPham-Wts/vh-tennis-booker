@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-18
+
 ### Added
 - The driver: the project's own APK (`android/`), run in MuMu as an instrumentation with
   `am instrument`, which gets UiAutomation as uiautomator2 does; it is not an accessibility
