@@ -9,16 +9,16 @@ Last updated: 2026-10-18.
 Python code on Windows that drives the **Vinhomes Resident** Android app (Flutter) inside
 the **MuMu Player** emulator to book a tennis court. A learning project meant to be a
 realistic, CV-worthy product; personal use only. The only product goal is to win the race
-when bookings open at **06:00 every day**, unattended. Bypassing any app check or modifying
-the Vinhomes app is out of scope; an on-device AccessibilityService agent (our own APK, the
-official accessibility API) is in scope since 2026-10-18.
+when bookings open at **06:00 every day**, unattended. Bypassing any app check and
+on-device automation (AccessibilityService) are out of scope: the app refuses to book while
+an accessibility service is enabled (seen 2026-10-18).
 
 Read the matching doc before changing an area; these notes hold only the essentials:
 
 | Doc | Holds |
 |---|---|
 | `docs/architecture.md` | Every module, route and UI layer in detail |
-| `docs/field-notes.md` | App screens, labels, dialogs, MuMu facts, agent experiment, timings, verified runs |
+| `docs/field-notes.md` | App screens, labels, dialogs, MuMu facts, timings, verified runs |
 | `docs/roadmap.md` | Product decisions, phases, situations table, ruled-out ideas |
 | `docs/how-it-works.md` | How the flow reads the app (dumps, matching, navigation) |
 | `docs/specs/0.5.0-desktop-app.md` | Desktop app design: backend, screens, parts of 0.5.0 and 0.6.0, packaging (last) |
@@ -174,15 +174,12 @@ list. Details in `docs/field-notes.md`.
 
 - Released: 0.7.0 (`stable`, tag `v0.7.0`): taps as a bare touch down + up, MuMu closed
   after a real run; the runner is at v0.7.0. `main` also holds the court check on the
-  booking details page (PR #121, booked for real 2026-10-18); it ships with 0.8.0, there is
-  no 0.7.1.
-- Now: 0.8.0, an on-device agent: our own AccessibilityService APK that reads the screen in
-  about 3 ms (uiautomator2: 80 ms) and taps by label, so a court list that moves cannot send
-  a tap to another court. uiautomator2 stays as the fallback until a few 06:00 runs have
-  used the agent, then goes (`docs/field-notes.md`, "Accessibility agent"). After it: MuMu
-  tuning, several MuMu instances in parallel, then packaging the desktop app (Tauri,
-  PyInstaller, installer; "Packaging" in `docs/specs/0.5.0-desktop-app.md`), the last step
-  before 1.0.0; it is not planned yet and has no version number yet.
+  booking details page (PR #121, booked for real 2026-10-18); it ships with 0.7.1.
+- Now: release 0.7.1 (the court check). Then the speed work: MuMu tuning, several MuMu
+  instances in parallel. The on-device agent was tried and dropped (`docs/field-notes.md`,
+  "Accessibility agent"). Packaging the desktop app (Tauri, PyInstaller, installer;
+  "Packaging" in `docs/specs/0.5.0-desktop-app.md`) is the last step before 1.0.0; it is
+  not planned yet and has no version number yet.
 - Progress and the plan for the next part are kept outside the repo, in
   `D:\VH-Booker\notes\` (`progress.md`, `next.md`): read both at the start of a session and
   update them when a part ends. Local test tools (scratch backend, screenshots, a stand-in

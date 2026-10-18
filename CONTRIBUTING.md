@@ -19,23 +19,6 @@ npm ci            # install the exact versions from package-lock.json
 npm run dev       # development server with hot reload
 ```
 
-The on-device agent lives in `android/` (Java, the usual Gradle folder layout, built without
-Gradle). It needs a JDK 17 or later and the Android SDK: unpack the
-[command-line tools](https://developer.android.com/studio#command-line-tools-only) into
-`<sdk>/cmdline-tools/latest`, set `ANDROID_HOME` to `<sdk>` (the build tool falls back to
-`D:\Tools\android-sdk`), then install the two packages it uses:
-
-```bash
-sdkmanager "platforms;android-35" "build-tools;35.0.0"
-python tools/build_agent.py      # writes android/build/court-agent.apk
-```
-
-In PowerShell, pass the package names after `--%` (`sdkmanager --% "platforms;android-35"
-"build-tools;35.0.0"`): `sdkmanager.bat` splits its arguments at `;` otherwise. The APK is
-signed with the Android debug key (`~/.android/debug.keystore`, created on the first build),
-so a new build installs over the old one with `adb install -r`. CI builds it in the `agent`
-job and keeps the APK as an artifact.
-
 ## Before opening a pull request
 
 ```bash

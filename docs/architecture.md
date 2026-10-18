@@ -381,38 +381,6 @@ would move the task away from the runner folder.
   app events; a run's other steps send no request. `runSteps.ts` `useRunSteps(runId)`
   joins a run's stored steps with the live ones after the last stored id.
 
-## On-device agent (`android/`)
-
-An AccessibilityService in its own APK (`dev.courtbooker.agent`, Java, the usual Gradle
-layout under `android/app/src/main`), built by `tools/build_agent.py` with the SDK tools
-alone (aapt2, javac, d8, zipalign, apksigner); the APK's version is the Python package's.
-Runs do not use it yet (0.8.0 work: the engine's device layer, then device setup).
-
-- `AgentService` listens on the abstract socket `court-agent`; the PC reaches it with
-  `adb forward tcp:<port> localabstract:court-agent`. Android unbinds the service while
-  uiautomator2 runs and binds a new instance afterwards, so the socket belongs to the bound
-  instance: opened in `onServiceConnected`, closed (and every connection with it) in
-  `onUnbind`/`onDestroy`. Each accessibility event adds one to a counter, `seq`.
-- `MainActivity` closes at once; opening it once makes Android willing to bind the service
-  (field notes, "Accessibility agent").
-- `Tree` reads the active window as the uiautomator2 dump does: only nodes visible to the
-  user, bounds clipped to the screen.
-
-Protocol 1: one JSON object per line each way. A command has `op`, its arguments and an
-optional `id`; the reply repeats `id` and has `ok`, plus `error` when `ok` is false (an
-unknown `op`, a missing argument, a line that is not JSON).
-
-| `op` | Arguments | Reply |
-|---|---|---|
-| `hello` | | `protocol` (1), `version` (the APK's) |
-| `dump` | | `xml` (`<hierarchy>` of `<node>` with `text`, `class`, `content-desc`, `clickable`, `enabled`, `bounds`; `<hierarchy/>` without a window), `seq` |
-| `click` | `label`, `x`, `y` | `clicked`; the visible node labelled exactly `label` that holds (x, y), else the nearest, is clicked (`ACTION_CLICK` on it or its nearest clickable ancestor); `bounds` of that node; `clicked` false when no node has the label |
-| `click_at` | `x`, `y` | `clicked`, `bounds` of the smallest clickable node holding the point |
-| `back` | | `done` |
-| `swipe` | `x1`, `y1`, `x2`, `y2`, `ms` | `done` once the gesture has ended |
-| `current` | | `package` of the active window |
-| `wait_change` | `since`, `timeout_ms` (0) | `seq`, as soon as it is above `since` or after the timeout |
-
 ## Tests
 
 - External effects are injectable (`run`, `probe`, `clock`, `sleep`, `post`, `set_state`),

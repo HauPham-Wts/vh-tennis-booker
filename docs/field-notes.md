@@ -156,64 +156,40 @@ without it, such as the empty frame seen at 16:44 on 2026-10-15, is read again.
   heavy test runs): `MuMuNxDevice` must be ended by hand. Since 0.7.0 a real run closes
   MuMu this way; a frozen run never tries.
 
-## Accessibility agent (experiment 2026-10-18)
+## Accessibility agent (tried and dropped, 2026-10-18)
 
-A throwaway AccessibilityService APK (Java, built with the SDK tools alone, 25 KB) on MuMu's
-Android 15, quiet hours, no booking. It took one JSON line per command on the abstract
-socket `court-agent`, reached from the PC with `adb forward tcp:<port> localabstract:...`.
+A throwaway AccessibilityService APK (Java, 25 KB) on MuMu's Android 15, then a fuller
+one driving real rounds. It read the screen in 3 ms (uiautomator2: 80 ms) and tapped by
+label, but **the Vinhomes app refuses to book while an accessibility service is
+enabled**: right after "Xác nhận" (two timed real bookings, 20/10 10:00-12:00) it showed
+a dialog titled `'Cảnh báo'` instead of the ticket: "Thiết bị đang sử dụng ứng dụng không
+được phép dev.courtbooker.agent. Vui lòng tắt quyền 'Accessibility' hoặc gỡ ứng dụng này
+để tiếp tục", with `'Gỡ bỏ'` and `'Cài đặt'`; no booking was made. Every step before
+"Xác nhận" worked, dry runs too, and the app showed nothing at all until that point. With
+the agent uninstalled and the setting cleared, the 0.7.0 runner booked both slots the same
+afternoon without the dialog. The app checks for accessibility services at the
+confirmation; getting around that check is out of scope, so the idea was dropped.
 
-- Switching it on over ADB works: `adb install` (not flagged as restricted), then open the
-  package's activity once, then wait about 1 s and set
-  `settings put secure enabled_accessibility_services <pkg>/<pkg>.AgentService` and
-  `accessibility_enabled 1`; `dumpsys accessibility` then lists it under "Bound services".
-  A package never opened is "stopped" and is not bound (Android refuses to start it: "user 0
-  is stopped"), and setting the service before that first open does not bind it later: the
-  setting must be written again. `install -r` of a new APK binds it again by itself.
-- It cannot run beside uiautomator2: when uiautomator2 (3.x, a server started with
-  `app_process`) connects, Android unbinds the service; when uiautomator2 stops, Android
-  binds it again within 1 s, but as a new instance, while the old one still holds the
-  socket and reads an empty screen. A run uses one or the other, and the socket must belong
-  to the bound instance (closed in `onUnbind`/`onDestroy`, opened in `onServiceConnected`).
-- The Vinhomes app showed no reaction to it (home, utilities, calendar, slots, court list,
-  booking details, confirmation page).
-- `findAccessibilityNodeInfosByText` finds nothing in the Flutter app; walking the tree
-  takes 2 ms. Labels are in `contentDescription`, as in the uiautomator2 dump.
-- `ACTION_CLICK` worked on every element tried: "Tiện ích", "Sân Tennis", a day, a slot,
-  "Tiếp tục" on the calendar, a court (S9's details page 625 ms later), "Tiếp tục" on the
-  details page, and the unlabelled consent checkbox, found as the smallest clickable element
-  holding a point ("Xác nhận" then became clickable). "Xác nhận" and "Đóng" were not tried.
-  A click can wait 4-123 ms while the app is busy (longest while the home screen scrolls).
-  A click on "Sân Tennis" sent right after the tap on "Tiện ích", while the page was
-  changing, also worked.
-- With `notificationTimeout=0` the first accessibility event came 2-20 ms after a tap, at
-  most 15 ms late (the first events after the service started: 720 and 153 ms).
-- Speed, same session: reading the whole screen 3 ms on the device and 9 ms to the PC
-  (uiautomator2: 80 ms, 75-108), a command round trip 1.5 ms. From the tap on "Tiện ích" to
-  "Sân Tennis" showing: about 365 ms with the agent (click plus events, n=25) against
-  515 ms with uiautomator2 (n=15, quartiles 490-549), about 150 ms a step, so an estimated
-  1.0-1.4 s a round of nine steps (to be measured on real rounds).
-- A tap must find its element by label in the current tree: a point from the read before
-  can still land on S9 when the court list has moved. A point is only for elements without
-  a label (the consent checkbox).
+What the experiment showed, kept in case the numbers matter:
 
-The agent of `android/` (protocol 1), tried the same afternoon on MuMu, no booking:
-
-- Its dump of the Vinhomes home screen held the same 62 elements as the uiautomator2 dump
-  (label, bounds, clickable), and nothing else; uiautomator2 adds 24 elements of the status
-  bar, a separate window the agent leaves out. A dump took 6.7 ms to the PC (median of 30,
-  5.6-10.8), a command round trip 2.4 ms.
-- A click by label on "Tiện ích" answered in 10 ms and "Sân Tennis" showed 430 ms after it
-  (five reads, each after `wait_change`); `click_at`, `swipe` and `back` worked too.
-- uiautomator2 unbound the agent as before; after `stop_uiautomator()` the new instance was
-  bound 0.06 s later and answered on the socket.
-- **After a MuMu restart the agent is not bound**, although it stays in the enabled
-  services (twice: `control shutdown` + `launch`, 39 and 43 s to boot). During boot Android
-  logs "Unable to launch app dev.courtbooker.agent ... user 0 is stopped" and never tries
-  again; `accessibility_enabled` reads 0. Writing the same setting value does nothing, and
-  clearing and setting it again does nothing either until the package's activity has been
-  opened. Opening the activity, then clearing and setting
-  `enabled_accessibility_services` bound it 0.13 s later (0.8 s on the first try). Since
-  a real run closes MuMu, every run has to do this after starting MuMu.
+- Reading the whole screen took 3 ms on the device (6.7 ms to the PC), against 80 ms for
+  uiautomator2; tapping "Tiện ích" until "Sân Tennis" showed took about 365 ms against
+  515 ms, about 150 ms a step. Waiting on accessibility events, a tap came 2-20 ms before
+  the first event.
+- uiautomator2 (3.x, a server started with `app_process`) and an accessibility service
+  cannot run together: Android unbinds the service while uiautomator2 runs.
+- After a MuMu restart an enabled service is not bound ("user 0 is stopped"), until the
+  package's activity has been opened and the setting written again.
+- `findAccessibilityNodeInfosByText` finds nothing in the Flutter app; labels are in
+  `contentDescription`.
+- The app takes a slot a few frames after the tap (agent clicks, dry rounds): a "Tiếp tục"
+  11-40 ms after the slot click booked the slot selected before (3 of 3), one 60 or 100 ms
+  after it the slot clicked (12 of 12). uiautomator2's taps were never that close.
+- A tap by label cannot miss a court that moved, but a round with the agent still opened
+  S9 once (2026-10-18): the court check on the booking details page is what catches it.
+- Taps written to `/dev/input/event4` (the ADB shell may write there; 0.1 ms a tap) came
+  out like the other ways to tap once the same change detection was used (402, 417 and
+  428 ms from the tap to the next screen).
 
 ## App and server timings
 
