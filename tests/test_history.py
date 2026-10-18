@@ -3,6 +3,7 @@
 import json
 import logging
 import sqlite3
+import threading
 from datetime import datetime, timedelta
 
 import pytest
@@ -232,6 +233,21 @@ def test_lines_before_the_run_are_stored_with_it(connection, capture):
         {"run_id": store.run_id, "level": "INFO", "message": "court-booker 0.5.0"},
         {"run_id": store.run_id, "level": "DEBUG", "message": "Connected to 127.0.0.1:16384"},
     ]
+
+
+def test_lines_logged_on_the_device_thread_are_stored(connection, capture):
+    # The driver logs inside device calls, which the watchdog runs on its own thread.
+    store, log = capture
+    Reporter(store, clock=ticking_clock())(
+        EventKind.RUN_STARTED, trigger="manual", dry_run=False, version="0.8.0"
+    )
+
+    worker = threading.Thread(target=lambda: log.info("Starting the driver"))
+    worker.start()
+    worker.join()
+
+    assert not store.failed
+    assert log_lines(connection)[-1]["message"] == "Starting the driver"
 
 
 def test_lines_without_a_run_are_stored_on_close(connection, capture):

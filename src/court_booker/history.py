@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import logging
 import sqlite3
+import threading
 import time
 from datetime import datetime
 from pathlib import Path
@@ -92,7 +93,8 @@ def connect(path: Path) -> sqlite3.Connection:
     every commit a write takes well under a millisecond.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(path, timeout=BUSY_TIMEOUT)
+    # Log lines also come from the thread that runs device calls (court_booker.watchdog).
+    connection = sqlite3.connect(path, timeout=BUSY_TIMEOUT, check_same_thread=False)
     try:
         connection.execute("PRAGMA journal_mode = WAL")
         connection.execute("PRAGMA synchronous = NORMAL")
@@ -164,6 +166,8 @@ class History:
         self.failed = False
         self.writes = 0
         self.seconds = 0.0
+        self._lock = threading.Lock()
+        """One write at a time: events come from the run, log lines from any thread."""
         # Added to a logger by the caller, so that logger's lines are kept with the run.
         self.handler = HistoryHandler(self)
 
@@ -224,18 +228,22 @@ class History:
 
     def _write(self, write: Callable[[sqlite3.Connection], None]) -> None:
         """Run ``write`` in one transaction, unless an earlier write failed."""
-        if self.failed:
-            return
-        started = time.perf_counter()
-        try:
-            with self.connection:
-                write(self.connection)
-        except sqlite3.Error:
-            self.failed = True
-            logger.warning("History database failed; history is off for this run", exc_info=True)
-        finally:
-            self.writes += 1
-            self.seconds += time.perf_counter() - started
+        error: sqlite3.Error | None = None
+        with self._lock:
+            if self.failed:
+                return
+            started = time.perf_counter()
+            try:
+                with self.connection:
+                    write(self.connection)
+            except sqlite3.Error as exc:
+                self.failed, error = True, exc
+            finally:
+                self.writes += 1
+                self.seconds += time.perf_counter() - started
+        if error is not None:
+            # Outside the lock: the handler gets this line back and calls this method again.
+            logger.warning("History database failed; history is off for this run", exc_info=error)
 
     def _record_run(self, db: sqlite3.Connection, event: Event) -> None:
         kind, data, stamp = event.kind, event.data, _stamp(event.time)

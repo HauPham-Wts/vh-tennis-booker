@@ -79,6 +79,14 @@ class DeviceNotRespondingError(DeviceError):
     """A command to the device did not end in time: the emulator froze."""
 
 
+class DriverUnavailableError(DeviceError):
+    """The driver could not be installed or started, or speaks another protocol."""
+
+
+class DriverError(DeviceError):
+    """The driver refused a command or closed the connection."""
+
+
 class AppNotReadyError(CourtBookerError):
     """The app did not reach its home or utilities screen, e.g. after a logout."""
 

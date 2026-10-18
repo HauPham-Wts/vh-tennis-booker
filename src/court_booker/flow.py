@@ -2,11 +2,14 @@
 
 Each screen is read with one hierarchy dump (:class:`~court_booker.screen.Screen`),
 which lists every element with its bounds in about the time of a single element
-query. Elements are found by accessibility label in that dump and tapped at their
-coordinates, so waiting for the next screen and locating the next element are the
-same query: a step costs one dump per poll plus one tap. No coordinates are kept
-across screens. ``device`` is a :class:`uiautomator2.Device` or a test double with
-``dump_hierarchy``, ``click``, ``press``, ``swipe``, ``shell`` and the app calls.
+query. Elements are found by accessibility label in that dump, so waiting for the next
+screen and locating the next element are the same query: a step costs one dump per poll
+plus one tap. A tap names the element by its label: the driver
+(:class:`~court_booker.driver.DriverDevice`) clicks the element with that label where it is
+then, uiautomator2 (:class:`~court_booker.runner.QuickTap`) taps where the dump showed it.
+No coordinates are kept across screens. ``device`` is one of them or a test double with
+``dump_hierarchy``, ``click`` (with the label of the element tapped), ``press``, ``swipe``,
+``shell`` and the app calls.
 """
 
 from __future__ import annotations
@@ -54,6 +57,17 @@ _MOVED_COURT_WAIT = 0.6
 
 A tap that opens a court shows the booking details page 0.23-0.45 s later (14-17/10)."""
 _BACK_PRESSES = 8
+_SLOT_SETTLE = 0.1
+"""Pause after the slot tap, before "Tiếp tục": the app takes the slot a few frames later.
+
+A "Tiếp tục" 11-40 ms after the tap booked the slot selected before (3 of 3, with an
+accessibility agent, 2026-10-18); 60 and 100 ms got the slot tapped (12 of 12).
+uiautomator2's taps were never that close. Nothing on the screen shows the selection, so
+there is nothing to wait for."""
+_TERMS_SETTLE = 0.2
+"""Least time from the checkbox tap to "Xác nhận": the app takes the tick a few frames after
+the button shows enabled. A "Xác nhận" 65 ms after the tick did nothing (the driver,
+2026-10-18), one 97 ms after it booked, and uiautomator2's 0.14-0.23 s always did."""
 _FIRST_DATE_WAIT = 1.5
 _NEXT_DATE_WAIT = 0.8
 _CHECKBOX_TIMEOUT = 0.8
@@ -427,6 +441,7 @@ class Booker:
                 position = self._visibility(screen, node)
                 if position == "visible":
                     self.tap(node)
+                    time.sleep(_SLOT_SETTLE)
                     logger.info("Selected slot %s (%d swipe(s))", slot, swipes)
                     self.report(EventKind.SLOT_SELECTED, slot=slot, swipes=swipes)
                     return screen
@@ -509,6 +524,7 @@ class Booker:
         """
         deadline = time.monotonic() + self.config.timeout
         while True:
+            ticked = time.monotonic()
             self.tap_point(*point)
             found = self.wait_for(self._finder(self.confirm_button), _CHECKBOX_TIMEOUT)
             if found is not None:
@@ -522,6 +538,7 @@ class Booker:
         if dry_run:
             logger.info("Dry run: skipping final confirmation")
             return None
+        time.sleep(max(0.0, ticked + _TERMS_SETTLE - time.monotonic()))
         self.tap(found[0])
         outcome = self.wait_for(self._after_confirm, self.config.timeout)
         if outcome is None:
@@ -580,10 +597,14 @@ class Booker:
         self.tap_point(*node.center, label=node.desc)
 
     def tap_point(self, x: float, y: float, label: str = "") -> None:
-        """Tap ``(x, y)``; ``label`` names the element tapped, for the debug log."""
+        """Tap ``(x, y)``; ``label`` names the element tapped.
+
+        The driver clicks the element with that label where it is now, which may be away
+        from ``(x, y)`` if the screen moved since it was read; uiautomator2 taps the point.
+        """
         self.commands += 1
         logger.debug("Tap %s(%d, %d)", f"{label!r} at " if label else "", x, y)
-        self.device.click(x, y)
+        self.device.click(x, y, label=label)
 
     def press_back(self) -> None:
         self.commands += 1

@@ -102,6 +102,8 @@ class FakeApp:
         self.on_swipe = None
         self.ops = []
         self.taps = []
+        self.labels = []
+        """The label sent with each tap, as the driver needs it."""
         self.calls = []
         self.swipes = 0
         self.swipe_args = []
@@ -130,7 +132,8 @@ class FakeApp:
         root = f'<node content-desc="" bounds="[0,0][{WIDTH},{HEIGHT}]" clickable="false">'
         return f"<hierarchy>{root}{children}</node></hierarchy>"
 
-    def click(self, x, y):
+    def click(self, x, y, label=""):
+        self.labels.append(label)
         hits = [
             (desc, box)
             for desc, box, _ in self.screens[self.screen]
@@ -261,6 +264,49 @@ def test_book_reads_each_screen_once_and_taps_by_coordinates():
     assert app.screen == "ticket"
     # 8 taps plus one read per screen: start, calendar, slots, courts, details,
     # confirmation, enabled confirm button, ticket.
+    assert booker.commands == 16
+
+
+def test_every_tap_names_its_element_for_the_driver():
+    app = booking_app()
+
+    Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    # The driver clicks by label; the consent checkbox has none and goes by position.
+    assert app.labels == [tap if isinstance(tap, str) else "" for tap in FULL_ROUND]
+
+
+def test_continue_waits_for_the_app_to_take_the_slot(fake_time):
+    app = booking_app()
+    tapped = {}
+    click = app.click
+
+    def timed_click(x, y, label=""):
+        tapped.setdefault(label, fake_time[0])
+        click(x, y, label)
+
+    app.click = timed_click
+    Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    # Sooner, the app books the slot selected before (field notes).
+    assert tapped["Tiếp tục"] - tapped["11:00 - 12:00"] >= flow._SLOT_SETTLE
+
+
+def test_confirm_waits_for_the_app_to_take_the_tick(fake_time):
+    app = booking_app()
+    tapped = {}
+    click = app.click
+
+    def timed_click(x, y, label=""):
+        tapped[label] = fake_time[0]
+        click(x, y, label)
+
+    app.click = timed_click
+    booker = Booker(app, Config())
+    booker.book("11:00 - 12:00", TARGET)
+
+    # Sooner, the app ignores "Xác nhận" (field notes); the checkbox has no label.
+    assert tapped["Xác nhận"] - tapped[""] >= flow._TERMS_SETTLE
     assert booker.commands == 16
 
 

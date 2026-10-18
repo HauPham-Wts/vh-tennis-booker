@@ -12,6 +12,8 @@ from typing import Any
 from court_booker.adb import Adb, find_adb, resolve_device
 from court_booker.clock import wait_until
 from court_booker.config import Config
+from court_booker.driver import PACKAGE as DRIVER_PACKAGE
+from court_booker.driver import connect_driver
 from court_booker.emulator import MuMu
 from court_booker.errors import BookingError, DeviceConnectionError, DeviceNotRespondingError
 from court_booker.events import EventKind, Reporter
@@ -22,6 +24,12 @@ logger = logging.getLogger(__name__)
 
 LOCATE_AHEAD = timedelta(seconds=2)
 """How long before the start time the utilities entry is read again."""
+AUTO_DRIVER = "auto"
+INSTRUMENTATION = "instrumentation"
+UIAUTOMATOR2 = "uiautomator2"
+DRIVERS = (AUTO_DRIVER, INSTRUMENTATION, UIAUTOMATOR2)
+"""How the run drives the device: the driver (:mod:`court_booker.driver`) when it starts,
+else uiautomator2 (``auto``), or only one of them (for tests by hand)."""
 
 
 @dataclass
@@ -51,26 +59,35 @@ class QuickTap:
     every time (2026-10-16).
     """
 
+    driver = UIAUTOMATOR2
+
     def __init__(self, device: Any) -> None:
         self._device = device
 
-    def click(self, x: int, y: int) -> None:
-        """Tap ``(x, y)``; both events in one call, so the watchdog limits the whole tap."""
+    def click(self, x: int, y: int, label: str = "") -> None:
+        """Tap ``(x, y)``; both events in one call, so the watchdog limits the whole tap.
+
+        ``label`` is for the driver, which clicks by label; a tap here goes by position only.
+        """
         self._device.touch.down(x, y).up(x, y)
+
+    def close(self) -> None:
+        """Leave the uiautomator2 server running, as runs always did."""
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self._device, name)
 
 
-def connect_device(config: Config) -> Any:
-    """Start the emulator if configured and return a uiautomator2 device.
+def connect_device(config: Config, driver: str = AUTO_DRIVER) -> Any:
+    """Start the emulator if configured and return the device the run drives.
 
-    The connection and every command on the device returned are time-limited
-    (:mod:`court_booker.watchdog`), so a frozen emulator ends the run instead of hanging it.
-    Taps skip uiautomator2's hold (:class:`QuickTap`).
+    That is the driver (:mod:`court_booker.driver`), installed and started as needed, else
+    uiautomator2 when the driver does not start, whose taps skip its hold (:class:`QuickTap`);
+    ``driver`` can ask for one of them only. The device's ``driver`` attribute names the one
+    used, and ``close()`` ends it after the run. The connection and every command on the
+    device are time-limited (:mod:`court_booker.watchdog`), so a frozen emulator ends the
+    run instead of hanging it.
     """
-    import uiautomator2  # deferred so tests do not require the dependency
-
     preferred = None
     extra_dirs = []
     if config.mumu_manager:
@@ -83,13 +100,33 @@ def connect_device(config: Config) -> Any:
     serial = resolve_device(adb, config.device, preferred)
     logger.info("Connecting to %s", serial)
     watchdog = Watchdog()
+    if driver != UIAUTOMATOR2:
+        try:
+            device = watchdog.run("connect", lambda: connect_driver(adb, serial))
+        except DeviceNotRespondingError:
+            raise
+        except Exception as exc:  # any driver failure, so it never costs the booking
+            if driver == INSTRUMENTATION:
+                raise
+            logger.warning("Driver unavailable (%s); using uiautomator2", exc)
+            # A driver that started and failed after holds UiAutomation, which uiautomator2 needs.
+            adb.shell(serial, "am", "force-stop", DRIVER_PACKAGE)
+        else:
+            return GuardedDevice(device, watchdog)
+    return GuardedDevice(QuickTap(connect_uiautomator2(serial, watchdog)), watchdog)
+
+
+def connect_uiautomator2(serial: str, watchdog: Watchdog) -> Any:
+    """Return a uiautomator2 device on ``serial``."""
+    import uiautomator2  # deferred so tests do not require the dependency
+
     try:
         device = watchdog.run("connect", lambda: uiautomator2.connect(serial))
     except DeviceNotRespondingError:
         raise
     except Exception as exc:  # uiautomator2 raises several unrelated types
         raise DeviceConnectionError(f"Could not connect to {serial}: {exc}") from exc
-    return GuardedDevice(QuickTap(device), watchdog)
+    return device
 
 
 def run_booking(

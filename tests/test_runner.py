@@ -11,6 +11,8 @@ from court_booker.config import Config
 from court_booker.errors import (
     AppNotReadyError,
     DeviceNotRespondingError,
+    DriverError,
+    DriverUnavailableError,
     NavigationError,
     SlotUnavailableError,
 )
@@ -254,3 +256,103 @@ def test_a_quick_tap_is_one_time_limited_call():
             device.click(270, 1537)
     finally:
         release.set()
+
+
+class FakeDriver:
+    driver = "instrumentation"
+
+
+class FakeAdb:
+    def __init__(self, path):
+        self.shells = []
+
+    def shell(self, serial, *args):
+        self.shells.append(" ".join(args))
+        return ""
+
+
+@pytest.fixture
+def drivers(monkeypatch):
+    """Connect without MuMu or adb; the driver starts unless ``drivers.driver`` is an error."""
+    state = type("Drivers", (), {"driver": FakeDriver(), "tried": [], "adb": None})()
+
+    def make_adb(path):
+        state.adb = FakeAdb(path)
+        return state.adb
+
+    def connect_driver(adb, serial):
+        state.tried.append("instrumentation")
+        if isinstance(state.driver, BaseException):
+            raise state.driver
+        return state.driver
+
+    def connect_uiautomator2(serial, watchdog):
+        state.tried.append("uiautomator2")
+        return TouchDevice()
+
+    monkeypatch.setattr(runner, "Adb", make_adb)
+    monkeypatch.setattr(runner, "find_adb", lambda path, dirs: "adb")
+    monkeypatch.setattr(runner, "resolve_device", lambda adb, device, preferred: "serial")
+    monkeypatch.setattr(runner, "connect_driver", connect_driver)
+    monkeypatch.setattr(runner, "connect_uiautomator2", connect_uiautomator2)
+    return state
+
+
+def test_the_driver_drives_the_device_when_it_starts(drivers):
+    device = runner.connect_device(Config(mumu_manager=""))
+
+    assert device.driver == "instrumentation"
+    assert drivers.tried == ["instrumentation"]
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        DriverUnavailableError("The driver did not answer 10 s after being started"),
+        DriverError("The driver refused hello: boom"),
+        KeyError("version"),
+    ],
+)
+def test_without_the_driver_uiautomator2_drives_the_device(drivers, caplog, error):
+    drivers.driver = error
+
+    device = runner.connect_device(Config(mumu_manager=""))
+
+    assert device.driver == "uiautomator2"
+    assert drivers.tried == ["instrumentation", "uiautomator2"]
+    assert f"Driver unavailable ({error}); using uiautomator2" in caplog.text
+    # A driver left running would hold UiAutomation, which uiautomator2 needs.
+    assert drivers.adb.shells == ["am force-stop dev.courtbooker.driver"]
+
+
+def test_a_frozen_emulator_is_not_handed_to_uiautomator2(drivers):
+    drivers.driver = DeviceNotRespondingError("MuMu did not answer connect within 60 s")
+
+    with pytest.raises(DeviceNotRespondingError):
+        runner.connect_device(Config(mumu_manager=""))
+
+    assert drivers.tried == ["instrumentation"]
+
+
+def test_asking_for_the_driver_fails_the_run_without_it(drivers):
+    drivers.driver = DriverUnavailableError("The driver APK is missing")
+
+    with pytest.raises(DriverUnavailableError):
+        runner.connect_device(Config(mumu_manager=""), runner.INSTRUMENTATION)
+
+    assert drivers.tried == ["instrumentation"]
+
+
+def test_asking_for_uiautomator2_leaves_the_driver_alone(drivers):
+    device = runner.connect_device(Config(mumu_manager=""), runner.UIAUTOMATOR2)
+
+    assert device.driver == "uiautomator2"
+    assert drivers.tried == ["uiautomator2"]
+
+
+def test_closing_uiautomator2_leaves_its_server_running():
+    device = TouchDevice()
+
+    runner.QuickTap(device).close()  # TouchDevice has no close(): nothing reaches it
+
+    assert device.events == []

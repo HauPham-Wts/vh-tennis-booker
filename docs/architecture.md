@@ -35,8 +35,14 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
 - `processes.py` names a process by pid and start time (`GetProcessTimes` via ctypes on
   Windows), so a later process that reuses a pid is never taken for the holder or stopped.
 - `runner.connect_device`: `emulator.MuMu.ensure_started` (MuMuManager `info`/`control
-  launch`), `adb.find_adb` + `adb.resolve_device` (prefers the serial MuMu reports),
-  `uiautomator2.connect` (imported lazily so tests do not need it). `runner.QuickTap` wraps
+  launch`), `adb.find_adb` + `adb.resolve_device` (prefers the serial MuMu reports), then
+  the driver (`driver.connect_driver`, see "Driver (`android/`)"); when it fails to start,
+  for any reason but a frozen MuMu, a warning, `am force-stop` of the driver (it would hold
+  UiAutomation) and `uiautomator2.connect` (imported lazily so tests do not need it).
+  `--driver instrumentation|uiautomator2` asks for one only (`auto` by default; not a
+  config field, so an older runner reads a newer config). The device's `driver` names the
+  one used (log line, `device_ready` event), and the CLI calls its `close()` after the run
+  (not after a freeze): the driver stops, uiautomator2's server stays. `runner.QuickTap` wraps
   the device: `click(x, y)` sends `touch.down(x, y).up(x, y)` instead of uiautomator2's
   `click`, which holds the touch about 100 ms; every other attribute passes through. The
   connection and every call on the device it returns (`watchdog.GuardedDevice`, around
@@ -380,6 +386,71 @@ would move the task away from the runner folder.
   `slot_booked`, `slot_failed`, `run_finished`; the run itself at `run_finished`) and for
   app events; a run's other steps send no request. `runSteps.ts` `useRunSteps(runId)`
   joins a run's stored steps with the live ones after the last stored id.
+
+## Driver (`android/`)
+
+An instrumentation in its own APK (`dev.courtbooker.driver`, Java, the usual Gradle layout
+under `android/app/src/main`, no activity, service or permission), started with
+`am instrument -w dev.courtbooker.driver/.Driver`. It gets Android's UiAutomation, the
+connection uiautomator2 uses (`FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES`: enabled services
+stay visible to apps); it is not an accessibility service, which the app refuses (field
+notes, "Instrumentation driver"). Only one UiAutomation runs at a time, so a run uses the
+driver or uiautomator2, never both.
+
+`tools/build_driver.py` builds it with the SDK tools alone (aapt2, javac, d8, zipalign,
+apksigner) into `src/court_booker/assets/court-driver.apk`, which is committed and shipped
+as package data: a machine that only runs bookings needs no SDK. `court-driver.json` next
+to it holds the SHA-256 of the sources, also the APK's version name (first 12 characters);
+`tests/test_build_driver.py` fails when the sources change and the APK is not built again.
+The version code stays 1. CI's `driver` job builds it (`--check`, into `android/build`).
+
+`driver.py` is the PC side. `connect_driver` (inside the watchdog's `connect` call):
+`ensure_installed` compares the SHA-256 of the installed `base.apk` (`pm path`,
+`sha256sum`) with the packaged APK and runs `adb install -r` when they differ or it is
+missing (a driver signed with another key is uninstalled first); `Adb.forward` forwards a
+local port (reusing one already set) and `hello` is sent; a forward with no driver behind
+it closes the connection at once. No answer: `start_driver` ends a uiautomator2 server
+(`pkill -f 'com.wetest.uia2.Mai[n]'`) and starts
+`setsid nohup am instrument -w ... > /data/local/tmp/court-driver.log 2>&1 &` (the `am`
+process holds the UiAutomation connection, so it must outlive the adb shell), then `hello`
+is retried for `START_TIMEOUT` (10 s; it answers 1-1.5 s after a start, the first install
+takes about 4 s). No answer then stops it and raises `DriverUnavailableError`, like a
+missing APK, a failed install or another protocol. `DriverDevice` offers the flow's device
+calls: `dump_hierarchy`, `click(x, y, label)` (`click` by label; no label: `click_at`),
+`press("back")`, `swipe`, `app_current` (`current`), `close` (`stop`, then `am force-stop`
+and the forward removed), and `shell`, `app_start` (`monkey` with the launcher category),
+`app_stop` (`am force-stop`) through adb. `DriverClient` sends one command at a time with
+its own `id`; a refusal or a closed connection raises `DriverError`, no answer within
+`COMMAND_TIMEOUT` (10 s) `DeviceNotRespondingError`, and a broken connection fails every
+later command. The driver logs on the watchdog's thread, so `history.connect` allows that
+thread and `History` writes under a lock.
+
+- `Driver` (`Instrumentation`) listens on the abstract socket `court-driver`; the PC
+  reaches it with `adb forward tcp:<port> localabstract:court-driver`. A new connection
+  closes the one before, so a run that died cannot block the next. `stop` closes the socket
+  and ends the instrumentation.
+- An element is clicked by its label in the tree of the moment, with
+  `AccessibilityNodeInfo.ACTION_CLICK`: no position comes from the PC, so a list that moved
+  since the PC read it cannot send the click to another element. A node that is not
+  clickable, or refuses the action, is touched at its middle where it is now (an injected
+  touch down and up, `injectInputEvent`).
+- `Tree` reads the active window as the uiautomator2 dump does: only nodes visible to the
+  user, bounds clipped to the screen (the status bar, another window, is left out).
+
+Protocol 1: one JSON object per line each way. A command has `op`, its arguments and an
+optional `id`; the reply repeats `id` and has `ok`, plus `error` when `ok` is false (an
+unknown `op`, a missing argument, a line that is not JSON).
+
+| `op` | Arguments | Reply |
+|---|---|---|
+| `hello` | | `protocol` (1), `version` (the APK's), `sdk` |
+| `dump` | | `xml` (`<hierarchy>` of `<node>` with `text`, `class`, `content-desc`, `clickable`, `enabled`, `bounds`; `<hierarchy/>` without a window) |
+| `click` | `label`, `x`, `y` | `clicked`, `how` (`action` or `touch`), `bounds`: the visible node labelled exactly `label` that holds (x, y), else the nearest, clicked where it is now; `clicked` false when no node has the label |
+| `click_at` | `x`, `y` | The same for the smallest visible clickable node holding (x, y), for elements without a label (the consent checkbox) |
+| `back` | | Once a Back key down and up were injected |
+| `swipe` | `x1`, `y1`, `x2`, `y2`, `ms` | Once the injected touch has moved there in `ms` (5 ms steps) and lifted |
+| `current` | | `package` of the active window |
+| `stop` | | Before the driver ends |
 
 ## Tests
 

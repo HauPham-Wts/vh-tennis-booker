@@ -41,6 +41,10 @@ court-booker = "court_booker.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+# The driver APK that runs install on the emulator (tools/build_driver.py).
+[tool.setuptools.package-data]
+court_booker = ["assets/*"]
+
 [tool.setuptools.dynamic]
 version = { attr = "court_booker.__version__" }
 

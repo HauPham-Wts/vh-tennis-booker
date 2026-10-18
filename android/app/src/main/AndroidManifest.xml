@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The driver: an instrumentation started with
+     am instrument -w dev.courtbooker.driver/.Driver
+     which gets Android's UiAutomation (the connection uiautomator2 uses) to read and click
+     the screen. No activity, no service, no permission; not an accessibility service.
+     tools/build_driver.py sets the version from the Python package. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="dev.courtbooker.driver">
+
+    <application android:label="Court Booker driver" android:hasCode="true" />
+
+    <instrumentation
+        android:name=".Driver"
+        android:label="Court Booker driver"
+        android:targetPackage="dev.courtbooker.driver" />
+</manifest>

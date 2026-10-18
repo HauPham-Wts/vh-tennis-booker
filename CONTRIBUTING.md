@@ -19,6 +19,25 @@ npm ci            # install the exact versions from package-lock.json
 npm run dev       # development server with hot reload
 ```
 
+The driver that runs install on the emulator lives in `android/` (Java, the usual Gradle
+folder layout, built without Gradle). Its APK is committed
+(`src/court_booker/assets/court-driver.apk`), so only a change to `android/` needs the
+build tools: a JDK 17 or later and the Android SDK. Unpack the
+[command-line tools](https://developer.android.com/studio#command-line-tools-only) into
+`<sdk>/cmdline-tools/latest`, set `ANDROID_HOME` to `<sdk>` (the build tool falls back to
+`D:\Tools\android-sdk`), then install the two packages it uses and build:
+
+```bash
+sdkmanager "platforms;android-35" "build-tools;35.0.0"
+python tools/build_driver.py     # writes the APK and court-driver.json; commit both
+```
+
+In PowerShell, pass the package names after `--%` (`sdkmanager --% "platforms;android-35"
+"build-tools;35.0.0"`): `sdkmanager.bat` splits its arguments at `;` otherwise. The APK is
+signed with the Android debug key (`~/.android/debug.keystore`, created on the first build);
+a run replaces a driver signed with another key. A test fails while the committed APK was
+not built from the current sources; CI's `driver` job builds them.
+
 ## Before opening a pull request
 
 ```bash
