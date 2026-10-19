@@ -731,6 +731,46 @@ def test_select_slot_scrolls_until_slot_is_shown():
     assert app.swipe_args[0][:4] == (270.0, 992.0, 270.0, 608.0)
 
 
+DISABLED_CONTINUE = node("Tiếp tục", CONTINUE[1], False)  # the slot list at 06:00:10, 2026-10-19
+
+
+def test_the_slot_is_tapped_once_continue_is_enabled(caplog):
+    caplog.set_level(logging.INFO, logger="court_booker.flow")
+    app = booking_app()
+    app.screens["slots_loading"] = [*DAYS, *SLOTS, DISABLED_CONTINUE]
+    app.taps_to[("calendar", DAY_11)] = ["slots_loading", ("calendar_slots", 3)]
+    booker = Booker(app, Config())
+
+    booker.book("11:00 - 12:00", TARGET)
+
+    assert app.taps == FULL_ROUND  # a slot tapped on the list loading would lead nowhere
+    assert app.screen == "ticket"
+    assert booker.commands == 16 + 2  # the list read twice more
+    assert "'Tiếp tục' enabled after 0.04 s" in caplog.text
+
+
+def test_continue_enabled_only_by_the_slot_tap_still_books(fake_time, caplog):
+    app = booking_app()
+    app.screens["calendar_slots"] = [*DAYS, *SLOTS, DISABLED_CONTINUE]
+
+    Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert app.taps == FULL_ROUND
+    assert app.screen == "ticket"
+    assert "'Tiếp tục' still disabled after 2 s; tapping the slot anyway" in caplog.text
+
+
+def test_continue_that_stays_disabled_fails_the_round():
+    app = booking_app()
+    app.screens["calendar_slots"] = [*DAYS, *SLOTS, DISABLED_CONTINUE]
+    app.screens["calendar_selected"] = [*DAYS, *SLOTS, DISABLED_CONTINUE]
+
+    with pytest.raises(ElementNotFoundError, match="'Tiếp tục' stayed disabled"):
+        Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert app.taps == FULL_ROUND[:3]
+
+
 def test_locate_checkbox_picks_small_node_level_with_caption():
     nodes = [*CONFIRM_PAGE, node("", (35, 1200, 79, 1244))]
     app = FakeApp({"confirm": nodes}, {}, {}, "confirm")
