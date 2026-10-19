@@ -7,7 +7,7 @@ days_ahead = 2                      # book this many days after today
 slots = ["18:00 - 19:00", "19:00 - 20:00"]  # one booking round per slot
 court = "S10 - Sân tennis"
 venue_keyword = "Origami"           # venue screen, tapped only if shown
-timeout = 10                        # seconds to wait for each element
+timeout = 30                        # longest wait for any screen, in seconds
 max_swipes = 6                      # scroll attempts when a slot is hidden (short screens)
 
 # Emulator start. Leave mumu_manager empty if you start the emulator yourself.

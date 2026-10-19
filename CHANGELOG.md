@@ -6,6 +6,15 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-10-19
+
+### Changed
+- Every screen is awaited up to `timeout`, now 30 s by default (was 10 s, and five taps of
+  2 s for screen changes); a screen that shows sooner is acted on at once. A tap is repeated
+  every 2 s while its element is still shown, never while the app loads the next screen. On
+  2026-10-19 the ticket came more than 10 s after "Xác nhận": the round was booked but
+  reported "Outcome unknown". An existing `config.toml` with `timeout = 10` needs 30.
+
 ## [0.8.1] - 2026-10-19
 
 ### Changed

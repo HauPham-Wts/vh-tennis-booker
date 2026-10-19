@@ -50,9 +50,11 @@ app does not need.
 
 `Booker.tap_and_advance()` taps an element of the current dump, then reads the screen every
 20 ms until a finder returns what the next step needs (for example the target day). If the
-next screen does not appear within 2 s (tap swallowed by lag), it taps again while the
-element is still shown, up to 5 times. The court tap is checked as well: the court list
-can move up while it loads, so the tap may open another court; the booking details page
+next screen does not appear within 2 s and the element is still shown (tap swallowed by
+lag), it taps again, every 2 s; while the app loads the next screen (the element gone) it
+only waits. A screen is awaited up to `timeout` (30 s; no step of a booking by hand ever
+took that long), and acted on as soon as it shows. The court tap is checked as well: the
+court list can move up while it loads, so the tap may open another court; the booking details page
 names the court, and another one is left with Back and the court tapped again. A timed run
 waits on the app's home screen and
 opens the utilities list `warm_up_seconds` (60 s) before the start time, so the list is
@@ -69,7 +71,7 @@ the slot booked. A "Thông báo" dialog with a button, for example when someone 
 slot a moment earlier, fails the round with its message instead. Before either, the app
 shows the confirmation page while its server answers and then, for a moment, a screen
 without labels, so the page going away does not tell the outcome. If neither the ticket nor
-a dialog shows within `timeout` (10 s), the round fails as "Outcome unknown": better a
+a dialog shows within `timeout` (30 s), the round fails as "Outcome unknown": better a
 booking reported missing than a missing one reported booked. The date, slot and court the
 confirmation page shows, and the ticket's status, are read from screens already read,
 logged (a warning when they differ from the target) and kept in the history; neither stops
