@@ -82,13 +82,16 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   device commands).
 - `wait_for(find, timeout, screen=None)` reads the screen every 20 ms until a finder returns
   something; the found node carries the coordinates to tap. Every transition goes through
-  `tap_and_advance(screen, target, name, find_next)`: tap `target` from `screen`, wait for
-  `find_next`, re-tap while `target` is still shown. The court goes through
+  `tap_and_advance(screen, target, name, find_next)`: tap `target` from `screen` and wait
+  for `find_next` up to `config.timeout` (30 s), tapping again every `_RETAP_AFTER` (2 s)
+  while `target` is still shown (a swallowed tap), never while it is gone (the app loads the
+  next screen); then `NavigationError`. The court goes through
   `select_court(screen)` instead: the court list can move under the tap (field notes), so
   the booking details page must name the configured court (`opened_court`); another court
   is left with `go_back()` and the court tapped again where the list shows it, and a list
   still shown 0.6 s after the tap with the court moved (`_MOVED_COURT_WAIT`) gets the tap
-  again at once. Five taps in all, then `NavigationError`.
+  again at once. It waits up to `timeout` as well, and gives up after five courts opened
+  by mistake (`_COURT_ATTEMPTS`).
 - `Booker.prepare()` first turns off Android animations (`ANIMATION_SCALES` set to 0 in one
   `shell` command, as Accessibility > Remove animations; a failure is logged and ignored),
   then restarts the app and ends on the home screen (`return_to_home()`, never Back on

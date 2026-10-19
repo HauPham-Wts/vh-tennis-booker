@@ -75,7 +75,7 @@ failures are fixed as they show up in the log.
 | App | Closed-hours dialog after a too-early tap | Seen 2026-10-19 at 06:00: Windows set the PC clock after the NTP check, so the tap came up to 0.76 s early; the round waited 10 s and failed. Fixed (0.8.1): the wait goes by NTP time on a counter, checked again at the warm-up, the tap comes 0.1 s after the start, and a notice after the utility tap is closed with Back and the utility tapped again until `open_retry_seconds` |
 | App | Update prompt, other dialogs, network error | Not handled |
 | App | App crash or freeze during a round | Not handled |
-| App | Slow server at 06:00 | Re-tap after 2 s |
+| App | Slow server at 06:00 | Every screen awaited up to `timeout` (30 s since 0.8.2; was 10 s), re-tap every 2 s while the element is still shown |
 | Booking | New date not open yet | Calendar reloaded for `open_retry_seconds` |
 | Booking | Slot fully booked | Round fails; no fallback slot (by decision) |
 | Booking | Court fully booked | Round fails; no fallback court (by decision) |

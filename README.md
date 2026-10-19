@@ -27,13 +27,14 @@ round 2 shows as it happens](docs/img/overview.png)
 ## Highlights
 
 - **Unattended at 06:00.** The daily task wakes the PC from sleep, starts MuMu, restarts the
-  app and waits on the utilities list. The clock is corrected against NTP, so the first tap
-  goes out about a millisecond after 06:00:00.
+  app and waits on the utilities list. The run tells the time by NTP, on a counter Windows
+  does not set, and the first tap goes out 0.1 s after 06:00:00.
 - **Reports only what the app showed.** A slot counts as booked only once the app shows its
   ticket. A refusal fails the round with the app's own message, and a round that shows
-  neither within 10 s is reported as "outcome unknown", never as booked.
-- **Built for a slow app.** Each step taps as soon as its button appears and taps again if
-  the next screen has not come within 2 s. A frozen emulator ends the run after 60 s with a
+  neither within 30 s is reported as "outcome unknown", never as booked.
+- **Built for a slow app.** Each step taps as soon as its button appears, taps again every
+  2 s while the app ignores it, and waits up to 30 s for a slow screen. A frozen emulator
+  ends the run after 60 s with a
   clear error instead of hanging until the next morning.
 - **One read per screen.** A screen is read in a single accessibility dump (about 70 ms)
   and every button is found in it locally; waiting for a screen and finding its buttons is

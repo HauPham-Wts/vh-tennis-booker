@@ -451,11 +451,11 @@ def test_neither_ticket_nor_notice_in_time_fails_the_round_as_unknown(after, fak
     app = booking_app()
     app.taps_to[("confirm_ticked", "Xác nhận")] = after
 
-    with pytest.raises(BookingUnconfirmedError, match=r"Outcome unknown: .* 10 s after confirming"):
+    with pytest.raises(BookingUnconfirmedError, match=r"Outcome unknown: .* 30 s after confirming"):
         Booker(app, Config()).book("11:00 - 12:00", TARGET)
 
     assert app.taps == FULL_ROUND  # "Xác nhận" is never tapped again
-    assert fake_time[0] >= 10
+    assert fake_time[0] >= 30
 
 
 def test_book_taps_venue_screen_when_shown():
@@ -509,6 +509,57 @@ def test_swallowed_tap_is_retried():
 
     assert app.taps.count("Sân Tennis") == 2
     assert app.screen == "ticket"
+
+
+def test_a_tap_swallowed_again_and_again_is_repeated_every_two_seconds(fake_time):
+    app = booking_app()
+    app.swallow = {"Sân Tennis": 7}  # five taps were the most before 0.8.2
+
+    Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert app.taps.count("Sân Tennis") == 8
+    assert app.screen == "ticket"
+    assert 14 <= fake_time[0] < 16
+
+
+@pytest.mark.parametrize(
+    ("tapped", "shown"),
+    [
+        (("calendar_selected", "Tiếp tục"), "courts"),  # the court list after 12 s
+        (("courts", "S10 - Sân tennis"), "details"),  # the details page after 20 s
+    ],
+)
+def test_a_screen_the_app_loads_slowly_is_awaited_without_tapping_again(fake_time, tapped, shown):
+    app = booking_app()
+    dumps = 600 if shown == "courts" else 1000  # 20 ms a read
+    app.taps_to[tapped] = ["loading", (shown, dumps)]
+
+    Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert app.taps == FULL_ROUND  # the element left the screen: the app took the tap
+    assert app.screen == "ticket"
+    assert fake_time[0] >= dumps * 0.02  # 10 s were the most before 0.8.2
+
+
+@pytest.mark.parametrize("timeout", [None, 15])  # the default, 30 s, and one not a 2 s multiple
+def test_a_screen_that_never_shows_fails_the_round_after_the_timeout(fake_time, timeout):
+    app = booking_app()
+    app.taps_to[("calendar_selected", "Tiếp tục")] = "loading"
+    tapped = {}
+    click = app.click
+
+    def timed_click(x, y, label=""):
+        tapped.setdefault(label, fake_time[0])
+        click(x, y, label)
+
+    app.click = timed_click
+    config = Config() if timeout is None else Config(timeout=timeout)
+
+    with pytest.raises(NavigationError, match="Tapped 'Tiếp tục' but the next screen did not"):
+        Booker(app, config).book("11:00 - 12:00", TARGET)
+
+    assert app.taps == FULL_ROUND[:4]
+    assert config.timeout <= fake_time[0] - tapped["Tiếp tục"] < config.timeout + 0.1
 
 
 COURTS_MOVED = [  # the court list once the service info above it has loaded, 232 px higher

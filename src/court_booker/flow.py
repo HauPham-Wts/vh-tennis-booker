@@ -51,7 +51,15 @@ Finder = Callable[[Screen], Optional[T]]
 
 _POLL_INTERVAL = 0.02
 _NEXT_SCREEN_TIMEOUT = 2.0
-_TAP_RETRIES = 5
+"""How long a screen may take to show after Back before Back is pressed again."""
+_RETAP_AFTER = 2.0
+"""How long a tap may go without the next screen before its element, if still shown, is
+tapped again: the app swallowed the tap. The calendar stayed 2.3 s after a "Tiếp tục" the
+app took (2026-10-11), so a shorter wait would send it twice at 06:00. A tap is never
+repeated while the app loads the next screen (the element gone): that waits up to
+``timeout``, as the server may be slow."""
+_COURT_ATTEMPTS = 5
+"""Courts opened by mistake before the round gives up."""
 _MOVED_COURT_WAIT = 0.6
 """A court list still shown this long after a court tap, with the court moved, missed it.
 
@@ -292,37 +300,42 @@ class Booker:
         of S6 on 2026-10-13 and 17) and does nothing if it is full. The details page names
         the court it opened; another court is left with Back, and the court is tapped again
         where the list shows it then, as it is when the list moved under a tap that opened
-        nothing. A tap the app swallowed is tapped again after 2 s, as in
-        :meth:`tap_and_advance`.
+        nothing. A tap the app swallowed is tapped again, and the details page is awaited up
+        to ``timeout``, as in :meth:`tap_and_advance`.
         """
         name = self.config.court
         node = screen.find(self.court)
         if node is None:
             raise ElementNotFoundError(f"Button not found: {name!r}")
+        deadline = time.monotonic() + self.config.timeout
         wrong = 0
-        for attempt in range(_TAP_RETRIES):
+        attempt = 1
+        while True:
             if node is not None:
                 self.tap(node)
-            found = self.wait_for(self._court_tapped(node), _NEXT_SCREEN_TIMEOUT)
+            found = self.wait_for(self._court_tapped(node), _retap_wait(deadline))
             if found is None:
                 node = self.last_screen.find(self.court)
-                logger.debug("Next screen missing after %r (attempt %d)", name, attempt + 2)
-                continue
-            shown, screen = found
-            if screen.find(self.continue_button) is None:
+                attempt += 1
+                logger.debug("Next screen missing after %r (attempt %d)", name, attempt)
+            elif found[1].find(self.continue_button) is None:
                 logger.warning("%r moved on the court list under the tap; tapping it again", name)
-                node = shown
-                continue
-            if screen.find(self.opened_court) is not None:
+                node = found[0]
+            elif found[1].find(self.opened_court) is not None:
                 logger.info("Tapped %r", name)
-                return screen
-            wrong += 1
-            logger.warning("The app opened another court than %r; going back to the list", name)
-            screen = self.go_back(screen, self._finder(self.court))
-            back = self.wait_for(self._finder(self.court), _NEXT_SCREEN_TIMEOUT, screen)
-            if back is None:
-                raise NavigationError(f"Could not return to the court list for {name!r}")
-            node = back[0]
+                return found[1]
+            else:
+                wrong += 1
+                logger.warning("The app opened another court than %r; going back to the list", name)
+                screen = self.go_back(found[1], self._finder(self.court))
+                back = self.wait_for(self._finder(self.court), _NEXT_SCREEN_TIMEOUT, screen)
+                if back is None:
+                    raise NavigationError(f"Could not return to the court list for {name!r}")
+                if wrong >= _COURT_ATTEMPTS:
+                    break
+                node = back[0]
+            if time.monotonic() >= deadline:
+                break
         if wrong:
             raise NavigationError(f"The app opened another court than {name!r} {wrong} time(s)")
         raise NavigationError(f"Tapped {name!r} but the next screen did not appear")
@@ -362,21 +375,27 @@ class Booker:
     ) -> tuple[T, Screen]:
         """Tap ``target`` on ``screen`` and return what ``find_next`` finds on the next one.
 
-        A tap swallowed by a lagging app is retried while ``target`` is still shown.
+        The next screen is awaited up to ``timeout``, and acted on as soon as a read shows
+        it. A tap swallowed by a lagging app is repeated every :data:`_RETAP_AFTER` while
+        ``target`` is still shown, never while the app loads the next screen.
         """
         node = screen.find(target)
         if node is None:
             raise ElementNotFoundError(f"Button not found: {name!r}")
-        for attempt in range(_TAP_RETRIES):
+        deadline = time.monotonic() + self.config.timeout
+        attempt = 1
+        while True:
             if node is not None:
                 self.tap(node)
-            found = self.wait_for(find_next, _NEXT_SCREEN_TIMEOUT)
+            found = self.wait_for(find_next, _retap_wait(deadline))
             if found is not None:
                 logger.info("Tapped %r", name)
                 return found
+            if time.monotonic() >= deadline:
+                raise NavigationError(f"Tapped {name!r} but the next screen did not appear")
             node = self.last_screen.find(target)
-            logger.debug("Next screen missing after %r (attempt %d)", name, attempt + 2)
-        raise NavigationError(f"Tapped {name!r} but the next screen did not appear")
+            attempt += 1
+            logger.debug("Next screen missing after %r (attempt %d)", name, attempt)
 
     def go_back(self, screen: Screen, arrived: Finder[Node]) -> Screen:
         """Press Back on ``screen`` and return the next screen as soon as it shows.
@@ -779,6 +798,11 @@ def log_screen(screen: Screen, title: str) -> None:
     """
     lines = screen.describe()
     logger.debug("%s (%d elements):%s", title, len(lines), "".join(f"\n  {x}" for x in lines))
+
+
+def _retap_wait(deadline: float) -> float:
+    """Return how long to wait for the next screen before a tap may be repeated."""
+    return min(_RETAP_AFTER, max(0.0, deadline - time.monotonic()))
 
 
 def _controls(screen: Screen) -> set[Node]:

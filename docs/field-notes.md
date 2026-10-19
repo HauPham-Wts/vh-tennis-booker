@@ -249,6 +249,11 @@ stays `null` and `dumpsys accessibility` lists no bound or enabled service;
 
 - Calendar 0.14 s after "Sân Tennis", slot list ~2.1 s after the date tap, court list
   1.5-2.0 s, details 0.5 s, confirmation 0.14 s.
+- Slow server, 2026-10-19 around 10:03: court list 4.3 s after "Tiếp tục", the details
+  page's "Tiếp tục" 7.7 s after the court tap, the ticket more than 10 s after "Xác nhận"
+  (the round, given up at 10 s, was booked all the same); at 10:18 the ticket took 7.7 s.
+  The user, who booked by hand many times, never saw a step take 30 s, busy days included;
+  since 0.8.2 every screen is awaited up to 30 s (`timeout`).
 - "Tiếp tục" on the calendar showed enabled in the same read as the slot list in 77 reads
   on 14-18/10; at 06:00:10.463 on 2026-10-19 the list showed with it still disabled, and
   the round, which looked for it in that read, failed with "Button not found". Since 0.8.1
@@ -278,4 +283,5 @@ stays `null` and `dumpsys accessibility` lists no bound or enabled service;
 | 0.8.0 | 2026-10-18 | Dry run at 19:39 (S10, 20/10 10:00-12:00): the driver answered 1.5 s after its start; both rounds reached the accepted terms (5.3 s and 3.8 s); the driver stopped after the run (no process, no forward, `accessibility_enabled` 0) |
 | 0.8.1 code (`fix/opening-race`) | 2026-10-19 | Timed real bookings 21/10 on S6 (test bookings). At 10:02:57, before the NTP sampling fix: checks -0.531 s (a 0.57 s check) and -0.462 s at the warm-up, "Start reached at 10:02:57.100 (NTP), PC clock 10:02:57.562", no notice; the server was slow (court list 4.3 s, details 7.7 s) and no ticket showed within 10 s of "Xác nhận" in either round ("Outcome unknown"; one of the two was booked). At 10:15 checks 89 s apart left the anchored time off by +0.003 s (both slots taken). At 10:18:08: checks -0.398 s and -0.404 s (+0.006 s off), start reached at 10:18:08.100 (NTP); 10:00-11:00 booked in 18.9 s (ticket 7.7 s after "Xác nhận", "Đang xử lý") and 11:00-12:00 in 7.0 s (2.4 s). "Tiếp tục" showed enabled with the slot list and no notice showed, so neither new path ran. MuMu closed after the summary |
 | 0.8.1 | 2026-10-19 | Timed dry run at 10:29 (S6, 21/10 10:00-12:00): clock checks -0.387 s at the start and at the warm-up 89 s later (anchored time off by +0.000 s), start reached at 10:29:25.100 (NTP), PC clock 10:29:25.487; both rounds reached the accepted terms (7.5 s and 8.1 s, 66 and 44 commands) |
+| 0.8.2 code (`fix/screen-timeout`) | 2026-10-19 | Timed real booking 21/10 at 11:21 on S6 (test bookings), `timeout = 30`: start reached at 11:21:28.100 (NTP); 10:00-11:00 booked in 7.2 s (75 commands) and 11:00-12:00 in 6.7 s (69), each ticket 1.1 s after "Xác nhận", which came 0.23 s and 0.20 s after the tick. No screen came near the old 10 s limit, so the longer wait did not come into play |
 | UI part 3 | 2026-10-14 | Requests through the Vite proxy, and the live feed across a backend stop and restart (no step lost or repeated), against a scratch backend |
