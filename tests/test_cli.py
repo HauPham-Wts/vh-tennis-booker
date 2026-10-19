@@ -129,7 +129,37 @@ def test_scheduled_uses_config_start_and_clock_offset(monkeypatch, tmp_path):
 
     assert cli.main(["--config", str(tmp_path / "missing.toml"), "--scheduled"]) == 0
     assert run.kwargs["start"] == datetime(2026, 10, 8, 6, 0)
-    assert run.kwargs["offset"] == 0.25
+    assert run.kwargs["clock"].offset == 0.25  # anchored to the answer
+
+
+@pytest.mark.parametrize(
+    ("config_text", "answer", "asked"),
+    [('ntp_server = ""\n', 0.25, []), ("", None, ["time.google.com"])],
+)
+def test_without_an_ntp_answer_the_run_waits_by_the_pc_clock(
+    monkeypatch, tmp_path, config_text, answer, asked
+):
+    path = tmp_path / "config.toml"
+    path.write_text(config_text, encoding="utf-8")
+    servers = []
+    monkeypatch.setattr(cli, "ntp_offset", lambda server: servers.append(server) or answer)
+    run = fake_run([("18:00 - 19:00", True)])
+    monkeypatch.setattr(cli, "datetime", FixedDatetime)
+    monkeypatch.setattr(cli, "connect_device", fake_connect)
+    monkeypatch.setattr(cli, "run_booking", run)
+
+    assert cli.main(["--config", str(path), "--scheduled"]) == 0
+    assert servers == asked
+    assert run.kwargs["clock"].offset is None
+
+
+def test_an_untimed_run_does_not_ask_the_time_server(monkeypatch, tmp_path):
+    def ntp_offset(server):
+        raise AssertionError("must not ask")
+
+    monkeypatch.setattr(cli, "ntp_offset", ntp_offset)
+
+    assert run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)]) == cli.EXIT_OK
 
 
 class FixedDatetime(datetime):

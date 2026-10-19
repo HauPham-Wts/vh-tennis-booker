@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from court_booker.adb import Adb, find_adb, resolve_device
-from court_booker.clock import wait_until
+from court_booker.clock import NtpClock, wait_until
 from court_booker.config import Config
 from court_booker.driver import PACKAGE as DRIVER_PACKAGE
 from court_booker.driver import connect_driver
@@ -24,6 +24,13 @@ logger = logging.getLogger(__name__)
 
 LOCATE_AHEAD = timedelta(seconds=2)
 """How long before the start time the utilities entry is read again."""
+OPENING_MARGIN = timedelta(seconds=0.1)
+"""How long after the start time a timed run taps first.
+
+The app answers a tap before 06:00 by its server's clock with a notice (2026-10-19, a tap
+up to 0.76 s early) and took every tap 0.085 s (2026-10-17, 1 of 1) and 0.15 s (10-16/10,
+6 of 6) after it. The margin also covers the NTP error, half the round trip at most. To be
+shortened from the 06:00 logs, which show where the tap fell ("Start reached")."""
 AUTO_DRIVER = "auto"
 INSTRUMENTATION = "instrumentation"
 UIAUTOMATOR2 = "uiautomator2"
@@ -135,19 +142,20 @@ def run_booking(
     *,
     dry_run: bool = False,
     start: datetime | None = None,
-    offset: float = 0.0,
+    clock: NtpClock | None = None,
     results: list[RoundResult] | None = None,
     report: Reporter | None = None,
 ) -> list[RoundResult]:
     """Prepare the app, wait for ``start`` if given, then book every configured slot.
 
-    ``offset`` corrects the local clock (see :func:`clock.ntp_offset`). The target
-    date is ``days_ahead`` after the start date. Results are appended to
-    ``results`` as rounds finish, so an interrupted caller still sees them; progress
-    goes to ``report`` as events.
+    The wait goes by ``clock`` (the PC clock if not given), measured again at the warm-up,
+    and ends :data:`OPENING_MARGIN` after ``start``. The target date is ``days_ahead``
+    after the start date. Results are appended to ``results`` as rounds finish, so an
+    interrupted caller still sees them; progress goes to ``report`` as events.
     """
     results = [] if results is None else results
     report = Reporter() if report is None else report
+    clock = NtpClock() if clock is None else clock
     booker = Booker(device, config, report)
     try:
         booker.prepare()
@@ -156,14 +164,18 @@ def run_booking(
             report(EventKind.WAITING, until=start.isoformat(timespec="seconds"))
             # Wait on the home screen, then load the utilities list shortly before the
             # start, so the app has just talked to its server when the first tap comes.
-            wait_until(start - timedelta(seconds=config.warm_up_seconds), offset)
+            wait_until(start - timedelta(seconds=config.warm_up_seconds), clock.now)
+            # A fresh answer leaves the counter only the warm-up to drift, and the log shows
+            # how far Windows set the PC clock since the first one.
+            clock.measure()
             try:
                 booker.locate_entry()
             except BookingError as exc:
                 logger.warning("Could not open the utilities list yet (%s); retrying", exc)
-            wait_until(start - LOCATE_AHEAD, offset)
+            wait_until(start - LOCATE_AHEAD, clock.now)
             booker.locate_entry()
-            wait_until(start, offset)
+            wait_until(start + OPENING_MARGIN, clock.now)
+            logger.info("Start reached at %s", clock.reading())
     except Exception:  # the caller logs the error itself
         log_last_screen(booker)
         raise

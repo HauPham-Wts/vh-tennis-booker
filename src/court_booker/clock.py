@@ -1,4 +1,4 @@
-"""Exact start time: parse it, measure the clock error and wait for it."""
+"""Exact start time: parse it, tell the true time and wait for it."""
 
 from __future__ import annotations
 
@@ -105,8 +105,96 @@ def ntp_offset(
             if offset is not None:
                 logger.info("Clock checked against %s (attempt %d)", name, attempt)
                 return offset
-    logger.warning("No time server answered (%s); using the local clock", ", ".join(servers))
+    logger.warning("No time server answered (%s)", ", ".join(servers))
     return None
+
+
+class NtpClock:
+    """The time a timed run waits by: NTP time carried forward on a counter nothing sets.
+
+    Windows Time sets the PC clock on its own schedule, also while a run waits: on
+    2026-10-19 it synchronised at 05:50:21, 18 s after the run had measured the PC clock
+    0.757 s slow, and slewed that error away (Windows slews an error under 1 s rather than
+    stepping it), so the run still added 0.757 s at 06:00 and tapped up to 0.76 s early.
+    Each answer of the time server therefore anchors this clock: the NTP time then, carried
+    forward by :func:`time.perf_counter` (QueryPerformanceCounter on Windows), which no
+    clock setting moves. Without an answer the clock is the PC clock, which Windows then
+    keeps right.
+    """
+
+    def __init__(
+        self,
+        server: str = "",
+        measure: Callable[[str], float | None] = ntp_offset,
+        local_now: Callable[[], datetime] = datetime.now,
+        counter: Callable[[], float] = time.perf_counter,
+    ) -> None:
+        self.server = server
+        """Time server :meth:`measure` asks; empty never asks (``ntp_server = ""``)."""
+        self.offset: float | None = None
+        """Seconds the PC clock was behind NTP time at the last answer; ``None`` before one."""
+        self._measure = measure
+        self._local_now = local_now
+        self._counter = counter
+        self._anchor: tuple[datetime, float] | None = None
+        self._checked_at = ""
+        """PC clock time of the last answer, as the log line of it shows."""
+
+    def measure(self) -> None:
+        """Ask the time server and anchor the clock to its answer.
+
+        A later answer anchors it again and logs how far the PC clock and the anchored time
+        moved since the answer before; no answer keeps the anchor there is.
+        """
+        if not self.server:
+            return
+        offset = self._measure(self.server)
+        if offset is None:
+            if self.offset is None:
+                logger.info("Using the PC clock")
+            else:
+                logger.info(
+                    "Keeping the clock offset %+.3f s from %s", self.offset, self._checked_at
+                )
+            return
+        counter = self._counter()
+        local = self._local_now()
+        true_now = local + timedelta(seconds=offset)
+        if self.offset is None:
+            logger.info("Clock offset %+.3f s", offset)
+        else:
+            logger.info(
+                "Clock offset %+.3f s (%+.3f s since %s; anchored time off by %+.3f s)",
+                offset,
+                offset - self.offset,
+                self._checked_at,
+                (self._anchored(counter) - true_now).total_seconds(),
+            )
+        self._anchor = (true_now, counter)
+        self._checked_at = format_time(local)
+        self.offset = offset
+
+    def now(self) -> datetime:
+        """Return the time carried forward from the last answer, else the PC clock's."""
+        if self._anchor is None:
+            return self._local_now()
+        return self._anchored(self._counter())
+
+    def reading(self) -> str:
+        """Return the time now for the log: the anchored time and the PC clock's, or the latter."""
+        if self._anchor is None:
+            return f"{format_time(self._local_now())} (PC clock)"
+        return f"{format_time(self.now())} (NTP), PC clock {format_time(self._local_now())}"
+
+    def _anchored(self, counter: float) -> datetime:
+        assert self._anchor is not None
+        moment, anchored_at = self._anchor
+        return moment + timedelta(seconds=counter - anchored_at)
+
+
+def format_time(moment: datetime) -> str:
+    """Return the time of day of ``moment`` to the millisecond, e.g. ``06:00:00.100``."""
+    return moment.time().isoformat(timespec="milliseconds")
 
 
 def offset_from_reply(reply: bytes, sent: float, received: float) -> float | None:
@@ -126,28 +214,27 @@ def offset_from_reply(reply: bytes, sent: float, received: float) -> float | Non
 
 def wait_until(
     target: datetime,
-    offset: float = 0.0,
     now: Callable[[], datetime] = datetime.now,
     sleep: Callable[[float], None] = time.sleep,
 ) -> None:
-    """Block until the local clock corrected by ``offset`` reaches ``target``.
+    """Block until ``now()`` (such as :meth:`NtpClock.now`) reaches ``target``.
 
     Sleeps in long steps first, then in millisecond steps for the last second, so
     the start is late by about a millisecond at most.
     """
-    remaining = _remaining(target, offset, now)
+    remaining = _remaining(target, now)
     if remaining > 0:
-        logger.info("Waiting %.1f s until %s", remaining, f"{target:%H:%M:%S}")
+        logger.info("Waiting %.1f s until %s", remaining, format_time(target))
     while remaining > 0:
         if remaining > _FINE_WINDOW:
             sleep(min(remaining - _FINE_WINDOW, _COARSE_STEP))
         else:
             sleep(min(remaining, _FINE_STEP))
-        remaining = _remaining(target, offset, now)
+        remaining = _remaining(target, now)
 
 
-def _remaining(target: datetime, offset: float, now: Callable[[], datetime]) -> float:
-    return (target - now()).total_seconds() - offset
+def _remaining(target: datetime, now: Callable[[], datetime]) -> float:
+    return (target - now()).total_seconds()
 
 
 def _ntp_timestamp(packet: bytes, position: int) -> float:

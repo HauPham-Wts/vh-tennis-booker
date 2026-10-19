@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import pytest
 
 import court_booker.runner as runner
+from court_booker.clock import NtpClock
 from court_booker.config import Config
 from court_booker.errors import (
     AppNotReadyError,
@@ -61,30 +62,76 @@ def test_failed_round_does_not_stop_later_rounds(monkeypatch):
     assert results[1].detail == "dry run passed"
 
 
-def test_entry_is_located_just_before_the_start_time(monkeypatch):
-    bookers = []
+class FakeClock:
+    """Note each check of the time server in ``events``."""
+
+    def __init__(self, events):
+        self.events = events
+
+    def now(self):
+        raise AssertionError("the tests replace wait_until")
+
+    def measure(self):
+        self.events.append("measure")
+
+    def reading(self):
+        return "06:00:00.100 (NTP), PC clock 05:59:59.343"
+
+
+def test_entry_is_located_just_before_the_start_time(monkeypatch, caplog):
+    caplog.set_level(logging.INFO, logger="court_booker")
+    events = []
 
     def make_booker(device, config, report=None):
-        bookers.append(FakeBooker(device, config, report))
-        return bookers[-1]
+        booker = FakeBooker(device, config, report)
+        booker.events = events
+        return booker
 
     monkeypatch.setattr(runner, "Booker", make_booker)
-    monkeypatch.setattr(
-        runner, "wait_until", lambda target, offset: bookers[0].events.append(target)
-    )
+    monkeypatch.setattr(runner, "wait_until", lambda target, now: events.append(target))
     start = datetime(2026, 10, 10, 6, 0)
 
     config = Config(slots=["19:00 - 20:00"], warm_up_seconds=60)
-    runner.run_booking(FakeDevice(), config, start=start)
+    runner.run_booking(FakeDevice(), config, start=start, clock=FakeClock(events))
 
-    assert bookers[0].events == [
+    assert events == [
         "prepare",
         start - timedelta(seconds=60),
+        "measure",  # once more, as Windows may have set the PC clock since the first check
         "locate",
         start - runner.LOCATE_AHEAD,
         "locate",
-        start,
+        start + timedelta(seconds=0.1),  # a tap before 06:00 by the app's clock is refused
     ]
+    assert "Start reached at 06:00:00.100 (NTP), PC clock 05:59:59.343" in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("answer", "offset", "logged"),
+    [
+        (0.012, 0.012, "Clock offset +0.012 s (-0.745 s since 05:50:03.000"),
+        (None, 0.757, "Keeping the clock offset +0.757 s from 05:50:03.000"),
+    ],
+)
+def test_the_clock_is_checked_again_at_the_warm_up(monkeypatch, caplog, answer, offset, logged):
+    caplog.set_level(logging.INFO, logger="court_booker")
+    monkeypatch.setattr(runner, "Booker", FakeBooker)
+    monkeypatch.setattr(runner, "wait_until", lambda target, now: None)
+    answers = iter([0.757, answer])
+    clock = NtpClock(
+        "time.google.com",
+        lambda server: next(answers),
+        lambda: datetime(2026, 10, 10, 5, 50, 3),
+        lambda: 1000.0,
+    )
+    clock.measure()  # as the run does at 05:50, before connecting to the device
+
+    runner.run_booking(
+        FakeDevice(), Config(slots=["19:00 - 20:00"]), start=datetime(2026, 10, 10, 6), clock=clock
+    )
+
+    assert clock.offset == offset
+    assert logged in caplog.text
 
 
 def test_failed_warm_up_is_retried_just_before_the_start(monkeypatch, caplog):
@@ -101,7 +148,7 @@ def test_failed_warm_up_is_retried_just_before_the_start(monkeypatch, caplog):
         return bookers[-1]
 
     monkeypatch.setattr(runner, "Booker", make_booker)
-    monkeypatch.setattr(runner, "wait_until", lambda target, offset: None)
+    monkeypatch.setattr(runner, "wait_until", lambda target, now: None)
 
     results = runner.run_booking(
         FakeDevice(), Config(slots=["19:00 - 20:00"]), start=datetime(2026, 10, 10, 6, 0)
@@ -171,7 +218,7 @@ def test_events_follow_the_run(monkeypatch):
 
 def test_timed_run_reports_the_wait(monkeypatch):
     monkeypatch.setattr(runner, "Booker", FakeBooker)
-    monkeypatch.setattr(runner, "wait_until", lambda target, offset: None)
+    monkeypatch.setattr(runner, "wait_until", lambda target, now: None)
     sink = MemorySink()
     start = datetime(2026, 10, 13, 6, 0)
 

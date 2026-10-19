@@ -8,7 +8,14 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from court_booker.clock import ntp_offset, offset_from_reply, query_ntp, resolve_start, wait_until
+from court_booker.clock import (
+    NtpClock,
+    ntp_offset,
+    offset_from_reply,
+    query_ntp,
+    resolve_start,
+    wait_until,
+)
 from court_booker.errors import RequestError
 
 NOW = datetime(2026, 10, 8, 5, 45, 0)
@@ -57,13 +64,6 @@ def test_wait_until_ends_on_time_with_fine_steps_at_the_end():
     assert clock.now_value - target < timedelta(milliseconds=2)
     assert max(clock.sleeps) <= 30
     assert clock.sleeps[-1] <= 0.001
-
-
-def test_wait_until_applies_offset():
-    clock = FakeClock(NOW)
-    # The PC is 2 s slow, so the true 06:00:00 is local 05:59:58.
-    wait_until(datetime(2026, 10, 8, 6, 0), offset=2.0, now=clock.now, sleep=clock.sleep)
-    assert abs((clock.now_value - datetime(2026, 10, 8, 5, 59, 58)).total_seconds()) < 0.002
 
 
 def test_wait_until_past_target_returns_at_once():
@@ -176,6 +176,136 @@ def test_ntp_offset_without_any_answer_is_none(caplog):
         for _ in range(2)
     ]
     assert (
-        "No time server answered (ntp.example.org, time.google.com, time.windows.com, "
-        "pool.ntp.org); using the local clock"
+        "No time server answered (ntp.example.org, time.google.com, time.windows.com, pool.ntp.org)"
     ) in caplog.text
+
+
+CHECKED = datetime(2026, 10, 19, 5, 50, 3, 536000)  # the first check on 2026-10-19, PC clock
+
+
+class WindowsTime:
+    """A PC clock that Windows Time sets, and a performance counter that nothing sets.
+
+    Sleeping moves both; ``answers`` are the time server's answers, in turn.
+    """
+
+    def __init__(self, *answers):
+        self.pc = CHECKED
+        self.counter = 1000.0
+        self.answers = list(answers)
+        self.asked = 0
+
+    def local_now(self):
+        return self.pc
+
+    def perf_counter(self):
+        return self.counter
+
+    def sleep(self, seconds):
+        self.pc += timedelta(seconds=seconds)
+        self.counter += seconds
+
+    def set_pc(self, seconds):
+        """Set the PC clock by ``seconds``, as Windows does after a synchronisation."""
+        self.pc += timedelta(seconds=seconds)
+
+    def measure(self, server):
+        self.asked += 1
+        return self.answers.pop(0)
+
+    def clock(self, server="time.google.com"):
+        return NtpClock(server, self.measure, self.local_now, self.perf_counter)
+
+
+@pytest.mark.parametrize("change", [0.757, -1.0, 1.0])
+def test_the_anchored_time_ignores_the_pc_clock_being_set(change):
+    windows = WindowsTime(0.757)
+    clock = windows.clock()
+    clock.measure()
+
+    windows.set_pc(change)
+    windows.sleep(536.464)
+
+    assert clock.now() == CHECKED + timedelta(seconds=0.757 + 536.464)
+    assert clock.offset == 0.757
+
+
+def test_the_first_tap_waits_for_the_ntp_time_after_windows_set_the_pc_clock(caplog):
+    caplog.set_level(logging.INFO, logger="court_booker")
+    windows = WindowsTime(0.757)  # the PC clock is 0.757 s slow
+    clock = windows.clock()
+    clock.measure()
+    windows.set_pc(0.757)  # 05:50:21 on 2026-10-19: the PC clock is right from now on
+    start = datetime(2026, 10, 19, 6, 0, 0, 100000)
+
+    wait_until(start, now=clock.now, sleep=windows.sleep)
+
+    # The PC clock is right, so it reads the start too; the old wait ended at 05:59:59.343.
+    assert abs((windows.pc - start).total_seconds()) < 0.002
+    assert "Waiting 595.8 s until 06:00:00.100" in caplog.text
+
+
+def test_a_later_answer_anchors_the_clock_again_and_logs_the_change(caplog):
+    caplog.set_level(logging.INFO, logger="court_booker")
+    windows = WindowsTime(0.757, 0.012)
+    clock = windows.clock()
+    clock.measure()
+    windows.set_pc(0.745)  # Windows slewed most of the error away
+    windows.sleep(535.707)  # to 05:58:59.988 by the PC clock, 05:59:00.000 by NTP
+    windows.counter += 0.002  # the counter ran 2 ms fast
+
+    clock.measure()
+
+    assert clock.offset == 0.012
+    assert clock.now() == datetime(2026, 10, 19, 5, 59, 0)
+    assert (
+        "Clock offset +0.012 s (-0.745 s since 05:50:03.536; anchored time off by +0.002 s)"
+    ) in caplog.text
+
+
+def test_a_failed_later_check_keeps_the_anchor(caplog):
+    caplog.set_level(logging.INFO, logger="court_booker")
+    windows = WindowsTime(0.757, None)
+    clock = windows.clock()
+    clock.measure()
+    windows.set_pc(1.0)
+
+    clock.measure()
+
+    assert clock.offset == 0.757
+    assert clock.now() == CHECKED + timedelta(seconds=0.757)
+    assert "Keeping the clock offset +0.757 s from 05:50:03.536" in caplog.text
+
+
+def test_without_an_answer_the_clock_is_the_pc_clock(caplog):
+    caplog.set_level(logging.INFO, logger="court_booker")
+    windows = WindowsTime(None)
+    clock = windows.clock()
+
+    clock.measure()
+    windows.set_pc(1.0)
+
+    assert clock.offset is None
+    assert clock.now() == windows.pc
+    assert "Using the PC clock" in caplog.text
+
+
+def test_without_a_server_the_clock_never_asks():
+    windows = WindowsTime()
+    clock = windows.clock(server="")
+
+    clock.measure()
+
+    assert windows.asked == 0
+    assert clock.now() == windows.pc
+
+
+def test_reading_shows_the_anchored_time_and_the_pc_clock():
+    windows = WindowsTime(0.757)
+    clock = windows.clock()
+    assert clock.reading() == "05:50:03.536 (PC clock)"
+
+    clock.measure()
+    windows.set_pc(0.1)
+
+    assert clock.reading() == "05:50:04.293 (NTP), PC clock 05:50:03.636"

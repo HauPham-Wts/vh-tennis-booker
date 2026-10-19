@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, NoReturn
 
 from court_booker import __version__, device_setup, schedule
-from court_booker.clock import ntp_offset, resolve_start
+from court_booker.clock import NtpClock, ntp_offset, resolve_start
 from court_booker.config import Config, load_config
 from court_booker.device_setup import Check, Status, Tools, find_tools, run_checks
 from court_booker.emulator import MuMu
@@ -279,10 +279,9 @@ def main(argv: list[str] | None = None) -> int:
                 lock.acquire(trigger)
             if history is not None and lock.held is not None:
                 history.interrupt_stale_runs()
-            offset = 0.0
-            if start is not None and config.ntp_server:
-                offset = ntp_offset(config.ntp_server) or 0.0
-                logger.info("Clock offset %+.3f s", offset)
+            clock = NtpClock(config.ntp_server, ntp_offset)
+            if start is not None:
+                clock.measure()
             device = connect_device(config, args.driver)
             logger.info("Driving the device with %s", device.driver)
             report(EventKind.DEVICE_READY, driver=device.driver)
@@ -291,7 +290,7 @@ def main(argv: list[str] | None = None) -> int:
                 config,
                 dry_run=args.dry_run,
                 start=start,
-                offset=offset,
+                clock=clock,
                 results=results,
                 report=report,
             )
