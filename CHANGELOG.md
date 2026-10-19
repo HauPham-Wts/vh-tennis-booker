@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-10-19
+
 ### Changed
 - Every screen is awaited up to `timeout`, now 30 s by default (was 10 s, and five taps of
   2 s for screen changes); a screen that shows sooner is acted on at once. A tap is repeated
