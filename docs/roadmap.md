@@ -72,7 +72,7 @@ failures are fixed as they show up in the log.
 | Area | Situation | Today |
 |---|---|---|
 | App | Logged out | Fails early (exit 4) |
-| App | Closed-hours dialog after a too-early tap | Not handled (not seen so far) |
+| App | Closed-hours dialog after a too-early tap | Seen 2026-10-19 at 06:00: Windows set the PC clock after the NTP check, so the tap came up to 0.76 s early; the round waited 10 s and failed. Fixed (0.8.1): the wait goes by NTP time on a counter, checked again at the warm-up, the tap comes 0.1 s after the start, and a notice after the utility tap is closed with Back and the utility tapped again until `open_retry_seconds` |
 | App | Update prompt, other dialogs, network error | Not handled |
 | App | App crash or freeze during a round | Not handled |
 | App | Slow server at 06:00 | Re-tap after 2 s |
@@ -86,7 +86,7 @@ failures are fixed as they show up in the log.
 | Device | MuMu not running / frozen | Started automatically / since 0.6.1 a command over 60 s ends the run with an error (exit code 3); no restart, no retry (by decision) |
 | Device | ADB lost during a run | Not handled |
 | Device | Wrong MuMu resolution | Works but scrolls; no warning |
-| Device | PC woke late, clock drift | Runs at once if under 10 min late; NTP offset |
+| Device | PC woke late, clock drift | Runs at once if under 10 min late; NTP time carried on a counter Windows does not set (0.8.1; was an offset to the PC clock) |
 | Reporting | Every failure reported | Log file and history database; Telegram optional, not configured |
 
 ## Ruled out
