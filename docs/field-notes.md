@@ -110,7 +110,13 @@ without it, such as the empty frame seen at 16:44 on 2026-10-15, is read again.
 - Outside 06:00-21:00, tapping "Sân Tennis" opens a dialog "Thông báo": "Ban quản lý BQL
   Grand Park chỉ nhận đăng ký Sân Tennis từ 06:00 đến 21:00 mỗi ngày" with a "Đóng"
   button; it hides the utilities list. The 06:00:00.0 tap of 0.3.0 did not trigger it on
-  2026-10-10.
+  2026-10-10. On 2026-10-19 a tap at 05:59:59.244 by the PC clock, up to 0.76 s early by
+  NTP time (see "Emulator"), got it 0.05 s later (four elements: the full-screen root, the
+  title spanning `[0,33][540,1600]`, the message, "Đóng"); the round waited 10 s for the
+  calendar and failed. Back closed it and the list showed 0.1 s later. The app goes by its
+  server's clock, not Android's: a tap at PC 05:59:59.92 got the calendar on 2026-10-17.
+  Since 0.8.1 the round closes any notice after the utility tap with Back and taps again,
+  about 0.2 s a try, until `open_retry_seconds`.
 - Each apartment may book 8 slots per month (1 hour = 1 slot). Once they are used, tapping
   "Tiếp tục" on the calendar opens a dialog "Thông báo": "Căn hộ đã hết hạn mức đăng ký
   tiện ích cho phép." with a "Đóng" button (seen 2026-10-10); the round then fails after
@@ -139,6 +145,21 @@ without it, such as the empty frame seen at 16:44 on 2026-10-15, is read again.
   (+0.035 to +0.144 s; +0.34 s on 2026-10-15 at 22:00 from time.google.com,
   time.windows.com and pool.ntp.org alike). time.google.com timed out once (2026-10-15
   20:09) and the run used the PC clock; since 0.6.2 other servers are asked.
+- One NTP answer can be off by half its round trip. At 10:00 on 2026-10-19 a check that
+  took 0.57 s (the DNS lookup was timed with it until 0.8.1) read the PC clock 0.531 s
+  fast and one 88 s later 0.462 s; quick answers (40-65 ms) from time.google.com,
+  time.windows.com and time.cloudflare.com read 0.413 s minutes later, within 2 ms of
+  each other. The PC clock drifted from -0.004 s at 08:34 to about -0.41 s by 10:15, with
+  Windows Time "not synchronized" since 05:50:21. Since 0.8.1 a check keeps the quickest
+  of four answers (0.4-0.5 s a check).
+- Windows Time sets the PC clock on its own schedule (System log, Time-Service event 37):
+  on 2026-10-19 at 05:50:21 (time.windows.com), 18 s after the run measured the PC clock
+  0.757 s slow, the largest offset seen (0.12-0.21 s on 10-18/10). An error under 1 s
+  (`MaxAllowedPhaseOffset` = 1) is slewed, not stepped (no Kernel-General event 1): at
+  08:34 the offset was -0.004 s. The run still added 0.757 s at 06:00, so the tap came up
+  to 0.76 s early. On 10-18/10 no synchronisation fell between the check and 06:00 (on
+  14/10 it came at 05:49:28). Since 0.8.1 the run waits by NTP time carried forward on
+  `perf_counter`, which Windows does not set, and checks again at the warm-up.
 - Android animations were already off (removed in MuMu's Android settings on 2026-10-12);
   `Booker.prepare` turns them off anyway.
 - MuMu froze twice on 2026-10-13 during dry runs (11:13, and 11:58 right after a restart),
@@ -228,6 +249,10 @@ stays `null` and `dumpsys accessibility` lists no bound or enabled service;
 
 - Calendar 0.14 s after "Sân Tennis", slot list ~2.1 s after the date tap, court list
   1.5-2.0 s, details 0.5 s, confirmation 0.14 s.
+- "Tiếp tục" on the calendar showed enabled in the same read as the slot list in 77 reads
+  on 14-18/10; at 06:00:10.463 on 2026-10-19 the list showed with it still disabled, and
+  the round, which looked for it in that read, failed with "Button not found". Since 0.8.1
+  the list is read again until the button is enabled (up to 2 s) before the slot tap.
 - Round 1 took 1.3-2.0 s from "Sân Tennis" to the calendar at 06:00 on 2026-10-10 to 14,
   0.3-0.7 s at other times, also after long waits: mostly server load at 06:00. 0.5.3 opens
   the utilities list 60 s before the start; compare after the change.
@@ -251,4 +276,5 @@ stays `null` and `dumpsys accessibility` lists no bound or enabled service;
 | 0.7.1 | 2026-10-18 | Dry run at 19:03: round 1 found S6 fully booked (a test booking held it), round 2 reached the accepted terms on S6. Then a timed real booking 20/10 at 19:08 (test bookings): 10:00-11:00 booked in 7.0 s (54 commands) and 11:00-12:00 in 4.9 s (38), both on S6 with no court opened by mistake. MuMu closed after the summary |
 | 0.8.0 code (driver) | 2026-10-18 | Dry run at 19:20 that started MuMu: the driver installed in 4.1 s and answered 1.4 s after its start; every step to "Tiếp tục" by accessibility clicks, then the monthly quota dialog (test bookings). After a cancellation, a timed real booking 20/10 at 19:26 on S10 (test bookings): 10:00-11:00 booked in 4.8 s and 11:00-12:00 in 3.9 s, every click an accessibility click by label, "Xác nhận" 0.20 s after the tick. The driver stopped after the run; MuMu closed after the summary |
 | 0.8.0 | 2026-10-18 | Dry run at 19:39 (S10, 20/10 10:00-12:00): the driver answered 1.5 s after its start; both rounds reached the accepted terms (5.3 s and 3.8 s); the driver stopped after the run (no process, no forward, `accessibility_enabled` 0) |
+| 0.8.1 code (`fix/opening-race`) | 2026-10-19 | Timed real bookings 21/10 on S6 (test bookings). At 10:02:57, before the NTP sampling fix: checks -0.531 s (a 0.57 s check) and -0.462 s at the warm-up, "Start reached at 10:02:57.100 (NTP), PC clock 10:02:57.562", no notice; the server was slow (court list 4.3 s, details 7.7 s) and no ticket showed within 10 s of "Xác nhận" in either round ("Outcome unknown"; one of the two was booked). At 10:15 checks 89 s apart left the anchored time off by +0.003 s (both slots taken). At 10:18:08: checks -0.398 s and -0.404 s (+0.006 s off), start reached at 10:18:08.100 (NTP); 10:00-11:00 booked in 18.9 s (ticket 7.7 s after "Xác nhận", "Đang xử lý") and 11:00-12:00 in 7.0 s (2.4 s). "Tiếp tục" showed enabled with the slot list and no notice showed, so neither new path ran. MuMu closed after the summary |
 | UI part 3 | 2026-10-14 | Requests through the Vite proxy, and the live feed across a backend stop and restart (no step lost or repeated), against a scratch backend |

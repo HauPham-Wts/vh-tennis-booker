@@ -57,7 +57,12 @@ names the court, and another one is left with Back and the court tapped again. A
 waits on the app's home screen and
 opens the utilities list `warm_up_seconds` (60 s) before the start time, so the list is
 freshly loaded; two seconds before the start it is read once more, so the first command at
-the start time is the tap itself.
+the start time is the tap itself. The wait goes by NTP time: the PC clock's error, measured
+when the run starts and again at the warm-up, carried forward on a counter that Windows
+does not set when it corrects the PC clock. The tap comes 0.1 s after the start, since the
+app answers a tap before 06:00 by its server's clock with a "Thông báo" dialog; if that
+dialog shows all the same, the round closes it with Back and taps again. On the calendar
+the slot is tapped once "Tiếp tục" shows enabled too.
 
 After confirming, the script reads the screen until the ticket's title shows: only then is
 the slot booked. A "Thông báo" dialog with a button, for example when someone else took the
