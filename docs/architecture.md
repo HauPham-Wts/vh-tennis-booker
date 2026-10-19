@@ -54,10 +54,14 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   `end_process` (`os._exit`, code 3), since the exit hook of uiautomator2 could wait for
   the stuck thread.
 - `runner.run_booking`: `Booker.prepare()` (ends on the home screen),
-  `wait_until(start - warm_up_seconds)`, `Booker.locate_entry()` (taps "Tiện ích", loads
-  the utilities list; a failure is logged and retried by the next call),
-  `wait_until(start - LOCATE_AHEAD)`, `locate_entry()` again (read only),
-  `wait_until(start)`, then one round per slot; a `BookingError` (or any exception) fails
+  `wait_until(start - warm_up_seconds)`, `clock.measure()` once more, `Booker.locate_entry()`
+  (taps "Tiện ích", loads the utilities list; a failure is logged and retried by the next
+  call), `wait_until(start - LOCATE_AHEAD)`, `locate_entry()` again (read only),
+  `wait_until(start + OPENING_MARGIN)` (0.1 s: the app refuses a tap before 06:00 by its
+  server's clock) and a log line "Start reached at <NTP time> (NTP), PC clock <PC time>",
+  then one round per slot. The waits go by `clock`, a `clock.NtpClock` the CLI anchors
+  before connecting to the device (the PC clock without one); a `BookingError` (or any
+  exception) fails
   that round only, except `DeviceNotRespondingError`, which ends the run after it. Results are appended to a caller-owned list; the debug log counts
   device commands per round. When a round, `prepare()` or `locate_entry()` fails,
   `log_last_screen` writes `Booker.last_screen` to the debug log, so a failure seen once at
@@ -98,7 +102,16 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   status bar's labels and a screen that only gains controls do not count, nor does the
   frame without controls read while a screen is built; nothing new in 2 s presses Back
   again.
-  `open_slot()` re-enters the calendar while the date or slot is missing.
+  `open_slot()` taps the utility and waits for the calendar or a notice
+  (`_calendar_or_notice`); a notice, such as the closed-hours one after a tap before 06:00,
+  is logged (INFO once, then DEBUG), closed with `go_back()` and the utility tapped again,
+  about 0.2 s a try. It re-enters the calendar while the date or slot is missing. Both stop
+  after `open_retry_seconds` with `BookingNotOpenError` (the notice's message or the
+  missing element). The "Closing a notice" warning comes from `return_to_utilities()` and
+  `return_to_home()`, for a notice left by an earlier round, not from `go_back()`.
+  `select_slot()` taps the slot once "Tiếp tục" shows enabled in the same read, reading the
+  list again for up to `_CONTINUE_WAIT` (2 s), then taps it anyway; `book()` then waits
+  for the enabled button in fresh reads up to `timeout` ("'Tiếp tục' stayed disabled").
 - `accept_and_confirm` reads the screen after "Xác nhận" until the ticket's title (booked)
   or a notice dialog (`BookingRejectedError` with the message, `Booker.notice_text`) shows;
   frames without either, such as the empty one while the next screen is built, are read
@@ -110,9 +123,18 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   they differ from the target, the round still confirms; `read_ticket` notes the ticket's
   status in the read that showed the ticket, if it shows already.
 - `clock.ntp_offset` asks the configured `ntp_server`, then `NTP_FALLBACKS`
-  (time.google.com, time.windows.com, pool.ntp.org), twice each with a 1 s timeout, and
-  takes the first valid reply (a server's, stratum 1-15); with none it logs a warning and
-  the run uses the PC clock.
+  (time.google.com, time.windows.com, pool.ntp.org), and stops at the first server that
+  gives a valid reply (a server's, stratum 1-15): it asks that one `_NTP_SAMPLES` (4) times,
+  or until two questions failed (1 s timeout each), and keeps the answer with the shortest
+  round trip (`NtpSample.delay`, logged), whose offset is off by half of it at most; with
+  no answer it logs a warning. `query_ntp` resolves the name before it times the exchange.
+  `clock.NtpClock` turns answers into the time a timed run waits by: `measure()` anchors
+  it to the NTP time of the answer and `time.perf_counter()` (QueryPerformanceCounter),
+  so `now()` is unaffected when Windows Time sets the PC clock during the wait (it did at
+  05:50:21 on 2026-10-19). A later answer anchors it again and logs the change ("Clock
+  offset +0.012 s (-0.745 s since 05:50:03.536; anchored time off by +0.002 s)"); a failed
+  one keeps the anchor. Without any answer, or with `ntp_server = ""`, it is the PC clock.
+  `wait_until(target, now)` sleeps on any such clock.
 - `geometry.py`, `screen.py` and most of `clock.py` are pure; logic testable without a
   device belongs there.
 

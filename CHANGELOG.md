@@ -6,6 +6,29 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-10-19
+
+### Changed
+- Branches: `develop` is the development line and `main` holds releases only, each commit
+  on it tagged; work branches are cut from `develop` and merged back into it, and a release
+  is a pull request from `develop` into `main`. The `stable` branch is gone (CONTRIBUTING).
+  CI also runs on pushes to `develop`, and Dependabot opens its pull requests there.
+
+### Fixed
+- The first tap goes by NTP time carried forward on a counter that Windows does not set,
+  checked again at the warm-up, and comes 0.1 s after the start: on 2026-10-19 Windows set
+  the PC clock after the run's NTP check, so the tap came up to 0.76 s early and the app
+  answered with its closed-hours notice.
+- A clock check keeps the quickest of four answers from the time server, and the DNS lookup
+  is no longer timed with the exchange: an answer is off by half its round trip, and a
+  check that took 0.57 s read the PC clock 0.531 s fast where quick ones read 0.413 s.
+- A notice in place of the calendar after the utility tap, such as "chỉ nhận đăng ký Sân
+  Tennis từ 06:00", is closed with Back and the utility tapped again (about 0.2 s a try)
+  until `open_retry_seconds`; the round waited 10 s for the calendar and failed.
+- The slot is tapped once "Tiếp tục" shows enabled (read again for up to 2 s), and the
+  button is looked for in a fresh read: on 2026-10-19 it was still disabled when the slot
+  list showed, and the round failed with "Button not found".
+
 ## [0.8.0] - 2026-10-18
 
 ### Added

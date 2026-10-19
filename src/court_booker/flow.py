@@ -57,6 +57,12 @@ _MOVED_COURT_WAIT = 0.6
 
 A tap that opens a court shows the booking details page 0.23-0.45 s later (14-17/10)."""
 _BACK_PRESSES = 8
+_CONTINUE_WAIT = 2.0
+"""How long the slot list is read again while "Tiếp tục" shows disabled, before the slot tap.
+
+Every booking so far tapped the slot with the button enabled, and 77 reads of the slot list
+on 14-18/10 showed both at once; at 06:00:10 on 2026-10-19 the list showed with the button
+still disabled. A tap on a page not done yet may be dropped when the page is built again."""
 _SLOT_SETTLE = 0.1
 """Pause after the slot tap, before "Tiếp tục": the app takes the slot a few frames later.
 
@@ -204,6 +210,11 @@ class Booker:
         """
         labels = self.config.labels
         screen = self.open_slot(slot, target)
+        if screen.find(self.continue_button) is None:  # the slot was tapped with it disabled
+            found = self.wait_for(self._finder(self.continue_button), self.config.timeout)
+            if found is None:
+                raise ElementNotFoundError(f"{labels.continue_!r} stayed disabled")
+            screen = found[1]
         court, screen = self.tap_and_advance(
             screen, self.continue_button, labels.continue_, self._find_court
         )
@@ -228,19 +239,37 @@ class Booker:
         """Open the calendar and select ``target`` and ``slot``.
 
         Returns the calendar screen read before the slot was tapped, which also
-        holds the continue button. Right at the opening time the server may not
-        list the new date or slot yet, so the calendar is left and re-entered to
-        reload it until ``open_retry_seconds`` have passed. A fully booked slot
-        fails at once.
+        holds the continue button unless it stayed disabled. Until ``open_retry_seconds``
+        have passed, a notice in place of the calendar, as the app shows for a tap before
+        06:00 by its server's clock, is closed with Back and the utility tapped again; and
+        a date or slot the server does not list yet, right at the opening time, reloads
+        the calendar by leaving and entering it again. A fully booked slot fails at once.
         """
         deadline = time.monotonic() + self.config.open_retry_seconds
         attempt = 1
+        notices = 0
+        screen = self._entry
+        self._entry = None
         while True:
-            screen = self._entry if self._entry is not None else self.return_to_utilities()
-            self._entry = None
+            screen = self.return_to_utilities(screen)
             _, screen = self.tap_and_advance(
-                screen, self.utility, self.config.labels.utility, self._find_calendar
+                screen, self.utility, self.config.labels.utility, self._calendar_or_notice
             )
+            message = self.notice_text(screen)
+            if message is not None:
+                message = message or "a notice without a message"
+                if time.monotonic() >= deadline:
+                    raise BookingNotOpenError(
+                        f"{target.isoformat()} {slot} not open after {attempt} attempt(s): "
+                        f"{message}"
+                    )
+                notices += 1
+                # 0.2 s a try: on 2026-10-19 the list showed 0.1 s after Back.
+                log = logger.info if notices == 1 else logger.debug
+                log("Not open yet: %s; closing the notice and tapping again", message)
+                screen = self.go_back(screen, self._finder(self.utility))
+                attempt += 1
+                continue
             self.report(EventKind.CALENDAR_OPENED, attempt=attempt)
             try:
                 self.select_date(screen, target)
@@ -251,6 +280,7 @@ class Booker:
                         f"{target.isoformat()} {slot} not open after {attempt} attempt(s): {exc}"
                     ) from exc
                 logger.info("Not open yet (%s); reloading the calendar", exc)
+            screen = None
             attempt += 1
 
     def select_court(self, screen: Screen) -> Screen:
@@ -310,6 +340,7 @@ class Booker:
                     screen, self.home, self.config.labels.home, self._finder(self.utility)
                 )
                 return screen
+            self._warn_about_notice(screen)
             screen = self.go_back(screen, arrived)
         raise NavigationError("Could not return to the utilities list")
 
@@ -320,6 +351,7 @@ class Booker:
         for _ in range(_BACK_PRESSES):
             if screen.find(self.home):
                 return screen
+            self._warn_about_notice(screen)
             screen = self.go_back(screen, self._finder(self.home))
         raise NavigationError("Could not return to the home screen")
 
@@ -358,7 +390,6 @@ class Booker:
         screen is built has no controls and is read again. If nothing changed in 2 s, as
         after a Back the app missed, the last read is returned and Back is pressed again.
         """
-        self._warn_about_notice(screen)
         before = _controls(screen)
 
         def next_screen(shown: Screen) -> bool | None:
@@ -420,12 +451,16 @@ class Booker:
     def select_slot(self, slot: str) -> Screen:
         """Tap ``slot`` once the list shows it, scrolling only while it is hidden.
 
-        Returns the screen read before the tap.
+        The slot is tapped once "Tiếp tục" shows enabled too, or after the list was read
+        again for :data:`_CONTINUE_WAIT` with it disabled. Returns the screen read before
+        the tap.
         """
         match = Match(prefix=slot)
+        button = self.config.labels.continue_
         deadline = time.monotonic() + self.config.timeout
         swipes = 0
         screen: Screen | None = None
+        disabled_since: float | None = None
         while True:
             remaining = max(0.0, deadline - time.monotonic())
             found = self.wait_for(self._finder(self.any_slot), remaining, screen)
@@ -440,6 +475,22 @@ class Booker:
                     raise SlotUnavailableError(f"Slot {slot} is fully booked")
                 position = self._visibility(screen, node)
                 if position == "visible":
+                    now = time.monotonic()
+                    if screen.find(self.continue_button) is None:
+                        if disabled_since is None:
+                            disabled_since = now
+                            logger.debug("%r disabled; reading the slot list again", button)
+                        if now - disabled_since < _CONTINUE_WAIT:
+                            time.sleep(_POLL_INTERVAL)
+                            screen = None
+                            continue
+                        logger.warning(
+                            "%r still disabled after %.0f s; tapping the slot anyway",
+                            button,
+                            _CONTINUE_WAIT,
+                        )
+                    elif disabled_since is not None:
+                        logger.info("%r enabled after %.2f s", button, now - disabled_since)
                     self.tap(node)
                     time.sleep(_SLOT_SETTLE)
                     logger.info("Selected slot %s (%d swipe(s))", slot, swipes)
@@ -636,6 +687,16 @@ class Booker:
             or screen.find(self.prev_month)
             or screen.find(self.next_month)
         )
+
+    def _calendar_or_notice(self, screen: Screen) -> bool | None:
+        """Return ``True`` once the calendar or a notice shows, such as the closed-hours one.
+
+        The notice showed 0.05 s after a tap on the utility before 06:00 (2026-10-19), in
+        place of the calendar; waiting for the calendar alone then cost the round 10 s.
+        """
+        if self._find_calendar(screen) is not None or self.notice_text(screen) is not None:
+            return True
+        return None
 
     def _court_tapped(self, tapped: Node | None) -> Finder[Node]:
         """Find the details page's continue button, or the court moved on a list left as is.
