@@ -73,7 +73,11 @@ class Config:
     slots: list[str] = field(default_factory=lambda: ["11:00 - 12:00", "14:00 - 15:00"])
     court: str = "S10 - Sân tennis"
     venue_keyword: str = "Origami"
-    timeout: float = 10.0
+    timeout: float = 30.0
+    """Longest wait for any screen, in seconds; one that shows sooner is acted on at once.
+
+    No step of a booking by hand ever took 30 s, also on busy days (user, 2026-10-19); the
+    ticket once took over 10 s after "Xác nhận" (2026-10-19, 10:03)."""
     max_swipes: int = 6
     mumu_manager: str = DEFAULT_MUMU_MANAGER
     """MuMuManager.exe used to start the emulator; empty skips starting it."""
