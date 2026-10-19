@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-10-19
+
 ### Changed
 - Branches: `develop` is the development line and `main` holds releases only, each commit
   on it tagged; work branches are cut from `develop` and merged back into it, and a release
