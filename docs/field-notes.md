@@ -249,6 +249,11 @@ stays `null` and `dumpsys accessibility` lists no bound or enabled service;
 
 - Calendar 0.14 s after "Sân Tennis", slot list ~2.1 s after the date tap, court list
   1.5-2.0 s, details 0.5 s, confirmation 0.14 s.
+- Slow server, 2026-10-19 around 10:03: court list 4.3 s after "Tiếp tục", the details
+  page's "Tiếp tục" 7.7 s after the court tap, the ticket more than 10 s after "Xác nhận"
+  (the round, given up at 10 s, was booked all the same); at 10:18 the ticket took 7.7 s.
+  The user, who booked by hand many times, never saw a step take 30 s, busy days included;
+  since 0.8.2 every screen is awaited up to 30 s (`timeout`).
 - "Tiếp tục" on the calendar showed enabled in the same read as the slot list in 77 reads
   on 14-18/10; at 06:00:10.463 on 2026-10-19 the list showed with it still disabled, and
   the round, which looked for it in that read, failed with "Button not found". Since 0.8.1
