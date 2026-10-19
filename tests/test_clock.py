@@ -5,14 +5,17 @@ import socket
 import struct
 import time
 from datetime import datetime, timedelta
+from types import SimpleNamespace
 
 import pytest
 
+import court_booker.clock as clock_module
 from court_booker.clock import (
     NtpClock,
+    NtpSample,
     ntp_offset,
-    offset_from_reply,
     query_ntp,
+    read_reply,
     resolve_start,
     wait_until,
 )
@@ -79,22 +82,23 @@ def ntp_reply(server_seconds, mode=4, stratum=2):
     return bytes([0x18 | mode, stratum]) + bytes(30) + timestamp + timestamp  # version 3
 
 
-def test_offset_from_reply():
+def test_read_reply():
     # Sent at 1000.0, received at 1000.2; the server stamped 1001.6 in the middle.
-    offset = offset_from_reply(ntp_reply(1001.6), sent=1000.0, received=1000.2)
-    assert offset == pytest.approx(1.5, abs=1e-6)
+    sample = read_reply(ntp_reply(1001.6), sent=1000.0, received=1000.2)
+    assert sample.offset == pytest.approx(1.5, abs=1e-6)
+    assert sample.delay == pytest.approx(0.2, abs=1e-6)
 
 
-def test_offset_from_short_reply_is_none():
-    assert offset_from_reply(b"\x00" * 10, 0.0, 0.0) is None
+def test_read_short_reply_is_none():
+    assert read_reply(b"\x00" * 10, 0.0, 0.0) is None
 
 
 @pytest.mark.parametrize(
     ("mode", "stratum"),
     [(3, 2), (4, 0), (4, 16)],  # a client's packet, a refusal, a server without a clock
 )
-def test_offset_from_a_reply_without_the_time_is_none(mode, stratum):
-    assert offset_from_reply(ntp_reply(1001.6, mode, stratum), 1000.0, 1000.2) is None
+def test_read_reply_without_the_time_is_none(mode, stratum):
+    assert read_reply(ntp_reply(1001.6, mode, stratum), 1000.0, 1000.2) is None
 
 
 class FakeSocket:
@@ -123,14 +127,44 @@ class FakeSocket:
         return self.answer, ("192.0.2.1", 123)
 
 
-def test_query_ntp_returns_the_offset_of_a_reply():
+def resolve(server):
+    """Stand in for DNS: tests never touch the network."""
+    return "192.0.2.1"
+
+
+def test_query_ntp_returns_the_answer_in_a_reply():
     sock = FakeSocket(ntp_reply(time.time() + 1.5))
 
-    offset = query_ntp("time.google.com", open_socket=lambda: sock)
+    sample = query_ntp("time.google.com", open_socket=lambda: sock, resolve=resolve)
 
-    assert offset == pytest.approx(1.5, abs=0.5)
-    assert sock.addresses == [("time.google.com", 123)]
+    assert sample.offset == pytest.approx(1.5, abs=0.5)
+    assert sock.addresses == [("192.0.2.1", 123)]
     assert sock.timeout == 1.0
+
+
+def test_query_ntp_resolves_the_name_before_timing_the_exchange(monkeypatch):
+    now = [1000.0]
+    monkeypatch.setattr(clock_module, "time", SimpleNamespace(time=lambda: now[0]))
+
+    def slow_resolve(server):
+        now[0] += 0.3  # a slow DNS answer, on the way out only
+        return "192.0.2.1"
+
+    sock = FakeSocket(ntp_reply(1001.5))
+    sample = query_ntp("time.google.com", open_socket=lambda: sock, resolve=slow_resolve)
+
+    # Timed with the lookup inside, the offset would read 1.35 s and the round trip 0.3 s.
+    assert sample == (pytest.approx(1.2), 0.0)
+
+
+def test_query_ntp_logs_a_name_that_does_not_resolve(caplog):
+    caplog.set_level(logging.INFO, logger="court_booker")
+
+    def no_dns(server):
+        raise socket.gaierror(11001, "getaddrinfo failed")
+
+    assert query_ntp("time.google.com", resolve=no_dns) is None
+    assert "Clock check against time.google.com failed ([Errno 11001] getaddrinfo" in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -138,7 +172,6 @@ def test_query_ntp_returns_the_offset_of_a_reply():
     [
         (socket.timeout("timed out"), "Clock check against time.google.com failed (timed out)"),
         (TimeoutError(), "Clock check against time.google.com failed (TimeoutError)"),
-        (socket.gaierror(11001, "getaddrinfo failed"), "failed ([Errno 11001] getaddrinfo"),
         (b"\x00" * 10, "Invalid reply from time.google.com"),
         (ntp_reply(1001.6, stratum=0), "Invalid reply from time.google.com"),
     ],
@@ -146,21 +179,37 @@ def test_query_ntp_returns_the_offset_of_a_reply():
 def test_query_ntp_logs_why_it_has_no_offset(answer, logged, caplog):
     caplog.set_level(logging.INFO, logger="court_booker")
 
-    assert query_ntp("time.google.com", open_socket=lambda: FakeSocket(answer)) is None
+    sock = FakeSocket(answer)
+    assert query_ntp("time.google.com", open_socket=lambda: sock, resolve=resolve) is None
     assert logged in caplog.text
 
 
-def test_ntp_offset_asks_each_server_twice_until_one_answers(caplog):
+def test_ntp_offset_leaves_a_server_after_two_failures(caplog):
     caplog.set_level(logging.INFO, logger="court_booker")
     asked = []
 
     def query(server):
         asked.append(server)
-        return 0.128 if len(asked) == 4 else None
+        return NtpSample(0.128, 0.05) if len(asked) == 4 else None
 
     assert ntp_offset("time.google.com", query=query) == 0.128
-    assert asked == ["time.google.com"] * 2 + ["time.windows.com"] * 2
-    assert "Clock checked against time.windows.com (attempt 2)" in caplog.text
+    assert asked == ["time.google.com"] * 2 + ["time.windows.com"] * 3
+    assert "Clock checked against time.windows.com: round trip 50 ms (best of 1)" in caplog.text
+
+
+def test_ntp_offset_keeps_the_answer_with_the_shortest_round_trip(caplog):
+    caplog.set_level(logging.INFO, logger="court_booker")
+    # The first check of the test booking on 2026-10-19 took 0.57 s; quick ones agreed.
+    answers = iter([(-0.531, 0.570), (-0.413, 0.065), (-0.435, 0.130), (-0.414, 0.041)])
+    asked = []
+
+    def query(server):
+        asked.append(server)
+        return NtpSample(*next(answers))
+
+    assert ntp_offset("time.google.com", query=query) == -0.414
+    assert asked == ["time.google.com"] * 4
+    assert "Clock checked against time.google.com: round trip 41 ms (best of 4)" in caplog.text
 
 
 def test_ntp_offset_without_any_answer_is_none(caplog):

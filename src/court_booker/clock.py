@@ -9,7 +9,7 @@ import time
 from collections.abc import Sequence
 from datetime import datetime, timedelta
 from datetime import time as time_of_day
-from typing import Callable
+from typing import Callable, NamedTuple
 
 from court_booker.errors import RequestError
 
@@ -25,6 +25,11 @@ _TIME_FORMATS = ("%H:%M:%S", "%H:%M")
 _NTP_PORT = 123
 _NTP_TIMEOUT = 1.0
 _NTP_ATTEMPTS = 2
+_NTP_SAMPLES = 4
+"""Answers asked of a server per check; the one with the shortest round trip is kept.
+
+A check that took 0.57 s read the PC clock 0.531 s fast; quick ones (40-65 ms) from three
+servers read 0.413 s minutes later, within 2 ms of each other (2026-10-19)."""
 _NTP_EPOCH_OFFSET = 2_208_988_800  # seconds from 1900-01-01 to 1970-01-01
 _NTP_PACKET_SIZE = 48
 _NTP_SERVER_MODE = 4
@@ -59,6 +64,15 @@ def parse_time(text: str, name: str) -> time_of_day:
     raise RequestError(f"Invalid {name} {text!r}; use HH:MM or HH:MM:SS")
 
 
+class NtpSample(NamedTuple):
+    """One answer of a time server."""
+
+    offset: float
+    """Seconds to add to the local clock to match the server's."""
+    delay: float
+    """Round trip less the server's own time; the offset is off by half of it at most."""
+
+
 def _udp_socket() -> socket.socket:
     return socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -67,44 +81,65 @@ def query_ntp(
     server: str,
     timeout: float = _NTP_TIMEOUT,
     open_socket: Callable[[], socket.socket] = _udp_socket,
-) -> float | None:
-    """Ask ``server`` once; return the clock offset, or ``None`` with the reason logged."""
+    resolve: Callable[[str], str] = socket.gethostbyname,
+) -> NtpSample | None:
+    """Ask ``server`` once; return its answer, or ``None`` with the reason logged.
+
+    The name is resolved before the exchange is timed: a DNS lookup inside it would count as
+    time on the way out and shift the offset by half of it.
+    """
     request = b"\x1b" + bytes(_NTP_PACKET_SIZE - 1)  # version 3, client mode
     try:
+        address = resolve(server)
         with open_socket() as sock:
             sock.settimeout(timeout)
             sent = time.time()
-            sock.sendto(request, (server, _NTP_PORT))
+            sock.sendto(request, (address, _NTP_PORT))
             reply, _ = sock.recvfrom(_NTP_PACKET_SIZE)
             received = time.time()
     except OSError as exc:
         logger.info("Clock check against %s failed (%s)", server, str(exc) or type(exc).__name__)
         return None
-    offset = offset_from_reply(reply, sent, received)
-    if offset is None:
+    sample = read_reply(reply, sent, received)
+    if sample is None:
         logger.info("Invalid reply from %s", server)
-    return offset
+    return sample
 
 
 def ntp_offset(
     server: str,
     fallbacks: Sequence[str] = NTP_FALLBACKS,
     attempts: int = _NTP_ATTEMPTS,
-    query: Callable[[str], float | None] = query_ntp,
+    samples: int = _NTP_SAMPLES,
+    query: Callable[[str], NtpSample | None] = query_ntp,
 ) -> float | None:
     """Return seconds to add to the local clock to match NTP time, or ``None``.
 
-    Asks ``server``, then each fallback not asked yet, ``attempts`` times each, and stops
-    at the first valid answer. A run measures it before waiting for the start time, so the
-    few seconds lost when every server fails cost no booking time.
+    Asks ``server``, then each fallback not asked yet, and stops at the first that answers:
+    ``samples`` times, or until ``attempts`` questions failed, keeping the answer with the
+    shortest round trip, whose offset is the most accurate. A run measures it before
+    waiting for the start time, so the seconds lost when every server fails cost no
+    booking time.
     """
     servers = list(dict.fromkeys([server, *fallbacks]))
     for name in servers:
-        for attempt in range(1, attempts + 1):
-            offset = query(name)
-            if offset is not None:
-                logger.info("Clock checked against %s (attempt %d)", name, attempt)
-                return offset
+        answers: list[NtpSample] = []
+        failed = 0
+        while len(answers) < samples and failed < attempts:
+            sample = query(name)
+            if sample is None:
+                failed += 1
+            else:
+                answers.append(sample)
+        if answers:
+            best = min(answers, key=lambda answer: answer.delay)
+            logger.info(
+                "Clock checked against %s: round trip %.0f ms (best of %d)",
+                name,
+                best.delay * 1000,
+                len(answers),
+            )
+            return best.offset
     logger.warning("No time server answered (%s)", ", ".join(servers))
     return None
 
@@ -197,8 +232,8 @@ def format_time(moment: datetime) -> str:
     return moment.time().isoformat(timespec="milliseconds")
 
 
-def offset_from_reply(reply: bytes, sent: float, received: float) -> float | None:
-    """Return the clock offset from an NTP reply and the local send/receive times.
+def read_reply(reply: bytes, sent: float, received: float) -> NtpSample | None:
+    """Return the answer in an NTP reply, given the local send and receive times.
 
     ``None`` for a reply that is short, not from a server, or from a server that is not
     synchronised (stratum 0, as in a refusal), whose timestamps are not the time.
@@ -209,7 +244,10 @@ def offset_from_reply(reply: bytes, sent: float, received: float) -> float | Non
         return None
     server_received = _ntp_timestamp(reply, 32)
     server_sent = _ntp_timestamp(reply, 40)
-    return ((server_received - sent) + (server_sent - received)) / 2
+    return NtpSample(
+        offset=((server_received - sent) + (server_sent - received)) / 2,
+        delay=(received - sent) - (server_sent - server_received),
+    )
 
 
 def wait_until(
