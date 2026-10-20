@@ -59,6 +59,7 @@ round is made as fast as it can be before rounds run side by side.
 | 3 Fast | 0.7.0 | Taps as a bare touch down and up (about 0.5-0.7 s less a round); a real run closes MuMu once its rounds are done (released 2026-10-16) |
 | 2 Every situation | 0.7.1 | The court check on the booking details page (released 2026-10-18) |
 | 3 Fast | 0.8.0 | Instrumentation driver: reads the screen in about 13 ms instead of 100 ms and clicks elements by label in the tree of the moment, no coordinates; uiautomator2 when it does not start (released 2026-10-18) |
+| 2 Every situation | 0.9.0 | The Vinhomes app in English as well as Vietnamese: the English labels built in, the language found on the app's first screen, no setting |
 | 3 Fast | **Next** | MuMu tuning (frame rate, performance, hidden bottlenecks); then several MuMu instances with separate accounts in parallel (one account cannot log in twice), the last speed step (now) |
 | 4 UI | Desktop app, last before 1.0.0 | Tauri shell with PyInstaller sidecar, installer, release automation; version number set when it starts (spec [0.5.0-desktop-app](specs/0.5.0-desktop-app.md), "Packaging") |
 
@@ -72,6 +73,7 @@ failures are fixed as they show up in the log.
 | Area | Situation | Today |
 |---|---|---|
 | App | Logged out | Fails early (exit 4) |
+| App | App set to English | Works since 0.9.0: the language is found on the first screen |
 | App | Closed-hours dialog after a too-early tap | Seen 2026-10-19 at 06:00: Windows set the PC clock after the NTP check, so the tap came up to 0.76 s early; the round waited 10 s and failed. Fixed (0.8.1): the wait goes by NTP time on a counter, checked again at the warm-up, the tap comes 0.1 s after the start, and a notice after the utility tap is closed with Back and the utility tapped again until `open_retry_seconds` |
 | App | Update prompt, other dialogs, network error | Not handled |
 | App | App crash or freeze during a round | Not handled |

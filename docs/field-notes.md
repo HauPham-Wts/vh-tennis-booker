@@ -11,7 +11,8 @@ Home ("Tiện ích") → Utilities list ("Sân Tennis") → Calendar (pick date,
 appears; pick slot; "Tiếp tục") → optional venue screen ("Origami…") → Court list
 ("S10 - Sân tennis") → Booking details ("Tiếp tục") → Confirmation ("Xác nhận đăng ký":
 tick consent checkbox, "Xác nhận") → Ticket screen. One Back from the ticket returns to the
-Utilities list, where the next round starts.
+Utilities list, where the next round starts. The app can also show English, with the same
+screens ("App in English" below).
 
 Back from inside the flow (2026-10-15 20:50): a notice dialog closes to the confirmation
 page, with `'Đóng'` and with Back alike. From there Back goes to the booking details, the
@@ -131,12 +132,61 @@ without it, such as the empty frame seen at 16:44 on 2026-10-15, is read again.
   server's clock, not Android's: a tap at PC 05:59:59.92 got the calendar on 2026-10-17.
   Since 0.8.1 the round closes any notice after the utility tap with Back and taps again,
   about 0.2 s a try, until `open_retry_seconds`.
-- Each apartment may book 8 slots per month (1 hour = 1 slot). Once they are used, tapping
-  "Tiếp tục" on the calendar opens a dialog "Thông báo": "Căn hộ đã hết hạn mức đăng ký
-  tiện ích cho phép." with a "Đóng" button (seen 2026-10-10); the round then fails after
+- Each apartment may book 2 slots per day and 8 per month (1 hour = 1 slot; the user,
+  2026-10-20). Once either is used, tapping "Tiếp tục" on the calendar opens a dialog
+  "Thông báo": "Căn hộ đã hết hạn mức đăng ký tiện ích cho phép." with a "Đóng" button (seen
+  2026-10-10; on 2026-10-20 for a day that already held 2 tickets); the round then fails after
   the re-taps with "Tapped 'Tiếp tục' but the next screen did not appear". On 2026-10-16
   the same dialog showed only after "Xác nhận" (0.72 s after the tap), so the round failed
   with its message.
+
+## App in English (2026-10-20)
+
+The app shows English when it is set to English in the app. Every screen keeps its layout,
+its positions and its order; only the labels differ. Read on 2026-10-20 by walking each
+screen, then by booking 21/10 10:00-12:00 on S10 for real in two rounds (cancelled):
+
+| `Labels` field | Vietnamese | English |
+|---|---|---|
+| `home` | Tiện ích | Utilities |
+| `utility` | Sân Tennis | Tennis |
+| `continue` | Tiếp tục | Next |
+| `fully_booked` | Hết chỗ | Full |
+| `confirm_page` | Xác nhận đăng ký | Confirm registration |
+| `agree` | Tôi đã hiểu (caption `Tôi đã hiểu và đồng ý với `) | I have read (caption `I have read, understood, and agree to `) |
+| `confirm` | Xác nhận | Confirm |
+| `booked_time` | Thời gian đặt lịch | Schedule time |
+| `booked_place` | Vị trí/dịch vụ | Place/service |
+| `ticket` | Chi tiết đặt lịch | Booking details |
+| `processing` | Đang xử lý | Processing |
+| `registered` | Đã đăng ký | Registered |
+| `notice` | Thông báo | Notification |
+| (dialog button) | Đóng | Close |
+| (ticket button) | Đặt lịch khác | Book another time |
+
+- Calendar: title "Register utility", a heading "Tennis" that is not clickable, "Select
+  year" twice, "Select expected date of use" until a day is picked, then "Available time
+  frame". A day reads `21, Wednesday, October 21, 2026` (the month by name); slots read as
+  in Vietnamese (`09:00 - 10:00`, `18:00 - 19:00\nFull`). The month buttons have no label,
+  as in Vietnamese.
+- Court list: "Service information", "View more", "Select place/service", then the courts
+  with their Vietnamese names (`S10 - Sân tennis`, `S9 - Sân tennis\nFull`) and a
+  "Directions" button each. It moved up once loaded, as in Vietnamese. No venue screen
+  showed. The booking details page names the court and has "Next".
+- The confirmation page and the ticket hold one label such as `Tennis\nSchedule
+  time\n21/10/2026 10:00 - 11:00\nPlace/service\nS10 - Sân tennis\n...` (the ticket adds
+  "Scheduling code" and "Transaction ID"): the date, time and court read as in Vietnamese.
+  The consent checkbox is the same unlabelled node left of its caption (tick at x=57).
+- The quota notice: "Notification", "The apartment has reached the allowed utility
+  registration quota.", "Close". The closed-hours notice is still to read in English.
+- The two real rounds (13:27, a uiautomator2 script, not the booker): the slot list 1.1-1.3 s
+  after the day tap, the court list 2.5 s after "Next", "Confirm" enabled 0.21-0.27 s after
+  the tick, the ticket's title 0.82-1.04 s after "Confirm" (round 2's first read showed
+  "Processing", the next "Registered"), and one Back to "Utilities list" in 0.3 s.
+- Whole labels tell the languages apart: "Tennis" is clickable only on the utilities list,
+  and "Registered" is not the "Registered information" heading of a loading ticket.
+- Back on the calendar, after a notice was closed there and after Back from the court list,
+  left the calendar only the second time.
 
 ## Emulator (MuMu)
 
@@ -301,4 +351,5 @@ stays `null` and `dumpsys accessibility` lists no bound or enabled service;
 | 0.8.2 | 2026-10-19 | Timed dry run at 11:33 (S6, 21/10 10:00-12:00): start reached at 11:33:03.101 (NTP); in round 1 the slot list showed with "Tiếp tục" disabled and the slot was tapped once it was enabled, 0.09 s later (the first time on the app); both rounds reached the accepted terms (6.8 s and 5.9 s). A dry run at 11:30, with the test tickets not cancelled yet, got the monthly quota notice after "Tiếp tục": not recognised at that step, it took each round 30 s to fail |
 | 0.8.3 code (`fix/confirm-retap`) | 2026-10-20 | Timed real bookings 21/10 10:00-12:00 on S10 (test bookings, cancelled between runs). At 12:05, with the least wait from the tick to "Xác nhận" set to 0 for the test: in round 1 the button showed enabled late, "Xác nhận" came 0.48 s after the tick and booked (8.9 s); in round 2 it came 79 ms after the tick, the app swallowed it, the page stayed unchanged, "Xác nhận" was tapped again 3.03 s later and the ticket showed 0.64 s after that (10.0 s). At 12:10 with 1.5 s outbound lag and 5% loss: round 1 tapped "Xác nhận" again after 3.0 s and the ticket showed 5.3 s after the first tap, 2.3 s after the second, with no notice; the app held one ticket per slot (rounds 20.5 s and 16.1 s). At 12:16 without load: 8.8 s and 5.8 s, tickets 1.0 s and 0.9 s after "Xác nhận", no second tap |
 | 0.8.3 | 2026-10-20 | Timed dry run at 12:28 (S10, 21/10 10:00-12:00): clock checks +0.455 s at the start and at the warm-up 83 s later (anchored time off by +0.001 s), start reached at 12:28:00.100 (NTP), PC clock 12:27:59.645; both rounds reached the accepted terms (6.6 s each, 57 and 47 commands) |
+| 0.9.0 code (`feat/app-english`) | 2026-10-20 | Timed real bookings 21/10 10:00-12:00 on S10 (test bookings, cancelled). At 13:53 with the app in English: "App language: English", both rounds booked (7.6 s and 4.8 s), the confirmation page read in English, "Confirm" 0.20 s after the tick at x=57, the ticket 1.5 s and 0.8 s after it, no second tap. At 13:57 with the app in Vietnamese: "App language: Vietnamese", both booked (6.6 s and 4.8 s), the ticket 0.9 s after "Xác nhận" |
 | UI part 3 | 2026-10-14 | Requests through the Vite proxy, and the live feed across a backend stop and restart (no step lost or repeated), against a scratch backend |

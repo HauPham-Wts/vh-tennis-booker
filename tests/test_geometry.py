@@ -1,12 +1,8 @@
-import re
 from datetime import date
 
 from court_booker.geometry import (
-    day_pattern,
     is_checkbox_beside,
     is_inside,
-    month_index,
-    month_index_from_label,
     parse_booked_time,
     parse_bounds,
 )
@@ -47,22 +43,6 @@ def test_checkbox_detection_scales_with_resolution():
         return tuple(int(v * factor) for v in box)
 
     assert is_checkbox_beside(scale(CHECKBOX), scale(CAPTION), 1440)
-
-
-def test_day_pattern_matches_exact_day_only():
-    pattern = day_pattern(date(2026, 10, 3))
-    assert re.fullmatch(pattern, "3, Thứ Bảy, 3 tháng 10, 2026")
-    assert not re.fullmatch(pattern, "13, Thứ Ba, 13 tháng 10, 2026")
-
-
-def test_day_pattern_across_month_and_year():
-    assert re.fullmatch(day_pattern(date(2026, 11, 1)), "1, Chủ Nhật, 1 tháng 11, 2026")
-    assert re.fullmatch(day_pattern(date(2027, 1, 1)), "1, Thứ Sáu, 1 tháng 1, 2027")
-
-
-def test_month_index_from_label():
-    assert month_index_from_label("2, Thứ Sáu, 2 tháng 10, 2026") == month_index(2026, 10)
-    assert month_index_from_label("no date") is None
 
 
 def test_parse_booked_time_splits_date_and_slot():

@@ -30,6 +30,15 @@ Two consequences of Flutter shaped the design:
    A candidate is accepted only if it is small, left of the caption and on the same
    row (`geometry.is_checkbox_beside`). Thresholds scale with screen width.
 
+The app shows Vietnamese or English, as set in the app, with the same screens and layout.
+The labels differ, and so do the calendar's day labels (`2, Thứ Sáu, 2 tháng 10, 2026` and
+`2, Friday, October 2, 2026`); the court names and the booked date and time read the same.
+A language is data (`app_language.AppLanguage`: the labels, the day label's form, the month
+names), and nothing is set by hand: `Booker.prepare()` finds the language on the app's first
+screen, by the home or the utility button it shows, in the read it makes anyway. The rounds
+then match that language's labels. The Vietnamese ones are `[labels]` in the config, the
+English ones are built in.
+
 ## "Coordinates" vs. elements
 
 A tap names its element by label. With the driver (`docs/architecture.md`, "Driver") no
