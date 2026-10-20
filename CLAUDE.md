@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Last updated: 2026-10-18.
+Last updated: 2026-10-20.
 
 ## Project
 
@@ -74,8 +74,9 @@ npm run api:types                                    # src/api/schema.d.ts from 
   (they may hold personal data; the repo is public). The only images in the repo are the
   README's screenshots of this project's UI with made-up data, in `docs/img/` (English
   UI, 1280 wide, under 200 KB each).
-- All code, comments, logs, commits and docs in English; app labels stay Vietnamese in the
-  config. Type hints, short imperative docstrings, comments explain why, module loggers,
+- All code, comments, logs, commits and docs in English; app labels stay in the app's
+  language (Vietnamese in the config, English built into `app_language.py`). Type hints,
+  short imperative docstrings, comments explain why, module loggers,
   `BookingError` subclasses, named constants, Ruff line length 100.
 - Git: `develop` (protected) is the development line; `main` (protected) holds releases
   only, every commit on it tagged `vX.Y.Z`. `feat/`, `fix/`, `docs/`, `chore/` branches are
@@ -101,8 +102,10 @@ npm run api:types                                    # src/api/schema.d.ts from 
   runs the rounds: prepare, warm up `warm_up_seconds` before the start, one round per slot.
   `watchdog.py` limits every device call to 60 s (a frozen MuMu ends the run, exit 3).
 - `flow.py` `Booker`: the booking flow; device use only through `snapshot()`, `tap()`,
-  `press_back()`, `_scroll()`, each counted in `commands`. `screen.py` (one dump parsed into
-  nodes, matched locally), `geometry.py` and most of `clock.py` are pure.
+  `press_back()`, `_scroll()`, each counted in `commands`. `prepare()` finds the app's
+  language on its first screen. `screen.py` (one dump parsed into nodes, matched locally),
+  `app_language.py` (labels and calendar day labels per language: Vietnamese from the
+  config, English built in), `geometry.py` and most of `clock.py` are pure.
 - `lock.py` + `processes.py`: the run lock and the quiet time (no dry run or auto setup
   from `wake_at` to start + 5 min).
 - `events.py` (event kinds are stable strings), `history.py` (`booker.db` writer, an event
@@ -137,12 +140,15 @@ Flow: Home ("Tiện ích") → Utilities list ("Sân Tennis") → Calendar (date
 Confirmation (consent checkbox, "Xác nhận") → Ticket; one Back returns to the Utilities
 list. Details in `docs/field-notes.md`.
 
+- The app may be set to Vietnamese or English: the same screens with other labels
+  ("Utilities", "Tennis", "Next", "Confirm", "Booking details"; days as `21, Wednesday,
+  October 21, 2026`). Court names and the booked date and time read the same in both.
 - Flutter exposes text via `content-desc`, not `text`, and builds lazily (off-screen
   elements are absent from the dump).
 - MuMu runs at 540x1600, 220 DPI. Never use hard-coded coordinates: positions come from
   the dump of the screen being tapped (the consent checkbox moves).
 - Success is the ticket's title showing after "Xác nhận"; a "Thông báo" dialog (closed
-  hours, monthly quota of 8 slots, refused booking) fails the round. A frame without labels
+  hours, quota of 2 slots a day and 8 a month, refused booking) fails the round. A frame without labels
   shows before either, so the confirmation page going away proves nothing; neither within
   `timeout` fails the round as "Outcome unknown".
 - MuMu can freeze (seen 2026-10-13); a device call then never returns, so the watchdog
@@ -172,10 +178,12 @@ list. Details in `docs/field-notes.md`.
 
 ## Current state
 
-- Released: 0.8.0 (`main`, tag `v0.8.0`): the instrumentation driver, which clicks
-  elements by label with no coordinates (`docs/architecture.md`, "Driver"); the runner is
-  at v0.8.0.
-- Now: watching the 06:00 runs on the driver. Then the speed work goes on: MuMu tuning,
+- Released: 0.8.3 (`main`, tag `v0.8.3`): the instrumentation driver of 0.8.0, which
+  clicks elements by label with no coordinates (`docs/architecture.md`, "Driver"), and
+  "Xác nhận" tapped again while the app has not taken it; the runner is at v0.8.3.
+- Now: 0.9.0, booking with the app in English too (`feat/app-english`); the runner of
+  0.8.3 reads Vietnamese only, so the app must be in Vietnamese at 06:00 until the runner
+  is at 0.9.0. Then the speed work goes on: MuMu tuning,
   several MuMu instances in parallel. The on-device accessibility agent was tried and
   dropped (`docs/field-notes.md`, "Accessibility agent"). Packaging the desktop app (Tauri, PyInstaller, installer;
   "Packaging" in `docs/specs/0.5.0-desktop-app.md`) is the last step before 1.0.0; it is
