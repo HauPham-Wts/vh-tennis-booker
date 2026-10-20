@@ -446,16 +446,79 @@ def test_notice_after_a_frame_without_labels_fails_the_round():
         Booker(app, Config()).book("11:00 - 12:00", TARGET)
 
 
-@pytest.mark.parametrize("after", ["loading", "confirm_ticked"])
-def test_neither_ticket_nor_notice_in_time_fails_the_round_as_unknown(after, fake_time):
+def test_neither_ticket_nor_notice_in_time_fails_the_round_as_unknown(fake_time):
     app = booking_app()
-    app.taps_to[("confirm_ticked", "Xác nhận")] = after
+    app.taps_to[("confirm_ticked", "Xác nhận")] = "loading"
 
-    with pytest.raises(BookingUnconfirmedError, match=r"Outcome unknown: .* 30 s after confirming"):
+    with pytest.raises(
+        BookingUnconfirmedError,
+        match=r"Outcome unknown: .* 30 s after confirming \(taps on 'Xác nhận': 1\)",
+    ):
         Booker(app, Config()).book("11:00 - 12:00", TARGET)
 
-    assert app.taps == FULL_ROUND  # "Xác nhận" is never tapped again
+    assert app.taps == FULL_ROUND  # never tapped again while the next screen is built
     assert fake_time[0] >= 30
+
+
+def timed_taps(app, now):
+    """Record the fake time of every tap on ``app``, by label."""
+    times = {}
+    click = app.click
+
+    def timed_click(x, y, label=""):
+        times.setdefault(label, []).append(now[0])
+        click(x, y, label)
+
+    app.click = timed_click
+    return times
+
+
+def test_a_confirm_the_app_swallowed_is_tapped_again_after_three_seconds(fake_time, caplog):
+    caplog.set_level(logging.INFO, logger="court_booker")
+    app = booking_app()
+    app.swallow = {"Xác nhận": 1}  # 2 of 26 rounds under simulated load, 2026-10-19
+    times = timed_taps(app, fake_time)
+
+    Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert app.taps == [*FULL_ROUND, "Xác nhận"]
+    assert app.screen == "ticket"
+    first, second = times["Xác nhận"]
+    assert 3.0 <= second - first < 3.1
+    assert (
+        "'Xác nhận' tapped again 3.0 s after the last tap with the page unchanged (attempt 2)"
+        in caplog.text
+    )
+
+
+def test_a_confirm_swallowed_again_and_again_is_repeated_every_three_seconds(fake_time):
+    app = booking_app()
+    app.taps_to[("confirm_ticked", "Xác nhận")] = "confirm_ticked"
+    times = timed_taps(app, fake_time)
+
+    with pytest.raises(BookingUnconfirmedError, match=r"\(taps on 'Xác nhận': 10\)"):
+        Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    start = times["Xác nhận"][0]
+    assert [round(at - start) for at in times["Xác nhận"]] == list(range(0, 30, 3))
+    assert 30 <= fake_time[0] - start < 30.1
+
+
+@pytest.mark.parametrize(
+    "answer",
+    [
+        [("ticket", 125)],  # the page unchanged until the ticket shows after 2.5 s
+        [("loading", 145), ("ticket", 55)],  # the ticket built from 2.9 s, shown at 4 s
+    ],
+)
+def test_a_confirm_the_app_took_is_not_tapped_again(answer, fake_time):
+    app = booking_app()
+    app.taps_to[("confirm_ticked", "Xác nhận")] = answer  # 20 ms a read
+
+    Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert app.taps == FULL_ROUND
+    assert app.screen == "ticket"
 
 
 def test_book_taps_venue_screen_when_shown():
@@ -485,6 +548,20 @@ def test_notice_after_confirming_fails_the_round_with_its_message():
 
     assert app.taps == FULL_ROUND
     assert booker.commands == 16
+
+
+def test_a_notice_after_tapping_confirm_again_leaves_the_outcome_unknown():
+    app = refusing_app()
+    app.swallow = {"Xác nhận": 1}
+
+    # The notice may answer the second tap of a booking the first one made.
+    with pytest.raises(
+        BookingUnconfirmedError,
+        match=f"a notice after 2 taps on 'Xác nhận': {QUOTA_MESSAGE}; an earlier tap may have",
+    ):
+        Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert app.taps == [*FULL_ROUND, "Xác nhận"]
 
 
 def test_fully_booked_court_fails_the_round():
