@@ -178,7 +178,10 @@ screen, then by booking 21/10 10:00-12:00 on S10 for real in two rounds (cancell
   "Scheduling code" and "Transaction ID"): the date, time and court read as in Vietnamese.
   The consent checkbox is the same unlabelled node left of its caption (tick at x=57).
 - The quota notice: "Notification", "The apartment has reached the allowed utility
-  registration quota.", "Close". The closed-hours notice is still to read in English.
+  registration quota.", "Close". The closed-hours notice (after "Tennis" on the utilities
+  list, 2026-10-20 21:00): "The BQL Grand Park Management Board only accepts Tennis
+  registration from 06:00 to 21:00 everyday", with "Close"; the booker reads it as "not open
+  yet" in English too.
 - The two real rounds (13:27, a uiautomator2 script, not the booker): the slot list 1.1-1.3 s
   after the day tap, the court list 2.5 s after "Next", "Confirm" enabled 0.21-0.27 s after
   the tick, the ticket's title 0.82-1.04 s after "Confirm" (round 2's first read showed
@@ -352,4 +355,5 @@ stays `null` and `dumpsys accessibility` lists no bound or enabled service;
 | 0.8.3 code (`fix/confirm-retap`) | 2026-10-20 | Timed real bookings 21/10 10:00-12:00 on S10 (test bookings, cancelled between runs). At 12:05, with the least wait from the tick to "Xác nhận" set to 0 for the test: in round 1 the button showed enabled late, "Xác nhận" came 0.48 s after the tick and booked (8.9 s); in round 2 it came 79 ms after the tick, the app swallowed it, the page stayed unchanged, "Xác nhận" was tapped again 3.03 s later and the ticket showed 0.64 s after that (10.0 s). At 12:10 with 1.5 s outbound lag and 5% loss: round 1 tapped "Xác nhận" again after 3.0 s and the ticket showed 5.3 s after the first tap, 2.3 s after the second, with no notice; the app held one ticket per slot (rounds 20.5 s and 16.1 s). At 12:16 without load: 8.8 s and 5.8 s, tickets 1.0 s and 0.9 s after "Xác nhận", no second tap |
 | 0.8.3 | 2026-10-20 | Timed dry run at 12:28 (S10, 21/10 10:00-12:00): clock checks +0.455 s at the start and at the warm-up 83 s later (anchored time off by +0.001 s), start reached at 12:28:00.100 (NTP), PC clock 12:27:59.645; both rounds reached the accepted terms (6.6 s each, 57 and 47 commands) |
 | 0.9.0 code (`feat/app-english`) | 2026-10-20 | Timed real bookings 21/10 10:00-12:00 on S10 (test bookings, cancelled). At 13:53 with the app in English: "App language: English", both rounds booked (7.6 s and 4.8 s), the confirmation page read in English, "Confirm" 0.20 s after the tick at x=57, the ticket 1.5 s and 0.8 s after it, no second tap. At 13:57 with the app in Vietnamese: "App language: Vietnamese", both booked (6.6 s and 4.8 s), the ticket 0.9 s after "Xác nhận" |
+| 0.9.0 | 2026-10-20 | Timed dry run for 20:57:45 (S10, 21/10 10:00-12:00), app in Vietnamese: "App language: Vietnamese"; MuMu was started by the run (Android after 47.5 s), so the start was reached at 20:57:47.775 (NTP), 2.8 s late; clock offset +0.177 s, anchored time off by +0.000 s at the warm-up; both rounds reached the accepted terms (10.9 s and 9.1 s, 33 and 62 commands). Closed-hours run at 21:00:50 with the app in English (`open_retry_seconds = 10`, same slots): "App language: English", the English notice read as "not open yet", "Tennis" tapped 48 and 74 times, both rounds failed "not open" after 10 s as expected, MuMu closed at the end |
 | UI part 3 | 2026-10-14 | Requests through the Vite proxy, and the live feed across a backend stop and restart (no step lost or repeated), against a scratch backend |
