@@ -115,11 +115,15 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   `select_slot()` taps the slot once "Tiếp tục" shows enabled in the same read, reading the
   list again for up to `_CONTINUE_WAIT` (2 s), then taps it anyway; `book()` then waits
   for the enabled button in fresh reads up to `timeout` ("'Tiếp tục' stayed disabled").
-- `accept_and_confirm` reads the screen after "Xác nhận" until the ticket's title (booked)
-  or a notice dialog (`BookingRejectedError` with the message, `Booker.notice_text`) shows;
-  frames without either, such as the empty one while the next screen is built, are read
-  again. Neither within `timeout` fails the round with `BookingUnconfirmedError`
-  ("Outcome unknown ... check the app").
+- `accept_and_confirm` taps "Xác nhận" at least `_TERMS_SETTLE` (0.2 s) after the tick and
+  reads the screen until the ticket's title (booked) or a notice dialog
+  (`BookingRejectedError` with the message, `Booker.notice_text`) shows; frames without
+  either, such as the empty one while the next screen is built, are read again. While the
+  last read still shows "Xác nhận" enabled, the button is tapped again every
+  `_CONFIRM_RETAP_AFTER` (3 s; the app swallowed it under load), never while the next
+  screen is built. A notice after such a second tap fails the round with
+  `BookingUnconfirmedError`, as the first tap may have booked; so does neither within
+  `timeout` of the first tap ("Outcome unknown ... check the app", with the number of taps).
 - `book()` returns a `Booked`, read from screens the round reads anyway (no extra
   command): `read_confirmation` takes the date, slot and court from the confirmation page
   (`Screen.line_after` the `booked_time` and `booked_place` captions) and only warns when

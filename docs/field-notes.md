@@ -83,6 +83,20 @@ never tell one screen from another.
   booked but was not: round 2 then needed 11 s and 169 commands to get back to "Sân Tennis"
   (other days 0.6-0.8 s, one Back from the ticket), so a dialog had replaced the page.
   Since 0.5.1 such a round fails with the app's message.
+- "Xác nhận" swallowed (2026-10-19, timed real bookings with load added on our side:
+  outbound lag and packet loss on the PC, busy loops in MuMu): in 2 of 26 rounds the page
+  stayed exactly as it was for 30 s after "Xác nhận" (0.20 s after the tick, the button
+  enabled), with no ticket. With 0.5 s lag no ticket came at all; with 2.5 s lag, 10% loss
+  and CPU load the user tapped "Xác nhận" by hand afterwards and got the ticket at once.
+  While the server answers a tap it took, the page stays unchanged too, so a read cannot
+  tell the two apart. No round without load or at 06:00 was swallowed. A "Xác nhận" 79 ms
+  after the tick was swallowed the same way (2026-10-20). Since 0.8.3 "Xác nhận" is tapped
+  again every 3 s while the page still shows it enabled; a second tap while the server was
+  still answering the first booked the slot once, with no notice (2026-10-20, 1.5 s lag).
+- The ticket after "Xác nhận": 0.66-1.6 s at 06:00 (7 taps, 15-20/10), 0.9-1.1 s without
+  load, 0.7-2.7 s with 0.2-0.8 s outbound lag (2026-10-20), 1.7-6.6 s with 0.5-1.5 s lag and
+  15.4 s with 2.5 s lag, CPU load and 10% loss (2026-10-19), more than 10 s once with a slow
+  server at midday (see "App and server timings").
 - Before "Xác nhận" the page already names what it books, in one label `[0,210][540,775]`
   (2026-10-14 and 15, every read):
   `'Sân Tennis\nThời gian đặt lịch\n17/10/2026 15:00 - 16:00\nVị trí/dịch vụ\n'`
@@ -285,4 +299,5 @@ stays `null` and `dumpsys accessibility` lists no bound or enabled service;
 | 0.8.1 | 2026-10-19 | Timed dry run at 10:29 (S6, 21/10 10:00-12:00): clock checks -0.387 s at the start and at the warm-up 89 s later (anchored time off by +0.000 s), start reached at 10:29:25.100 (NTP), PC clock 10:29:25.487; both rounds reached the accepted terms (7.5 s and 8.1 s, 66 and 44 commands) |
 | 0.8.2 code (`fix/screen-timeout`) | 2026-10-19 | Timed real booking 21/10 at 11:21 on S6 (test bookings), `timeout = 30`: start reached at 11:21:28.100 (NTP); 10:00-11:00 booked in 7.2 s (75 commands) and 11:00-12:00 in 6.7 s (69), each ticket 1.1 s after "Xác nhận", which came 0.23 s and 0.20 s after the tick. No screen came near the old 10 s limit, so the longer wait did not come into play |
 | 0.8.2 | 2026-10-19 | Timed dry run at 11:33 (S6, 21/10 10:00-12:00): start reached at 11:33:03.101 (NTP); in round 1 the slot list showed with "Tiếp tục" disabled and the slot was tapped once it was enabled, 0.09 s later (the first time on the app); both rounds reached the accepted terms (6.8 s and 5.9 s). A dry run at 11:30, with the test tickets not cancelled yet, got the monthly quota notice after "Tiếp tục": not recognised at that step, it took each round 30 s to fail |
+| 0.8.3 code (`fix/confirm-retap`) | 2026-10-20 | Timed real bookings 21/10 10:00-12:00 on S10 (test bookings, cancelled between runs). At 12:05, with the least wait from the tick to "Xác nhận" set to 0 for the test: in round 1 the button showed enabled late, "Xác nhận" came 0.48 s after the tick and booked (8.9 s); in round 2 it came 79 ms after the tick, the app swallowed it, the page stayed unchanged, "Xác nhận" was tapped again 3.03 s later and the ticket showed 0.64 s after that (10.0 s). At 12:10 with 1.5 s outbound lag and 5% loss: round 1 tapped "Xác nhận" again after 3.0 s and the ticket showed 5.3 s after the first tap, 2.3 s after the second, with no notice; the app held one ticket per slot (rounds 20.5 s and 16.1 s). At 12:16 without load: 8.8 s and 5.8 s, tickets 1.0 s and 0.9 s after "Xác nhận", no second tap |
 | UI part 3 | 2026-10-14 | Requests through the Vite proxy, and the live feed across a backend stop and restart (no step lost or repeated), against a scratch backend |
