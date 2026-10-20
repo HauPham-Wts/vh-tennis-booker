@@ -70,9 +70,13 @@ After confirming, the script reads the screen until the ticket's title shows: on
 the slot booked. A "Thông báo" dialog with a button, for example when someone else took the
 slot a moment earlier, fails the round with its message instead. Before either, the app
 shows the confirmation page while its server answers and then, for a moment, a screen
-without labels, so the page going away does not tell the outcome. If neither the ticket nor
-a dialog shows within `timeout` (30 s), the round fails as "Outcome unknown": better a
-booking reported missing than a missing one reported booked. The date, slot and court the
+without labels, so the page going away does not tell the outcome. If the page still shows
+"Xác nhận" enabled 3 s after the tap, the script taps it again, every 3 s: under load the
+app sometimes ignores the tap, and the page then stays as it was with no ticket. It never
+taps while the next screen is built. A dialog after such a second tap leaves the outcome
+unknown, since the first tap may have booked. If neither the ticket nor a dialog shows
+within `timeout` (30 s), the round fails as "Outcome unknown": better a booking reported
+missing than a missing one reported booked. The date, slot and court the
 confirmation page shows, and the ticket's status, are read from screens already read,
 logged (a warning when they differ from the target) and kept in the history; neither stops
 the round. Every new screen a run reads, and every tap, is written to the debug

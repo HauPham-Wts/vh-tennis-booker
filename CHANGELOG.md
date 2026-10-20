@@ -6,6 +6,13 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- "Xác nhận" is tapped again every 3 s while the confirmation page still shows it enabled
+  with no ticket or notice, never while the next screen is built. Under load on 2026-10-19
+  the app ignored it in 2 of 26 rounds: the page stayed for 30 s with no ticket, and a tap
+  by hand then booked. A notice after a second tap reports the outcome as unknown, since the
+  first tap may have booked.
+
 ## [0.8.2] - 2026-10-19
 
 ### Changed

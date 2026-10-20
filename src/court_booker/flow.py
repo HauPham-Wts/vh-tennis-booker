@@ -82,6 +82,14 @@ _TERMS_SETTLE = 0.2
 """Least time from the checkbox tap to "Xác nhận": the app takes the tick a few frames after
 the button shows enabled. A "Xác nhận" 65 ms after the tick did nothing (the driver,
 2026-10-18), one 97 ms after it booked, and uiautomator2's 0.14-0.23 s always did."""
+_CONFIRM_RETAP_AFTER = 3.0
+"""How long "Xác nhận" may go without the ticket or a notice before it is tapped again, if
+the confirmation page still shows it enabled: the app swallowed the tap. 2 of 26 rounds under
+simulated load (2026-10-19) kept the page unchanged for 30 s with no ticket, and a tap by
+hand then booked. The page also stays unchanged while the server answers, so the wait is
+about twice the slowest answer at 06:00: the ticket showed 0.66-1.6 s after the tap (7 taps,
+15-20/10), 1.1-2.7 s under light lag. A swallowed tap costs 3 s, and a slow answer seldom
+gets a second tap."""
 _FIRST_DATE_WAIT = 1.5
 _NEXT_DATE_WAIT = 0.8
 _CHECKBOX_TIMEOUT = 0.8
@@ -589,8 +597,11 @@ class Booker:
         verifies the tick. The round is booked only once the ticket shows; a notice
         dialog, such as a slot taken a moment earlier by someone else, fails it, and so
         does neither in ``timeout``: better a booking reported missing than a missing one
-        reported booked. Returns the screen that showed the ticket, or ``None`` in a dry
-        run.
+        reported booked. "Xác nhận" is tapped again every :data:`_CONFIRM_RETAP_AFTER`
+        while the page still shows it enabled, never while the next screen is built. A
+        notice after such a tap may answer the second tap of a booking the first one made,
+        so it leaves the outcome unknown. Returns the screen that showed the ticket, or
+        ``None`` in a dry run.
         """
         deadline = time.monotonic() + self.config.timeout
         while True:
@@ -609,14 +620,42 @@ class Booker:
             logger.info("Dry run: skipping final confirmation")
             return None
         time.sleep(max(0.0, ticked + _TERMS_SETTLE - time.monotonic()))
-        self.tap(found[0])
-        outcome = self.wait_for(self._after_confirm, self.config.timeout)
-        if outcome is None:
-            raise BookingUnconfirmedError(
-                "Outcome unknown: neither the ticket nor a notice showed "
-                f"{self.config.timeout:.0f} s after confirming; check the app"
+        button: Node | None = found[0]
+        name = found[0].desc
+        deadline = time.monotonic() + self.config.timeout
+        taps = 0
+        tapped = 0.0
+        while True:
+            if button is not None:
+                if taps:
+                    logger.info(
+                        "%r tapped again %.1f s after the last tap with the page unchanged "
+                        "(attempt %d)",
+                        name,
+                        time.monotonic() - tapped,
+                        taps + 1,
+                    )
+                tapped = time.monotonic()
+                self.tap(button)
+                taps += 1
+            outcome = self.wait_for(
+                self._after_confirm, _retap_wait(deadline, _CONFIRM_RETAP_AFTER)
             )
+            if outcome is not None:
+                break
+            if time.monotonic() >= deadline:
+                raise BookingUnconfirmedError(
+                    "Outcome unknown: neither the ticket nor a notice showed "
+                    f"{self.config.timeout:.0f} s after confirming (taps on {name!r}: {taps}); "
+                    "check the app"
+                )
+            button = self.last_screen.find(self.confirm_button)
         message = self.notice_text(outcome[1])
+        if message is not None and taps > 1:
+            raise BookingUnconfirmedError(
+                f"Outcome unknown: a notice after {taps} taps on {name!r}: "
+                f"{message or 'no message'}; an earlier tap may have booked, check the app"
+            )
         if message is not None:
             raise BookingRejectedError(f"The app refused the booking: {message or 'no message'}")
         logger.info("Booking confirmed")
@@ -800,9 +839,9 @@ def log_screen(screen: Screen, title: str) -> None:
     logger.debug("%s (%d elements):%s", title, len(lines), "".join(f"\n  {x}" for x in lines))
 
 
-def _retap_wait(deadline: float) -> float:
+def _retap_wait(deadline: float, after: float = _RETAP_AFTER) -> float:
     """Return how long to wait for the next screen before a tap may be repeated."""
-    return min(_RETAP_AFTER, max(0.0, deadline - time.monotonic()))
+    return min(after, max(0.0, deadline - time.monotonic()))
 
 
 def _controls(screen: Screen) -> set[Node]:
