@@ -11,9 +11,6 @@ from datetime import date
 Box = tuple[int, int, int, int]
 """Element bounds as ``(left, top, right, bottom)`` in pixels."""
 
-DAY_PATTERN = r"\d{1,2}, .*, \d{1,2} tháng \d{1,2}, \d{4}"
-"""Accessibility label of a selectable calendar day, e.g. ``2, Thứ Sáu, 2 tháng 10, 2026``."""
-
 ANY_SLOT_PATTERN = r"(?s)\d{2}:\d{2} - \d{2}:\d{2}.*"
 """Accessibility label of any time slot, available or fully booked."""
 
@@ -61,26 +58,16 @@ def is_checkbox_beside(box: Box, label: Box, screen_width: int) -> bool:
     return is_small and is_left_of_label and is_same_row
 
 
-def day_pattern(target: date) -> str:
-    """Return a regex matching the accessibility label of ``target`` only."""
-    return f"{target.day}, .*, {target.day} tháng {target.month}, {target.year}"
-
-
 def month_index(year: int, month: int) -> int:
     """Return a monotonically increasing index for a calendar month."""
     return year * 12 + month
 
 
-def month_index_from_label(label: str) -> int | None:
-    """Extract the month index from a calendar-day accessibility label."""
-    match = re.search(r"tháng (\d{1,2}), (\d{4})", label or "")
-    if match is None:
-        return None
-    return month_index(int(match.group(2)), int(match.group(1)))
-
-
 def parse_booked_time(text: str) -> tuple[date, str] | None:
-    """Split a booking time such as ``17/10/2026 15:00 - 16:00`` into its date and slot."""
+    """Split a booking time such as ``17/10/2026 15:00 - 16:00`` into its date and slot.
+
+    The app writes it this way in Vietnamese and in English alike.
+    """
     match = re.fullmatch(r"(\d{1,2})/(\d{1,2})/(\d{4}) (\d{2}:\d{2} - \d{2}:\d{2})", text.strip())
     if match is None:
         return None
