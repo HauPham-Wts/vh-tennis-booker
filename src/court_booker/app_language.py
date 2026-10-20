@@ -1,6 +1,9 @@
 """The languages the Vinhomes app shows, and how each one labels its screens.
 
-Kept free of device access for unit tests.
+The app shows Vietnamese or English, as set in the app. Both lay out every screen the same
+way; only the labels and the calendar's day labels differ. The court names and the booked
+date and time on the confirmation page and the ticket read the same in both (2026-10-20), so
+they are not part of a language. Kept free of device access for unit tests.
 """
 
 from __future__ import annotations
@@ -11,6 +14,40 @@ from datetime import date
 
 from court_booker.config import Labels
 from court_booker.geometry import month_index
+
+ENGLISH_LABELS = Labels(  # read from the app in English on 2026-10-20
+    home="Utilities",
+    utility="Tennis",
+    continue_="Next",
+    confirm="Confirm",
+    confirm_page="Confirm registration",
+    prev_month="Previous month",  # not shown: the month buttons have no label in either language
+    next_month="Next month",
+    agree="I have read",  # the caption reads "I have read, understood, and agree to "
+    fully_booked="Full",
+    notice="Notification",
+    booked_time="Schedule time",
+    booked_place="Place/service",
+    ticket="Booking details",
+    processing="Processing",
+    registered="Registered",
+)
+"""The English labels. The Vietnamese ones are the config's ``[labels]``."""
+
+ENGLISH_MONTHS = (
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+)
 
 
 @dataclass(frozen=True)
@@ -51,12 +88,15 @@ class AppLanguage:
 
 
 def app_languages(labels: Labels) -> tuple[AppLanguage, ...]:
-    """Return the app's languages: Vietnamese with ``labels``, the config's."""
+    """Return the app's languages: Vietnamese with ``labels``, the config's, then English."""
     return (
         AppLanguage(
             "Vietnamese",
             labels,
             "{day}, {weekday}, {day} tháng {month}, {year}",
             tuple(str(month) for month in range(1, 13)),
+        ),
+        AppLanguage(
+            "English", ENGLISH_LABELS, "{day}, {weekday}, {month} {day}, {year}", ENGLISH_MONTHS
         ),
     )

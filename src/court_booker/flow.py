@@ -188,7 +188,8 @@ class Booker:
         With ``restart_app`` the app is stopped first, so a stale screen, popup or
         expired session from the previous day cannot get in the way. A timed run waits
         on the home screen and opens the utilities list shortly before the start
-        (:meth:`locate_entry`), so the list it books from is freshly loaded.
+        (:meth:`locate_entry`), so the list it books from is freshly loaded. The first of
+        these screens tells the app's language, whose labels the rounds then use.
         """
         package = self.config.package
         self.disable_animations()
@@ -200,13 +201,19 @@ class Booker:
             logger.info("Starting %s", package)
             self.device.app_start(package)
 
-        found = self.wait_for(self._either(self.home, self.utility), self.config.boot_timeout)
+        found = self.wait_for(self._find_language, self.config.boot_timeout)
         if found is None:
+            *labels, last = [
+                repr(label)
+                for language in self.languages
+                for label in (language.labels.home, language.labels.utility)
+            ]
             raise AppNotReadyError(
-                f"The app did not show {self.labels.home!r} or "
-                f"{self.labels.utility!r} in {self.config.boot_timeout:.0f} s; "
-                "check that it is logged in"
+                f"The app did not show {', '.join(labels)} or {last} in "
+                f"{self.config.boot_timeout:.0f} s; check that it is logged in"
             )
+        self._use(found[0])
+        logger.info("App language: %s", found[0].name)
         try:
             self.return_to_home(found[1])
         except NavigationError as exc:
@@ -734,6 +741,18 @@ class Booker:
 
     def _either(self, first: Match, second: Match) -> Finder[Node]:
         return lambda screen: screen.find(first) or screen.find(second)
+
+    def _find_language(self, screen: Screen) -> AppLanguage | None:
+        """Return the language whose home or utility button ``screen`` shows.
+
+        Their labels differ in each language (field notes), so no screen shows two.
+        """
+        for language in self.languages:
+            labels = language.labels
+            for label in (labels.home, labels.utility):
+                if screen.find(Match(desc=label, clickable=True)) is not None:
+                    return language
+        return None
 
     def _after_confirm(self, screen: Screen) -> bool | None:
         """Return ``True`` once the ticket's title or a notice shows.
