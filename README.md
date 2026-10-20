@@ -63,10 +63,12 @@ flowchart TD
 
 The app is built with Flutter, which publishes its widgets to Android's accessibility tree
 with their text in `content-desc`. The booker reads each screen in one dump, finds the
-buttons by their Vietnamese labels and taps the coordinates from that dump; no position is
+buttons by their labels and taps the coordinates from that dump; no position is
 hard-coded. Each slot in `config.toml` is booked in its own round, and one Back from the
-ticket returns to the utilities list for the next one. The labels live in `config.toml`,
-so a change of wording in the app needs no code change.
+ticket returns to the utilities list for the next one. The app may be set to Vietnamese or
+English: the booker tells which from the first screen and uses that language's labels. The
+Vietnamese labels live in `config.toml`, so a change of wording in the app needs no code
+change; the English ones are built in.
 
 A real 06:00 run, abridged (times are the PC clock, which was 0.161 s behind: the first
 tap went out at 06:00:00.001 and is logged once the calendar showed):

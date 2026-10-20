@@ -80,6 +80,44 @@ def details(when="11/10/2026 11:00 - 12:00", court="S10 - Sân tennis"):
 
 
 DETAILS = details()
+ENGLISH = {  # the same labels with the app set to English, read on 2026-10-20
+    "Tiện ích": "Utilities",
+    "Sân Tennis": "Tennis",
+    DAY_10: "10, Saturday, October 10, 2026",
+    DAY_11: "11, Sunday, October 11, 2026",
+    "Tiếp tục": "Next",
+    "14:00 - 15:00\nHết chỗ": "14:00 - 15:00\nFull",
+    "S9 - Sân tennis\nHết chỗ": "S9 - Sân tennis\nFull",
+    "Xác nhận đăng ký": "Confirm registration",
+    "Tôi đã hiểu và đồng ý với ": "I have read, understood, and agree to ",
+    DETAILS[0]: (
+        "Tennis\nSchedule time\n11/10/2026 11:00 - 12:00\nPlace/service\nS10 - Sân tennis\n"
+        "Payment information\nSupplier\nVinhomes\nTotal amount\n0 VND"
+    ),
+    "Xác nhận": "Confirm",
+    "Chi tiết đặt lịch": "Booking details",
+    "Đang xử lý": "Processing",
+    "Thông báo": "Notification",
+    QUOTA_MESSAGE: "The apartment has reached the allowed utility registration quota.",
+    "Đóng": "Close",
+}
+
+
+def english(taps):
+    """Return ``taps`` with each label as the app in English shows it."""
+    return [ENGLISH.get(tap, tap) for tap in taps]
+
+
+def in_english(app):
+    """Set ``app`` to English: its screens and taps use the English labels."""
+    app.screens = {
+        name: [(ENGLISH.get(desc, desc), box, clickable) for desc, box, clickable in nodes]
+        for name, nodes in app.screens.items()
+    }
+    app.taps_to = {
+        (screen, ENGLISH.get(key, key)): target for (screen, key), target in app.taps_to.items()
+    }
+    return app
 
 
 class FakeApp:
@@ -191,6 +229,7 @@ def booking_app(
     slot_delay=0,
     shown=(DETAILS,),
     ticket=TICKET,
+    english=False,
 ):
     screens = {
         "loading": LOADING,
@@ -230,7 +269,24 @@ def booking_app(
         "calendar_slots": "utilities",
         "calendar_selected": "utilities",
     }
-    return FakeApp(screens, taps_to, backs_to, screen, launches_to="home")
+    app = FakeApp(screens, taps_to, backs_to, screen, launches_to="home")
+    return in_english(app) if english else app
+
+
+def prepared(app, config=None):
+    """Return a booker that ran ``prepare`` on ``app``, then put ``app`` back on its screen.
+
+    ``prepare`` finds the app's language on the home screen; the records of ``app`` and the
+    command count start afresh.
+    """
+    screen = app.screen
+    booker = Booker(app, config or Config())
+    booker.prepare()
+    app.screen = screen
+    for record in (app.ops, app.taps, app.labels, app.calls, app.shells):
+        record.clear()
+    booker.commands = 0
+    return booker
 
 
 @pytest.fixture(autouse=True)
@@ -530,13 +586,13 @@ def test_book_taps_venue_screen_when_shown():
     assert app.screen == "ticket"
 
 
-def refusing_app(**options):
+def refusing_app(english=False, **options):
     """Answer "Xác nhận" with a notice dialog, as when someone else took the slot first."""
     app = booking_app(**options)
     app.screens["notice"] = NOTICE
     app.taps_to[("confirm_ticked", "Xác nhận")] = "notice"
     app.backs_to["notice"] = "confirm_ticked"
-    return app
+    return in_english(app) if english else app
 
 
 def test_notice_after_confirming_fails_the_round_with_its_message():
@@ -1074,11 +1130,14 @@ CLOSED_NOTICE = [  # 0.05 s after a tap on the utility at 05:59:59.244, 2026-10-
 ]
 
 
-def early_app(notices):
+def early_app(notices, english=False):
     """Answer the first ``notices`` taps on the utility with the closed-hours notice."""
     app = booking_app()
     app.screens["closed"] = CLOSED_NOTICE
     app.backs_to["closed"] = "utilities"  # Back closed it on 2026-10-19
+    if english:
+        in_english(app)
+    utility = ENGLISH["Sân Tennis"] if english else "Sân Tennis"
     click = app.click
     shown = [0]
 
@@ -1086,7 +1145,7 @@ def early_app(notices):
         if app.screen == "utilities":
             early = shown[0] < notices
             shown[0] += 1
-            app.taps_to[("utilities", "Sân Tennis")] = "closed" if early else "calendar"
+            app.taps_to[("utilities", utility)] = "closed" if early else "calendar"
         click(x, y, label)
 
     app.click = click_early
@@ -1122,3 +1181,140 @@ def test_a_notice_that_stays_fails_the_round_after_the_retry_window(monkeypatch)
 
     assert app.taps.count("Sân Tennis") > 1
     assert app.screen == "closed"
+
+
+# The app in English -----------------------------------------------------------
+
+
+@pytest.mark.parametrize("name", ["Vietnamese", "English"])
+def test_prepare_finds_the_language_of_the_app_without_extra_commands(name, caplog):
+    caplog.set_level(logging.INFO, logger="court_booker")
+    app = booking_app(screen="loading", english=name == "English")
+    booker = Booker(app, Config())
+
+    booker.prepare()
+
+    assert booker.language.name == name
+    assert app.screen == "home"
+    assert booker.commands == 2  # animations off, one read of the home screen
+    logged = [r.getMessage() for r in caplog.records if "language" in r.getMessage()]
+    assert logged == [f"App language: {name}"]
+
+
+def test_prepare_finds_english_on_the_utilities_list_and_goes_back_home():
+    app = booking_app(screen="utilities", english=True)
+    app.current = "com.vinhomes.resident"
+    booker = Booker(app, Config(restart_app=False))
+
+    booker.prepare()
+
+    assert booker.language.name == "English"
+    assert app.calls == ["back"]
+    assert app.screen == "home"
+
+
+def test_a_logged_out_app_names_the_labels_of_each_language():
+    app = booking_app(screen="loading")
+    app.launches_to = None
+
+    with pytest.raises(
+        AppNotReadyError,
+        match=r"did not show 'Tiện ích', 'Sân Tennis', 'Utilities' or 'Tennis' in 1 s; ",
+    ):
+        Booker(app, Config(boot_timeout=1)).prepare()
+
+
+def test_an_app_in_english_books_a_round_in_16_commands(caplog):
+    caplog.set_level(logging.INFO, logger="court_booker")
+    app = booking_app(english=True, ticket=[*TICKET, PROCESSING])
+    booker = prepared(app)
+
+    booked = booker.book("11:00 - 12:00", TARGET)
+
+    assert app.taps == english(FULL_ROUND)
+    assert app.labels == [tap if isinstance(tap, str) else "" for tap in english(FULL_ROUND)]
+    assert app.screen == "ticket"
+    assert booker.commands == 16
+    # The court and the booked time read the same in English.
+    assert booked == Booked("2026-10-11", "11:00 - 12:00", "S10 - Sân tennis", "Processing")
+    assert "Confirmation page: 2026-10-11 11:00 - 12:00 on S10 - Sân tennis" in caplog.text
+
+
+def test_an_app_in_english_is_entered_from_its_home_screen():
+    app = booking_app(screen="home", english=True)
+    booker = prepared(app)
+
+    booker.locate_entry()
+    booker.locate_entry()
+    app.ops.clear()
+    booker.book("11:00 - 12:00", TARGET)
+
+    assert app.taps[:2] == ["Utilities", "Tennis"]
+    assert app.ops[0] == ("click", "Tennis")
+    assert app.screen == "ticket"
+
+
+@pytest.mark.parametrize(
+    ("slot", "courts", "error"),
+    [
+        ("14:00 - 15:00", COURTS, "Slot 14:00 - 15:00 is fully booked"),
+        ("11:00 - 12:00", [node("S10 - Sân tennis\nFull", COURTS[0][1])], "Court S10"),
+    ],
+)
+def test_an_app_in_english_shows_full_slots_and_courts(slot, courts, error):
+    booker = prepared(booking_app(english=True, courts=courts))
+
+    with pytest.raises(SlotUnavailableError, match=error):
+        booker.book(slot, TARGET)
+
+
+def test_an_english_notice_after_confirming_fails_the_round_with_its_message():
+    app = refusing_app(english=True)
+    booker = prepared(app)
+
+    with pytest.raises(
+        BookingRejectedError,
+        match="refused the booking: The apartment has reached the allowed utility registration",
+    ):
+        booker.book("11:00 - 12:00", TARGET)
+
+    assert app.taps == english(FULL_ROUND)
+
+
+def test_an_english_notice_after_the_utility_tap_is_closed_and_the_utility_tapped_again():
+    # The English message of the closed-hours notice is not known yet; its title is.
+    app = early_app(notices=1, english=True)
+    booker = prepared(app)
+
+    booker.book("11:00 - 12:00", TARGET)
+
+    assert app.taps == ["Tennis", *english(FULL_ROUND)]
+    assert app.calls == ["back"]
+    assert app.screen == "ticket"
+
+
+def test_an_english_calendar_switches_month_by_the_day_it_shows():
+    prev_arrow, next_arrow = (450, 180, 490, 220), (490, 180, 530, 220)  # unlabelled
+    day_31 = "31, Saturday, October 31, 2026"
+    app = FakeApp(
+        screens={
+            "home": [node("Utilities", (200, 1500, 340, 1580))],
+            "november": [
+                node("", prev_arrow),
+                node("", next_arrow),
+                node("1, Sunday, November 1, 2026", (35, 344, 109, 402)),
+            ],
+            "october": [node(day_31, (381, 344, 455, 402))],
+            "slots": [],
+        },
+        taps_to={("november", prev_arrow): "october", ("october", day_31): "slots"},
+        backs_to={},
+        screen="november",
+        launches_to="home",
+    )
+    booker = prepared(app)
+
+    booker.select_date(booker.snapshot(), date(2026, 10, 31))
+
+    # Back a month, as the day shown is in November; at the button's fallback position.
+    assert app.taps == [prev_arrow, day_31]

@@ -6,6 +6,14 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-20
+
+### Added
+- Booking with the Vinhomes app set to English as well as Vietnamese. The English labels and
+  calendar day labels are built in; the language is found on the app's first screen and
+  logged ("App language: English"), with no new setting and no extra device command.
+  `[labels]` in the config stays the Vietnamese set.
+
 ## [0.8.3] - 2026-10-20
 
 ### Fixed

@@ -73,7 +73,13 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   clickable); `screen.Match` (desc / prefix / contains / full-match pattern / clickable) is
   applied locally. `Screen.describe()` gives one log line per labelled or clickable node
   (bounds, label).
-- `flow.Booker` builds `Match`es from `config.labels` in `__init__`. The device is only used
+- `flow.Booker` builds `Match`es from the labels of the app's language (`_use`). The
+  languages come from `app_language.app_languages(config.labels)`: Vietnamese with the
+  config's labels, then English (`ENGLISH_LABELS`); each also gives the calendar's day
+  regexes (`any_day`, `day_pattern`, `month_index_from_label`). The booker starts in
+  Vietnamese; `prepare()` waits for the home or utility button of any language
+  (`_find_language`), switches to the one shown and logs "App language: English". Court
+  names, slots and the booked time read the same in both. The device is only used
   through `snapshot()` (one dump), `tap()`/`tap_point()` (`device.click(x, y)`),
   `press_back()` and `_scroll()`; each increments `commands` and logs itself at debug level
   (taps with the element's label and position). `snapshot()` logs a screen that differs
@@ -142,8 +148,8 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   offset +0.012 s (-0.745 s since 05:50:03.536; anchored time off by +0.002 s)"); a failed
   one keeps the anchor. Without any answer, or with `ntp_server = ""`, it is the PC clock.
   `wait_until(target, now)` sleeps on any such clock.
-- `geometry.py`, `screen.py` and most of `clock.py` are pure; logic testable without a
-  device belongs there.
+- `geometry.py`, `screen.py`, `app_language.py` and most of `clock.py` are pure; logic
+  testable without a device belongs there.
 
 ## Events and history
 
@@ -179,7 +185,9 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
 ## Configuration and data folder
 
 - `config.load_config` rejects unknown keys (`ConfigError`); the TOML key `continue` maps
-  to `Labels.continue_`; keys ending in `_xy` become tuples. New config fields must be added
+  to `Labels.continue_`; keys ending in `_xy` become tuples. `[labels]` holds the
+  Vietnamese labels only; the English ones are built into `app_language.py`, with no
+  setting. New config fields must be added
   to the dataclass and `config.example.toml`. A relative `log_dir` resolves against the
   config file. Loading does not validate, so an existing config never stops the 06:00 run.
 - `config_from_dict` builds a config from parsed TOML; `validate_config` lists problems
@@ -487,7 +495,9 @@ unknown `op`, a missing argument, a line that is not JSON).
   so nothing in the test suite touches a device, adb, the network or Task Scheduler.
 - `tests/test_flow.py` has hand-written fakes: `FakeApp`, a scripted app that serves
   hierarchy XML per screen and switches screens on taps and Back, and `OpeningBooker`; a
-  fake `flow.time` clock makes timeouts pass instantly. A full round must cost 16 commands.
+  fake `flow.time` clock makes timeouts pass instantly. A full round must cost 16 commands,
+  in English too: `in_english` sets a `FakeApp` to the English labels, and `prepared` runs
+  `prepare()` on it so the booker finds the language.
 - `tests/conftest.py` puts `src/` on `sys.path` and points `COURT_BOOKER_HOME` at a
   temporary folder for every test (fixture `data_home`), so tests never write the real
   history. Its `record_run` fixture writes runs through the history sink.

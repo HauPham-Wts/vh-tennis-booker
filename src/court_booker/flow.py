@@ -20,6 +20,7 @@ from dataclasses import asdict, dataclass
 from datetime import date
 from typing import Any, Callable, Optional, TypeVar
 
+from court_booker.app_language import AppLanguage, app_languages
 from court_booker.config import Config
 from court_booker.errors import (
     AppNotReadyError,
@@ -33,12 +34,9 @@ from court_booker.errors import (
 from court_booker.events import EventKind, Reporter
 from court_booker.geometry import (
     ANY_SLOT_PATTERN,
-    DAY_PATTERN,
-    day_pattern,
     is_checkbox_beside,
     is_inside,
     month_index,
-    month_index_from_label,
     parse_booked_time,
 )
 from court_booker.screen import Match, Node, Screen
@@ -140,19 +138,26 @@ class Booker:
         self.last_screen = Screen([])
         self._entry: Screen | None = None
 
-        labels = config.labels
-        self.home = Match(desc=labels.home, clickable=True)
-        self.utility = Match(desc=labels.utility, clickable=True)
-        self.any_day = Match(pattern=DAY_PATTERN)
         self.any_slot = Match(pattern=ANY_SLOT_PATTERN)
-        self.prev_month = Match(desc=labels.prev_month)
-        self.next_month = Match(contains=labels.next_month)
-        self.continue_button = Match(desc=labels.continue_, clickable=True)
         self.venue = Match(contains=config.venue_keyword) if config.venue_keyword else None
         self.court = Match(desc=config.court, clickable=True)
         self.any_court = Match(prefix=config.court, clickable=True)
         self.opened_court = Match(desc=config.court, clickable=False)
         """The court named on the booking details page."""
+        self.languages = app_languages(config.labels)
+        """The languages the app may show; the court names read the same in each."""
+        self._use(self.languages[0])
+
+    def _use(self, language: AppLanguage) -> None:
+        """Read and tap the app's labels in ``language`` from now on."""
+        self.language = language
+        self.labels = labels = language.labels
+        self.home = Match(desc=labels.home, clickable=True)
+        self.utility = Match(desc=labels.utility, clickable=True)
+        self.any_day = Match(pattern=language.any_day)
+        self.prev_month = Match(desc=labels.prev_month)
+        self.next_month = Match(contains=labels.next_month)
+        self.continue_button = Match(desc=labels.continue_, clickable=True)
         self.agree = Match(contains=labels.agree)
         self.confirm_button = Match(desc=labels.confirm, clickable=True)
         self.notice = Match(desc=labels.notice)
@@ -183,7 +188,8 @@ class Booker:
         With ``restart_app`` the app is stopped first, so a stale screen, popup or
         expired session from the previous day cannot get in the way. A timed run waits
         on the home screen and opens the utilities list shortly before the start
-        (:meth:`locate_entry`), so the list it books from is freshly loaded.
+        (:meth:`locate_entry`), so the list it books from is freshly loaded. The first of
+        these screens tells the app's language, whose labels the rounds then use.
         """
         package = self.config.package
         self.disable_animations()
@@ -195,13 +201,19 @@ class Booker:
             logger.info("Starting %s", package)
             self.device.app_start(package)
 
-        found = self.wait_for(self._either(self.home, self.utility), self.config.boot_timeout)
+        found = self.wait_for(self._find_language, self.config.boot_timeout)
         if found is None:
+            *labels, last = [
+                repr(label)
+                for language in self.languages
+                for label in (language.labels.home, language.labels.utility)
+            ]
             raise AppNotReadyError(
-                f"The app did not show {self.config.labels.home!r} or "
-                f"{self.config.labels.utility!r} in {self.config.boot_timeout:.0f} s; "
-                "check that it is logged in"
+                f"The app did not show {', '.join(labels)} or {last} in "
+                f"{self.config.boot_timeout:.0f} s; check that it is logged in"
             )
+        self._use(found[0])
+        logger.info("App language: %s", found[0].name)
         try:
             self.return_to_home(found[1])
         except NavigationError as exc:
@@ -224,7 +236,7 @@ class Booker:
 
         Returns what the confirmation page and the ticket showed.
         """
-        labels = self.config.labels
+        labels = self.labels
         screen = self.open_slot(slot, target)
         if screen.find(self.continue_button) is None:  # the slot was tapped with it disabled
             found = self.wait_for(self._finder(self.continue_button), self.config.timeout)
@@ -269,7 +281,7 @@ class Booker:
         while True:
             screen = self.return_to_utilities(screen)
             _, screen = self.tap_and_advance(
-                screen, self.utility, self.config.labels.utility, self._calendar_or_notice
+                screen, self.utility, self.labels.utility, self._calendar_or_notice
             )
             message = self.notice_text(screen)
             if message is not None:
@@ -358,7 +370,7 @@ class Booker:
                 return screen
             if screen.find(self.home):
                 _, screen = self.tap_and_advance(
-                    screen, self.home, self.config.labels.home, self._finder(self.utility)
+                    screen, self.home, self.labels.home, self._finder(self.utility)
                 )
                 return screen
             self._warn_about_notice(screen)
@@ -452,7 +464,7 @@ class Booker:
 
     def select_date(self, screen: Screen, target: date) -> None:
         """Tap ``target`` in the calendar shown on ``screen``, switching month if needed."""
-        match = Match(pattern=day_pattern(target))
+        match = Match(pattern=self.language.day_pattern(target))
         target_month = month_index(target.year, target.month)
         current: Screen | None = screen
         for attempt in range(5):
@@ -469,7 +481,9 @@ class Booker:
                 target.isoformat(),
                 first_day.desc if first_day else None,
             )
-            shown = None if first_day is None else month_index_from_label(first_day.desc)
+            shown = (
+                None if first_day is None else self.language.month_index_from_label(first_day.desc)
+            )
             forward = attempt % 2 == 0 if shown is None else shown < target_month
             self._switch_month(self.last_screen, forward)
             current = None
@@ -483,7 +497,7 @@ class Booker:
         the tap.
         """
         match = Match(prefix=slot)
-        button = self.config.labels.continue_
+        button = self.labels.continue_
         deadline = time.monotonic() + self.config.timeout
         swipes = 0
         screen: Screen | None = None
@@ -498,7 +512,7 @@ class Booker:
             if node is None:
                 down = True
             else:
-                if self.config.labels.fully_booked in node.desc:
+                if self.labels.fully_booked in node.desc:
                     raise SlotUnavailableError(f"Slot {slot} is fully booked")
                 position = self._visibility(screen, node)
                 if position == "visible":
@@ -559,7 +573,7 @@ class Booker:
         The court is checked on the booking details page already (:meth:`select_court`),
         so a difference here is only logged as a warning and the round still confirms.
         """
-        labels = self.config.labels
+        labels = self.labels
         booked = Booked(shown_court=screen.line_after(labels.booked_place))
         time_text = screen.line_after(labels.booked_time)
         parsed = None if time_text is None else parse_booked_time(time_text)
@@ -728,6 +742,18 @@ class Booker:
     def _either(self, first: Match, second: Match) -> Finder[Node]:
         return lambda screen: screen.find(first) or screen.find(second)
 
+    def _find_language(self, screen: Screen) -> AppLanguage | None:
+        """Return the language whose home or utility button ``screen`` shows.
+
+        Their labels differ in each language (field notes), so no screen shows two.
+        """
+        for language in self.languages:
+            labels = language.labels
+            for label in (labels.home, labels.utility):
+                if screen.find(Match(desc=label, clickable=True)) is not None:
+                    return language
+        return None
+
     def _after_confirm(self, screen: Screen) -> bool | None:
         """Return ``True`` once the ticket's title or a notice shows.
 
@@ -793,7 +819,7 @@ class Booker:
         shorter than a full one. The sticky bottom button counts as hidden area.
         """
         _, height = screen.size
-        button = screen.find(Match(desc=self.config.labels.continue_))
+        button = screen.find(Match(desc=self.labels.continue_))
         bottom_limit = button.box[1] if button is not None else height
         full_height = max(n.height for n in screen.find_all(self.any_slot))
         if node.box[3] <= bottom_limit and node.height >= full_height * _MIN_VISIBLE_RATIO:
