@@ -33,7 +33,7 @@ round 2 shows as it happens](docs/img/overview.png)
   ticket. A refusal fails the round with the app's own message, and a round that shows
   neither within 30 s is reported as "outcome unknown", never as booked.
 - **Built for a slow app.** Each step taps as soon as its button appears, taps again every
-  2 s while the app ignores it, and waits up to 30 s for a slow screen. A frozen emulator
+  2 s (3 s for "Xác nhận") while the app ignores it, and waits up to 30 s for a slow screen. A frozen emulator
   ends the run after 60 s with a
   clear error instead of hanging until the next morning.
 - **One read per screen.** A screen is read in a single accessibility dump (about 70 ms)
