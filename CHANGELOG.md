@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.3] - 2026-10-20
+
 ### Fixed
 - "Xác nhận" is tapped again every 3 s while the confirmation page still shows it enabled
   with no ticket or notice, never while the next screen is built. Under load on 2026-10-19
