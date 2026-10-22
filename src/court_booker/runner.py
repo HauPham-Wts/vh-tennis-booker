@@ -27,10 +27,10 @@ LOCATE_AHEAD = timedelta(seconds=2)
 OPENING_MARGIN = timedelta(seconds=0.1)
 """How long after the start time a timed run taps first.
 
-The app answers a tap before 06:00 by its server's clock with a notice (2026-10-19, a tap
-up to 0.76 s early) and took every tap 0.085 s (2026-10-17, 1 of 1) and 0.15 s (10-16/10,
-6 of 6) after it. The margin also covers the NTP error, half the round trip at most. To be
-shortened from the 06:00 logs, which show where the tap fell ("Start reached")."""
+The app answered an early tap with a notice on 2026-10-19 (up to 0.76 s early). The
+0.1 s margin reduces that risk, but a notice still appeared on 2026-10-20 with the PC
+clock behind NTP. Which clock the app uses for opening hours remains unverified.
+The 06:00 logs show where the tap fell ("Start reached"); retaps handle a notice."""
 AUTO_DRIVER = "auto"
 INSTRUMENTATION = "instrumentation"
 UIAUTOMATOR2 = "uiautomator2"

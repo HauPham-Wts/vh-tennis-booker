@@ -268,8 +268,8 @@ class Booker:
 
         Returns the calendar screen read before the slot was tapped, which also
         holds the continue button unless it stayed disabled. Until ``open_retry_seconds``
-        have passed, a notice in place of the calendar, as the app shows for a tap before
-        06:00 by its server's clock, is closed with Back and the utility tapped again; and
+        have passed, a notice in place of the calendar, such as the closed-hours notice,
+        is closed with Back and the utility tapped again; and
         a date or slot the server does not list yet, right at the opening time, reloads
         the calendar by leaving and entering it again. A fully booked slot fails at once.
         """

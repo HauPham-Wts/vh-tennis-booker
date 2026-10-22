@@ -40,7 +40,7 @@ desktop app (the installer) moved to the very end, after the speed work, so it o
 what has proven itself; it gets its version number when it starts. On 2026-10-18 an
 accessibility agent was tried for the speed work and dropped (the app refuses to book
 with one enabled); the same day an instrumentation driver took its place (0.8.0), which
-clicks elements by label with no coordinates. The speed work goes on in this order: the
+finds elements by label in the current tree before clicking. The speed work goes on in this order: the
 driver, MuMu tuning, several MuMu instances in parallel (the last step for two slots); each
 round is made as fast as it can be before rounds run side by side.
 
@@ -58,12 +58,19 @@ round is made as fast as it can be before rounds run side by side.
 | 4 UI | 0.6.3 | Activity becomes the second tab of History (five menu items); both list ten days and "Xem thêm" (`GET /api/runs?days=`) (released 2026-10-16) |
 | 3 Fast | 0.7.0 | Taps as a bare touch down and up (about 0.5-0.7 s less a round); a real run closes MuMu once its rounds are done (released 2026-10-16) |
 | 2 Every situation | 0.7.1 | The court check on the booking details page (released 2026-10-18) |
-| 3 Fast | 0.8.0 | Instrumentation driver: reads the screen in about 13 ms instead of 100 ms and clicks elements by label in the tree of the moment, no coordinates; uiautomator2 when it does not start (released 2026-10-18) |
-| 2 Every situation | 0.9.0 | The Vinhomes app in English as well as Vietnamese: the English labels built in, the language found on the app's first screen, no setting |
+| 3 Fast | 0.8.0 | Instrumentation driver: reads the screen in about 13 ms instead of 100 ms and finds labelled elements in the current tree before clicking; uiautomator2 when it does not start (released 2026-10-18) |
+| 2 Every situation | 0.8.1 | NTP time anchored to a counter, renewed at warm-up, with a 0.1 s opening margin; closed-hours notice retried; disabled calendar button awaited; `develop`/`main` release workflow (released 2026-10-19) |
+| 2 Every situation | 0.8.2 | Every screen awaited up to `timeout`, now 30 s by default; repeat taps every 2 s only while the old element remains (released 2026-10-19) |
+| 2 Every situation | 0.8.3 | Repeat "Xác nhận" every 3 s while enabled with no ticket or notice; a notice after another tap leaves the outcome unknown (released 2026-10-20) |
+| 2 Every situation | 0.9.0 | The Vinhomes app in English as well as Vietnamese: the English labels built in, the language found on the app's first screen, no setting (released 2026-10-20) |
 | 3 Fast | **Next** | MuMu tuning (frame rate, performance, hidden bottlenecks); then several MuMu instances with separate accounts in parallel (one account cannot log in twice), the last speed step (now) |
 | 4 UI | Desktop app, last before 1.0.0 | Tauri shell with PyInstaller sidecar, installer, release automation; version number set when it starts (spec [0.5.0-desktop-app](specs/0.5.0-desktop-app.md), "Packaging") |
 
 There is no 0.3.1: its candidate fixes were judged to have no impact.
+
+The 0.2.0 and 0.3.0 specs are historical designs for those releases. The desktop spec
+still holds the UI decisions and unfinished packaging plan; current implementation details
+are in [architecture.md](architecture.md).
 
 ## Situations (phase 2)
 
@@ -84,7 +91,7 @@ failures are fixed as they show up in the log.
 | Booking | Slot taken by someone else at "Xác nhận" | Round fails with the app's notice (0.5.1; was logged as booked on 2026-10-14) |
 | Booking | Booked court differs from the tapped one | Seen 2026-10-13 (S6 tapped, S9 booked), 2026-10-15 at 06:00 (the tap hit S9, fully booked: 2.45 s lost), 2026-10-16 (confirmation page on S9, refused by the quota) and 2026-10-17 at 06:00 (S9 booked). Cause: the court list moves up 232 px when the service info above it finishes loading (field notes). Since 0.6.1 the court on the confirmation page is logged (a warning when it differs) and kept in the history. Fixed (0.7.1): the booking details page must name the configured court, another one is left with Back and the court tapped again; a list that moved under a tap that opened nothing gets the tap again after 0.6 s. On 2026-10-18 both rounds of a real booking opened S9 and were set right this way (about 1.5 s each). |
 | Booking | Target date in the next month | Code exists; untested since 0.3.0. Only testable on the last two days of a month (30/10 → 1/11, 31/10 → 2/11): the calendar does not switch to a month without bookable days |
-| Booking | Booking limit per account | 8 slots per apartment per month; not handled by decision (users track their own quota), the log shows the dialog |
+| Booking | Booking limit per apartment | 2 slots per day and 8 per month; quota tracking is left to the user. A notice after "Xác nhận" is reported; a notice after the calendar's "Tiếp tục" is not recognised at that step and the round times out (field notes, "Dialogs") |
 | Device | MuMu not running / frozen | Started automatically / since 0.6.1 a command over 60 s ends the run with an error (exit code 3); no restart, no retry (by decision) |
 | Device | ADB lost during a run | Not handled |
 | Device | Wrong MuMu resolution | Works but scrolls; no warning |

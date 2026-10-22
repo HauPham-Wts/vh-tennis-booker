@@ -4,8 +4,9 @@ The driver is our own small APK, run in MuMu as an instrumentation (``am instrum
 gets Android's UiAutomation, the connection uiautomator2 uses; it is not an accessibility
 service, and the app books with it running (field notes, "Instrumentation driver"). It reads
 the screen in about 13 ms where uiautomator2 needs 100 ms, and clicks an element by its
-label in the tree of the moment, so no position travels from the PC: a list that moved since
-the last read cannot send a click to another element.
+label in the tree of the moment. The PC sends coordinates to distinguish nodes with the
+same label and locate unlabelled controls; labelled clicks resolve the node again before
+acting, so they follow its current position.
 
 It speaks protocol 1: one JSON line per command and reply over the abstract socket
 ``court-driver``, which ``adb forward`` brings to a local TCP port. Only one UiAutomation can

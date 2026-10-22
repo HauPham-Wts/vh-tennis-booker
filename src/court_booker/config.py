@@ -91,7 +91,7 @@ class Config:
     wake_at: str = "05:45"
     """When the scheduled task wakes the PC and starts preparing; before ``start_at``."""
     ntp_server: str = "time.google.com"
-    """Time server used to correct the PC clock before a timed start; empty disables."""
+    """Time server for the run's clock; does not set Windows time. Empty uses the PC clock."""
     open_retry_seconds: float = 60.0
     """How long to keep reloading the calendar while the date or slot is not open yet."""
     warm_up_seconds: float = 60.0
