@@ -6,6 +6,13 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- Documentation aligned with 0.9.0: release and runner status, instrumentation and
+  fallback behaviour, bilingual labels, configuration, API coverage and release workflow.
+  Mark the 0.2.0 and 0.3.0 specs as historical and distinguish the released browser UI
+  from the unfinished desktop packaging. The clock used by the app for opening hours
+  remains unverified.
+
 ## [0.9.0] - 2026-10-20
 
 ### Added

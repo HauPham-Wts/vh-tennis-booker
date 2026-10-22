@@ -78,7 +78,8 @@ cd ui && npm run api:types       # writes ui/src/api/schema.d.ts
   backend route and UI layer; [docs/field-notes.md](docs/field-notes.md) holds what the app
   and the emulator were seen to do. Update them with the code they describe.
 - **Language:** code, comments, logs, commit messages and documentation are in English.
-  Accessibility labels of the target app stay in Vietnamese and live in `config.toml`.
+  Accessibility labels stay in the target app's language: Vietnamese in `config.toml`,
+  English in `src/court_booker/app_language.py`. The booker detects the app's language.
 - **Style:** enforced by Ruff (line length 100). Public functions have type hints and a
   one-line docstring in the imperative mood. Comments explain *why*, not *what*. UI code
   is strict TypeScript, linted by ESLint and formatted by Prettier (also 100 columns).
@@ -139,9 +140,9 @@ The daily scheduled task books for real, so it never runs the development checko
 it still reads `config.toml` and writes `logs/` in the development folder.
 
 ```bash
-python tools/setup_runner.py v0.4.0 --schedule   # first time: create it and point the task at it
+python tools/setup_runner.py v0.9.0 --schedule   # first time: create it and point the task at it
 python tools/setup_runner.py vX.Y.Z              # after a release: move it to the new tag
-python tools/setup_runner.py v0.4.0              # move it back if the new release fails
+python tools/setup_runner.py <previous-tag>      # roll back to the last working release
 ```
 
 The log of each run names the Python and code folder it used. A fix that must reach the
