@@ -282,8 +282,9 @@ work in progress.
 ## Roadmap
 
 The 0.x versions go through four phases toward 1.0.0: it runs, it handles every situation,
-it is fast, it is friendly to use. Released: 0.9.0, with the instrumentation driver and
-booking in either Vietnamese or English. Next on the desktop line: MuMu tuning from the
+it is fast, it is friendly to use. Released: 0.10.0, with a Windows notification after
+every run; 0.9.0 brought the instrumentation driver and booking in either Vietnamese or
+English. Next on the desktop line: MuMu tuning from the
 logs, then several accounts booking in parallel (one MuMu each). Last before
 1.0.0: the desktop app with an installer. See [docs/roadmap.md](docs/roadmap.md) and the
 [changelog](CHANGELOG.md).
