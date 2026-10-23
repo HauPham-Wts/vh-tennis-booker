@@ -6,10 +6,6 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Changed
-- Roadmap: the monthly quota (8 slots per account) is to be checked in the app's history
-  before 06:00, planned for 0.11.0; until now it was left to the user.
-
 ## [0.10.0] - 2026-10-23
 
 ### Added
