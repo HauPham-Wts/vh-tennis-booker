@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Court Booker",
-    "version": "0.9.0"
+    "version": "0.9.1"
   },
   "paths": {
     "/api/health": {
@@ -885,6 +885,18 @@
             "type": "string",
             "title": "Fully Booked"
           },
+          "venue_list": {
+            "type": "string",
+            "title": "Venue List"
+          },
+          "court_list": {
+            "type": "string",
+            "title": "Court List"
+          },
+          "residents": {
+            "type": "string",
+            "title": "Residents"
+          },
           "notice": {
             "type": "string",
             "title": "Notice"
@@ -922,6 +934,9 @@
           "next_month",
           "agree",
           "fully_booked",
+          "venue_list",
+          "court_list",
+          "residents",
           "notice",
           "booked_time",
           "booked_place",

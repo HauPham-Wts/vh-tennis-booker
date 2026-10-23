@@ -6,7 +6,7 @@ package = "com.vinhomes.resident"
 days_ahead = 2                      # book this many days after today
 slots = ["18:00 - 19:00", "19:00 - 20:00"]  # one booking round per slot
 court = "S10 - Sân tennis"
-venue_keyword = "Origami"           # venue screen, tapped only if shown
+venue_keyword = "Origami"           # picks the venue when the app lists several
 timeout = 30                        # longest wait for any screen, in seconds
 max_swipes = 6                      # scroll attempts when a slot is hidden (short screens)
 
@@ -19,7 +19,7 @@ restart_app = true                  # restart the app for a clean state before b
 # Timed start: the scheduled task starts at wake_at and books at start_at.
 start_at = "06:00"                  # when the app opens bookings, HH:MM or HH:MM:SS
 wake_at = "05:45"                   # scheduled task time (court-booker schedule install)
-ntp_server = "time.google.com"      # corrects the PC clock (others tried if it fails); "" = PC clock
+ntp_server = "time.google.com"      # NTP time for the run; does not set Windows time; "" = PC clock
 open_retry_seconds = 60             # keep reloading while the date or slot is not open yet
 warm_up_seconds = 60                # wait on the home screen; open the utilities list this early
 log_dir = "logs"                    # daily log files, next to this file; "" disables
@@ -28,6 +28,11 @@ log_dir = "logs"                    # daily log files, next to this file; "" dis
 # message, then read your chat id from https://api.telegram.org/bot<token>/getUpdates
 telegram_token = ""
 telegram_chat_id = ""
+
+# Fallback points for unlabelled calendar month controls, as fractions of screen size.
+# Real month-boundary navigation is not yet verified; the driver needs a node at the point.
+next_month_xy = [0.953, 0.122]
+prev_month_xy = [0.873, 0.122]
 
 # Accessibility labels of the target app in Vietnamese; update them here if the app
 # changes its wording. The English ones are built in: the booker finds the app's language
@@ -42,6 +47,9 @@ prev_month = "Tháng trước"
 next_month = "Tháng sau"
 agree = "Tôi đã hiểu"
 fully_booked = "Hết chỗ"
+venue_list = "Chọn phân khu"         # heading of the venues, when the app lists them
+court_list = "Chọn vị trí/dịch vụ"   # heading of the court list
+residents = "Số lượng cư dân"        # caption of the booking details page
 notice = "Thông báo"                 # title of the app's message dialogs
 booked_time = "Thời gian đặt lịch"   # caption of the date and slot to book
 booked_place = "Vị trí/dịch vụ"      # caption of the court to book

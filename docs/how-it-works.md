@@ -2,14 +2,16 @@
 
 ## Reading a Flutter app from the outside
 
-uiautomator2 reads Android's accessibility tree. Flutter renders its own widgets, but
-publishes a *semantics* tree to accessibility services, where visible text appears in
+The instrumentation driver (or uiautomator2 as fallback) reads Android's accessibility
+tree. Flutter renders its own widgets, but publishes a *semantics* tree to accessibility
+services, where visible text appears in
 `content-desc` (not `text`). Every element is therefore matched by its `content-desc`
 label (`screen.Match`).
 
 Each screen is read with **one hierarchy dump**, which returns every element with its
-visible bounds in about 70 ms, no slower than a query for a single element. Elements are
-then matched locally (`screen.Screen`), so a screen costs one device command however many
+visible bounds. On MuMu the driver read and parsed a screen in about 13 ms; uiautomator2
+took about 70-100 ms in the recorded measurements (see [field notes](field-notes.md)).
+Elements are then matched locally (`screen.Screen`), so a screen costs one device command however many
 elements the step needs.
 
 Two consequences of Flutter shaped the design:
@@ -41,10 +43,11 @@ English ones are built in.
 
 ## "Coordinates" vs. elements
 
-A tap names its element by label. With the driver (`docs/architecture.md`, "Driver") no
-position is involved at all: the driver looks the label up in the screen's tree of that
-moment and clicks the element with an accessibility click, so a list that moved since the
-last read (the court list does, while it loads) cannot send the click to another element.
+A tap names its element by label. The driver ([architecture](architecture.md#driver-android))
+looks the label up in the screen's tree of that moment and clicks the element with an
+accessibility click. Coordinates from the dump distinguish nodes with the same label;
+the click uses the selected node's current position if it needs a touch fallback. A list
+that moved since the last read is therefore looked up again before the click.
 The consent checkbox has no label; it is the smallest clickable element at the point the
 latest dump shows it. Waiting for the next screen and locating the next element are the
 same read, so pre-recorded coordinates would not save a command: the screen must be read
@@ -62,7 +65,13 @@ app does not need.
 next screen does not appear within 2 s and the element is still shown (tap swallowed by
 lag), it taps again, every 2 s; while the app loads the next screen (the element gone) it
 only waits. A screen is awaited up to `timeout` (30 s; no step of a booking by hand ever
-took that long), and acted on as soon as it shows. The court tap is checked as well: the
+took that long), and acted on as soon as it shows. A finder must not match the screen the
+tap leaves: after "Tiếp tục" it waits for the court list's heading ("Chọn vị trí/dịch vụ")
+or the venues' heading ("Chọn phân khu") with a venue below it, which is then tapped; after
+the venue, for the court list's heading only; then for the configured court on the list.
+The booking details page is known by "Số lượng cư dân" and an enabled "Tiếp tục". The
+calendar, the venues, the court list and the details page share the title "Đăng ký tiện
+ích", so the title never tells them apart. The court tap is checked as well: the
 court list can move up while it loads, so the tap may open another court; the booking details page
 names the court, and another one is left with Back and the court tapped again. A timed run
 waits on the app's home screen and
@@ -71,9 +80,10 @@ freshly loaded; two seconds before the start it is read once more, so the first 
 the start time is the tap itself. The wait goes by NTP time: the PC clock's error, measured
 when the run starts and again at the warm-up, carried forward on a counter that Windows
 does not set when it corrects the PC clock. The tap comes 0.1 s after the start, since the
-app answers a tap before 06:00 by its server's clock with a "Thông báo" dialog; if that
+app can answer a tap near opening time with a "Thông báo" dialog; if that
 dialog shows all the same, the round closes it with Back and taps again. On the calendar
-the slot is tapped once "Tiếp tục" shows enabled too.
+the slot is tapped once "Tiếp tục" shows enabled too. Whether the app checks opening hours
+against the server clock or the emulator clock remains unverified (field notes, "Dialogs").
 
 After confirming, the script reads the screen until the ticket's title shows: only then is
 the slot booked. A "Thông báo" dialog with a button, for example when someone else took the

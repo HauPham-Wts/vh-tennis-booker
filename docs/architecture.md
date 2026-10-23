@@ -57,8 +57,8 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   `wait_until(start - warm_up_seconds)`, `clock.measure()` once more, `Booker.locate_entry()`
   (taps "Tiện ích", loads the utilities list; a failure is logged and retried by the next
   call), `wait_until(start - LOCATE_AHEAD)`, `locate_entry()` again (read only),
-  `wait_until(start + OPENING_MARGIN)` (0.1 s: the app refuses a tap before 06:00 by its
-  server's clock) and a log line "Start reached at <NTP time> (NTP), PC clock <PC time>",
+  `wait_until(start + OPENING_MARGIN)` (0.1 s to reduce early taps; the clock the app uses
+  for opening hours is unverified) and a log line "Start reached at <NTP time> (NTP), PC clock <PC time>",
   then one round per slot. The waits go by `clock`, a `clock.NtpClock` the CLI anchors
   before connecting to the device (the PC clock without one); a `BookingError` (or any
   exception) fails
@@ -80,8 +80,9 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   Vietnamese; `prepare()` waits for the home or utility button of any language
   (`_find_language`), switches to the one shown and logs "App language: English". Court
   names, slots and the booked time read the same in both. The device is only used
-  through `snapshot()` (one dump), `tap()`/`tap_point()` (`device.click(x, y)`),
-  `press_back()` and `_scroll()`; each increments `commands` and logs itself at debug level
+  through `snapshot()` (one dump), `tap()`/`tap_point()` (`device.click(x, y, label=...)`),
+  `press_back()` and `_scroll()`; taps pass the label as well as coordinates to the device.
+  Each operation increments `commands` and logs itself at debug level
   (taps with the element's label and position). `snapshot()` logs a screen that differs
   from the previous read as one record (`log_screen`), so the debug log and the history's
   log lines hold every screen a run went through (about 400 lines for one slot, no extra
@@ -91,7 +92,10 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   `tap_and_advance(screen, target, name, find_next)`: tap `target` from `screen` and wait
   for `find_next` up to `config.timeout` (30 s), tapping again every `_RETAP_AFTER` (2 s)
   while `target` is still shown (a swallowed tap), never while it is gone (the app loads the
-  next screen); then `NavigationError`. The court goes through
+  next screen); then `NavigationError`. After "Tiếp tục" the finder is
+  `_court_list_or_venue` (the court list's heading, or the venue below the venues' heading:
+  the only one, or the one naming `venue_keyword`); after the venue, the court list's
+  heading alone; the court is then awaited on the list. The court goes through
   `select_court(screen)` instead: the court list can move under the tap (field notes), so
   the booking details page must name the configured court (`opened_court`); another court
   is left with `go_back()` and the court tapped again where the list shows it, and a list
@@ -198,7 +202,8 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   `ensure_config` writes the defaults once.
 - `paths.data_folder()`: the app's data folder, `%LOCALAPPDATA%\CourtBooker` (override with
   `COURT_BOOKER_HOME`), holding `config.toml`, `booker.db`, `logs/` and `run.lock`. The CLI
-  writes only `booker.db` there; its config and logs stay beside `--config` until the app.
+  uses `booker.db` and `run.lock` there; its config comes from `--config` (default
+  `config.toml` in the working directory), and relative log paths resolve beside that file.
 
 ## Device setup
 
@@ -246,6 +251,7 @@ category `setup` without a run. `court-booker setup` prints the checks; `--auto`
 
 | Route | Module | Behaviour |
 |---|---|---|
+| `GET /api/health` | `app.py` | The backend answers with `status: "ok"` and `version` (model `Health`); no device access |
 | `GET /api/status` | `status.py` | The Overview in one call (model `Overview`): `version`, `running` (lock holder, or the dry run the backend just started), `schedule`, `last_run`, `setup` (`last_setup`: time and items left by the last auto setup; empty until it ran). Never calls MuMu |
 | `GET /api/runs`, `GET /api/runs/{id}` | `history.py` | Runs newest first, each with its `slots` (read for the whole page in one query; `month`, `trigger`, `dry_run` from the run's flag, not its trigger, `before`, `days`: every run of the newest 1-60 days that have runs, by start day, `limit`); one run with slots, steps and log lines (404 `not_found` via `api.errors.NotFoundError`) |
 | `GET /api/runs/months` | `history.py` | Months of real bookings by play date, newest first, with `runs` and `booked` slots; declared before `/runs/{run_id}`, which would take "months" for an id |
@@ -466,9 +472,9 @@ thread and `History` writes under a lock.
   reaches it with `adb forward tcp:<port> localabstract:court-driver`. A new connection
   closes the one before, so a run that died cannot block the next. `stop` closes the socket
   and ends the instrumentation.
-- An element is clicked by its label in the tree of the moment, with
-  `AccessibilityNodeInfo.ACTION_CLICK`: no position comes from the PC, so a list that moved
-  since the PC read it cannot send the click to another element. A node that is not
+- An element is found by its label in the tree of the moment and clicked with
+  `AccessibilityNodeInfo.ACTION_CLICK`. The PC also sends the last observed coordinates
+  to distinguish nodes with the same label; unlabelled elements use `click_at`. A node that is not
   clickable, or refuses the action, is touched at its middle where it is now (an injected
   touch down and up, `injectInputEvent`).
 - `Tree` reads the active window as the uiautomator2 dump does: only nodes visible to the

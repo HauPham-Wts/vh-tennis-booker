@@ -1,8 +1,8 @@
 """Where the app keeps its data: the config, the history database, logs and the run lock.
 
 The installed app uses ``%LOCALAPPDATA%\\CourtBooker``; ``COURT_BOOKER_HOME`` points it
-elsewhere, for tests and development. The command line keeps its ``--config`` option and
-does not use this folder unless told to.
+elsewhere, for tests and development. The command line uses this folder for history and
+the run lock; its config comes from ``--config`` and relative log paths resolve beside it.
 """
 
 from __future__ import annotations

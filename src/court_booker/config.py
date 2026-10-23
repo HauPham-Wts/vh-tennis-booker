@@ -46,6 +46,12 @@ class Labels:
     next_month: str = "Tháng sau"
     agree: str = "Tôi đã hiểu"
     fully_booked: str = "Hết chỗ"
+    venue_list: str = "Chọn phân khu"
+    """Heading of the venues the app may list before the courts."""
+    court_list: str = "Chọn vị trí/dịch vụ"
+    """Heading of the court list."""
+    residents: str = "Số lượng cư dân"
+    """Caption of the booking details page that follows the court list."""
     notice: str = "Thông báo"
     """Title of the app's message dialogs, e.g. the monthly quota or a refused booking."""
     booked_time: str = "Thời gian đặt lịch"
@@ -73,6 +79,7 @@ class Config:
     slots: list[str] = field(default_factory=lambda: ["11:00 - 12:00", "14:00 - 15:00"])
     court: str = "S10 - Sân tennis"
     venue_keyword: str = "Origami"
+    """Picks the venue when the app lists several; a single one is tapped whatever its name."""
     timeout: float = 30.0
     """Longest wait for any screen, in seconds; one that shows sooner is acted on at once.
 
@@ -91,7 +98,7 @@ class Config:
     wake_at: str = "05:45"
     """When the scheduled task wakes the PC and starts preparing; before ``start_at``."""
     ntp_server: str = "time.google.com"
-    """Time server used to correct the PC clock before a timed start; empty disables."""
+    """Time server for the run's clock; does not set Windows time. Empty uses the PC clock."""
     open_retry_seconds: float = 60.0
     """How long to keep reloading the calendar while the date or slot is not open yet."""
     warm_up_seconds: float = 60.0

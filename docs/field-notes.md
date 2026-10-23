@@ -22,6 +22,21 @@ empty frame (only the full-screen root and the status bar). The status bar's lab
 on their own (the clock, a "Google Play services notification" seen at 20:13), so they
 never tell one screen from another.
 
+Venues and court list (logs of 14-23/10): the calendar, the venues, the court list and the
+booking details page all have the title "Đăng ký tiện ích". The venues and the court list
+are one page, below "Thông tin dịch vụ": first "Chọn phân khu" with one entry,
+`'Origami_ Sân tennis'`, then "Chọn vị trí/dịch vụ" with the courts. With one venue the app
+goes on to the courts by itself within a fraction of a second; a read may catch the
+venues or not. In 8 of 30 reads "Chọn phân khu" showed before its entry; the court list's
+heading showed with S10 but not yet S6 once (18/10). On 23/10 at 06:00 round 2 tapped
+the venue and the read 8 ms later still showed it; the code took that for the next screen,
+looked for S6 at once and failed the round. The details page shows
+`'Phí đặt chỗ 0 VND\nSố lượng cư dân\n4'` (the fee and count as read; the confirmation page
+and the ticket repeat it as `'Phí đặt chỗ\n0 VND\n...'`), in about 24 reads before "Tiếp
+tục" is enabled. In English: "Select place/service", `'Booking fee 0 VND\nNumber of
+residents\n4'`; the venues' heading is "Select subdivision" (read on 23/10 at 13:27, above
+`'Origami_ Sân tennis'` at the same place as in Vietnamese).
+
 ## Reading the app
 
 - Flutter exposes text via `content-desc`, not `text`; select with `description=...`.
@@ -128,8 +143,12 @@ without it, such as the empty frame seen at 16:44 on 2026-10-15, is read again.
   2026-10-10. On 2026-10-19 a tap at 05:59:59.244 by the PC clock, up to 0.76 s early by
   NTP time (see "Emulator"), got it 0.05 s later (four elements: the full-screen root, the
   title spanning `[0,33][540,1600]`, the message, "Đóng"); the round waited 10 s for the
-  calendar and failed. Back closed it and the list showed 0.1 s later. The app goes by its
-  server's clock, not Android's: a tap at PC 05:59:59.92 got the calendar on 2026-10-17.
+  calendar and failed. Back closed it and the list showed 0.1 s later. A tap at PC
+  05:59:59.92 got the calendar on 2026-10-17, initially suggesting a server-clock check.
+  On 2026-10-20 the notice still appeared after a start at NTP 06:00:00.100 while the PC
+  clock read 05:59:59.975; a later tap opened the calendar. These observations do not
+  establish which clock the app checks. Comparing the server and emulator clocks around
+  closing time was proposed, but no result establishing the clock source is recorded here.
   Since 0.8.1 the round closes any notice after the utility tap with Back and taps again,
   about 0.2 s a try, until `open_retry_seconds`.
 - Each apartment may book 2 slots per day and 8 per month (1 hour = 1 slot; the user,
@@ -172,7 +191,8 @@ screen, then by booking 21/10 10:00-12:00 on S10 for real in two rounds (cancell
 - Court list: "Service information", "View more", "Select place/service", then the courts
   with their Vietnamese names (`S10 - Sân tennis`, `S9 - Sân tennis\nFull`) and a
   "Directions" button each. It moved up once loaded, as in Vietnamese. No venue screen
-  showed. The booking details page names the court and has "Next".
+  showed that day; on 23/10 it read "Select subdivision" above `'Origami_ Sân tennis'`.
+  The booking details page names the court and has "Next".
 - The confirmation page and the ticket hold one label such as `Tennis\nSchedule
   time\n21/10/2026 10:00 - 11:00\nPlace/service\nS10 - Sân tennis\n...` (the ticket adds
   "Scheduling code" and "Transaction ID"): the date, time and court read as in Vietnamese.
@@ -356,4 +376,7 @@ stays `null` and `dumpsys accessibility` lists no bound or enabled service;
 | 0.8.3 | 2026-10-20 | Timed dry run at 12:28 (S10, 21/10 10:00-12:00): clock checks +0.455 s at the start and at the warm-up 83 s later (anchored time off by +0.001 s), start reached at 12:28:00.100 (NTP), PC clock 12:27:59.645; both rounds reached the accepted terms (6.6 s each, 57 and 47 commands) |
 | 0.9.0 code (`feat/app-english`) | 2026-10-20 | Timed real bookings 21/10 10:00-12:00 on S10 (test bookings, cancelled). At 13:53 with the app in English: "App language: English", both rounds booked (7.6 s and 4.8 s), the confirmation page read in English, "Confirm" 0.20 s after the tick at x=57, the ticket 1.5 s and 0.8 s after it, no second tap. At 13:57 with the app in Vietnamese: "App language: Vietnamese", both booked (6.6 s and 4.8 s), the ticket 0.9 s after "Xác nhận" |
 | 0.9.0 | 2026-10-20 | Timed dry run for 20:57:45 (S10, 21/10 10:00-12:00), app in Vietnamese: "App language: Vietnamese"; MuMu was started by the run (Android after 47.5 s), so the start was reached at 20:57:47.775 (NTP), 2.8 s late; clock offset +0.177 s, anchored time off by +0.000 s at the warm-up; both rounds reached the accepted terms (10.9 s and 9.1 s, 33 and 62 commands). Closed-hours run at 21:00:50 with the app in English (`open_retry_seconds = 10`, same slots): "App language: English", the English notice read as "not open yet", "Tennis" tapped 48 and 74 times, both rounds failed "not open" after 10 s as expected, MuMu closed at the end |
+| 0.9.1 code (`fix/venue-court-list-wait`) | 2026-10-23 | Timed real bookings 25/10 10:00-12:00 on S10 (test bookings, cancelled), start reached at 13:04:45.100 (NTP): both rounds booked (5.1 s and 3.6 s, 143 and 102 commands), the court list known by "Chọn vị trí/dịch vụ" and the details page by "Số lượng cư dân"; no venue screen showed in either round. A run at 13:01 for 18:00-20:00 stopped on the calendar, both slots "Hết chỗ" |
+| 0.9.1 (`develop`) | 2026-10-23 | Dry run at 13:27 with the app in English (S10, 25/10 14:00-15:00, 10:00-11:00, 11:00-12:00): "App language: English", all three rounds reached the accepted terms (4.9 s, 3.3 s, 3.0 s); the venues' heading "Select subdivision" with `'Origami_ Sân tennis'` below it was read twice, both times during the Backs between rounds (on the way forward the app had moved on to the courts before a read) |
+| 0.9.1 code (`fix/english-venue-heading`) | 2026-10-23 | Timed real bookings 25/10 10:00-12:00 on S10 with the app in English (test bookings, cancelled), start reached at 13:33:16.100 (NTP): both rounds booked (5.2 s and 3.4 s, 131 and 79 commands, ticket "Processing"). Round 1 read "Select subdivision" with `'Origami_ Sân tennis'` after "Next" and tapped it; the driver found it gone (the app had moved on by itself, nothing clicked), a loading frame followed, and "Select place/service" with the courts 0.71 s after the tap, where S10 was tapped. Round 2 went from "Next" straight to the court list |
 | UI part 3 | 2026-10-14 | Requests through the Vite proxy, and the live feed across a backend stop and restart (no step lost or repeated), against a scratch backend |

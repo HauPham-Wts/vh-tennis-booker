@@ -1,8 +1,9 @@
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+It is also the shared project guidance for Codex, whose entry point is `AGENTS.md`.
 
-Last updated: 2026-10-20.
+Last updated: 2026-10-22.
 
 ## Project
 
@@ -33,7 +34,7 @@ python -m pytest tests/test_flow.py -k slot          # single file / single test
 python -m ruff check . && python -m ruff format .    # CI runs `ruff format --check .`
 python -m court_booker --dry-run --verbose           # real run against the emulator
 python -m court_booker --at 06:00 --dry-run          # timed run
-python tools/setup_runner.py v0.4.0 --schedule       # runner folder + daily task (CONTRIBUTING)
+python tools/setup_runner.py v0.9.0 --schedule       # runner folder + daily task (CONTRIBUTING)
 python -m court_booker schedule status               # task details (install, remove)
 python -m court_booker setup                         # device setup checks (--auto fixes)
 python -m court_booker serve --config config.toml    # backend on 127.0.0.1:8765 (/api/docs)
@@ -98,12 +99,17 @@ npm run api:types                                    # src/api/schema.d.ts from 
 
 - `cli.py` run entry: overrides, log file, NTP offset, keep awake, run lock, exit codes
   (`RequestError` 2, `DeviceError` 3, `AppNotReadyError` 4, `LockHeldError` 5, Ctrl+C 130).
-- `runner.py` connects the device (`emulator.py` MuMuManager, `adb.py`, uiautomator2) and
-  runs the rounds: prepare, warm up `warm_up_seconds` before the start, one round per slot.
+- `runner.py` connects the device (`emulator.py` MuMuManager, `adb.py`, the instrumentation
+  driver with uiautomator2 as fallback) and runs the rounds: prepare, warm up
+  `warm_up_seconds` before the start, one round per slot.
   `watchdog.py` limits every device call to 60 s (a frozen MuMu ends the run, exit 3).
+- `driver.py` talks to the instrumentation in `android/`; `tools/build_driver.py` builds
+  the committed APK in `src/court_booker/assets/`. It finds labelled elements in the current
+  tree; coordinates distinguish duplicate labels and locate unlabelled elements. Its
+  protocol has a 10 s response timeout inside the watchdog's 60 s limit.
 - `flow.py` `Booker`: the booking flow; device use only through `snapshot()`, `tap()`,
-  `press_back()`, `_scroll()`, each counted in `commands`. `prepare()` finds the app's
-  language on its first screen. `screen.py` (one dump parsed into nodes, matched locally),
+  `tap_point()`, `press_back()`, `_scroll()`, each counted in `commands`. `prepare()` finds
+  the app's language on its first screen. `screen.py` (one dump parsed into nodes, matched locally),
   `app_language.py` (labels and calendar day labels per language: Vietnamese from the
   config, English built in), `geometry.py` and most of `clock.py` are pure.
 - `lock.py` + `processes.py`: the run lock and the quiet time (no dry run or auto setup
@@ -145,8 +151,9 @@ list. Details in `docs/field-notes.md`.
   October 21, 2026`). Court names and the booked date and time read the same in both.
 - Flutter exposes text via `content-desc`, not `text`, and builds lazily (off-screen
   elements are absent from the dump).
-- MuMu runs at 540x1600, 220 DPI. Never use hard-coded coordinates: positions come from
-  the dump of the screen being tapped (the consent checkbox moves).
+- MuMu runs at 540x1600, 220 DPI. Locate elements from the current dump (the consent
+  checkbox moves). The calendar's unlabelled month controls have configurable ratio
+  fallbacks, `next_month_xy` and `prev_month_xy`; these still need a real month-boundary test.
 - Success is the ticket's title showing after "Xác nhận"; a "Thông báo" dialog (closed
   hours, quota of 2 slots a day and 8 a month, refused booking) fails the round. A frame without labels
   shows before either, so the confirmation page going away proves nothing; neither within
@@ -159,7 +166,8 @@ list. Details in `docs/field-notes.md`.
 - Windows 11, Python 3.14 (`python` is the install manager's launcher: the pid
   `Start-Process python` returns is not the pid in `run.lock`), Git.
 - CI (GitHub Actions): `lint` (ruff check + format), `test` (Python 3.9, 3.11, 3.12, 3.13,
-  3.14) and `ui` (Node 22: `npm ci`, typecheck, lint, format check, test, build). Tooling:
+  3.14), `driver` (build the Android sources with JDK 21 and SDK 35), and `ui` (Node 22:
+  `npm ci`, generated API type check, typecheck, lint, format check, test, build). Tooling:
   pre-commit (ruff, basic hooks), `.editorconfig`, `.gitattributes` (LF), Dependabot, PR and
   issue templates.
 - Node.js 22.19, npm 10.9 for `ui/`. Node 22.22 would allow jsdom 30 and React Router 8,
@@ -178,16 +186,18 @@ list. Details in `docs/field-notes.md`.
 
 ## Current state
 
-- Released: 0.8.3 (`main`, tag `v0.8.3`): the instrumentation driver of 0.8.0, which
-  clicks elements by label with no coordinates (`docs/architecture.md`, "Driver"), and
-  "Xác nhận" tapped again while the app has not taken it; the runner is at v0.8.3.
-- Now: 0.9.0, booking with the app in English too (`feat/app-english`); the runner of
-  0.8.3 reads Vietnamese only, so the app must be in Vietnamese at 06:00 until the runner
-  is at 0.9.0. Then the speed work goes on: MuMu tuning,
-  several MuMu instances in parallel. The on-device accessibility agent was tried and
-  dropped (`docs/field-notes.md`, "Accessibility agent"). Packaging the desktop app (Tauri, PyInstaller, installer;
+- Released: 0.9.0 on 2026-10-20 (`main`, tag `v0.9.0`); the runner is at v0.9.0
+  (verified 2026-10-22). It books with the Vinhomes app in Vietnamese or English, detects
+  the language on the first screen and uses the instrumentation driver by default.
+- Next on the released desktop line: MuMu tuning, then several MuMu instances in parallel.
+  The on-device AccessibilityService agent was tried and dropped (`docs/field-notes.md`,
+  "Accessibility agent"). A separate local branch, `feat/android-on-device`, holds an
+  Android compatibility lab using the instrumentation driver through Shizuku; it is not
+  part of v0.9.0 or a completed Android booking app. Read that branch's
+  `android/mobile/README.md` when working on it.
+  Packaging the desktop app (Tauri, PyInstaller, installer;
   "Packaging" in `docs/specs/0.5.0-desktop-app.md`) is the last step before 1.0.0; it is
-  not planned yet and has no version number yet.
+  not scheduled for a release yet and has no version number yet.
 - Progress and the plan for the next part are kept outside the repo, in
   `D:\VH-Booker\notes\` (`progress.md`, `next.md`): read both at the start of a session and
   update them when a part ends. Local test tools (scratch backend, screenshots, a stand-in

@@ -8,8 +8,9 @@
 Books a tennis court the moment bookings open. The Vinhomes Resident app opens each day's
 courts at 06:00, and the popular slots are gone within seconds. This project books them
 while its owner sleeps: a Windows scheduled task wakes the PC, starts the MuMu Player
-emulator and taps through the app's own booking screens with Python and uiautomator2, as a
-person would. It uses no private API and does not modify the app.
+emulator and taps through the app's own booking screens with Python and an Android
+instrumentation driver, with uiautomator2 as fallback. It uses no private API and does not
+modify the app.
 
 It is a UI-automation case study built as a real product: a booking engine that has booked
 real courts at 06:00 since 2026-10-10, a local FastAPI backend and a web UI in React and
@@ -36,8 +37,9 @@ round 2 shows as it happens](docs/img/overview.png)
   2 s (3 s for "Xác nhận") while the app ignores it, and waits up to 30 s for a slow screen. A frozen emulator
   ends the run after 60 s with a
   clear error instead of hanging until the next morning.
-- **One read per screen.** A screen is read in a single accessibility dump (about 70 ms)
-  and every button is found in it locally; waiting for a screen and finding its buttons is
+- **One read per screen.** A screen is read in a single accessibility dump (about 13 ms
+  with the driver, measured on MuMu) and every button is found in it locally;
+  waiting for a screen and finding its buttons is
   the same read. At the real 06:00 opening, the first slot has been booked 7 to 11 s after
   06:00.
 - **Local web UI and full history.** Overview, schedule, history and settings screens in
@@ -53,7 +55,7 @@ round 2 shows as it happens](docs/img/overview.png)
 flowchart TD
     A["Home: tap Tiện ích"] --> B["Utilities: tap Sân Tennis"]
     B --> C["Calendar: pick the date and slot, tap Tiếp tục"]
-    C --> V["Venue, if shown: tap Origami"]
+    C --> V["Venues (Chọn phân khu), if shown: tap the venue"]
     V --> D["Courts: tap the court"]
     D --> E["Booking details: tap Tiếp tục"]
     E --> F["Confirmation: tick the consent, tap Xác nhận"]
@@ -63,9 +65,11 @@ flowchart TD
 
 The app is built with Flutter, which publishes its widgets to Android's accessibility tree
 with their text in `content-desc`. The booker reads each screen in one dump, finds the
-buttons by their labels and taps the coordinates from that dump; no position is
-hard-coded. Each slot in `config.toml` is booked in its own round, and one Back from the
-ticket returns to the utilities list for the next one. The app may be set to Vietnamese or
+buttons by their labels, and the driver finds them again in the current tree before
+clicking. Coordinates distinguish duplicate labels and locate unlabelled controls; the
+uiautomator2 fallback taps the points from the dump. Each slot in `config.toml` is booked
+in its own round, and one Back from the ticket returns to the utilities list for the next
+one. The app may be set to Vietnamese or
 English: the booker tells which from the first screen and uses that language's labels. The
 Vietnamese labels live in `config.toml`, so a change of wording in the app needs no code
 change; the English ones are built in.
@@ -221,6 +225,7 @@ An app not used yet opens on a four-step Welcome instead. Saving settings rewrit
 | `court-booker --scheduled` | The same at `start_at` (what the daily task runs) |
 | `court-booker --slots "18:00 - 19:00" --days 1` | Other slots or another day, for this run only |
 | `court-booker --verbose` | Also print every screen read and every tap |
+| `court-booker --driver instrumentation` / `--driver uiautomator2` | Use only that driver; the default `auto` tries instrumentation, then falls back to uiautomator2 |
 | `court-booker setup [--auto]` | Check the PC and the emulator, or fix them |
 | `court-booker schedule install` / `status` / `remove` | The daily task |
 | `court-booker serve --config config.toml` | The backend of the web UI |
@@ -276,8 +281,9 @@ work in progress.
 ## Roadmap
 
 The 0.x versions go through four phases toward 1.0.0: it runs, it handles every situation,
-it is fast, it is friendly to use. Now: 0.6.x fixes from the daily 06:00 logs. Then speed
-tuning from the logs, and several accounts booking in parallel (one MuMu each). Last before
+it is fast, it is friendly to use. Released: 0.9.0, with the instrumentation driver and
+booking in either Vietnamese or English. Next on the desktop line: MuMu tuning from the
+logs, then several accounts booking in parallel (one MuMu each). Last before
 1.0.0: the desktop app with an installer. See [docs/roadmap.md](docs/roadmap.md) and the
 [changelog](CHANGELOG.md).
 
