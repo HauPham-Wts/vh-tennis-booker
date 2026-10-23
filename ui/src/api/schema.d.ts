@@ -559,7 +559,7 @@ export interface components {
         };
         /**
          * Settings
-         * @description Every booking setting; the UI shows the first five, the rest under "Advanced".
+         * @description Every booking setting; the UI changes the slots, court and day, and sends the rest back.
          */
         Settings: {
             /** Slots */

@@ -21,6 +21,13 @@ uses [Semantic Versioning](https://semver.org/).
 - README, CONTRIBUTING and CLAUDE.md follow the trimmed docs: a real booking's results go in
   the pull request's description, a GitHub release page is optional, and CLAUDE.md's current
   state points to the changelog and the session notes instead of repeating them.
+- Before the opening, only the first tap on the utility logs "Tapped" at info level (a tap
+  every 0.2 s filled the log with them: 121 lines on 2026-10-20); a new line says after how
+  many attempts the calendar opened.
+
+### Fixed
+- The settings model's description no longer mentions an "Advanced" section; the app
+  changes the slots, court and day only.
 
 ### Removed
 - The historical specs of 0.2.0 and 0.3.0 (`docs/specs`): the current design is in
