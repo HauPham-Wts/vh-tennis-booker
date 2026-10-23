@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from court_booker import __version__
-from court_booker.api import history, live, runs, schedule, settings, setup, status
+from court_booker.api import history, live, notifications, runs, schedule, settings, setup, status
 from court_booker.api.context import AppContext
 from court_booker.api.errors import Problem, add_error_handlers
 
@@ -43,7 +43,7 @@ def create_app(context: AppContext) -> FastAPI:
         """Tell the UI the backend is up, and its version."""
         return Health(status="ok", version=__version__)
 
-    for module in (history, settings, setup, schedule, runs, status):
+    for module in (history, settings, notifications, setup, schedule, runs, status):
         app.include_router(module.router, responses=ERROR_RESPONSES)
     app.include_router(live.router)
     return app
