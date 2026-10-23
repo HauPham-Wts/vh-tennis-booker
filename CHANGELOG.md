@@ -9,7 +9,11 @@ uses [Semantic Versioning](https://semver.org/).
 ### Fixed
 - After the venue ("Origami…") is tapped, the court list is awaited: a read right after the
   tap could still show the venue screen, which was taken for the next one, so the round
-  failed at once with "Button not found" for the court (06:00 on 2026-10-23).
+  failed at once with "Button not found" for the court (06:00 on 2026-10-23). Each of these
+  screens is now known by a label of its own: the venues by "Chọn phân khu" (a single
+  venue is tapped whatever its name; `venue_keyword` picks one of several), the court list
+  by "Chọn vị trí/dịch vụ", the booking details page by "Số lượng cư dân", each with a new
+  default in `[labels]`; the court and "Tiếp tục" are then awaited on them.
 
 ## [0.9.0] - 2026-10-20
 

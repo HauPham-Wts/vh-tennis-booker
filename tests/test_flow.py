@@ -45,6 +45,10 @@ COURTS = [
     node("S10 - Sân tennis", (35, 1024, 505, 1144)),
     node("S9 - Sân tennis\nHết chỗ", (35, 1157, 505, 1277)),
 ]
+COURT_LIST = node("Chọn vị trí/dịch vụ", (35, 958, 237, 992), False)
+VENUE_LIST = node("Chọn phân khu", (35, 958, 201, 992), False)
+VENUE = node("Origami Grand Park", (35, 1024, 505, 1134))
+RESIDENTS = node("Phí đặt chỗ 0 VND\nSố lượng cư dân\n4", (35, 873, 505, 1125), False)
 QUOTA_MESSAGE = "Căn hộ đã hết hạn mức đăng ký tiện ích cho phép."
 NOTICE = [  # read from the device on 2026-10-10; the dialog hides the page beneath
     node("", (0, 0, 540, 1600)),
@@ -88,6 +92,8 @@ ENGLISH = {  # the same labels with the app set to English, read on 2026-10-20
     "Tiếp tục": "Next",
     "14:00 - 15:00\nHết chỗ": "14:00 - 15:00\nFull",
     "S9 - Sân tennis\nHết chỗ": "S9 - Sân tennis\nFull",
+    "Chọn vị trí/dịch vụ": "Select place/service",
+    RESIDENTS[0]: "Booking fee 0 VND\nNumber of residents\n4",
     "Xác nhận đăng ký": "Confirm registration",
     "Tôi đã hiểu và đồng ý với ": "I have read, understood, and agree to ",
     DETAILS[0]: (
@@ -238,9 +244,9 @@ def booking_app(
         "calendar": [*DAYS, CONTINUE],
         "calendar_slots": DAYS + SLOTS + [CONTINUE],
         "calendar_selected": DAYS + SLOTS + [CONTINUE],
-        "venue": [node("Origami Grand Park", (35, 600, 505, 700))],
-        "courts": courts,
-        "details": [node("S10 - Sân tennis", (116, 975, 274, 1004), False), CONTINUE],
+        "venue": [VENUE_LIST, VENUE],
+        "courts": [COURT_LIST, *courts],
+        "details": [node("S10 - Sân tennis", (116, 975, 274, 1004), False), RESIDENTS, CONTINUE],
         "confirm": [*CONFIRM_PAGE, *shown, node("Xác nhận", (35, 1490, 505, 1584), False)],
         "confirm_ticked": [*CONFIRM_PAGE, *shown, node("Xác nhận", (35, 1490, 505, 1584))],
         "ticket": ticket,
@@ -613,6 +619,79 @@ def test_a_swallowed_venue_tap_is_tapped_again():
     assert app.screen == "ticket"
 
 
+def test_a_venue_heading_without_its_venue_yet_is_read_again():
+    app = booking_app(via_venue=True)
+    app.screens["venue_heading"] = [VENUE_LIST]  # 8 of 30 reads by 2026-10-23
+    app.taps_to[("calendar_selected", "Tiếp tục")] = ["venue_heading", ("venue", 3)]
+
+    Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert app.taps[3:6] == ["Tiếp tục", "Origami Grand Park", "S10 - Sân tennis"]
+    assert app.screen == "ticket"
+
+
+def test_a_single_venue_is_tapped_whatever_its_name():
+    app = booking_app(via_venue=True)
+    app.screens["venue"] = [VENUE_LIST, node("Khu B_ Sân tennis", VENUE[1])]
+    app.taps_to[("venue", "Khu B_ Sân tennis")] = "courts"
+
+    Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert app.taps[4] == "Khu B_ Sân tennis"
+    assert app.screen == "ticket"
+
+
+def test_of_several_venues_the_one_naming_the_keyword_is_tapped():
+    app = booking_app(via_venue=True)
+    app.screens["venue"] = [
+        VENUE_LIST,
+        node("CX_ Sân tennis", (35, 1024, 505, 1134)),
+        node("BCX_ Sân tennis", (35, 1157, 505, 1267)),
+    ]
+    app.taps_to[("venue", "BCX_ Sân tennis")] = "courts"
+
+    Booker(app, Config(venue_keyword="BCX")).book("11:00 - 12:00", TARGET)
+
+    assert app.taps[4] == "BCX_ Sân tennis"
+    assert app.screen == "ticket"
+
+
+def test_a_court_list_heading_without_the_court_yet_is_read_again():
+    app = booking_app()
+    app.screens["courts_heading"] = [COURT_LIST, COURTS[1]]  # S6 missing in one read, 2026-10-18
+    app.taps_to[("calendar_selected", "Tiếp tục")] = ["courts_heading", ("courts", 3)]
+
+    Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert app.taps == FULL_ROUND
+    assert app.screen == "ticket"
+
+
+def test_a_court_missing_from_the_court_list_fails_the_round_after_the_timeout(fake_time):
+    app = booking_app(courts=[COURTS[1]])
+
+    with pytest.raises(ElementNotFoundError, match="'S10 - Sân tennis' is not on the court list"):
+        Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert app.taps == FULL_ROUND[:4]
+    assert fake_time[0] >= 30
+
+
+def test_the_details_page_is_awaited_until_its_continue_button_is_enabled():
+    app = booking_app()
+    app.screens["details_building"] = [  # 24 reads by 2026-10-23
+        node("S10 - Sân tennis", (116, 975, 274, 1004), False),
+        RESIDENTS,
+        node("Tiếp tục", CONTINUE[1], False),
+    ]
+    app.taps_to[("courts", "S10 - Sân tennis")] = ["details_building", ("details", 3)]
+
+    Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert app.taps == FULL_ROUND
+    assert app.screen == "ticket"
+
+
 def refusing_app(english=False, **options):
     """Answer "Xác nhận" with a notice dialog, as when someone else took the slot first."""
     app = booking_app(**options)
@@ -723,10 +802,11 @@ def test_a_screen_that_never_shows_fails_the_round_after_the_timeout(fake_time, 
 
 
 COURTS_MOVED = [  # the court list once the service info above it has loaded, 232 px higher
+    node("Chọn vị trí/dịch vụ", (35, 725, 237, 760), False),
     node("S10 - Sân tennis", (35, 792, 505, 912)),
     node("S9 - Sân tennis\nHết chỗ", (35, 925, 505, 1045)),
 ]
-OTHER_DETAILS = [node("S8 - Sân tennis", (116, 975, 274, 1004), False), CONTINUE]
+OTHER_DETAILS = [node("S8 - Sân tennis", (116, 975, 274, 1004), False), RESIDENTS, CONTINUE]
 
 
 def moving_courts_app(first_tap):

@@ -22,6 +22,20 @@ empty frame (only the full-screen root and the status bar). The status bar's lab
 on their own (the clock, a "Google Play services notification" seen at 20:13), so they
 never tell one screen from another.
 
+Venues and court list (logs of 14-23/10): the calendar, the venues, the court list and the
+booking details page all have the title "Đăng ký tiện ích". The venues and the court list
+are one page, below "Thông tin dịch vụ": first "Chọn phân khu" with one entry,
+`'Origami_ Sân tennis'`, then "Chọn vị trí/dịch vụ" with the courts. With one venue the app
+goes on to the courts by itself within a fraction of a second; a read may catch the
+venues or not. In 8 of 30 reads "Chọn phân khu" showed before its entry; the court list's
+heading showed with S10 but not yet S6 once (18/10). On 23/10 at 06:00 round 2 tapped
+the venue and the read 8 ms later still showed it; the code took that for the next screen,
+looked for S6 at once and failed the round. The details page shows
+`'Phí đặt chỗ 0 VND\nSố lượng cư dân\n4'` (the fee and count as read; the confirmation page
+and the ticket repeat it as `'Phí đặt chỗ\n0 VND\n...'`), in about 24 reads before "Tiếp
+tục" is enabled. In English: "Select place/service", `'Booking fee 0 VND\nNumber of
+residents\n4'`; the venues' heading was never read in English.
+
 ## Reading the app
 
 - Flutter exposes text via `content-desc`, not `text`; select with `description=...`.

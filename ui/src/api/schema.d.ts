@@ -315,6 +315,12 @@ export interface components {
             agree: string;
             /** Fully Booked */
             fully_booked: string;
+            /** Venue List */
+            venue_list: string;
+            /** Court List */
+            court_list: string;
+            /** Residents */
+            residents: string;
             /** Notice */
             notice: string;
             /** Booked Time */
