@@ -15,6 +15,7 @@ from court_booker.errors import (
     DriverError,
     DriverUnavailableError,
     NavigationError,
+    QuotaFullError,
     SlotUnavailableError,
 )
 from court_booker.events import EventKind, MemorySink, Reporter
@@ -247,6 +248,42 @@ def test_a_frozen_device_ends_the_run_after_its_round(monkeypatch):
     assert [(r.slot, r.ok) for r in results] == [("18:00 - 19:00", False)]
     assert sink.kinds[-1] is EventKind.SLOT_FAILED
     assert sink.events[-1].data["reason"] == "MuMu did not answer dump_hierarchy within 60 s"
+
+
+QUOTA = "Booking quota used up: Căn hộ đã hết hạn mức đăng ký tiện ích cho phép."
+
+
+@pytest.mark.parametrize("failing", [0, 1])
+def test_the_quota_notice_skips_the_rounds_left(monkeypatch, caplog, failing):
+    slots = ["16:00 - 17:00", "17:00 - 18:00", "18:00 - 19:00"]
+    tried = []
+
+    class QuotaBooker(FakeBooker):
+        def book(self, slot, target, dry_run=False):
+            tried.append(slot)
+            if slot == slots[failing]:
+                raise QuotaFullError(QUOTA)
+            return super().book(slot, target, dry_run)
+
+    monkeypatch.setattr(runner, "Booker", QuotaBooker)
+    sink = MemorySink()
+    results = []
+
+    runner.run_booking(FakeDevice(), Config(slots=slots), results=results, report=Reporter(sink))
+
+    assert tried == slots[: failing + 1]  # the rounds left never reach the device
+    assert [(r.slot, r.ok, r.detail) for r in results[failing:]] == [
+        (slots[failing], False, QUOTA),
+        *[(slot, False, runner.QUOTA_SKIPPED) for slot in slots[failing + 1 :]],
+    ]
+    assert sink.events[-1].data == {
+        "slot": slots[2],
+        "reason": "Skipped: the booking quota is used up",
+        "seconds": 0.0,
+        "commands": 0,
+    }
+    assert sink.kinds.count(EventKind.SLOT_STARTED) == failing + 1
+    assert f"Booking quota used up; skipping {', '.join(slots[failing + 1 :])}" in caplog.text
 
 
 class TouchDevice:

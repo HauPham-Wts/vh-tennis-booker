@@ -15,7 +15,12 @@ from court_booker.config import Config
 from court_booker.driver import PACKAGE as DRIVER_PACKAGE
 from court_booker.driver import connect_driver
 from court_booker.emulator import MuMu
-from court_booker.errors import BookingError, DeviceConnectionError, DeviceNotRespondingError
+from court_booker.errors import (
+    BookingError,
+    DeviceConnectionError,
+    DeviceNotRespondingError,
+    QuotaFullError,
+)
 from court_booker.events import EventKind, Reporter
 from court_booker.flow import Booker, log_screen
 from court_booker.watchdog import GuardedDevice, Watchdog
@@ -31,6 +36,8 @@ The app answered an early tap with a notice on 2026-10-19 (up to 0.76 s early). 
 0.1 s margin reduces that risk, but a notice still appeared on 2026-10-20 with the PC
 clock behind NTP. Which clock the app uses for opening hours remains unverified.
 The 06:00 logs show where the tap fell ("Start reached"); retaps handle a notice."""
+QUOTA_SKIPPED = "Skipped: the booking quota is used up"
+"""Why a round after the app's quota notice failed without running."""
 AUTO_DRIVER = "auto"
 INSTRUMENTATION = "instrumentation"
 UIAUTOMATOR2 = "uiautomator2"
@@ -150,8 +157,9 @@ def run_booking(
 
     The wait goes by ``clock`` (the PC clock if not given), measured again at the warm-up,
     and ends :data:`OPENING_MARGIN` after ``start``. The target date is ``days_ahead``
-    after the start date. Results are appended to ``results`` as rounds finish, so an
-    interrupted caller still sees them; progress goes to ``report`` as events.
+    after the start date. After the app's quota notice the slots left fail unrun. Results
+    are appended to ``results`` as rounds finish, so an interrupted caller still sees them;
+    progress goes to ``report`` as events.
     """
     results = [] if results is None else results
     report = Reporter() if report is None else report
@@ -201,6 +209,7 @@ def run_booking(
         commands = booker.commands
         shown: dict[str, Any] = {}
         frozen: DeviceNotRespondingError | None = None
+        quota_full = False
         try:
             shown = booker.book(slot, target, dry_run=dry_run).event_data()
         except DeviceNotRespondingError as exc:
@@ -211,6 +220,7 @@ def run_booking(
             logger.error("%s", exc)
             log_last_screen(booker)
             ok, detail = False, str(exc)
+            quota_full = isinstance(exc, QuotaFullError)
         except Exception as exc:  # keep later rounds running on device glitches
             logger.exception("Unexpected error")
             log_last_screen(booker)
@@ -240,4 +250,16 @@ def run_booking(
             )
         if frozen is not None:
             raise frozen
+        if quota_full:
+            skip_rounds(config.slots[index:], results, report)
+            break
     return results
+
+
+def skip_rounds(slots: list[str], results: list[RoundResult], report: Reporter) -> None:
+    """Fail ``slots`` without running them: the app's quota notice would refuse each one."""
+    if slots:
+        logger.warning("Booking quota used up; skipping %s", ", ".join(slots))
+    for slot in slots:
+        results.append(RoundResult(slot, False, QUOTA_SKIPPED, 0.0))
+        report(EventKind.SLOT_FAILED, slot=slot, reason=QUOTA_SKIPPED, seconds=0.0, commands=0)

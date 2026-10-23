@@ -129,6 +129,16 @@ def test_an_unknown_language_falls_back_to_vietnamese():
             "The app refused: Quá số lần\nđặt",
         ),
         (
+            "Booking quota used up: Căn hộ đã hết hạn mức đăng ký tiện ích cho phép.",
+            "Hết hạn mức đặt sân",
+            "Booking quota used up",
+        ),
+        (
+            "Skipped: the booking quota is used up",
+            "Bỏ qua vì đã hết hạn mức",
+            "Skipped: booking quota used up",
+        ),
+        (
             "Outcome unknown: no ticket 30 s after confirming",
             "Không rõ đã đặt được chưa, xem app Vinhomes",
             "Outcome unknown, check the Vinhomes app",

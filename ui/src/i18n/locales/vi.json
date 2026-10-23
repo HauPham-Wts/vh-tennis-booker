@@ -468,6 +468,8 @@
     "slotFull": "Hết chỗ",
     "courtFull": "Sân {{court}} đã kín",
     "refused": "App từ chối: {{message}}",
+    "quotaFull": "Hết hạn mức đặt sân",
+    "quotaSkipped": "Bỏ qua vì đã hết hạn mức",
     "unknown": "Không rõ đã đặt được chưa, xem app Vinhomes",
     "notOpen": "Ngày chưa mở đặt",
     "stuck": "App không chuyển màn hình",

@@ -55,6 +55,7 @@ venue_list = "Chọn phân khu"         # heading of the venues, when the app li
 court_list = "Chọn vị trí/dịch vụ"   # heading of the court list
 residents = "Số lượng cư dân"        # caption of the booking details page
 notice = "Thông báo"                 # title of the app's message dialogs
+quota_full = "hết hạn mức"           # in the quota notice's message: the run stops there
 booked_time = "Thời gian đặt lịch"   # caption of the date and slot to book
 booked_place = "Vị trí/dịch vụ"      # caption of the court to book
 ticket = "Chi tiết đặt lịch"         # title of the ticket: the booking went through

@@ -373,6 +373,8 @@ export interface components {
             residents: string;
             /** Notice */
             notice: string;
+            /** Quota Full */
+            quota_full: string;
             /** Booked Time */
             booked_time: string;
             /** Booked Place */

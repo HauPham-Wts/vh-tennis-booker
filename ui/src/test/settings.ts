@@ -38,6 +38,7 @@ export function settings(fields: Partial<Settings> = {}): Settings {
       court_list: "Chọn vị trí/dịch vụ",
       residents: "Số lượng cư dân",
       notice: "Thông báo",
+      quota_full: "hết hạn mức",
       booked_time: "Thời gian đặt lịch",
       booked_place: "Vị trí/dịch vụ",
       ticket: "Chi tiết đặt lịch",
