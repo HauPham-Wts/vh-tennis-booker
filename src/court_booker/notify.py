@@ -188,8 +188,9 @@ def format_notification(
 ) -> tuple[str, str]:
     """Return the title and the text of the notification for a finished run.
 
-    The text has one line per round: the slot and the court, or why it failed. A run
-    that failed before its rounds has one line for its error instead.
+    The text has one line per round: the slot and the court the app booked (``court``
+    if the round did not read it), or why it failed. A run that failed before its rounds
+    has one line for its error instead.
     """
     if language not in TEXTS:  # the config is not validated when loaded
         language = DEFAULT_LANGUAGE
@@ -210,7 +211,7 @@ def format_notification(
     if dry_run:
         title += texts["dry_run"]
     lines = [
-        f"✅ {result.slot} · {court_name(court)}"
+        f"✅ {result.slot} · {court_name(result.court or court)}"
         if result.ok
         else f"❌ {result.slot} · {failure_reason(result.detail, language)}"
         for result in results

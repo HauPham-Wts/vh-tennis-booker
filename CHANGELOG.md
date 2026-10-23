@@ -28,6 +28,8 @@ uses [Semantic Versioning](https://semver.org/).
 ### Fixed
 - The settings model's description no longer mentions an "Advanced" section; the app
   changes the slots, court and day only.
+- The Windows notification names the court the confirmation page showed, the one booked,
+  instead of the configured one (the app once booked another court than the one tapped).
 
 ### Removed
 - The historical specs of 0.2.0 and 0.3.0 (`docs/specs`): the current design is in
