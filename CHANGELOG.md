@@ -6,6 +6,13 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- Documentation aligned with 0.9.0: release and runner status, instrumentation and
+  fallback behaviour, bilingual labels, configuration, API coverage and release workflow.
+  Mark the 0.2.0 and 0.3.0 specs as historical and distinguish the released browser UI
+  from the unfinished desktop packaging. The clock used by the app for opening hours
+  remains unverified.
+
 ### Fixed
 - After the venue ("Origami…") is tapped, the court list is awaited: a read right after the
   tap could still show the venue screen, which was taken for the next one, so the round

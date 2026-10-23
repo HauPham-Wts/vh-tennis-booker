@@ -142,8 +142,12 @@ without it, such as the empty frame seen at 16:44 on 2026-10-15, is read again.
   2026-10-10. On 2026-10-19 a tap at 05:59:59.244 by the PC clock, up to 0.76 s early by
   NTP time (see "Emulator"), got it 0.05 s later (four elements: the full-screen root, the
   title spanning `[0,33][540,1600]`, the message, "Đóng"); the round waited 10 s for the
-  calendar and failed. Back closed it and the list showed 0.1 s later. The app goes by its
-  server's clock, not Android's: a tap at PC 05:59:59.92 got the calendar on 2026-10-17.
+  calendar and failed. Back closed it and the list showed 0.1 s later. A tap at PC
+  05:59:59.92 got the calendar on 2026-10-17, initially suggesting a server-clock check.
+  On 2026-10-20 the notice still appeared after a start at NTP 06:00:00.100 while the PC
+  clock read 05:59:59.975; a later tap opened the calendar. These observations do not
+  establish which clock the app checks. Comparing the server and emulator clocks around
+  closing time was proposed, but no result establishing the clock source is recorded here.
   Since 0.8.1 the round closes any notice after the utility tap with Back and taps again,
   about 0.2 s a try, until `open_retry_seconds`.
 - Each apartment may book 2 slots per day and 8 per month (1 hour = 1 slot; the user,
