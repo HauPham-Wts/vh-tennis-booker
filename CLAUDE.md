@@ -3,7 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 It is also the shared project guidance for Codex, whose entry point is `AGENTS.md`.
 
-Last updated: 2026-10-22.
+Last updated: 2026-10-23.
 
 ## Project
 
@@ -16,12 +16,14 @@ Read the matching doc before changing an area; these notes hold only the essenti
 
 | Doc | Holds |
 |---|---|
-| `docs/architecture.md` | Every module, route and UI layer in detail |
-| `docs/field-notes.md` | App screens, labels, dialogs, MuMu facts, timings, verified runs |
-| `docs/roadmap.md` | Product decisions, phases, situations table, ruled-out ideas |
+| `docs/architecture.md` | What each module, route and UI part does; what must stay true |
+| `docs/field-notes.md` | Facts about the app and MuMu the code relies on: screens, labels, dialogs, timings |
+| `docs/roadmap.md` | Goal, what is left, situations table, ruled-out ideas |
 | `docs/how-it-works.md` | How the flow reads the app (dumps, matching, navigation) |
-| `docs/specs/0.5.0-desktop-app.md` | Desktop app design: backend, screens, parts of 0.5.0 and 0.6.0, packaging (last) |
+| `docs/specs/0.5.0-desktop-app.md` | Desktop app product decisions and the packaging plan (last) |
 | `CONTRIBUTING.md` | Setup, checks, branches, releasing, runner folder |
+
+Docs hold only what is true of the current code; history is in `CHANGELOG.md` and git.
 
 ## Commands
 
@@ -34,7 +36,7 @@ python -m pytest tests/test_flow.py -k slot          # single file / single test
 python -m ruff check . && python -m ruff format .    # CI runs `ruff format --check .`
 python -m court_booker --dry-run --verbose           # real run against the emulator
 python -m court_booker --at 06:00 --dry-run          # timed run
-python tools/setup_runner.py v0.9.0 --schedule       # runner folder + daily task (CONTRIBUTING)
+python tools/setup_runner.py vX.Y.Z --schedule       # runner folder + daily task (CONTRIBUTING)
 python -m court_booker schedule status               # task details (install, remove)
 python -m court_booker setup                         # device setup checks (--auto fixes)
 python -m court_booker serve --config config.toml    # backend on 127.0.0.1:8765 (/api/docs)
@@ -155,9 +157,10 @@ list. Details in `docs/field-notes.md`.
   checkbox moves). The calendar's unlabelled month controls have configurable ratio
   fallbacks, `next_month_xy` and `prev_month_xy`; these still need a real month-boundary test.
 - Success is the ticket's title showing after "Xác nhận"; a "Thông báo" dialog (closed
-  hours, quota of 2 slots a day and 8 a month, refused booking) fails the round. A frame without labels
-  shows before either, so the confirmation page going away proves nothing; neither within
-  `timeout` fails the round as "Outcome unknown".
+  hours, quota of 2 slots a day and 8 a month, refused booking) fails the round, and the quota
+  one skips the rounds left. A frame without labels shows before either, so the confirmation
+  page going away proves nothing; neither within `timeout` fails the round as "Outcome
+  unknown".
 - MuMu can freeze (seen 2026-10-13); a device call then never returns, so the watchdog
   ends the run after 60 s (no restart, no retry).
 
@@ -186,19 +189,13 @@ list. Details in `docs/field-notes.md`.
 
 ## Current state
 
-- Released: 0.9.0 on 2026-10-20 (`main`, tag `v0.9.0`); the runner is at v0.9.0
-  (verified 2026-10-22). It books with the Vinhomes app in Vietnamese or English, detects
-  the language on the first screen and uses the instrumentation driver by default.
-- Next on the released desktop line: MuMu tuning, then several MuMu instances in parallel.
-  The on-device AccessibilityService agent was tried and dropped (`docs/field-notes.md`,
-  "Accessibility agent"). A separate local branch, `feat/android-on-device`, holds an
-  Android compatibility lab using the instrumentation driver through Shizuku; it is not
-  part of v0.9.0 or a completed Android booking app. Read that branch's
-  `android/mobile/README.md` when working on it.
-  Packaging the desktop app (Tauri, PyInstaller, installer;
-  "Packaging" in `docs/specs/0.5.0-desktop-app.md`) is the last step before 1.0.0; it is
-  not scheduled for a release yet and has no version number yet.
-- Progress and the plan for the next part are kept outside the repo, in
-  `D:\VH-Booker\notes\` (`progress.md`, `next.md`): read both at the start of a session and
-  update them when a part ends. Local test tools (scratch backend, screenshots, a stand-in
-  run) are in `D:\VH-Booker\dev-tools\`.
+- The released version is the newest section of `CHANGELOG.md`; what is left is in
+  `docs/roadmap.md`.
+- Session notes live outside the repo, in Vietnamese, in `D:\VH-Booker\notes\`:
+  `progress.md` (current state: release, runner, open branches, last 06:00 run, decisions in
+  force), `next.md` (the plan of the next task) and `issues.md` (open bugs). Read
+  `progress.md` and `next.md` at the start of a session and keep all three short and current;
+  nothing else goes there. Local test tools are in `D:\VH-Booker\dev-tools\`.
+- A separate local branch, `feat/android-on-device`, holds an Android compatibility lab using
+  the instrumentation driver through Shizuku; it is not part of any release. Read that
+  branch's `android/mobile/README.md` when working on it.

@@ -48,7 +48,8 @@ pytest
 
 If the booking flow changed, also book for real against the emulator, timed like the 06:00
 run, and cancel the bookings in the app afterwards: a dry run stops before "Xác nhận", so it
-cannot test the end of the flow.
+cannot test the end of the flow. Write what the run showed (date, slots, court, times) in the
+pull request's description.
 
 ```bash
 court-booker --verbose --slots "<slot>" "<next slot>" --at <a few minutes from now>
@@ -74,9 +75,10 @@ cd ui && npm run api:types       # writes ui/src/api/schema.d.ts
 
 ## Conventions
 
-- **Where things are:** [docs/architecture.md](docs/architecture.md) describes every module,
-  backend route and UI layer; [docs/field-notes.md](docs/field-notes.md) holds what the app
-  and the emulator were seen to do. Update them with the code they describe.
+- **Where things are:** [docs/architecture.md](docs/architecture.md) says what each module,
+  route and UI part does; [docs/field-notes.md](docs/field-notes.md) holds the facts about the
+  app and the emulator the code relies on. Update them with the code they describe, and keep
+  only what is true of the current code: history belongs in `CHANGELOG.md` and git.
 - **Language:** code, comments, logs, commit messages and documentation are in English.
   Accessibility labels stay in the target app's language: Vietnamese in `config.toml`,
   English in `src/court_booker/app_language.py`. The booker detects the app's language.
@@ -125,7 +127,7 @@ cd ui && npm run api:types       # writes ui/src/api/schema.d.ts
    git tag -a vX.Y.Z -m "vX.Y.Z" <merge-commit>
    git push origin vX.Y.Z
    ```
-4. Create a GitHub release from the tag using the changelog entry, then delete the
+4. Optionally create a GitHub release from the tag using the changelog entry; delete the
    `chore/release-X.Y.Z` branch.
 5. Once a dry run of the release passes on the emulator, move the runner folder to the new
    tag (see below); until then the daily task keeps the previous release:
@@ -140,7 +142,7 @@ The daily scheduled task books for real, so it never runs the development checko
 it still reads `config.toml` and writes `logs/` in the development folder.
 
 ```bash
-python tools/setup_runner.py v0.9.0 --schedule   # first time: create it and point the task at it
+python tools/setup_runner.py vX.Y.Z --schedule   # first time: create it and point the task at it
 python tools/setup_runner.py vX.Y.Z              # after a release: move it to the new tag
 python tools/setup_runner.py <previous-tag>      # roll back to the last working release
 ```
