@@ -12,6 +12,8 @@ uses [Semantic Versioning](https://semver.org/).
   for the courts), the slots left are skipped without touching the app, and the log, the
   history and the Windows notification say so. A new label, `quota_full` ("hết hạn mức"),
   finds the notice; config.toml needs no change.
+- `docs/architecture.md` says what each module, route and UI part does and what must stay
+  true (43 KB to 12 KB); the details live in the docstrings.
 
 ### Removed
 - The historical specs of 0.2.0 and 0.3.0 (`docs/specs`): the current design is in
