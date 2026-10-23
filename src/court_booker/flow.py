@@ -139,7 +139,6 @@ class Booker:
         self._entry: Screen | None = None
 
         self.any_slot = Match(pattern=ANY_SLOT_PATTERN)
-        self.venue = Match(contains=config.venue_keyword) if config.venue_keyword else None
         self.court = Match(desc=config.court, clickable=True)
         self.any_court = Match(prefix=config.court, clickable=True)
         self.opened_court = Match(desc=config.court, clickable=False)
@@ -158,6 +157,9 @@ class Booker:
         self.prev_month = Match(desc=labels.prev_month)
         self.next_month = Match(contains=labels.next_month)
         self.continue_button = Match(desc=labels.continue_, clickable=True)
+        self.venue_list = Match(desc=labels.venue_list)
+        self.court_list = Match(desc=labels.court_list)
+        self.residents = Match(contains=labels.residents)
         self.agree = Match(contains=labels.agree)
         self.confirm_button = Match(desc=labels.confirm, clickable=True)
         self.notice = Match(desc=labels.notice)
@@ -243,13 +245,20 @@ class Booker:
             if found is None:
                 raise ElementNotFoundError(f"{labels.continue_!r} stayed disabled")
             screen = found[1]
-        court, screen = self.tap_and_advance(
-            screen, self.continue_button, labels.continue_, self._find_court
+        shown, screen = self.tap_and_advance(
+            screen, self.continue_button, labels.continue_, self._court_list_or_venue
         )
-        if self.venue is not None and not self.any_court(court):
-            court, screen = self.tap_and_advance(
-                screen, self.venue, self.config.venue_keyword, self._find_court
+        if not self.court_list(shown):
+            # Only the court list's heading counts after the venue: a read right after the
+            # tap may still show the venue (2026-10-23), which ended the round at once.
+            venue = Match(desc=shown.desc, clickable=True)
+            _, screen = self.tap_and_advance(
+                screen, venue, shown.desc, self._finder(self.court_list)
             )
+        found = self.wait_for(self._finder(self.any_court), self.config.timeout, screen)
+        if found is None:
+            raise ElementNotFoundError(f"Court {self.config.court!r} is not on the court list")
+        court, screen = found
         if labels.fully_booked in court.desc:
             raise SlotUnavailableError(f"Court {self.config.court} is fully booked")
         screen = self.select_court(screen)
@@ -785,14 +794,16 @@ class Booker:
     def _court_tapped(self, tapped: Node | None) -> Finder[Node]:
         """Find the details page's continue button, or the court moved on a list left as is.
 
-        A list still shown :data:`_MOVED_COURT_WAIT` after the tap, with the court somewhere
-        else than ``tapped``, ignored the tap; the court is returned where it shows now.
+        The details page is known by its residents caption, which can show before the
+        continue button is enabled, so both are awaited. A list still shown
+        :data:`_MOVED_COURT_WAIT` after the tap, with the court somewhere else than
+        ``tapped``, ignored the tap; the court is returned where it shows now.
         """
         since = time.monotonic()
 
         def find(screen: Screen) -> Node | None:
             button = screen.find(self.continue_button)
-            if button is not None:
+            if button is not None and screen.find(self.residents) is not None:
                 return button
             court = screen.find(self.court)
             if (
@@ -806,11 +817,29 @@ class Booker:
 
         return find
 
-    def _find_court(self, screen: Screen) -> Node | None:
-        court = screen.find(self.any_court)
-        if court is None and self.venue is not None:
-            return screen.find(self.venue)
-        return court
+    def _court_list_or_venue(self, screen: Screen) -> Node | None:
+        """Return the court list's heading, or else the venue to tap, once either shows."""
+        return screen.find(self.court_list) or self._venue_entry(screen)
+
+    def _venue_entry(self, screen: Screen) -> Node | None:
+        """Return the venue to tap below the venues' heading, once it is listed.
+
+        The heading shows a read or more before the venues in some reads (8 of 30 by
+        2026-10-23). A single venue is tapped whatever its name; of several, the one that
+        names ``venue_keyword``.
+        """
+        heading = screen.find(self.venue_list)
+        if heading is None:
+            return None
+        venues = [
+            node
+            for node in screen.nodes
+            if node.clickable and node.desc and node.box[1] >= heading.box[3]
+        ]
+        if len(venues) == 1:
+            return venues[0]
+        keyword = self.config.venue_keyword
+        return next((node for node in venues if keyword and keyword in node.desc), None)
 
     def _visibility(self, screen: Screen, node: Node) -> str:
         """Return ``visible``, ``below`` or ``above`` relative to the tappable area.

@@ -92,7 +92,10 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   `tap_and_advance(screen, target, name, find_next)`: tap `target` from `screen` and wait
   for `find_next` up to `config.timeout` (30 s), tapping again every `_RETAP_AFTER` (2 s)
   while `target` is still shown (a swallowed tap), never while it is gone (the app loads the
-  next screen); then `NavigationError`. The court goes through
+  next screen); then `NavigationError`. After "Tiếp tục" the finder is
+  `_court_list_or_venue` (the court list's heading, or the venue below the venues' heading:
+  the only one, or the one naming `venue_keyword`); after the venue, the court list's
+  heading alone; the court is then awaited on the list. The court goes through
   `select_court(screen)` instead: the court list can move under the tap (field notes), so
   the booking details page must name the configured court (`opened_court`); another court
   is left with `go_back()` and the court tapped again where the list shows it, and a list

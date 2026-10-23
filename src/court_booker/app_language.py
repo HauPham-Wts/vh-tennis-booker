@@ -25,6 +25,9 @@ ENGLISH_LABELS = Labels(  # read from the app in English on 2026-10-20
     next_month="Next month",
     agree="I have read",  # the caption reads "I have read, understood, and agree to "
     fully_booked="Full",
+    # venue_list keeps the Vietnamese heading: no venue screen showed in English (field notes).
+    court_list="Select place/service",
+    residents="Number of residents",
     notice="Notification",
     booked_time="Schedule time",
     booked_place="Place/service",

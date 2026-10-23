@@ -55,7 +55,7 @@ round 2 shows as it happens](docs/img/overview.png)
 flowchart TD
     A["Home: tap Tiện ích"] --> B["Utilities: tap Sân Tennis"]
     B --> C["Calendar: pick the date and slot, tap Tiếp tục"]
-    C --> V["Venue, if shown: tap Origami"]
+    C --> V["Venues (Chọn phân khu), if shown: tap the venue"]
     V --> D["Courts: tap the court"]
     D --> E["Booking details: tap Tiếp tục"]
     E --> F["Confirmation: tick the consent, tap Xác nhận"]

@@ -65,7 +65,13 @@ app does not need.
 next screen does not appear within 2 s and the element is still shown (tap swallowed by
 lag), it taps again, every 2 s; while the app loads the next screen (the element gone) it
 only waits. A screen is awaited up to `timeout` (30 s; no step of a booking by hand ever
-took that long), and acted on as soon as it shows. The court tap is checked as well: the
+took that long), and acted on as soon as it shows. A finder must not match the screen the
+tap leaves: after "Tiếp tục" it waits for the court list's heading ("Chọn vị trí/dịch vụ")
+or the venues' heading ("Chọn phân khu") with a venue below it, which is then tapped; after
+the venue, for the court list's heading only; then for the configured court on the list.
+The booking details page is known by "Số lượng cư dân" and an enabled "Tiếp tục". The
+calendar, the venues, the court list and the details page share the title "Đăng ký tiện
+ích", so the title never tells them apart. The court tap is checked as well: the
 court list can move up while it loads, so the tap may open another court; the booking details page
 names the court, and another one is left with Back and the court tapped again. A timed run
 waits on the app's home screen and
