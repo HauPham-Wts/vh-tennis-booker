@@ -18,6 +18,9 @@ uses [Semantic Versioning](https://semver.org/).
   runs table and the dated accounts are gone: test evidence goes in the pull request); the
   roadmap keeps the goal, what is left and the situations; the desktop spec keeps the product
   decisions and the packaging plan; how-it-works is shorter.
+- README, CONTRIBUTING and CLAUDE.md follow the trimmed docs: a real booking's results go in
+  the pull request's description, a GitHub release page is optional, and CLAUDE.md's current
+  state points to the changelog and the session notes instead of repeating them.
 
 ### Removed
 - The historical specs of 0.2.0 and 0.3.0 (`docs/specs`): the current design is in
