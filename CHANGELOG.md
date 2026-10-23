@@ -13,6 +13,10 @@ uses [Semantic Versioning](https://semver.org/).
   history and the Windows notification say so. A new label, `quota_full` ("hết hạn mức"),
   finds the notice; config.toml needs no change.
 
+### Removed
+- The historical specs of 0.2.0 and 0.3.0 (`docs/specs`): the current design is in
+  `docs/architecture.md`, the old one in the git history.
+
 ## [0.10.0] - 2026-10-23
 
 ### Added
