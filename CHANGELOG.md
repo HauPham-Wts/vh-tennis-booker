@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-23
+
 ### Added
 - A Windows notification after every run, dry runs too: the booking day, how many slots
   went through, and one line per slot with the court or why it failed, in Vietnamese or
