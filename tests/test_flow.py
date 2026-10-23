@@ -586,6 +586,33 @@ def test_book_taps_venue_screen_when_shown():
     assert app.screen == "ticket"
 
 
+@pytest.mark.parametrize(
+    "answer",
+    [
+        [("courts", 2)],  # the venue screen read again right after the tap, 2026-10-23
+        [("loading", 10), ("courts", 25)],  # built in between, as on 2026-10-17
+    ],
+)
+def test_venue_tap_waits_for_the_court_list(answer):
+    app = booking_app(via_venue=True)
+    app.taps_to[("venue", "Origami Grand Park")] = answer
+
+    Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert app.taps[4:6] == ["Origami Grand Park", "S10 - Sân tennis"]
+    assert app.screen == "ticket"
+
+
+def test_a_swallowed_venue_tap_is_tapped_again():
+    app = booking_app(via_venue=True)
+    app.swallow["Origami Grand Park"] = 1
+
+    Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert app.taps[4:7] == ["Origami Grand Park", "Origami Grand Park", "S10 - Sân tennis"]
+    assert app.screen == "ticket"
+
+
 def refusing_app(english=False, **options):
     """Answer "Xác nhận" with a notice dialog, as when someone else took the slot first."""
     app = booking_app(**options)

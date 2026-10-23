@@ -6,6 +6,11 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- After the venue ("Origami…") is tapped, the court list is awaited: a read right after the
+  tap could still show the venue screen, which was taken for the next one, so the round
+  failed at once with "Button not found" for the court (06:00 on 2026-10-23).
+
 ## [0.9.0] - 2026-10-20
 
 ### Added

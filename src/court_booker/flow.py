@@ -247,8 +247,10 @@ class Booker:
             screen, self.continue_button, labels.continue_, self._find_court
         )
         if self.venue is not None and not self.any_court(court):
+            # Only the court list counts here: a read right after the tap may still show the
+            # venue screen (2026-10-23), and accepting it again skipped the wait.
             court, screen = self.tap_and_advance(
-                screen, self.venue, self.config.venue_keyword, self._find_court
+                screen, self.venue, self.config.venue_keyword, self._finder(self.any_court)
             )
         if labels.fully_booked in court.desc:
             raise SlotUnavailableError(f"Court {self.config.court} is fully booked")
