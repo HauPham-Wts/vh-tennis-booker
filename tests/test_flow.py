@@ -92,6 +92,7 @@ ENGLISH = {  # the same labels with the app set to English, read on 2026-10-20
     "Tiếp tục": "Next",
     "14:00 - 15:00\nHết chỗ": "14:00 - 15:00\nFull",
     "S9 - Sân tennis\nHết chỗ": "S9 - Sân tennis\nFull",
+    "Chọn phân khu": "Select subdivision",
     "Chọn vị trí/dịch vụ": "Select place/service",
     RESIDENTS[0]: "Booking fee 0 VND\nNumber of residents\n4",
     "Xác nhận đăng ký": "Confirm registration",
@@ -616,6 +617,17 @@ def test_a_swallowed_venue_tap_is_tapped_again():
     Booker(app, Config()).book("11:00 - 12:00", TARGET)
 
     assert app.taps[4:7] == ["Origami Grand Park", "Origami Grand Park", "S10 - Sân tennis"]
+    assert app.screen == "ticket"
+
+
+def test_an_app_in_english_taps_the_venue_under_its_heading():
+    app = booking_app(via_venue=True, english=True)
+    app.taps_to[("venue", "Origami Grand Park")] = [("courts", 2)]  # as on 2026-10-23 06:00
+    booker = prepared(app)
+
+    booker.book("11:00 - 12:00", TARGET)
+
+    assert app.taps[3:6] == ["Next", "Origami Grand Park", "S10 - Sân tennis"]
     assert app.screen == "ticket"
 
 

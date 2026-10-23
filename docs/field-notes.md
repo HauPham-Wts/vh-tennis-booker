@@ -34,7 +34,8 @@ looked for S6 at once and failed the round. The details page shows
 `'Phí đặt chỗ 0 VND\nSố lượng cư dân\n4'` (the fee and count as read; the confirmation page
 and the ticket repeat it as `'Phí đặt chỗ\n0 VND\n...'`), in about 24 reads before "Tiếp
 tục" is enabled. In English: "Select place/service", `'Booking fee 0 VND\nNumber of
-residents\n4'`; the venues' heading was never read in English.
+residents\n4'`; the venues' heading is "Select subdivision" (read on 23/10 at 13:27, above
+`'Origami_ Sân tennis'` at the same place as in Vietnamese).
 
 ## Reading the app
 
@@ -190,7 +191,8 @@ screen, then by booking 21/10 10:00-12:00 on S10 for real in two rounds (cancell
 - Court list: "Service information", "View more", "Select place/service", then the courts
   with their Vietnamese names (`S10 - Sân tennis`, `S9 - Sân tennis\nFull`) and a
   "Directions" button each. It moved up once loaded, as in Vietnamese. No venue screen
-  showed. The booking details page names the court and has "Next".
+  showed that day; on 23/10 it read "Select subdivision" above `'Origami_ Sân tennis'`.
+  The booking details page names the court and has "Next".
 - The confirmation page and the ticket hold one label such as `Tennis\nSchedule
   time\n21/10/2026 10:00 - 11:00\nPlace/service\nS10 - Sân tennis\n...` (the ticket adds
   "Scheduling code" and "Transaction ID"): the date, time and court read as in Vietnamese.
@@ -375,4 +377,5 @@ stays `null` and `dumpsys accessibility` lists no bound or enabled service;
 | 0.9.0 code (`feat/app-english`) | 2026-10-20 | Timed real bookings 21/10 10:00-12:00 on S10 (test bookings, cancelled). At 13:53 with the app in English: "App language: English", both rounds booked (7.6 s and 4.8 s), the confirmation page read in English, "Confirm" 0.20 s after the tick at x=57, the ticket 1.5 s and 0.8 s after it, no second tap. At 13:57 with the app in Vietnamese: "App language: Vietnamese", both booked (6.6 s and 4.8 s), the ticket 0.9 s after "Xác nhận" |
 | 0.9.0 | 2026-10-20 | Timed dry run for 20:57:45 (S10, 21/10 10:00-12:00), app in Vietnamese: "App language: Vietnamese"; MuMu was started by the run (Android after 47.5 s), so the start was reached at 20:57:47.775 (NTP), 2.8 s late; clock offset +0.177 s, anchored time off by +0.000 s at the warm-up; both rounds reached the accepted terms (10.9 s and 9.1 s, 33 and 62 commands). Closed-hours run at 21:00:50 with the app in English (`open_retry_seconds = 10`, same slots): "App language: English", the English notice read as "not open yet", "Tennis" tapped 48 and 74 times, both rounds failed "not open" after 10 s as expected, MuMu closed at the end |
 | 0.9.1 code (`fix/venue-court-list-wait`) | 2026-10-23 | Timed real bookings 25/10 10:00-12:00 on S10 (test bookings, cancelled), start reached at 13:04:45.100 (NTP): both rounds booked (5.1 s and 3.6 s, 143 and 102 commands), the court list known by "Chọn vị trí/dịch vụ" and the details page by "Số lượng cư dân"; no venue screen showed in either round. A run at 13:01 for 18:00-20:00 stopped on the calendar, both slots "Hết chỗ" |
+| 0.9.1 (`develop`) | 2026-10-23 | Dry run at 13:27 with the app in English (S10, 25/10 14:00-15:00, 10:00-11:00, 11:00-12:00): "App language: English", all three rounds reached the accepted terms (4.9 s, 3.3 s, 3.0 s); the venues' heading "Select subdivision" with `'Origami_ Sân tennis'` below it was read twice, both times during the Backs between rounds (on the way forward the app had moved on to the courts before a read) |
 | UI part 3 | 2026-10-14 | Requests through the Vite proxy, and the live feed across a backend stop and restart (no step lost or repeated), against a scratch backend |
