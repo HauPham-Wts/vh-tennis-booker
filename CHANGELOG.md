@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-10-23
+
 ### Changed
 - Documentation aligned with 0.9.0: release and runner status, instrumentation and
   fallback behaviour, bilingual labels, configuration, API coverage and release workflow.
