@@ -63,6 +63,7 @@ round is made as fast as it can be before rounds run side by side.
 | 2 Every situation | 0.8.2 | Every screen awaited up to `timeout`, now 30 s by default; repeat taps every 2 s only while the old element remains (released 2026-10-19) |
 | 2 Every situation | 0.8.3 | Repeat "Xác nhận" every 3 s while enabled with no ticket or notice; a notice after another tap leaves the outcome unknown (released 2026-10-20) |
 | 2 Every situation | 0.9.0 | The Vinhomes app in English as well as Vietnamese: the English labels built in, the language found on the app's first screen, no setting (released 2026-10-20) |
+| 4 UI | 0.10.0 | A Windows notification after every run, in the app's language; Settings › Notifications with a test button (released 2026-10-23) |
 | 3 Fast | **Next** | MuMu tuning (frame rate, performance, hidden bottlenecks); then several MuMu instances with separate accounts in parallel (one account cannot log in twice), the last speed step (now) |
 | 4 UI | Desktop app, last before 1.0.0 | Tauri shell with PyInstaller sidecar, installer, release automation; version number set when it starts (spec [0.5.0-desktop-app](specs/0.5.0-desktop-app.md), "Packaging") |
 
@@ -96,7 +97,7 @@ failures are fixed as they show up in the log.
 | Device | ADB lost during a run | Not handled |
 | Device | Wrong MuMu resolution | Works but scrolls; no warning |
 | Device | PC woke late, clock drift | Runs at once if under 10 min late; NTP time carried on a counter Windows does not set (0.8.1; was an offset to the PC clock) |
-| Reporting | Every failure reported | Log file and history database; Telegram optional, not configured |
+| Reporting | Every failure reported | Log file and history database; a Windows notification after every run (on by default, set in the app); Telegram optional, not configured |
 
 ## Ruled out
 

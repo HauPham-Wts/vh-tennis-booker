@@ -8,6 +8,7 @@ export const paths = {
   settings: "/settings",
   bookingSettings: "/settings/booking",
   deviceSetup: "/settings/device",
+  notificationSettings: "/settings/notifications",
   guide: "/guide",
   welcome: "/welcome",
 } as const;

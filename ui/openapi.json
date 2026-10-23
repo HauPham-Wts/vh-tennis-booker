@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Court Booker",
-    "version": "0.9.1"
+    "version": "0.10.0"
   },
   "paths": {
     "/api/health": {
@@ -440,7 +440,7 @@
           "settings"
         ],
         "summary": "Save Settings",
-        "description": "Check and save the settings; they apply from the next run.\n\nInvalid settings are refused with every problem listed, and the file is left as it\nwas. The file is rewritten without its comments; the hidden Telegram keys are kept.",
+        "description": "Check and save the settings; they apply from the next run.\n\nInvalid settings are refused with every problem listed, and the file is left as it\nwas. The file is rewritten without its comments; the hidden keys are kept.",
         "operationId": "save_settings_api_settings_put",
         "requestBody": {
           "content": {
@@ -462,6 +462,133 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Invalid request values, one line per value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error with a stable code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Read Notifications",
+        "description": "Read the notification settings the next run will use.",
+        "operationId": "read_notifications_api_notifications_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettings"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request values, one line per value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error with a stable code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Save Notifications",
+        "description": "Save the notification settings; they apply from the next run.\n\nThe file is written only when a value changed, and records ``settings_saved`` with the\nchanged TOML keys. A config that is invalid otherwise is refused (400 ``bad_request``)\nand left as it was.",
+        "operationId": "save_notifications_api_notifications_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationSettings"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettings"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request values, one line per value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error with a stable code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/test": {
+      "post": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Test Notification",
+        "description": "Show a sample notification in the saved language, whether notifications are on or not.\n\nA notification that cannot be shown answers 503 ``notification``.",
+        "operationId": "test_notification_api_notifications_test_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
           },
           "422": {
             "description": "Invalid request values, one line per value",
@@ -999,6 +1126,30 @@
         ],
         "title": "MonthSummary",
         "description": "One month with real bookings: how many runs, how many slots they booked."
+      },
+      "NotificationSettings": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "vi",
+              "en"
+            ],
+            "title": "Language"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "enabled",
+          "language"
+        ],
+        "title": "NotificationSettings",
+        "description": "Whether every run ends with a Windows notification, and in which language."
       },
       "Overview": {
         "properties": {

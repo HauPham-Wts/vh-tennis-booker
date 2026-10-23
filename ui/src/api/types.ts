@@ -32,6 +32,8 @@ export type LogLine = Schemas["LogLine"];
 
 export type Settings = Schemas["Settings"];
 export type LabelSettings = Schemas["LabelSettings"];
+/** Whether every run ends with a Windows notification, and its language. */
+export type NotificationSettings = Schemas["NotificationSettings"];
 
 export type SetupItem = Schemas["SetupItem"];
 /** The state of one device setup item (the backend's `Status` enum). */

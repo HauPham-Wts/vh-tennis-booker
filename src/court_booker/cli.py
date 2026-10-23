@@ -6,7 +6,7 @@ import argparse
 import logging
 import os
 import sys
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, NoReturn
 
@@ -28,7 +28,7 @@ from court_booker.events import EventKind, LogSink, MultiSink, Reporter
 from court_booker.history import History, close_history, open_history
 from court_booker.lock import TAKE_OVER_AHEAD, RunLock, check_quiet_time
 from court_booker.logging_setup import LOGGER_NAME, add_file_handler, configure_logging
-from court_booker.notify import format_summary, send_telegram
+from court_booker.notify import format_notification, format_summary, send_telegram, send_windows
 from court_booker.paths import data_folder
 from court_booker.power import keep_awake
 from court_booker.runner import AUTO_DRIVER, DRIVERS, RoundResult, connect_device, run_booking
@@ -156,6 +156,33 @@ def run_status(results: list[RoundResult], error: str | None, interrupted: bool)
     return "partial" if booked else "failed"
 
 
+def notify_windows(
+    config: Config,
+    results: list[RoundResult],
+    error: str | None,
+    *,
+    dry_run: bool,
+    interrupted: bool,
+    target: date,
+) -> None:
+    """Show the outcome as a Windows notification if it is on; a failure only logs."""
+    if not config.windows_notification:
+        return
+    try:
+        title, body = format_notification(
+            results,
+            error,
+            dry_run=dry_run,
+            interrupted=interrupted,
+            target=target,
+            court=config.court,
+            language=config.notification_language,
+        )
+        send_windows(title, body)
+    except Exception:  # reporting never costs a booking
+        logger.warning("Windows notification not shown", exc_info=True)
+
+
 def setup_main(argv: list[str]) -> int:
     """Run ``court-booker setup``: check the PC and MuMu; ``--auto`` fixes what it can."""
     parser = argparse.ArgumentParser(
@@ -243,6 +270,7 @@ def main(argv: list[str] | None = None) -> int:
     device: Any = None
     error: str | None = None
     frozen = False
+    start: datetime | None = None
     try:
         config = apply_overrides(load_config(args.config), args)
         if config.log_dir:
@@ -320,6 +348,16 @@ def main(argv: list[str] | None = None) -> int:
     if config is not None and config.telegram_token and config.telegram_chat_id:
         text = format_summary(results, error, dry_run=args.dry_run)
         send_telegram(config.telegram_token, config.telegram_chat_id, text)
+    # Also after a config that did not load, with the default settings.
+    shown = config or Config()
+    notify_windows(
+        shown,
+        results,
+        error,
+        dry_run=args.dry_run,
+        interrupted=code == EXIT_INTERRUPTED,
+        target=(start or datetime.now()).date() + timedelta(days=shown.days_ahead),
+    )
     # A real run closes MuMu once its rounds ran; the next run starts it again. MuMu stays
     # open after a dry run, Ctrl+C or an error before the rounds, for whoever is at the PC,
     # and when frozen, since MuMuManager does not shut a frozen instance down.

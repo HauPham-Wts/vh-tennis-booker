@@ -56,6 +56,7 @@ def test_defaults_are_valid():
         ({"warm_up_seconds": 2}, "warm_up_seconds must be 5 to 600 seconds"),
         ({"warm_up_seconds": 900}, "warm_up_seconds must be 5 to 600 seconds"),
         ({"next_month_xy": (1.2, 0.1)}, "next_month_xy must be two screen ratios between 0 and 1"),
+        ({"notification_language": "fr"}, "notification_language must be one of vi, en"),
     ],
 )
 def test_invalid_values_are_reported(changes, problem):
@@ -91,6 +92,22 @@ def test_saved_config_holds_only_the_changed_labels(tmp_path):
     text = path.read_text(encoding="utf-8")
     assert text.endswith('[labels]\nnotice = "Thông báo mới"\n')
     assert load_config(path).labels.home == "Tiện ích"
+
+
+def test_notification_keys_are_saved_only_when_changed(tmp_path):
+    path = tmp_path / "config.toml"
+
+    save_config(Config(), path)
+    text = path.read_text(encoding="utf-8")
+    # A runner of 0.9.1 refuses keys it does not know, so a default config must not name them.
+    assert "windows_notification" not in text
+    assert "notification_language" not in text
+
+    save_config(Config(windows_notification=False, notification_language="en"), path)
+    text = path.read_text(encoding="utf-8")
+    assert "windows_notification = false" in text
+    assert 'notification_language = "en"' in text
+    assert load_config(path) == Config(windows_notification=False, notification_language="en")
 
 
 def test_invalid_config_is_not_saved(tmp_path):

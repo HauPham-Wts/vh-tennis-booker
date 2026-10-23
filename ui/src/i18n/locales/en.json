@@ -221,6 +221,19 @@
         "quiet": "Locked from {{from}} to {{to}} so it never gets in the way of a booking."
       }
     },
+    "notificationSettings": {
+      "title": "Notifications",
+      "lead": "Court Booker reports every booking run right on this PC.",
+      "windows": {
+        "title": "Windows notification",
+        "text": "After every run, dry runs too, the corner of the screen shows the play day and each slot with its court or why it was not booked. It uses the language of this interface."
+      },
+      "test": {
+        "send": "Send a test",
+        "sending": "Sending…",
+        "sent": "Sent. Look at the bottom right of the screen."
+      }
+    },
     "guide": {
       "title": "Guide",
       "lead": "How to use each part of Court Booker.",
@@ -470,6 +483,7 @@
     "device": "MuMu cannot be reached.",
     "app_not_ready": "The Vinhomes app is not ready. It may have been logged out.",
     "schedule": "Windows Task Scheduler could not be read or changed.",
+    "notification": "Windows could not show the notification.",
     "engine": "Court Booker hit an error.",
     "invalid_settings": "Some settings are not valid.",
     "invalid_request": "The request has values that are not valid.",

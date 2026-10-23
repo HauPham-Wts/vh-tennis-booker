@@ -26,6 +26,10 @@ class DryRunRequiredError(CourtBookerError):
     """The schedule cannot be switched on before a dry run has passed."""
 
 
+class NotificationError(CourtBookerError):
+    """Windows did not show the notification (PowerShell failed, or not on Windows)."""
+
+
 class InvalidSettingsError(CourtBookerError):
     """Settings a run could not use; ``problems`` names each invalid value."""
 
@@ -53,6 +57,7 @@ _STATUSES: tuple[tuple[type[CourtBookerError], int, str], ...] = (
     (DeviceError, 503, "device"),
     (AppNotReadyError, 503, "app_not_ready"),
     (ScheduleError, 503, "schedule"),
+    (NotificationError, 503, "notification"),
 )
 """First match wins: HTTP status and code per error class."""
 

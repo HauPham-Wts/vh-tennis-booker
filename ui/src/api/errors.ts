@@ -13,6 +13,7 @@ export const ERROR_CODES = [
   "device",
   "app_not_ready",
   "schedule",
+  "notification",
   "engine",
   "invalid_settings",
   "invalid_request",

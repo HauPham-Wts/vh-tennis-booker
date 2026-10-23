@@ -15,7 +15,14 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   the run lock, then calls `runner.connect_device` and `runner.run_booking`. Errors map to
   exit codes (`RequestError` 2, `DeviceError` 3, `AppNotReadyError` 4, `LockHeldError` 5,
   Ctrl+C 130); the summary is logged and optionally sent with `notify.send_telegram` on
-  every path. A dry run is refused (exit 2) from `wake_at` to 5 minutes after `start_at`.
+  every path. Then `cli.notify_windows` shows the outcome as a Windows notification when
+  `windows_notification` is on (the default; dry runs too, and with the default config when
+  the config did not load): `notify.format_notification` writes a title (booking day,
+  booked/total, "stopped", "(dry run)") and one line per round, the slot and the court or a
+  few words for the failure (`failure_reason`, the same words as `ui/src/reasons.ts`), in
+  `notification_language`; `notify.send_windows` runs Windows PowerShell with an encoded
+  script that registers the AppUserModelID `CourtBooker` under HKCU and shows a WinRT
+  toast. Any failure only logs a warning. A dry run is refused (exit 2) from `wake_at` to 5 minutes after `start_at`.
   After the summary, while still holding the lock, `cli.close_emulator` shuts MuMu down
   (`emulator.MuMu.shutdown`, MuMuManager `control shutdown`) when `mumu_manager` is set,
   the run is not a dry run and ran at least one round, and neither Ctrl+C nor a frozen
@@ -196,9 +203,11 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   config file. Loading does not validate, so an existing config never stops the 06:00 run.
 - `config_from_dict` builds a config from parsed TOML; `validate_config` lists problems
   (slot format and duplicates, empty court, `days_ahead` 0-2, `wake_at` before `start_at`,
-  positive timeouts, `_xy` ratios); `save_config` validates, then writes with `tomli-w`
-  through a temporary file and `os.replace` (comments are not kept), with only the labels
-  that differ from the defaults (an older runner refuses a label it does not know);
+  positive timeouts, `_xy` ratios, `notification_language` `vi` or `en`); `save_config`
+  validates, then writes with `tomli-w` through a temporary file and `os.replace` (comments
+  are not kept), with only the labels that differ from the defaults (an older runner refuses
+  a label it does not know); for the same reason `windows_notification` and
+  `notification_language` (added after 0.9.1) are written only when changed;
   `ensure_config` writes the defaults once.
 - `paths.data_folder()`: the app's data folder, `%LOCALAPPDATA%\CourtBooker` (override with
   `COURT_BOOKER_HOME`), holding `config.toml`, `booker.db`, `logs/` and `run.lock`. The CLI
@@ -242,7 +251,8 @@ category `setup` without a run. `court-booker setup` prints the checks; `--auto`
   Pydantic evaluate annotations at run time, where Python 3.9 has no `X | None`.
 - Errors: `CourtBookerError`s become `Problem` JSON (`error` code, `detail`):
   `LockHeldError` 409 `lock_held`, `RequestError` 400 `bad_request`, `DeviceError` 503
-  `device`, `AppNotReadyError` 503 `app_not_ready`, others 500 `engine`. Invalid request
+  `device`, `AppNotReadyError` 503 `app_not_ready`, `NotificationError` 503
+  `notification`, others 500 `engine`. Invalid request
   values answer 422 `invalid_request` with `problems` (one line per value). Every router
   lists `422` and `default` responses as `Problem` (`api.app.ERROR_RESPONSES`).
 - The backend opens the history with `open_store` (no log capture: its log lines would mix
@@ -256,7 +266,8 @@ category `setup` without a run. `court-booker setup` prints the checks; `--auto`
 | `GET /api/runs`, `GET /api/runs/{id}` | `history.py` | Runs newest first, each with its `slots` (read for the whole page in one query; `month`, `trigger`, `dry_run` from the run's flag, not its trigger, `before`, `days`: every run of the newest 1-60 days that have runs, by start day, `limit`); one run with slots, steps and log lines (404 `not_found` via `api.errors.NotFoundError`) |
 | `GET /api/runs/months` | `history.py` | Months of real bookings by play date, newest first, with `runs` and `booked` slots; declared before `/runs/{run_id}`, which would take "months" for an id |
 | `GET /api/events` | `history.py` | Activity steps newest first (`category`, `before`, `limit`). A `Step`'s `kind` is the `EventKind` enum and its `category` the `Category` literal in the schema; a row with a kind the backend does not know fails the response, so the engine and the backend must be the same version or the backend newer |
-| `GET`/`PUT /api/settings` | `settings.py` | `settings_of(config)` (TOML keys, labels with `continue`, without the `HIDDEN` Telegram keys). `PUT` takes the full `Settings` (extra keys refused), merges it, runs `validate_config` (422 `invalid_settings` with `problems`, file untouched), and only when something changed saves it (comments are lost) and records `settings_saved` with the changed keys |
+| `GET`/`PUT /api/settings` | `settings.py` | `settings_of(config)` (TOML keys, labels with `continue`, without the `HIDDEN` Telegram and notification keys). `PUT` takes the full `Settings` (extra keys refused), merges it, runs `validate_config` (422 `invalid_settings` with `problems`, file untouched), and only when something changed saves it (comments are lost) and records `settings_saved` with the changed keys |
+| `GET`/`PUT /api/notifications`, `POST /api/notifications/test` | `notifications.py` | `NotificationSettings` `{enabled, language}` (`windows_notification`, `notification_language`; an unknown language in the file reads as `vi`). `PUT` (extra keys and other languages refused, 422) saves only when a value changed and records `settings_saved` with the changed TOML keys. `test` shows a sample in the saved language (`notify.format_test_notification`), on or off, with no lock or quiet time: 204, or 503 `notification` when `notify.send_windows` fails |
 | `GET /api/setup`, `POST /api/setup/auto` | `setup.py` | The checks as `SetupItem`s (item, status, detail); auto setup with `{"restart_mumu": bool}` (400 in the quiet time, 409 while a run holds the lock) |
 | `GET`/`PUT /api/schedule` | `schedule.py` | `enabled` (`schedule.installed`), wake and start time, `next_start`, `next_play_date`, `dry_run_passed`. `PUT {"enabled": bool}` installs the task again on every switch-on (needs a passed dry run: 409 `dry_run_required`; wake before start: 400) or removes it, recording `schedule_enabled` / `schedule_disabled` (category `schedule`). `ScheduleError` answers 503 `schedule` |
 | `POST /api/runs/dry-run` | `runs.py` | 202 `{pid, started_at}`; starts `python -m court_booker --dry-run --config <config>` with `launch` (own process, no window, output discarded: the run writes its history and log file). 400 in the quiet time; 409 while `RunLock.running_holder()` (a peek that never clears) names a running holder or the process it started last (`app.state.dry_run`) still runs, as a fresh dry run does not hold the lock for its first milliseconds. A `threading.Lock` keeps two requests from both starting one |
@@ -300,7 +311,9 @@ would move the task away from the runner folder.
   against `vi.json`. The choice is stored under `court-booker.language` in `localStorage`
   (blocked storage falls back to Vietnamese) and sets `<html lang>`. `LanguageSwitch`
   buttons are named "VI Tiếng Việt" / "EN English" with `aria-label` (a hidden span lost
-  the space). Language files use the same `{{placeholders}}` in both languages and no
+  the space). A click also gives the Windows notification that language
+  (`useSaveNotificationLanguage`: reads `/api/notifications`, saves only when it differs, a
+  failure is silent); loading a page never writes it. Language files use the same `{{placeholders}}` in both languages and no
   i18next plurals (Vietnamese has only `_other`, so the keys would differ).
 - `src/format.ts`: pure formatting of backend values. `parseLocal` reads the backend's
   local times (no zone) from the text, never through `new Date(text)`, which reads a date
@@ -355,7 +368,10 @@ would move the task away from the runner folder.
   from the steps alone. `useOverview` polls every 2 s (`settlingInterval`) only while a run
   holds the lock without a running row, or during auto setup: a run gives the lock back
   after its last step, and no step marks that moment.
-- `SettingsPage` holds "Đặt sân" and "Thiết lập máy" as tabs. `booking.ts` keeps the choices the
+- `SettingsPage` holds "Đặt sân", "Thiết lập máy" and "Thông báo" as tabs.
+  `NotificationSettingsPage` saves its switch at once (`useSaveNotifications`, with the UI's
+  language) and "Gửi thử" first gives the notification the UI's language, then calls
+  `POST /api/notifications/test`; `test/backend.ts` answers a 204 stub without a body. `booking.ts` keeps the choices the
   developer maintains with the Vinhomes app: `SLOTS` (13), `COURTS` (S6, S8, S9, S10),
   `DAYS_AHEAD`; `slotChoices` and `courtChoices` also offer a value the config holds outside
   them, and `toggleSlot` appends, so the list order is the booking order.
@@ -506,5 +522,7 @@ unknown `op`, a missing argument, a line that is not JSON).
   `prepare()` on it so the booker finds the language.
 - `tests/conftest.py` puts `src/` on `sys.path` and points `COURT_BOOKER_HOME` at a
   temporary folder for every test (fixture `data_home`), so tests never write the real
-  history. Its `record_run` fixture writes runs through the history sink.
+  history. Its `record_run` fixture writes runs through the history sink; `closed_mumu` and
+  `windows_notifications` record what a run would close or show, so no test closes MuMu or
+  runs PowerShell.
 - Backend tests live in `tests/api/` and are skipped without FastAPI.

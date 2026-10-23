@@ -21,7 +21,9 @@ export function stubBackend(replies: Record<string, Reply>) {
     const { status, body } =
       replies[key] ?? reply({ error: "not_found", detail: `No stub for ${key}` }, 404);
     const headers = { "Content-Type": "application/json" };
-    return Promise.resolve(new Response(JSON.stringify(body), { status, headers }));
+    // A 204 answer has no body; Response refuses one.
+    const text = status === 204 ? null : JSON.stringify(body);
+    return Promise.resolve(new Response(text, { status, headers }));
   });
   vi.stubGlobal("fetch", fetch);
   return fetch;
