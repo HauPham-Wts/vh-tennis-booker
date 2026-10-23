@@ -14,6 +14,10 @@ uses [Semantic Versioning](https://semver.org/).
   finds the notice; config.toml needs no change.
 - `docs/architecture.md` says what each module, route and UI part does and what must stay
   true (43 KB to 12 KB); the details live in the docstrings.
+- The field notes keep the facts about the app and MuMu the code relies on (the verified
+  runs table and the dated accounts are gone: test evidence goes in the pull request); the
+  roadmap keeps the goal, what is left and the situations; the desktop spec keeps the product
+  decisions and the packaging plan; how-it-works is shorter.
 
 ### Removed
 - The historical specs of 0.2.0 and 0.3.0 (`docs/specs`): the current design is in
