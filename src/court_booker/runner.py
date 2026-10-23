@@ -54,6 +54,9 @@ class RoundResult:
     ok: bool
     detail: str
     seconds: float
+    court: str | None = None
+    """The court the confirmation page named, if the round read it: the one booked, which
+    once differed from the configured one."""
 
 
 def log_last_screen(booker: Booker) -> None:
@@ -229,7 +232,7 @@ def run_booking(
             ok, detail = True, "dry run passed" if dry_run else "booked"
         seconds = time.perf_counter() - started
         used = booker.commands - commands
-        results.append(RoundResult(slot, ok, detail, seconds))
+        results.append(RoundResult(slot, ok, detail, seconds, shown.get("shown_court")))
         logger.debug("Round %d used %d device commands", index, used)
         if ok:
             report(

@@ -61,6 +61,7 @@ def test_failed_round_does_not_stop_later_rounds(monkeypatch):
     assert returned is results
     assert [(r.slot, r.ok) for r in results] == [("18:00 - 19:00", False), ("19:00 - 20:00", True)]
     assert results[1].detail == "dry run passed"
+    assert [r.court for r in results] == [None, "S9 - Sân tennis"]  # as the app showed it
 
 
 class FakeClock:
