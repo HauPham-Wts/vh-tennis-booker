@@ -1,5 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { runAutoSetup, saveSettings, startDryRun, switchSchedule } from "./endpoints";
+import type { Language } from "../i18n";
+import {
+  getNotifications,
+  runAutoSetup,
+  saveNotifications,
+  saveSettings,
+  sendTestNotification,
+  startDryRun,
+  switchSchedule,
+} from "./endpoints";
 import { queryKeys } from "./queries";
 
 /** Save the booking settings; the overview and the schedule show the new times. */
@@ -16,6 +25,44 @@ export function useSaveSettings() {
       ]);
     },
   });
+}
+
+/** Save the notification settings; the activity log shows the save. */
+export function useSaveNotifications() {
+  const cache = useQueryClient();
+  return useMutation({
+    mutationFn: saveNotifications,
+    onSuccess: async (settings) => {
+      cache.setQueryData(queryKeys.notifications, settings);
+      await cache.invalidateQueries({ queryKey: ["events"] });
+    },
+  });
+}
+
+/**
+ * Give the notification the language the user just chose for the UI, saving only when it
+ * differs. A failure leaves the UI in its new language and the notification in the old.
+ */
+export function useSaveNotificationLanguage() {
+  const cache = useQueryClient();
+  return useMutation({
+    mutationFn: async (language: Language) => {
+      const saved = await cache.fetchQuery({
+        queryKey: queryKeys.notifications,
+        queryFn: getNotifications,
+      });
+      return saved.language === language ? saved : saveNotifications({ ...saved, language });
+    },
+    onSuccess: async (settings) => {
+      cache.setQueryData(queryKeys.notifications, settings);
+      await cache.invalidateQueries({ queryKey: ["events"] });
+    },
+  });
+}
+
+/** Show a sample notification. */
+export function useTestNotification() {
+  return useMutation({ mutationFn: sendTestNotification });
 }
 
 /** Run auto setup; its checks replace the cached ones and the overview shows what is left. */

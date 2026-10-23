@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { STORAGE_KEY } from "../i18n";
 import { paths } from "../paths";
 import { renderApp } from "../test/app";
+import { reply, requestsTo } from "../test/backend";
 
 /** Render the whole app on the history screen. */
 function renderHistory() {
@@ -52,5 +53,39 @@ describe("LanguageSwitch", () => {
     expect(await screen.findByRole("heading", { level: 1, name: "Lịch sử" })).toBeInTheDocument();
     expect(document.documentElement.lang).toBe("vi");
     expect(localStorage.getItem(STORAGE_KEY)).toBe("vi");
+  });
+
+  it("gives the Windows notification the language chosen", async () => {
+    const { fetch } = renderApp(paths.history, {
+      "GET /api/notifications": reply({ enabled: false, language: "vi" }),
+      "PUT /api/notifications": reply({ enabled: false, language: "en" }),
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "EN English" }));
+
+    await waitFor(() => expect(requestsTo(fetch, "PUT /api/notifications")).toBe(1));
+    const put = fetch.mock.calls.map(([request]) => request).find((r) => r.method === "PUT");
+    expect(await put?.json()).toEqual({ enabled: false, language: "en" });
+  });
+
+  it("saves nothing when the notification has that language already", async () => {
+    const { fetch } = renderApp(paths.history, {
+      "GET /api/notifications": reply({ enabled: true, language: "vi" }),
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "VI Tiếng Việt" }));
+
+    await waitFor(() => expect(requestsTo(fetch, "GET /api/notifications")).toBe(1));
+    expect(requestsTo(fetch, "PUT /api/notifications")).toBe(0);
+  });
+
+  it("switches the UI even when the notification cannot be saved", async () => {
+    renderApp(paths.history, {
+      "GET /api/notifications": reply({ error: "engine", detail: "broken" }, 500),
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "EN English" }));
+
+    expect(await screen.findByRole("heading", { level: 1, name: "History" })).toBeInTheDocument();
   });
 });

@@ -1,10 +1,15 @@
+import { QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 import { App } from "./App";
 import { paths } from "./paths";
+import { createTestQueryClient } from "./test/queries";
 
-/** Render the layout at `path` with a stand-in screen for the overview and the welcome. */
+/**
+ * Render the layout at `path` with a stand-in screen for the overview and the welcome; the
+ * language switch in the header needs a cache.
+ */
 function renderAt(path: string) {
   const router = createMemoryRouter(
     [
@@ -19,7 +24,11 @@ function renderAt(path: string) {
     ],
     { initialEntries: [path] },
   );
-  render(<RouterProvider router={router} />);
+  render(
+    <QueryClientProvider client={createTestQueryClient()}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  );
 }
 
 describe("App", () => {

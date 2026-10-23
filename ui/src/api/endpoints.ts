@@ -4,6 +4,7 @@ import type {
   DryRunStarted,
   Health,
   MonthSummary,
+  NotificationSettings,
   Overview,
   RunDetail,
   RunSummary,
@@ -60,6 +61,21 @@ export function getSettings(): Promise<Settings> {
 /** Save the booking settings; invalid values fail with `invalid_settings` and `problems`. */
 export function saveSettings(settings: Settings): Promise<Settings> {
   return call(client.PUT("/api/settings", { body: settings })) as Promise<Settings>;
+}
+
+/** Read whether every run ends with a Windows notification, and its language. */
+export function getNotifications(): Promise<NotificationSettings> {
+  return call(client.GET("/api/notifications"));
+}
+
+/** Save the notification settings; they apply from the next run. */
+export function saveNotifications(settings: NotificationSettings): Promise<NotificationSettings> {
+  return call(client.PUT("/api/notifications", { body: settings }));
+}
+
+/** Show a sample notification in the saved language; fails with `notification`. */
+export function sendTestNotification(): Promise<void> {
+  return call(client.POST("/api/notifications/test"));
 }
 
 /** Check each device setup item. */

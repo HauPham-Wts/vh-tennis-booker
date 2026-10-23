@@ -311,7 +311,9 @@ would move the task away from the runner folder.
   against `vi.json`. The choice is stored under `court-booker.language` in `localStorage`
   (blocked storage falls back to Vietnamese) and sets `<html lang>`. `LanguageSwitch`
   buttons are named "VI Tiếng Việt" / "EN English" with `aria-label` (a hidden span lost
-  the space). Language files use the same `{{placeholders}}` in both languages and no
+  the space). A click also gives the Windows notification that language
+  (`useSaveNotificationLanguage`: reads `/api/notifications`, saves only when it differs, a
+  failure is silent); loading a page never writes it. Language files use the same `{{placeholders}}` in both languages and no
   i18next plurals (Vietnamese has only `_other`, so the keys would differ).
 - `src/format.ts`: pure formatting of backend values. `parseLocal` reads the backend's
   local times (no zone) from the text, never through `new Date(text)`, which reads a date
@@ -366,7 +368,10 @@ would move the task away from the runner folder.
   from the steps alone. `useOverview` polls every 2 s (`settlingInterval`) only while a run
   holds the lock without a running row, or during auto setup: a run gives the lock back
   after its last step, and no step marks that moment.
-- `SettingsPage` holds "Đặt sân" and "Thiết lập máy" as tabs. `booking.ts` keeps the choices the
+- `SettingsPage` holds "Đặt sân", "Thiết lập máy" and "Thông báo" as tabs.
+  `NotificationSettingsPage` saves its switch at once (`useSaveNotifications`, with the UI's
+  language) and "Gửi thử" first gives the notification the UI's language, then calls
+  `POST /api/notifications/test`; `test/backend.ts` answers a 204 stub without a body. `booking.ts` keeps the choices the
   developer maintains with the Vinhomes app: `SLOTS` (13), `COURTS` (S6, S8, S9, S10),
   `DAYS_AHEAD`; `slotChoices` and `courtChoices` also offer a value the config holds outside
   them, and `toggleSlot` appends, so the list order is the booking order.

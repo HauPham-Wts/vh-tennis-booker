@@ -221,6 +221,19 @@
         "quiet": "Tạm khóa từ {{from}} đến {{to}} để không làm gián đoạn lần đặt sân."
       }
     },
+    "notificationSettings": {
+      "title": "Thông báo",
+      "lead": "Court Booker báo kết quả mỗi lượt đặt sân ngay trên máy tính.",
+      "windows": {
+        "title": "Thông báo Windows",
+        "text": "Sau mỗi lượt, kể cả chạy thử, góc màn hình hiện ngày chơi và từng khung giờ với sân hoặc lý do không đặt được. Thông báo dùng ngôn ngữ của giao diện."
+      },
+      "test": {
+        "send": "Gửi thử",
+        "sending": "Đang gửi…",
+        "sent": "Đã gửi. Xem góc phải dưới màn hình."
+      }
+    },
     "guide": {
       "title": "Hướng dẫn",
       "lead": "Cách dùng từng phần của Court Booker.",
@@ -470,6 +483,7 @@
     "device": "Không kết nối được MuMu.",
     "app_not_ready": "App Vinhomes chưa sẵn sàng. Có thể app đã bị đăng xuất.",
     "schedule": "Không đọc hoặc đổi được lịch hẹn giờ của Windows.",
+    "notification": "Windows không hiện được thông báo.",
     "engine": "Court Booker gặp lỗi.",
     "invalid_settings": "Một số cài đặt chưa hợp lệ.",
     "invalid_request": "Dữ liệu gửi đi chưa hợp lệ.",

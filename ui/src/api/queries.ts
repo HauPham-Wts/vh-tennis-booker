@@ -6,6 +6,7 @@ import {
   getOverview,
   getRun,
   getSchedule,
+  getNotifications,
   getSettings,
   getSetupChecks,
   listEvents,
@@ -26,6 +27,7 @@ export const queryKeys = {
   run: (runId: number) => ["run", runId] as const,
   events: (query: EventsQuery = {}) => ["events", query] as const,
   settings: ["settings"] as const,
+  notifications: ["notifications"] as const,
   setup: ["setup"] as const,
   schedule: ["schedule"] as const,
 };
@@ -108,6 +110,11 @@ export function useEvents(query: EventsQuery = {}) {
 /** Read the booking settings. */
 export function useSettings() {
   return useQuery({ queryKey: queryKeys.settings, queryFn: getSettings });
+}
+
+/** Read the notification settings. */
+export function useNotifications() {
+  return useQuery({ queryKey: queryKeys.notifications, queryFn: getNotifications });
 }
 
 /**
