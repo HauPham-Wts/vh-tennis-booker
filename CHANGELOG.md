@@ -6,6 +6,13 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- A Windows notification after every run, dry runs too: the booking day, how many slots
+  went through, and one line per slot with the court or why it failed, in Vietnamese or
+  English. New settings `windows_notification` (on by default) and `notification_language`
+  (`vi` by default); they are written to `config.toml` only when changed, so a config saved
+  with both at their defaults still loads in a runner of 0.9.1.
+
 ## [0.9.1] - 2026-10-23
 
 ### Changed

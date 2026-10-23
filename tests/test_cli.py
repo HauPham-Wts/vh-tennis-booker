@@ -182,6 +182,49 @@ def test_summary_is_sent_to_telegram_even_on_device_error(monkeypatch, tmp_path)
     assert sent == ["court-booker: 0/0 ok\nError: MuMu did not start"]
 
 
+def test_every_run_ends_with_a_windows_notification(monkeypatch, tmp_path, windows_notifications):
+    outcomes = [("18:00 - 19:00", True), ("19:00 - 20:00", False)]
+
+    assert run_cli(monkeypatch, tmp_path, outcomes, args=["--dry-run"]) == cli.EXIT_ROUND_FAILED
+    (title, body), *_ = windows_notifications
+    # Booking day: 2026-10-08, the fake today, plus the default two days.
+    assert title == "Đặt sân 10/10: 1/2 thành công (chạy thử)"
+    assert body.splitlines() == ["✅ 18:00 - 19:00 · S10", "❌ 19:00 - 20:00 · Có lỗi, xem nhật ký"]
+
+
+def test_the_notification_reports_a_config_that_did_not_load(tmp_path, windows_notifications):
+    path = tmp_path / "config.toml"
+    path.write_text("slot = 1\n", encoding="utf-8")
+
+    assert cli.main(["--config", str(path)]) == cli.EXIT_BAD_REQUEST
+    ((title, _body),) = windows_notifications
+    assert title.endswith(": không đặt được")
+
+
+def test_the_notification_follows_its_settings(monkeypatch, tmp_path, windows_notifications):
+    path = tmp_path / "config.toml"
+    path.write_text('notification_language = "en"\n', encoding="utf-8")
+    monkeypatch.setattr(cli, "connect_device", fake_connect)
+    monkeypatch.setattr(cli, "run_booking", fake_run([("18:00 - 19:00", True)]))
+    monkeypatch.setattr(cli, "datetime", FixedDatetime)
+    cli.main(["--config", str(path)])
+    assert windows_notifications[0][0] == "Courts for 10 Oct: 1/1 booked"
+
+    path.write_text("windows_notification = false\n", encoding="utf-8")
+    cli.main(["--config", str(path)])
+    assert len(windows_notifications) == 1
+
+
+def test_a_notification_that_fails_does_not_change_the_exit_code(monkeypatch, tmp_path):
+    def send_windows(title, body):
+        raise RuntimeError("no toast")
+
+    monkeypatch.setattr(cli, "send_windows", send_windows)
+
+    assert run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)]) == cli.EXIT_OK
+    assert "Windows notification not shown" in read_log(tmp_path)
+
+
 def test_log_names_the_python_and_code_folder(monkeypatch, tmp_path):
     run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)])
 

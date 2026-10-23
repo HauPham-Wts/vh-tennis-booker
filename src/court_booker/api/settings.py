@@ -21,8 +21,9 @@ from court_booker.events import EventKind
 
 router = APIRouter(prefix="/api", tags=["settings"])
 
-HIDDEN = ("telegram_token", "telegram_chat_id")
-"""Config keys the app neither shows nor changes (the Telegram summary is set up by hand)."""
+HIDDEN = ("telegram_token", "telegram_chat_id", "windows_notification", "notification_language")
+"""Config keys these routes neither show nor change: the Telegram summary is set up by hand,
+and the Windows notification is not a booking setting."""
 
 
 class LabelSettings(BaseModel):
@@ -98,7 +99,7 @@ def save_settings(context: Context, settings: Settings) -> dict[str, Any]:
     """Check and save the settings; they apply from the next run.
 
     Invalid settings are refused with every problem listed, and the file is left as it
-    was. The file is rewritten without its comments; the hidden Telegram keys are kept.
+    was. The file is rewritten without its comments; the hidden keys are kept.
     """
     old = context.config()
     config = config_from_dict({**config_to_dict(old), **settings.model_dump(by_alias=True)})

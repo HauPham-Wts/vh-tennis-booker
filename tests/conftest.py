@@ -84,3 +84,13 @@ def closed_mumu(monkeypatch):
     closed = []
     monkeypatch.setattr(cli, "close_emulator", closed.append)
     return closed
+
+
+@pytest.fixture(autouse=True)
+def windows_notifications(monkeypatch):
+    """Record the notifications a run would show as ``(title, body)``; no test runs PowerShell."""
+    from court_booker import cli
+
+    shown = []
+    monkeypatch.setattr(cli, "send_windows", lambda title, body: shown.append((title, body)))
+    return shown

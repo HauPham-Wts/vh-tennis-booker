@@ -29,6 +29,10 @@ log_dir = "logs"                    # daily log files, next to this file; "" dis
 telegram_token = ""
 telegram_chat_id = ""
 
+# A Windows notification after every run, dry runs too; language "vi" or "en".
+windows_notification = true
+notification_language = "vi"
+
 # Fallback points for unlabelled calendar month controls, as fractions of screen size.
 # Real month-boundary navigation is not yet verified; the driver needs a node at the point.
 next_month_xy = [0.953, 0.122]
