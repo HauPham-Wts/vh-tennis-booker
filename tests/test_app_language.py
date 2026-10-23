@@ -11,13 +11,8 @@ from court_booker.geometry import month_index
 VIETNAMESE, ENGLISH = app_languages(Labels())
 
 
-NOT_READ_IN_ENGLISH = {"venue_list"}  # no venue screen showed in English yet
-
-
 def test_every_english_label_is_set():
     for item in fields(Labels):
-        if item.name in NOT_READ_IN_ENGLISH:
-            continue
         english = getattr(ENGLISH_LABELS, item.name)
         assert english and english != getattr(Labels(), item.name), item.name
 
