@@ -60,6 +60,8 @@ TEXTS = {
         "not_booked": "không đặt được",
         "stopped": "đã dừng",
         "dry_run": " (chạy thử)",
+        "test_title": "Thông báo thử",
+        "test_body": "Court Booker sẽ báo kết quả ở đây sau mỗi lượt đặt sân.",
     },
     "en": {
         "title": "Courts for {day}: {outcome}",
@@ -67,6 +69,8 @@ TEXTS = {
         "not_booked": "not booked",
         "stopped": "stopped",
         "dry_run": " (dry run)",
+        "test_title": "Test notification",
+        "test_body": "Court Booker will report here after every booking run.",
     },
 }
 """Words of the notification, per language of the app's interface."""
@@ -208,6 +212,12 @@ def format_notification(
     if not results and not interrupted:
         lines.append(failure_reason(error, language))
     return title, "\n".join(lines)
+
+
+def format_test_notification(language: str = DEFAULT_LANGUAGE) -> tuple[str, str]:
+    """Return the title and the text of the sample notification the app sends on request."""
+    texts = TEXTS.get(language, TEXTS[DEFAULT_LANGUAGE])
+    return texts["test_title"], texts["test_body"]
 
 
 def send_windows(title: str, body: str, run: Run | None = None) -> bool:

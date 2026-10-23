@@ -12,6 +12,9 @@ uses [Semantic Versioning](https://semver.org/).
   English. New settings `windows_notification` (on by default) and `notification_language`
   (`vi` by default); they are written to `config.toml` only when changed, so a config saved
   with both at their defaults still loads in a runner of 0.9.1.
+- Backend routes for the notification: `GET`/`PUT /api/notifications` read and save
+  whether it is on and its language; `POST /api/notifications/test` shows a sample one
+  (503 `notification` when Windows does not show it).
 
 ## [0.9.1] - 2026-10-23
 
