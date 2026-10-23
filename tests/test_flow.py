@@ -1241,7 +1241,7 @@ class OpeningBooker(Booker):
         self.entries = 0
         self.backs = 0
 
-    def tap_and_advance(self, screen, target, name, find_next):
+    def tap_and_advance(self, screen, target, name, find_next, quiet=False):
         self.entries += 1
         return None, Screen([])
 
@@ -1342,6 +1342,10 @@ def test_a_tap_before_the_opening_closes_the_notice_and_taps_again(caplog):
     message = f"Not open yet: {CLOSED_MESSAGE}; closing the notice and tapping again"
     assert logged == [(logging.INFO, message), (logging.DEBUG, message)]
     assert "Closing a notice" not in caplog.text  # expected here, so no warning
+    # Only the first tap of the utility logs at info, then the calendar opening.
+    taps = [r.levelno for r in caplog.records if r.getMessage() == "Tapped 'Sân Tennis'"]
+    assert taps == [logging.INFO, logging.DEBUG, logging.DEBUG]
+    assert "Calendar opened after 3 attempt(s)" in caplog.text
 
 
 def test_a_notice_that_stays_fails_the_round_after_the_retry_window(monkeypatch):

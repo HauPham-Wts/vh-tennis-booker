@@ -293,8 +293,13 @@ class Booker:
         self._entry = None
         while True:
             screen = self.return_to_utilities(screen)
+            # A tap after a notice logs at debug: before the opening one goes every 0.2 s.
             _, screen = self.tap_and_advance(
-                screen, self.utility, self.labels.utility, self._calendar_or_notice
+                screen,
+                self.utility,
+                self.labels.utility,
+                self._calendar_or_notice,
+                quiet=notices > 0,
             )
             message = self.notice_text(screen)
             if message is not None:
@@ -314,6 +319,8 @@ class Booker:
                 screen = self.go_back(screen, self._finder(self.utility))
                 attempt += 1
                 continue
+            if notices:
+                logger.info("Calendar opened after %d attempt(s)", attempt)
             self.report(EventKind.CALENDAR_OPENED, attempt=attempt)
             try:
                 self.select_date(screen, target)
@@ -407,13 +414,20 @@ class Booker:
     # Navigation -------------------------------------------------------------
 
     def tap_and_advance(
-        self, screen: Screen, target: Match, name: str, find_next: Finder[T]
+        self,
+        screen: Screen,
+        target: Match,
+        name: str,
+        find_next: Finder[T],
+        *,
+        quiet: bool = False,
     ) -> tuple[T, Screen]:
         """Tap ``target`` on ``screen`` and return what ``find_next`` finds on the next one.
 
         The next screen is awaited up to ``timeout``, and acted on as soon as a read shows
         it. A tap swallowed by a lagging app is repeated every :data:`_RETAP_AFTER` while
-        ``target`` is still shown, never while the app loads the next screen.
+        ``target`` is still shown, never while the app loads the next screen. ``quiet``
+        logs the tap at debug level, for a tap repeated many times.
         """
         node = screen.find(target)
         if node is None:
@@ -425,7 +439,7 @@ class Booker:
                 self.tap(node)
             found = self.wait_for(find_next, _retap_wait(deadline))
             if found is not None:
-                logger.info("Tapped %r", name)
+                (logger.debug if quiet else logger.info)("Tapped %r", name)
                 return found
             if time.monotonic() >= deadline:
                 raise NavigationError(f"Tapped {name!r} but the next screen did not appear")
