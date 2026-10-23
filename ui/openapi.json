@@ -440,7 +440,7 @@
           "settings"
         ],
         "summary": "Save Settings",
-        "description": "Check and save the settings; they apply from the next run.\n\nInvalid settings are refused with every problem listed, and the file is left as it\nwas. The file is rewritten without its comments; the hidden Telegram keys are kept.",
+        "description": "Check and save the settings; they apply from the next run.\n\nInvalid settings are refused with every problem listed, and the file is left as it\nwas. The file is rewritten without its comments; the hidden keys are kept.",
         "operationId": "save_settings_api_settings_put",
         "requestBody": {
           "content": {

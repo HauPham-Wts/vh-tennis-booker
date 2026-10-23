@@ -125,7 +125,7 @@ export interface paths {
          * @description Check and save the settings; they apply from the next run.
          *
          *     Invalid settings are refused with every problem listed, and the file is left as it
-         *     was. The file is rewritten without its comments; the hidden Telegram keys are kept.
+         *     was. The file is rewritten without its comments; the hidden keys are kept.
          */
         put: operations["save_settings_api_settings_put"];
         post?: never;

@@ -96,7 +96,7 @@ failures are fixed as they show up in the log.
 | Device | ADB lost during a run | Not handled |
 | Device | Wrong MuMu resolution | Works but scrolls; no warning |
 | Device | PC woke late, clock drift | Runs at once if under 10 min late; NTP time carried on a counter Windows does not set (0.8.1; was an offset to the PC clock) |
-| Reporting | Every failure reported | Log file and history database; Telegram optional, not configured |
+| Reporting | Every failure reported | Log file and history database; a Windows notification after every run (on by default, set in the app); Telegram optional, not configured |
 
 ## Ruled out
 

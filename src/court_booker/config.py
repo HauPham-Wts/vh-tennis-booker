@@ -24,6 +24,10 @@ MAX_DAYS_AHEAD = 2
 """The app books from today to today + 2."""
 WARM_UP_RANGE = (5, 600)
 """Allowed ``warm_up_seconds``: time to load the utilities list, at most ten minutes ahead."""
+NOTIFICATION_LANGUAGES = ("vi", "en")
+"""Languages of the Windows notification: those of the app's own interface."""
+_WRITTEN_WHEN_CHANGED = ("windows_notification", "notification_language")
+"""Keys ``save_config`` writes only when they differ from the default (see there)."""
 _SLOT_PATTERN = re.compile(r"\d{2}:\d{2} - \d{2}:\d{2}")
 
 
@@ -108,6 +112,10 @@ class Config:
     telegram_token: str = ""
     """Bot token from @BotFather; with ``telegram_chat_id`` the summary is sent there."""
     telegram_chat_id: str = ""
+    windows_notification: bool = True
+    """Show the outcome of every run, dry runs too, as a Windows notification."""
+    notification_language: str = "vi"
+    """Language of the Windows notification, one of :data:`NOTIFICATION_LANGUAGES`."""
     next_month_xy: tuple[float, float] = (0.953, 0.122)
     """Fallback tap position (screen ratio) when the next-month button has no label."""
     prev_month_xy: tuple[float, float] = (0.873, 0.122)
@@ -162,14 +170,20 @@ def save_config(config: Config, path: str | Path) -> None:
     file at that moment sees the old or the new version, never half of one. Comments of
     an existing file are not kept. Only the labels that differ from the defaults are
     written: a runner of an older version refuses a label it does not know, and a later
-    version's fix to a default label then reaches this file too.
+    version's fix to a default label then reaches this file too. For the same reason the
+    keys of :data:`_WRITTEN_WHEN_CHANGED`, added after 0.9.1, are written only when changed.
     """
     problems = validate_config(config)
     if problems:
         raise ConfigError("; ".join(problems))
     data = config_to_dict(config)
-    defaults = config_to_dict(Config())["labels"]
-    labels = {key: value for key, value in data.pop("labels").items() if value != defaults[key]}
+    defaults = config_to_dict(Config())
+    for key in _WRITTEN_WHEN_CHANGED:
+        if data[key] == defaults[key]:
+            del data[key]
+    labels = {
+        key: value for key, value in data.pop("labels").items() if value != defaults["labels"][key]
+    }
     if labels:
         data["labels"] = labels
     target = Path(path)
@@ -220,6 +234,8 @@ def validate_config(config: Config) -> list[str]:
             problems.append(f"{name} must not be negative")
     if not WARM_UP_RANGE[0] <= config.warm_up_seconds <= WARM_UP_RANGE[1]:
         problems.append(f"warm_up_seconds must be {WARM_UP_RANGE[0]} to {WARM_UP_RANGE[1]} seconds")
+    if config.notification_language not in NOTIFICATION_LANGUAGES:
+        problems.append(f"notification_language must be one of {', '.join(NOTIFICATION_LANGUAGES)}")
     for name in ("next_month_xy", "prev_month_xy"):
         point = getattr(config, name)
         if len(point) != 2 or not all(0 <= value <= 1 for value in point):
