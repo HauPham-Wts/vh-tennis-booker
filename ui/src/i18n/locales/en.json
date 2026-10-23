@@ -468,6 +468,8 @@
     "slotFull": "Fully booked",
     "courtFull": "Court {{court}} fully booked",
     "refused": "The app refused: {{message}}",
+    "quotaFull": "Booking quota used up",
+    "quotaSkipped": "Skipped: booking quota used up",
     "unknown": "Outcome unknown, check the Vinhomes app",
     "notOpen": "Not open for booking yet",
     "stuck": "The app did not move on",

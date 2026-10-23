@@ -154,10 +154,13 @@ without it, such as the empty frame seen at 16:44 on 2026-10-15, is read again.
 - Each apartment may book 2 slots per day and 8 per month (1 hour = 1 slot; the user,
   2026-10-20). Once either is used, tapping "Tiếp tục" on the calendar opens a dialog
   "Thông báo": "Căn hộ đã hết hạn mức đăng ký tiện ích cho phép." with a "Đóng" button (seen
-  2026-10-10; on 2026-10-20 for a day that already held 2 tickets); the round then fails after
-  the re-taps with "Tapped 'Tiếp tục' but the next screen did not appear". On 2026-10-16
-  the same dialog showed only after "Xác nhận" (0.72 s after the tap), so the round failed
-  with its message.
+  2026-10-10; on 2026-10-20 for a day that already held 2 tickets); up to 0.10.0 the round
+  then failed after `timeout` (30 s) with "Tapped 'Tiếp tục' but the next screen did not
+  appear". On 2026-10-16 the same dialog showed only after "Xác nhận" (0.72 s after the
+  tap), so the round failed with its message. The same message serves the day and the month.
+  Since 0.11.0 the notice is recognised by the `quota_full` label ("hết hạn mức"; English
+  "registration quota") after "Tiếp tục" and after "Xác nhận": the round fails at once as
+  "Booking quota used up" and the run skips the rounds left, which book the same day.
 
 ## App in English (2026-10-20)
 

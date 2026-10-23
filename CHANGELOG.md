@@ -6,6 +6,13 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- The app's quota notice ("Căn hộ đã hết hạn mức đăng ký tiện ích cho phép.") stops the
+  run: the round fails at once as "Booking quota used up" (after "Tiếp tục" it waited 30 s
+  for the courts), the slots left are skipped without touching the app, and the log, the
+  history and the Windows notification say so. A new label, `quota_full` ("hết hạn mức"),
+  finds the notice; config.toml needs no change.
+
 ## [0.10.0] - 2026-10-23
 
 ### Added

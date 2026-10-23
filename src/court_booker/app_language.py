@@ -29,6 +29,7 @@ ENGLISH_LABELS = Labels(  # read from the app in English on 2026-10-20
     court_list="Select place/service",
     residents="Number of residents",
     notice="Notification",
+    quota_full="registration quota",  # "The apartment has reached the allowed utility ..."
     booked_time="Schedule time",
     booked_place="Place/service",
     ticket="Booking details",

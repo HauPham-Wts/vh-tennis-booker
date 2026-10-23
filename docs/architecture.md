@@ -69,7 +69,9 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   then one round per slot. The waits go by `clock`, a `clock.NtpClock` the CLI anchors
   before connecting to the device (the PC clock without one); a `BookingError` (or any
   exception) fails
-  that round only, except `DeviceNotRespondingError`, which ends the run after it. Results are appended to a caller-owned list; the debug log counts
+  that round only, except `DeviceNotRespondingError`, which ends the run after it, and
+  `QuotaFullError`, after which the rounds left fail unrun with "Skipped: the booking quota
+  is used up" (no device command). Results are appended to a caller-owned list; the debug log counts
   device commands per round. When a round, `prepare()` or `locate_entry()` fails,
   `log_last_screen` writes `Booker.last_screen` to the debug log, so a failure seen once at
   06:00 can be fixed from the log alone.
@@ -100,8 +102,9 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   for `find_next` up to `config.timeout` (30 s), tapping again every `_RETAP_AFTER` (2 s)
   while `target` is still shown (a swallowed tap), never while it is gone (the app loads the
   next screen); then `NavigationError`. After "Tiếp tục" the finder is
-  `_court_list_or_venue` (the court list's heading, or the venue below the venues' heading:
-  the only one, or the one naming `venue_keyword`); after the venue, the court list's
+  `_after_calendar` (the court list's heading, or the venue below the venues' heading:
+  the only one, or the one naming `venue_keyword`, or a notice, which fails the round at
+  once: `QuotaFullError` for the quota notice); after the venue, the court list's
   heading alone; the court is then awaited on the list. The court goes through
   `select_court(screen)` instead: the court list can move under the tap (field notes), so
   the booking details page must name the configured court (`opened_court`); another court
@@ -134,7 +137,8 @@ How the booking flow reads the app is described in [how-it-works.md](how-it-work
   for the enabled button in fresh reads up to `timeout` ("'Tiếp tục' stayed disabled").
 - `accept_and_confirm` taps "Xác nhận" at least `_TERMS_SETTLE` (0.2 s) after the tick and
   reads the screen until the ticket's title (booked) or a notice dialog
-  (`BookingRejectedError` with the message, `Booker.notice_text`) shows; frames without
+  (`BookingRejectedError` with the message, `Booker.notice_text`; `QuotaFullError` when
+  the message holds the `quota_full` label) shows; frames without
   either, such as the empty one while the next screen is built, are read again. While the
   last read still shows "Xác nhận" enabled, the button is tapped again every
   `_CONFIRM_RETAP_AFTER` (3 s; the app swallowed it under load), never while the next

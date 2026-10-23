@@ -44,6 +44,7 @@ class LabelSettings(BaseModel):
     court_list: str
     residents: str
     notice: str
+    quota_full: str
     booked_time: str
     booked_place: str
     ticket: str

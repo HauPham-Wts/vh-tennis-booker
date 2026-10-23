@@ -44,6 +44,15 @@ describe("progressOf", () => {
     expect(progress.court).toBe("S6 - Sân tennis");
   });
 
+  it("leaves a slot skipped after the quota notice out of the waiting ones", () => {
+    const quota = step(4, { kind: "slot_failed", data: { slot: SLOTS[0], reason: "quota" } });
+    const skipped = step(5, { kind: "slot_failed", data: { slot: SLOTS[1], reason: "skipped" } });
+    const all = [STARTED, BOOKING, FIRST, quota, skipped, FINISHED];
+
+    expect(states(all)).toEqual(["failed", "failed"]);
+    expect(progressOf(all).waiting).toEqual([]);
+  });
+
   it("leaves no slot current once the run ended", () => {
     expect(states([STARTED, BOOKING, FIRST, FINISHED])).toEqual(["pending", "pending"]);
   });
