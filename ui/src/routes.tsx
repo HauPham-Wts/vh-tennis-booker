@@ -9,6 +9,7 @@ import { ErrorPage } from "./pages/ErrorPage";
 import { GuidePage } from "./pages/GuidePage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { NotificationSettingsPage } from "./pages/NotificationSettingsPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { SchedulePage } from "./pages/SchedulePage";
 import { SettingsPage } from "./pages/SettingsPage";
@@ -44,6 +45,7 @@ export const routes: RouteObject[] = [
           { index: true, element: <Navigate to={paths.bookingSettings} replace /> },
           { path: paths.bookingSettings, element: <BookingSettingsPage /> },
           { path: paths.deviceSetup, element: <DeviceSetupPage /> },
+          { path: paths.notificationSettings, element: <NotificationSettingsPage /> },
         ],
       },
       { path: paths.guide, element: <GuidePage /> },

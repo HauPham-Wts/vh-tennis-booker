@@ -15,6 +15,9 @@ uses [Semantic Versioning](https://semver.org/).
 - Backend routes for the notification: `GET`/`PUT /api/notifications` read and save
   whether it is on and its language; `POST /api/notifications/test` shows a sample one
   (503 `notification` when Windows does not show it).
+- Settings › Notifications in the app: switch the notification on or off and send a test
+  one. The notification follows the language of the app: switching the app's language
+  saves it too.
 
 ## [0.9.1] - 2026-10-23
 
