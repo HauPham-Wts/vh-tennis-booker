@@ -17,12 +17,11 @@ to be awake. Unattended, scheduled, as fast as possible.
 ## Phases
 
 The 0.x versions go through four phases toward 1.0.0: (1) it runs, (2) it handles every
-situation, (3) it is fast, (4) it has a user-friendly UI. Releases 0.1.0 to 0.10.0 covered all
+situation, (3) it is fast, (4) it has a user-friendly UI. Releases 0.1.0 to 0.11.0 covered all
 four (CHANGELOG). Failures are fixed as the 06:00 logs show them. What is left:
 
 | Phase | Next | Scope |
 |---|---|---|
-| 2 Every situation | 0.11.0 | The app's quota notice stops the run (merged, release pending a real test) |
 | 3 Fast | MuMu tuning | Frame rate, performance, hidden bottlenecks |
 | 3 Fast | Parallel MuMu | Several MuMu instances with separate accounts (one account cannot log in twice), one slot each: the last speed step |
 | 4 UI | Desktop app, last before 1.0.0 | Tauri shell with a PyInstaller sidecar, installer, release automation; version number set when it starts ([spec](specs/0.5.0-desktop-app.md), "Packaging") |

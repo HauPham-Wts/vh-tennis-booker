@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-10-24
+
 ### Changed
 - The app's quota notice ("Căn hộ đã hết hạn mức đăng ký tiện ích cho phép.") stops the
   run: the round fails at once as "Booking quota used up" (after "Tiếp tục" it waited 30 s
