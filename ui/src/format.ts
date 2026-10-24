@@ -153,6 +153,16 @@ export function relativeDay(text: string, today: string): RelativeDay | null {
   return days === 1 ? "tomorrow" : null;
 }
 
+/** Return the date `days` after a date or date-time (`2026-10-25`); another text as it is. */
+export function addDays(text: string, days: number): string {
+  const time = parseLocal(text);
+  if (time === null) {
+    return text;
+  }
+  const day = new Date(utcDay(time).getTime() + days * DAY_MS);
+  return `${day.getUTCFullYear()}-${pad(day.getUTCMonth() + 1)}-${pad(day.getUTCDate())}`;
+}
+
 /** Return today's date on this machine, in the backend's form ("2026-10-15"). */
 export function localToday(now: Date = new Date()): string {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;

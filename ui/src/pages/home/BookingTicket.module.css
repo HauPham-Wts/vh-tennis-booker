@@ -1,0 +1,253 @@
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+/* The switch with its words; ball yellow once a dry run passed and it is still off. */
+.auto {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-1) var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-control);
+  font-weight: var(--weight-semibold);
+}
+
+.remind {
+  background: var(--color-highlight);
+}
+
+.start {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-6);
+}
+
+/* The start time, the largest thing in the app; smaller in a low window. */
+.time {
+  font-size: var(--text-ticket);
+  font-weight: var(--weight-heavy);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-hero);
+  line-height: var(--leading-hero);
+}
+
+@media (max-height: 719px) {
+  .time {
+    font-size: var(--text-ticket-sm);
+  }
+}
+
+.off {
+  color: var(--color-muted);
+}
+
+.when {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-bottom: 10px;
+}
+
+.day {
+  font-size: var(--text-heading-sm);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-heading);
+}
+
+/* "sáng mai · Chủ Nhật 25/10" opens the line. */
+.day::first-letter {
+  text-transform: uppercase;
+}
+
+.wake {
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+}
+
+.offLine {
+  color: var(--color-muted);
+  font-size: var(--text-control);
+}
+
+.problem {
+  color: var(--color-failed);
+  font-size: var(--text-data);
+}
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5) var(--space-8);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.buttons {
+  display: flex;
+  gap: 6px;
+}
+
+/* A choice is paper with a rule; the chosen one is filled with ink. */
+.choice,
+.slot {
+  border: var(--border) solid var(--color-rule);
+  background: var(--color-field);
+  color: var(--color-ink);
+  cursor: pointer;
+}
+
+.choice[aria-pressed="true"],
+.slot[aria-pressed="true"] {
+  border-color: var(--color-ink);
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+}
+
+.choice {
+  min-height: 56px;
+  border-radius: var(--radius-button);
+}
+
+.dayChoice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0 14px;
+}
+
+.date {
+  font-weight: var(--weight-bold);
+}
+
+.hint {
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.choice[aria-pressed="true"] .hint {
+  color: var(--color-on-ink-muted);
+}
+
+.court {
+  min-width: 60px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-lead);
+  font-weight: var(--weight-bold);
+}
+
+.slotsHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.note,
+.warning {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+}
+
+.note {
+  color: var(--color-muted);
+}
+
+.warning {
+  color: var(--color-failed);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px var(--space-2);
+}
+
+.slot {
+  position: relative;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-stamp);
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  font-weight: var(--weight-semibold);
+}
+
+/* With two slots chosen the others take no more: a dashed edge, as a step not reached. */
+.blocked {
+  border-style: dashed;
+  border-color: var(--color-perforation);
+  background: transparent;
+  color: var(--color-muted);
+  font-weight: var(--weight-regular);
+  cursor: not-allowed;
+}
+
+/* The booking order, a ball-yellow badge on the corner. */
+.order {
+  position: absolute;
+  top: -10px;
+  right: -8px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-highlight);
+  box-shadow: 0 0 0 var(--border) var(--color-paper);
+  color: var(--color-ink);
+  font-size: var(--text-label);
+}
+
+.choices[aria-busy="true"] button {
+  cursor: progress;
+}
+
+.dryRun {
+  margin-top: auto;
+  padding: 14px 0 18px;
+  border-top: var(--border-hairline) dotted var(--color-rule);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.dryRunText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--color-muted);
+  font-size: var(--text-control);
+}
+
+.passed {
+  color: var(--color-stamp);
+  font-weight: var(--weight-semibold);
+}
+
+.failed {
+  color: var(--color-failed);
+  font-weight: var(--weight-semibold);
+}
+
+.quiet {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+}

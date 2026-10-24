@@ -136,12 +136,15 @@ After a route or model change: `python tools/export_openapi.py`, then `npm run a
 - `steps.ts` words each event kind (a new kind fails the type check); `reasons.ts` turns the
   engine's English reasons into a few words (`notify.REASONS` holds the same words; a test
   compares them).
-- Screens (`src/pages`): Overview (the next booking or the live run, with the History panel
-  beside it: runs ten days at a time, real bookings unless dry runs are ticked, `?run=` opens
-  one run's slots, steps and log in the panel), Schedule (dry run, switch), Settings (booking,
-  device setup, notification), Guide (static), Welcome (four steps, shown once per opening
-  while nothing is set up). The header's status line (`components/StatusLine.tsx`) shows the
-  run going on, else the one thing to do, on every screen. `booking.ts` holds the slot and court choices the developer maintains.
+- Screens (`src/pages`): Overview, with `pages/home/`: the ticket (`BookingTicket`: the
+  daily switch, the play day, court and up to two slots saved on each press, the dry run; or
+  `LiveTicket` while a booking or a dry run goes on) and the History panel beside it (runs
+  ten days at a time, real bookings unless dry runs are ticked, `?run=` opens one run's
+  slots, steps and log in the panel). Settings (device setup, notification), Guide (static),
+  Welcome (four steps, shown once per opening while nothing is set up). The header's status
+  line (`components/StatusLine.tsx`) shows the run going on, else the one thing to do, on
+  every screen. `booking.ts` holds the slot and court choices the developer maintains and
+  the two-slot limit.
 
 ## Driver (`android/`)
 

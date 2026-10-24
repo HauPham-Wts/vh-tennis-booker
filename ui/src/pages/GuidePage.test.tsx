@@ -44,19 +44,19 @@ describe("GuidePage", () => {
     const links = within(steps).getAllByRole("link");
     expect(links.map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
       ["1Thiết lập máyCài đặt › Thiết lập máy", paths.deviceSetup],
-      ["2Chọn khung giờ và sânCài đặt › Đặt sân", paths.bookingSettings],
-      ["3Chạy thửHẹn giờ › Chạy thử ngay", paths.schedule],
-      ["4Bật hẹn giờHẹn giờ › Hẹn giờ mỗi sáng", paths.schedule],
+      ["2Chọn ngày, sân và khung giờTổng quan › Lần đặt tiếp theo", paths.overview],
+      ["3Chạy thửTổng quan › Chạy thử ngay", paths.overview],
+      ["4Bật Tự đặt mỗi sángTổng quan › Tự đặt mỗi sáng", paths.overview],
     ]);
   });
 
   it("opens a step's screen", async () => {
     const { router } = renderGuide();
 
-    fireEvent.click(screen.getByRole("link", { name: /Chọn khung giờ và sân/ }));
+    fireEvent.click(screen.getByRole("link", { name: /Thiết lập máyCài đặt/ }));
 
     expect(await screen.findByRole("heading", { level: 1, name: "Cài đặt" })).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe(paths.bookingSettings);
+    expect(router.state.location.pathname).toBe(paths.deviceSetup);
   });
 
   it("describes each screen of the menu, quoting its labels", () => {
@@ -66,11 +66,11 @@ describe("GuidePage", () => {
     const names = within(list)
       .getAllByRole("term")
       .map((term) => term.textContent);
-    expect(names).toEqual(["Tổng quan", "Hẹn giờ", "Cài đặt"]);
+    expect(names).toEqual(["Tổng quan", "Cài đặt"]);
     expect(
-      within(list).getByText(/"Lịch sử": .* tích "Gồm cả chạy thử" .* mở "Chi tiết kỹ thuật"/),
+      within(list).getByText(/vé "Lần đặt tiếp theo": bật "Tự đặt mỗi sáng", .* "Lịch sử"/),
     ).toBeInTheDocument();
-    expect(within(list).getByText(/^"Đặt sân": .* "Thiết lập máy": /)).toBeInTheDocument();
+    expect(within(list).getByText(/^"Thiết lập máy": /)).toBeInTheDocument();
   });
 
   it("opens the answer of a problem when its question is pressed", () => {
@@ -82,7 +82,9 @@ describe("GuidePage", () => {
     fireEvent.click(screen.getByText('Kết quả báo "Hết chỗ"'));
 
     expect(details.open).toBe(true);
-    expect(within(details).getByText(/khung giờ khác ở Cài đặt › Đặt sân\.$/)).toBeVisible();
+    expect(
+      within(details).getByText(/khung giờ khác ở Tổng quan › Lần đặt tiếp theo\.$/),
+    ).toBeVisible();
   });
 
   it("names the buttons and results as the other screens show them", () => {
@@ -102,10 +104,10 @@ describe("GuidePage", () => {
 
     expect(await screen.findByRole("heading", { level: 1, name: "Guide" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Do a dry run/ })).toHaveTextContent(
-      "Schedule › Dry run now",
+      "Overview › Dry run now",
     );
     expect(trouble('The result says "Fully booked"')).toHaveTextContent(
-      "other slots in Settings › Booking.",
+      "other slots in Overview › Next booking.",
     );
   });
 });

@@ -80,7 +80,7 @@ function Daily({ state }: { state: ScheduleState }) {
               play: f.day(state.next_play_date),
             })
           : t("pages.schedule.daily.off")}{" "}
-        <Link to={paths.bookingSettings}>{t("pages.schedule.daily.change")}</Link>
+        <Link to={paths.overview}>{t("pages.schedule.daily.change")}</Link>
       </p>
       {locked && <p className={styles.note}>{t("errors.dry_run_required")}</p>}
       {toggle.isError && <p className={styles.problem}>{errorMessage(t, toggle.error)}</p>}

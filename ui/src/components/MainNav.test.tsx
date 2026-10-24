@@ -28,7 +28,6 @@ describe("MainNav", () => {
     const links = within(nav).getAllByRole("link");
     expect(links.map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
       ["Tổng quan", paths.overview],
-      ["Hẹn giờ", paths.schedule],
       ["Cài đặt", paths.settings],
       ["Hướng dẫn", paths.guide],
     ]);
@@ -36,8 +35,6 @@ describe("MainNav", () => {
 
   it.each([
     [paths.overview, "Tổng quan"],
-    [paths.schedule, "Hẹn giờ"],
-    [paths.bookingSettings, "Cài đặt"],
     [paths.deviceSetup, "Cài đặt"],
     [paths.guide, "Hướng dẫn"],
   ])("marks only one link as current on %s: %s", (path, current) => {

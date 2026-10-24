@@ -24,9 +24,9 @@ function RunningStatus({ running, startAt }: { running: Running; startAt: string
 }
 
 /**
- * One line in the header on whether the next booking can happen: the run going on, else
- * the one thing to do (set up the device, finish its setup, turn the schedule on), else
- * ready for the next start.
+ * One line in the header on whether the next booking can happen, in this order: the run
+ * going on; the device setup to do (with a link to it); no dry run passed yet; the daily
+ * switch off; else ready for the next start. The ticket holds what fixes the last three.
  */
 export function StatusLine({ overview }: { overview: Overview }) {
   const { t } = useTranslation();
@@ -36,24 +36,32 @@ export function StatusLine({ overview }: { overview: Overview }) {
     return <RunningStatus running={running} startAt={schedule.start_at} />;
   }
   let words: string;
-  let link: { to: string; text: string };
   let ready = false;
-  if (setup === null) {
-    words = t("pages.overview.status.noSetup");
-    link = { to: paths.deviceSetup, text: t("pages.overview.status.setupLink") };
-  } else if (setup.left.length > 0) {
-    words = t("pages.overview.status.setupLeft", { count: setup.left.length });
-    link = { to: paths.deviceSetup, text: t("pages.overview.status.setupLink") };
+  if (setup === null || setup.left.length > 0) {
+    return (
+      <p className={styles.status}>
+        <span className={styles.todo}>
+          <span aria-hidden="true">● </span>
+          {setup === null
+            ? t("pages.overview.status.noSetup")
+            : t("pages.overview.status.setupLeft", { count: setup.left.length })}
+        </span>
+        <Link to={paths.deviceSetup} className={styles.link}>
+          {t("pages.overview.status.setupLink")}
+        </Link>
+      </p>
+    );
+  }
+  if (!schedule.dry_run_passed) {
+    words = t("pages.overview.status.noDryRun");
   } else if (!schedule.enabled) {
     words = t("pages.overview.status.scheduleOff");
-    link = { to: paths.schedule, text: t("pages.overview.status.turnOn") };
   } else {
     ready = true;
     words = t("pages.overview.status.ready", {
       time: f.time(schedule.next_start),
       when: f.when(schedule.next_start, localToday()),
     });
-    link = { to: paths.deviceSetup, text: t("pages.overview.status.check") };
   }
   return (
     <p className={styles.status}>
@@ -61,9 +69,6 @@ export function StatusLine({ overview }: { overview: Overview }) {
         <span aria-hidden="true">● </span>
         {words}
       </span>
-      <Link to={link.to} className={styles.link}>
-        {link.text}
-      </Link>
     </p>
   );
 }

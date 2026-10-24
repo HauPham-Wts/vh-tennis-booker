@@ -12,7 +12,6 @@
   "nav": {
     "label": "Main navigation",
     "overview": "Overview",
-    "schedule": "Schedule",
     "settings": "Settings",
     "guide": "Guide"
   },
@@ -29,20 +28,10 @@
       "status": {
         "noSetup": "Device not set up yet",
         "setupLeft": "Device setup: {{count}} left to do",
-        "scheduleOff": "The schedule is off",
-        "ready": "Ready for {{time}} {{when}}",
         "setupLink": "Device setup",
-        "turnOn": "Turn it on",
-        "check": "Check the device"
-      },
-      "next": {
-        "title": "Next booking",
-        "off": "The schedule is off",
-        "when": "{{day}} {{period}} · PC wakes at {{wake}}",
-        "offLine": "Turn on the schedule to book at {{start}} every morning",
-        "playDate": "Play date",
-        "court": "Court",
-        "slots": "Slots"
+        "noDryRun": "No dry run passed yet · press Dry run now",
+        "scheduleOff": "Dry run passed · turn on Book every morning",
+        "ready": "Ready for {{time}} {{when}}"
       },
       "live": {
         "banner": {
@@ -52,15 +41,52 @@
           "setup": "Auto setup in progress",
           "other": "A run is in progress"
         },
-        "locked": "Dry run and auto setup are locked until it ends",
-        "preparing": "Getting ready",
+        "locked": "Dry run and auto setup are locked until it ends"
+      }
+    },
+    "ticket": {
+      "title": "Next booking",
+      "auto": "Book every morning",
+      "on": "ON",
+      "off": "OFF",
+      "when": "{{when}} · {{day}}",
+      "wake": "The PC wakes at {{wake}}",
+      "offTitle": "Off",
+      "offLine": "No booking {{when}}.",
+      "day": "Play day",
+      "dayHint": {
+        "0": "same day",
+        "1": "1 day ahead",
+        "2": "2 days ahead"
+      },
+      "court": "Court",
+      "slots": "Slots · booked in the order pressed, {{max}} at most",
+      "slot": "{{slot}}, turn {{order}}",
+      "pressToSave": "Saved on each press",
+      "saving": "Saving…",
+      "saved": "✓ Saved",
+      "full": "{{max}} slots already: remove one first",
+      "oneSlot": "Keep at least one slot",
+      "dryRun": {
+        "button": "Dry run now",
+        "starting": "Starting…",
+        "none": "No dry run yet.",
+        "last": "Last dry run: {{when}} at {{time}}",
+        "passed": "passed",
+        "failed": "did not pass: {{reason}}",
+        "stopped": "stopped halfway",
+        "quiet": "No dry run from {{from}} to {{to}}, so the booking is not disturbed."
+      },
+      "live": {
         "booking": "Booking for {{day}} · court {{court}}",
-        "running": "running",
-        "waiting": "{{slot}} · waiting for its turn",
-        "progress": "Progress",
+        "dryRun": "Dry run for {{day}} · court {{court}}",
+        "preparing": "Getting ready",
+        "round": "ROUND {{round}}/{{rounds}}",
         "booked": "slots booked",
         "through": "slots through",
-        "note": "You can close this window. The booking goes on, and its result will be in History when you open the app again."
+        "running": "running",
+        "waiting": "{{slot}} · waiting for its turn",
+        "locked": "Day, court, slots and dry run open again when this ends. You can close this window."
       }
     },
     "schedule": {
@@ -179,7 +205,7 @@
           "text": "Open the app in MuMu and log in with your resident account. Court Booker never reads or stores passwords.",
           "todo": "The last run could not get into the app. Log in again, then do a dry run.",
           "unknown": "Do one dry run to check.",
-          "link": "Open Schedule"
+          "link": "Dry run on the Overview"
         }
       },
       "state": {
@@ -232,15 +258,14 @@
       "start": {
         "title": "Get started in 4 steps",
         "device": "Set up the device",
-        "booking": "Choose the slots and court",
+        "booking": "Choose the day, court and slots",
         "dryRun": "Do a dry run",
-        "schedule": "Turn the schedule on"
+        "schedule": "Turn on Book every morning"
       },
       "screens": {
         "title": "Each screen",
-        "overview": "The line at the top says whether the PC is ready. On the left, the next booking, or the booking live while it goes on. On the right, \"{{history}}\": each booking, which slots were booked, which were not and why; tick \"{{withDry}}\" to see the dry runs too. Press a row to see every step; when something goes wrong, open \"{{technical}}\" to see exactly what happened.",
-        "schedule": "Do a dry run to check, then turn the schedule on so the app books every morning.",
-        "settings": "\"{{booking}}\": the slots, court and day. \"{{device}}\": prepare MuMu, the Vinhomes app and the PC."
+        "overview": "The line at the top says whether the PC is ready. On the left, the \"{{ticket}}\" ticket: turn on \"{{daily}}\", choose the play day, the court and up to two slots (saved on each press), and do a dry run; while a booking goes on, the ticket shows it live. On the right, \"{{history}}\": each booking, which slots were booked, which were not and why; tick \"{{withDry}}\" to see the dry runs too. Press a row to see every step; when something goes wrong, open \"{{technical}}\" to see exactly what happened.",
+        "settings": "\"{{device}}\": prepare MuMu, the Vinhomes app and the PC."
       },
       "trouble": {
         "title": "When something goes wrong",

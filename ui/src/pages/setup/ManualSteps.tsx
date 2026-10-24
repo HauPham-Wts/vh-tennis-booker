@@ -131,7 +131,7 @@ export function ManualSteps({ overview, checks, running, onCheck }: ManualStepsP
                   {step.key === "login" && step.state === "unknown" && (
                     <>
                       {" "}
-                      <Link to={paths.schedule}>{t("pages.deviceSetup.items.login.link")}</Link>
+                      <Link to={paths.overview}>{t("pages.deviceSetup.items.login.link")}</Link>
                     </>
                   )}
                 </p>

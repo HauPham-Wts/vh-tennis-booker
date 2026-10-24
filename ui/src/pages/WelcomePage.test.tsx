@@ -227,7 +227,7 @@ describe("WelcomePage steps 2 to 4", () => {
     renderStep(3);
 
     expect(
-      await screen.findByRole("heading", { level: 1, name: "Chọn khung giờ và sân" }),
+      await screen.findByRole("heading", { level: 1, name: "Chọn ngày, sân và khung giờ" }),
     ).toBeInTheDocument();
     expect(await screen.findByRole("group", { name: "Buổi sáng" })).toBeInTheDocument();
     expect(await nextLink()).toHaveAttribute("href", `${paths.welcome}?step=4`);
@@ -237,7 +237,7 @@ describe("WelcomePage steps 2 to 4", () => {
     renderStep(3);
     await screen.findByRole("group", { name: "Buổi sáng" });
 
-    fireEvent.click(screen.getByRole("button", { name: "07:00–08:00" }));
+    fireEvent.click(screen.getByRole("button", { name: "15:00–16:00, lượt 1" }));
 
     const next = screen.getByRole("button", { name: "Tiếp" });
     expect(next).toBeDisabled();
@@ -251,7 +251,7 @@ describe("WelcomePage steps 2 to 4", () => {
   it("lets the user go on once the slots are saved", async () => {
     renderStep(3);
     await screen.findByRole("group", { name: "Buổi sáng" });
-    fireEvent.click(screen.getByRole("button", { name: "07:00–08:00" }));
+    fireEvent.click(screen.getByRole("button", { name: "15:00–16:00, lượt 1" }));
 
     fireEvent.click(screen.getByRole("button", { name: "Lưu thay đổi" }));
 
@@ -262,7 +262,7 @@ describe("WelcomePage steps 2 to 4", () => {
   it("forgets a draft left behind on another step", async () => {
     renderStep(3);
     await screen.findByRole("group", { name: "Buổi sáng" });
-    fireEvent.click(screen.getByRole("button", { name: "07:00–08:00" }));
+    fireEvent.click(screen.getByRole("button", { name: "15:00–16:00, lượt 1" }));
 
     fireEvent.click(screen.getByRole("link", { name: "4 · Hẹn giờ" }));
 

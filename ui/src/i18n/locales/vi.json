@@ -12,7 +12,6 @@
   "nav": {
     "label": "Điều hướng chính",
     "overview": "Tổng quan",
-    "schedule": "Hẹn giờ",
     "settings": "Cài đặt",
     "guide": "Hướng dẫn"
   },
@@ -29,20 +28,10 @@
       "status": {
         "noSetup": "Chưa thiết lập máy",
         "setupLeft": "Còn {{count}} mục thiết lập máy cần làm",
-        "scheduleOff": "Hẹn giờ đang tắt",
-        "ready": "Mọi thứ đã sẵn sàng cho {{time}} {{when}}",
         "setupLink": "Thiết lập máy",
-        "turnOn": "Bật hẹn giờ",
-        "check": "Kiểm tra máy"
-      },
-      "next": {
-        "title": "Lần đặt tiếp theo",
-        "off": "Hẹn giờ đang tắt",
-        "when": "{{period}} {{day}} · đánh thức máy lúc {{wake}}",
-        "offLine": "Bật hẹn giờ để app tự đặt lúc {{start}} mỗi sáng",
-        "playDate": "Ngày chơi",
-        "court": "Sân",
-        "slots": "Khung giờ"
+        "noDryRun": "Chưa chạy thử đạt · bấm Chạy thử ngay",
+        "scheduleOff": "Chạy thử đạt · bật Tự đặt mỗi sáng",
+        "ready": "Sẵn sàng cho {{time}} {{when}}"
       },
       "live": {
         "banner": {
@@ -52,15 +41,52 @@
           "setup": "Đang thiết lập tự động",
           "other": "Đang có một lần chạy"
         },
-        "locked": "Chạy thử và Thiết lập tự động tạm khóa cho tới khi xong",
-        "preparing": "Đang chuẩn bị",
+        "locked": "Chạy thử và Thiết lập tự động tạm khóa cho tới khi xong"
+      }
+    },
+    "ticket": {
+      "title": "Lần đặt tiếp theo",
+      "auto": "Tự đặt mỗi sáng",
+      "on": "BẬT",
+      "off": "TẮT",
+      "when": "{{when}} · {{day}}",
+      "wake": "Máy tự thức dậy lúc {{wake}}",
+      "offTitle": "Đang tắt",
+      "offLine": "Máy sẽ không tự đặt sân {{when}}.",
+      "day": "Ngày chơi",
+      "dayHint": {
+        "0": "đặt cùng ngày",
+        "1": "đặt trước 1 ngày",
+        "2": "đặt trước 2 ngày"
+      },
+      "court": "Sân",
+      "slots": "Khung giờ · đặt theo thứ tự bấm, tối đa {{max}}",
+      "slot": "{{slot}}, lượt {{order}}",
+      "pressToSave": "Bấm là lưu",
+      "saving": "Đang lưu…",
+      "saved": "✓ Đã lưu",
+      "full": "Đã đủ {{max}} khung: bỏ một khung trước",
+      "oneSlot": "Cần ít nhất một khung giờ",
+      "dryRun": {
+        "button": "Chạy thử ngay",
+        "starting": "Đang bắt đầu…",
+        "none": "Chưa chạy thử lần nào.",
+        "last": "Chạy thử gần nhất: {{when}} lúc {{time}}",
+        "passed": "thành công",
+        "failed": "không qua: {{reason}}",
+        "stopped": "dừng giữa chừng",
+        "quiet": "Không chạy thử từ {{from}} đến {{to}}, để không làm gián đoạn lần đặt sân."
+      },
+      "live": {
         "booking": "Đang đặt cho {{day}} · sân {{court}}",
+        "dryRun": "Đang chạy thử cho {{day}} · sân {{court}}",
+        "preparing": "Đang chuẩn bị",
+        "round": "LƯỢT {{round}}/{{rounds}}",
+        "booked": "khung đã đặt xong",
+        "through": "khung đã qua",
         "running": "đang chạy",
         "waiting": "{{slot}} · chờ tới lượt",
-        "progress": "Tiến độ",
-        "booked": "khung giờ đã đặt xong",
-        "through": "khung giờ đã qua",
-        "note": "Bạn có thể đóng cửa sổ này. Việc đặt sân vẫn tiếp tục và kết quả sẽ có trong Lịch sử khi bạn mở lại app."
+        "locked": "Ngày, sân, khung giờ và chạy thử mở lại khi lần này xong. Bạn có thể đóng cửa sổ này."
       }
     },
     "schedule": {
@@ -179,7 +205,7 @@
           "text": "Mở app trong MuMu và đăng nhập bằng tài khoản cư dân. Court Booker không bao giờ đọc hay lưu mật khẩu.",
           "todo": "Lần chạy gần nhất không vào được app. Đăng nhập lại rồi chạy thử.",
           "unknown": "Chạy thử một lần để kiểm tra.",
-          "link": "Mở Hẹn giờ"
+          "link": "Chạy thử ở Tổng quan"
         }
       },
       "state": {
@@ -232,15 +258,14 @@
       "start": {
         "title": "Bắt đầu trong 4 bước",
         "device": "Thiết lập máy",
-        "booking": "Chọn khung giờ và sân",
+        "booking": "Chọn ngày, sân và khung giờ",
         "dryRun": "Chạy thử",
-        "schedule": "Bật hẹn giờ"
+        "schedule": "Bật Tự đặt mỗi sáng"
       },
       "screens": {
         "title": "Từng màn hình",
-        "overview": "Dòng trên cùng cho biết máy đã sẵn sàng chưa. Bên trái: lần đặt tiếp theo, hoặc tiến độ trực tiếp khi đang đặt sân. Bên phải, \"{{history}}\": mỗi lần đặt, khung nào được, khung nào không và vì sao; tích \"{{withDry}}\" để xem cả chạy thử. Bấm một dòng để xem từng bước; khi có lỗi, mở \"{{technical}}\" để biết chính xác chuyện gì đã xảy ra.",
-        "schedule": "Chạy thử để kiểm tra, rồi bật hẹn giờ để app tự đặt sân mỗi sáng.",
-        "settings": "\"{{booking}}\": khung giờ, sân và ngày. \"{{device}}\": chuẩn bị MuMu, app Vinhomes và máy tính."
+        "overview": "Dòng trên cùng cho biết máy đã sẵn sàng chưa. Bên trái, vé \"{{ticket}}\": bật \"{{daily}}\", chọn ngày chơi, sân và tối đa hai khung giờ (bấm là lưu), và chạy thử; khi đang đặt sân, vé hiện tiến độ trực tiếp. Bên phải, \"{{history}}\": mỗi lần đặt, khung nào được, khung nào không và vì sao; tích \"{{withDry}}\" để xem cả chạy thử. Bấm một dòng để xem từng bước; khi có lỗi, mở \"{{technical}}\" để biết chính xác chuyện gì đã xảy ra.",
+        "settings": "\"{{device}}\": chuẩn bị MuMu, app Vinhomes và máy tính."
       },
       "trouble": {
         "title": "Khi có sự cố",

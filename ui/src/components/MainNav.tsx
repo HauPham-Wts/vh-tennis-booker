@@ -3,10 +3,9 @@ import { NavLink } from "react-router";
 import { paths } from "../paths";
 import styles from "./MainNav.module.css";
 
-/** The screens in the navigation; the History is part of the overview. */
+/** The screens in the navigation; the schedule, the booking and the History are on the overview. */
 const ITEMS = [
   { to: paths.overview, label: "nav.overview" },
-  { to: paths.schedule, label: "nav.schedule" },
   { to: paths.settings, label: "nav.settings" },
   { to: paths.guide, label: "nav.guide" },
 ] as const;
