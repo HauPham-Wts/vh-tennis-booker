@@ -123,11 +123,15 @@ _MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
 
 
 def format_summary(
-    results: Sequence[RoundResult], error: str | None = None, dry_run: bool = False
+    results: Sequence[RoundResult],
+    error: str | None = None,
+    dry_run: bool = False,
+    instance: int | None = None,
 ) -> str:
-    """Return a short plain-text summary of the run."""
+    """Return a short plain-text summary of the run; ``instance`` names its MuMu instance."""
     booked = sum(result.ok for result in results)
-    title = f"court-booker: {booked}/{len(results)} ok"
+    name = "court-booker" if instance is None else f"court-booker (MuMu {instance})"
+    title = f"{name}: {booked}/{len(results)} ok"
     if dry_run:
         title += " (dry run)"
     lines = [title]
@@ -185,12 +189,14 @@ def format_notification(
     target: date,
     court: str,
     language: str = DEFAULT_LANGUAGE,
+    instance: int | None = None,
 ) -> tuple[str, str]:
     """Return the title and the text of the notification for a finished run.
 
     The text has one line per round: the slot and the court the app booked (``court``
     if the round did not read it), or why it failed. A run that failed before its rounds
-    has one line for its error instead.
+    has one line for its error instead. The title names the MuMu ``instance`` if given, as
+    each instance of a run with several reports on its own.
     """
     if language not in TEXTS:  # the config is not validated when loaded
         language = DEFAULT_LANGUAGE
@@ -210,6 +216,8 @@ def format_notification(
     title = texts["title"].format(day=day, outcome=outcome)
     if dry_run:
         title += texts["dry_run"]
+    if instance is not None:
+        title = f"MuMu {instance} · {title}"
     lines = [
         f"✅ {result.slot} · {court_name(result.court or court)}"
         if result.ok

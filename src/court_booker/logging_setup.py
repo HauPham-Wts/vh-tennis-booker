@@ -48,10 +48,10 @@ def configure_logging(verbose: bool = False) -> None:
     logger.addHandler(handler)
 
 
-def add_file_handler(log_dir: Path, today: date | None = None) -> Path:
-    """Also append full debug logs to ``log_dir/court-booker-YYYY-MM-DD.log``."""
+def add_file_handler(log_dir: Path, today: date | None = None, suffix: str = "") -> Path:
+    """Also append full debug logs to ``log_dir/court-booker-YYYY-MM-DD<suffix>.log``."""
     log_dir.mkdir(parents=True, exist_ok=True)
-    path = log_dir / f"court-booker-{(today or date.today()).isoformat()}.log"
+    path = log_dir / f"court-booker-{(today or date.today()).isoformat()}{suffix}.log"
     handler = logging.FileHandler(path, encoding="utf-8")
     handler.setLevel(logging.DEBUG)
     handler.addFilter(_ElapsedFilter())

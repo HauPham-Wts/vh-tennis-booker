@@ -42,6 +42,10 @@ def test_format_summary_with_run_error():
     assert text.splitlines() == ["court-booker: 0/0 ok (dry run)", "Error: MuMu did not start"]
 
 
+def test_format_summary_names_the_instance():
+    assert format_summary(RESULTS, instance=1).splitlines()[0] == "court-booker (MuMu 1): 1/2 ok"
+
+
 def test_send_telegram_posts_chat_and_text():
     sent = []
     assert send_telegram("123:abc", "42", "hello", post=lambda url, data: sent.append((url, data)))
@@ -100,6 +104,14 @@ def test_notification_of_a_dry_run_says_so():
 
     assert notification(passed, dry_run=True)[0] == "Đặt sân 26/10: 1/1 thành công (chạy thử)"
     assert notification(passed, dry_run=True, language="en")[0].endswith(": 1/1 booked (dry run)")
+
+
+def test_each_instance_of_a_run_with_several_names_itself():
+    title, _ = format_notification(
+        RESULTS, None, dry_run=True, interrupted=False, target=TARGET, court=COURT, instance=1
+    )
+
+    assert title == "MuMu 1 · Đặt sân 26/10: 1/2 thành công (chạy thử)"
 
 
 def test_a_run_that_failed_before_its_rounds_gives_its_reason():

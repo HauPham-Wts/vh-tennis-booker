@@ -21,9 +21,16 @@ from court_booker.events import EventKind
 
 router = APIRouter(prefix="/api", tags=["settings"])
 
-HIDDEN = ("telegram_token", "telegram_chat_id", "windows_notification", "notification_language")
+HIDDEN = (
+    "telegram_token",
+    "telegram_chat_id",
+    "windows_notification",
+    "notification_language",
+    "instances",
+)
 """Config keys these routes neither show nor change: the Telegram summary is set up by hand,
-and the Windows notification is not a booking setting."""
+the Windows notification is not a booking setting, and other MuMu instances are set up by
+hand for now."""
 
 
 class LabelSettings(BaseModel):

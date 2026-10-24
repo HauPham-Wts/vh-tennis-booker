@@ -5,14 +5,16 @@ from __future__ import annotations
 import argparse
 import logging
 import os
+import subprocess
 import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, NoReturn
 
 from court_booker import __version__, device_setup, schedule
+from court_booker.adb import AUTO
 from court_booker.clock import NtpClock, ntp_offset, resolve_start
-from court_booker.config import Config, load_config
+from court_booker.config import Config, instance_config, load_config
 from court_booker.device_setup import Check, Status, Tools, find_tools, run_checks
 from court_booker.emulator import MuMu
 from court_booker.errors import (
@@ -70,6 +72,13 @@ def build_parser() -> argparse.ArgumentParser:
     timing.add_argument(
         "--scheduled", action="store_true", help="like --at, using start_at from the config"
     )
+    parser.add_argument(
+        "--instance",
+        type=int,
+        metavar="N",
+        help="book with the [[instances]] entry of MuMu instance N only; a run starts one "
+        "such process for each entry",
+    )
     parser.add_argument("-v", "--verbose", action="store_true", help="show debug output")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     return parser
@@ -83,6 +92,80 @@ def apply_overrides(config: Config, args: argparse.Namespace) -> Config:
     if args.device:
         config.device = args.device
     return config
+
+
+def select_instance(config: Config, index: int) -> Config:
+    """Return the settings of the ``[[instances]]`` entry of MuMu instance ``index``."""
+    for table in config.instances:
+        if table.get("mumu_index") == index:
+            return instance_config(config, table)
+    raise RequestError(f"The config has no [[instances]] entry with mumu_index = {index}")
+
+
+def instance_argv(args: argparse.Namespace, index: int) -> list[str]:
+    """Return the arguments of the process that books with MuMu instance ``index``.
+
+    That process books with the instance's own settings, so ``--days``, ``--slots`` and
+    ``--device`` stay with this one.
+    """
+    argv = ["--config", str(Path(args.config).resolve()), "--instance", str(index)]
+    argv += ["--driver", args.driver]
+    if args.dry_run:
+        argv.append("--dry-run")
+    if args.at:
+        argv += ["--at", args.at]
+    if args.scheduled:
+        argv.append("--scheduled")
+    if args.verbose:
+        argv.append("--verbose")
+    return argv
+
+
+def start_instances(
+    args: argparse.Namespace, config: Config
+) -> list[tuple[int, subprocess.Popen[bytes]]]:
+    """Start a process for each ``[[instances]]`` entry and return them with their index.
+
+    Each books like this process, with its own account and settings, run lock, log file,
+    history entry and notification, so an instance that fails or freezes holds up no other.
+    Its console output is dropped: its log file has it all.
+    """
+    if not config.instances:
+        return []
+    if not config.mumu_manager or config.device != AUTO:
+        logger.warning(
+            'Other MuMu instances need mumu_manager and device = "auto"; booking with '
+            "instance %d alone",
+            config.mumu_index,
+        )
+        return []
+    started = []
+    taken = {config.mumu_index}
+    for table in config.instances:
+        index = table.get("mumu_index")
+        if not isinstance(index, int) or index in taken:
+            logger.warning("Skipping the [[instances]] entry with mumu_index = %r", index)
+            continue
+        taken.add(index)
+        command = [sys.executable, "-m", "court_booker", *instance_argv(args, index)]
+        try:
+            process = subprocess.Popen(command, stdout=subprocess.DEVNULL)
+        except OSError as exc:
+            logger.warning("Could not start MuMu instance %d's process: %s", index, exc)
+            continue
+        logger.info("MuMu instance %d books in process %d", index, process.pid)
+        started.append((index, process))
+    return started
+
+
+def wait_for_instances(processes: list[tuple[int, subprocess.Popen[bytes]]]) -> None:
+    """Wait for the other instances' processes, so a scheduled task ends after them too."""
+    for index, process in processes:
+        try:
+            code = process.wait()
+        except KeyboardInterrupt:  # the Ctrl+C reached them as well
+            return
+        logger.info("MuMu instance %d finished with exit code %d", index, code)
 
 
 def print_summary(results: list[RoundResult]) -> None:
@@ -164,6 +247,7 @@ def notify_windows(
     dry_run: bool,
     interrupted: bool,
     target: date,
+    instance: int | None = None,
 ) -> None:
     """Show the outcome as a Windows notification if it is on; a failure only logs."""
     if not config.windows_notification:
@@ -177,6 +261,7 @@ def notify_windows(
             target=target,
             court=config.court,
             language=config.notification_language,
+            instance=instance,
         )
         send_windows(title, body)
     except Exception:  # reporting never costs a booking
@@ -271,12 +356,16 @@ def main(argv: list[str] | None = None) -> int:
     error: str | None = None
     frozen = False
     start: datetime | None = None
+    instances: list[tuple[int, subprocess.Popen[bytes]]] = []
     try:
         config = apply_overrides(load_config(args.config), args)
+        if args.instance is not None:
+            config = select_instance(config, args.instance)
         if config.log_dir:
             # Relative to the config file, since a scheduled task may start elsewhere.
             log_dir = Path(args.config).resolve().parent / config.log_dir
-            logger.debug("Logging to %s", add_file_handler(log_dir))
+            suffix = "" if args.instance is None else f"-mumu{args.instance}"
+            logger.debug("Logging to %s", add_file_handler(log_dir, suffix=suffix))
         # Opened after the log file, so a database that cannot be opened is in the log.
         history = open_history(data_folder().database)
         if history is not None:
@@ -296,17 +385,24 @@ def main(argv: list[str] | None = None) -> int:
             slots=list(config.slots),
             start=None if start is None else start.isoformat(timespec="seconds"),
             version=__version__,
+            device=config.mumu_index,
         )
         started = True
-        lock = RunLock(data_folder().lock, report)
+        folder = data_folder()
+        lock = RunLock(
+            folder.lock if args.instance is None else folder.instance_lock(args.instance), report
+        )
         with keep_awake():
             # Inside keep_awake: a PC woken for the scheduled run must not sleep while it waits.
             if args.scheduled and start is not None:
                 lock.acquire_for_schedule(trigger, start - TAKE_OVER_AHEAD)
             else:
                 lock.acquire(trigger)
-            if history is not None and lock.held is not None:
-                history.interrupt_stale_runs()
+            if args.instance is None:
+                if history is not None and lock.held is not None:
+                    history.interrupt_stale_runs()
+                # Only now: the cleanup above would take the instances' runs for stale ones.
+                instances = start_instances(args, config)
             clock = NtpClock(config.ntp_server, ntp_offset)
             if start is not None:
                 clock.measure()
@@ -345,11 +441,12 @@ def main(argv: list[str] | None = None) -> int:
             total=len(results),
             error=error,
         )
+    # Each instance of a run with several reports on its own, under its number.
+    shown = config or Config()  # also after a config that did not load: the defaults
+    instance = shown.mumu_index if args.instance is not None or instances else None
     if config is not None and config.telegram_token and config.telegram_chat_id:
-        text = format_summary(results, error, dry_run=args.dry_run)
+        text = format_summary(results, error, dry_run=args.dry_run, instance=instance)
         send_telegram(config.telegram_token, config.telegram_chat_id, text)
-    # Also after a config that did not load, with the default settings.
-    shown = config or Config()
     notify_windows(
         shown,
         results,
@@ -357,6 +454,7 @@ def main(argv: list[str] | None = None) -> int:
         dry_run=args.dry_run,
         interrupted=code == EXIT_INTERRUPTED,
         target=(start or datetime.now()).date() + timedelta(days=shown.days_ahead),
+        instance=instance,
     )
     # A real run closes MuMu once its rounds ran; the next run starts it again. MuMu stays
     # open after a dry run, Ctrl+C or an error before the rounds, for whoever is at the PC,
@@ -376,4 +474,5 @@ def main(argv: list[str] | None = None) -> int:
         close_history(history)
     if frozen:
         end_process(code)
+    wait_for_instances(instances)
     return code

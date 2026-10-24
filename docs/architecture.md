@@ -16,6 +16,17 @@ Details live in the docstrings; this page says where things are and what must st
   every path it logs the summary, records the run, sends the optional Telegram summary and the
   Windows notification (`notify.py`; a failure only logs a warning). After a real run with at
   least one round, `close_emulator` shuts MuMu down.
+- Other MuMu instances (`[[instances]]` in the config, each with its own account and its own
+  `mumu_index`, `days_ahead`, `slots`, `court`, `venue_keyword`; `config.instance_config`):
+  the run's process, once it holds the lock and has cleared stale runs, starts one process per
+  entry (`start_instances`: the same command with `--instance N`, without `--days`, `--slots`,
+  `--device`; console output dropped) and waits for them at the end. Each such process is a
+  whole run of its own with its instance's settings: its lock `run-mumu<N>.lock`, its log file
+  `court-booker-<date>-mumu<N>.log`, its history run, its notification titled "MuMu N · …"
+  (the first instance's too, as "MuMu 0"); it never clears stale runs. So an instance that
+  fails or freezes holds up no other. Several instances need `mumu_manager` and
+  `device = "auto"`; otherwise, or for an entry repeating an instance, the run books with its
+  own instance alone (warning). Each run's `run_started` names its instance as `device`.
 - `lock.py` + `processes.py`: the run lock `run.lock` in the data folder (pid and process start
   time, so a reused pid is never taken for the holder). A scheduled run takes over a holder
   2 minutes before the start; a stale lock is cleared. The quiet time refuses a dry run or auto
@@ -112,7 +123,7 @@ values 422 `invalid_request`.
 | `GET /api/status` | The Overview in one call: running run, schedule, last run, setup; never calls MuMu |
 | `GET /api/runs`, `/api/runs/{id}`, `/api/runs/months` | Runs newest first (filters, paging by id or by days), one run with steps and log lines, months of real bookings |
 | `GET /api/events` | Activity steps newest first |
-| `GET`/`PUT /api/settings` | Booking settings without the hidden keys (`HIDDEN`); `PUT` validates, saves only on a change |
+| `GET`/`PUT /api/settings` | Booking settings without the hidden keys (`HIDDEN`: Telegram, the notification, `instances`); `PUT` validates, saves only on a change |
 | `GET`/`PUT /api/notifications`, `POST .../test` | The Windows notification's switch and language; a sample notification |
 | `GET /api/setup`, `POST /api/setup/auto` | Device checks; auto setup (quiet time and lock respected) |
 | `GET`/`PUT /api/schedule` | The task: state, times; switching on needs a passed dry run. Never switch it on from a development backend: the task would run the development Python |

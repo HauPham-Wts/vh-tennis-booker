@@ -9,6 +9,7 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 
@@ -18,6 +19,7 @@ from court_booker.cli import close_emulator
 from court_booker.config import Config
 from court_booker.device_setup import Check, Status
 from court_booker.errors import AppNotReadyError, DeviceNotRespondingError, EmulatorError
+from court_booker.history import History as HistoryStore
 from court_booker.history import HistoryHandler
 from court_booker.lock import Holder
 from court_booker.runner import RoundResult
@@ -25,7 +27,7 @@ from court_booker.runner import RoundResult
 
 def fake_run(outcomes):
     def run_booking(device, config, *, results, **kwargs):
-        run_booking.kwargs = kwargs
+        run_booking.config, run_booking.kwargs = config, kwargs
         for slot, ok in outcomes:
             if ok is KeyboardInterrupt:
                 raise KeyboardInterrupt
@@ -406,6 +408,126 @@ def test_close_emulator_shuts_the_configured_instance_down(monkeypatch):
     close_emulator(Config(mumu_manager="C:/MuMu/MuMuManager.exe", mumu_index=1))
 
     assert shut == [(Path("C:/MuMu/MuMuManager.exe"), 1)]
+
+
+INSTANCES = """slots = ["18:00 - 19:00", "19:00 - 20:00"]
+
+[[instances]]
+mumu_index = 1
+slots = ["20:00 - 21:00"]
+court = "S9 - Sân tennis"
+"""
+
+
+class FakeProcess:
+    """Stand in for ``subprocess.Popen``; ``started`` lists the commands and what was true."""
+
+    started: ClassVar[list] = []
+
+    def __init__(self, command, **kwargs):
+        self.pid = 4242
+        self.command, self.kwargs = command, kwargs
+        FakeProcess.started.append(self)
+
+    def wait(self):
+        self.waited = True
+        return 0
+
+
+@pytest.fixture
+def spawned(monkeypatch):
+    FakeProcess.started = []
+    monkeypatch.setattr(cli.subprocess, "Popen", FakeProcess)
+    return FakeProcess.started
+
+
+def test_another_instance_books_on_its_own(
+    monkeypatch, tmp_path, data_home, spawned, windows_notifications
+):
+    path = tmp_path / "config.toml"
+    path.write_text(INSTANCES, encoding="utf-8")
+    cleaned = []
+    monkeypatch.setattr(HistoryStore, "interrupt_stale_runs", lambda self: cleaned.append(self))
+    locks = []
+    run = fake_run([("20:00 - 21:00", True)])
+
+    def run_booking(device, config, *, results, **kwargs):
+        locks.extend(sorted(item.name for item in data_home.glob("*.lock")))
+        return run(device, config, results=results, **kwargs)
+
+    monkeypatch.setattr(cli, "connect_device", fake_connect)
+    monkeypatch.setattr(cli, "run_booking", run_booking)
+    monkeypatch.setattr(cli, "datetime", FixedDatetime)
+
+    assert cli.main(["--config", str(path), "--instance", "1"]) == cli.EXIT_OK
+
+    assert (run.config.mumu_index, run.config.slots) == (1, ["20:00 - 21:00"])
+    assert run.config.court == "S9 - Sân tennis"
+    assert locks == ["run-mumu1.lock"]  # beside the first instance's run.lock
+    assert next((tmp_path / "logs").glob("court-booker-*-mumu1.log")).exists()
+    assert windows_notifications[0][0].startswith("MuMu 1 · Đặt sân 10/10: 1/1")
+    # The first instance's process clears stale runs and starts the others, never this one.
+    assert cleaned == [] and spawned == []
+
+
+def test_an_instance_missing_from_the_config_exits_2(monkeypatch, tmp_path, spawned):
+    path = tmp_path / "config.toml"
+    path.write_text(INSTANCES, encoding="utf-8")
+
+    assert run_cli(monkeypatch, tmp_path, args=["--config", str(path), "--instance", "3"]) == 2
+
+
+def test_a_run_starts_a_process_for_each_other_instance(
+    monkeypatch, tmp_path, data_home, spawned, windows_notifications
+):
+    path = tmp_path / "config.toml"
+    path.write_text(INSTANCES, encoding="utf-8")
+    steps = []
+    monkeypatch.setattr(HistoryStore, "interrupt_stale_runs", lambda self: steps.append("clean"))
+    real_process = FakeProcess.__init__
+
+    def start(self, command, **kwargs):
+        steps.append(("start", (data_home / "run.lock").exists()))
+        real_process(self, command, **kwargs)
+
+    monkeypatch.setattr(FakeProcess, "__init__", start)
+    args = ["--config", str(path), "--dry-run", "--at", "05:50", "--slots", "07:00 - 08:00"]
+
+    assert run_cli(monkeypatch, tmp_path, [("07:00 - 08:00", True)], args=args) == cli.EXIT_OK
+
+    (process,) = spawned
+    assert process.command == [
+        sys.executable,
+        "-m",
+        "court_booker",
+        *["--config", str(path.resolve()), "--instance", "1", "--driver", "auto"],
+        *["--dry-run", "--at", "05:50"],  # its own slots, not the ones given here
+    ]
+    assert process.kwargs == {"stdout": subprocess.DEVNULL}
+    assert process.waited
+    assert steps == ["clean", ("start", True)]  # with the run lock held, after the cleanup
+    assert windows_notifications[0][0].startswith("MuMu 0 · ")
+    assert "MuMu instance 1 books in process 4242" in read_log(tmp_path)
+
+
+@pytest.mark.parametrize(
+    ("text", "args", "logged"),
+    [
+        (INSTANCES, ["--device", "127.0.0.1:16384"], 'need mumu_manager and device = "auto"'),
+        ("[[instances]]\nmumu_index = 0\n", [], "Skipping the [[instances]] entry with mumu_index"),
+    ],
+)
+def test_an_instance_that_cannot_book_side_by_side_is_skipped(
+    monkeypatch, tmp_path, spawned, windows_notifications, text, args, logged
+):
+    path = tmp_path / "config.toml"
+    path.write_text(text, encoding="utf-8")
+
+    run_cli(monkeypatch, tmp_path, [("18:00 - 19:00", True)], args=["--config", str(path), *args])
+
+    assert spawned == []
+    assert logged in read_log(tmp_path)
+    assert not windows_notifications[0][0].startswith("MuMu")  # one instance, as before
 
 
 def test_a_failed_close_only_warns(monkeypatch, tmp_path):
