@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-24
+
 ### Changed
 - The Overview holds the History in a panel beside the next booking; the History and
   Activity screens are gone (their addresses lead to the Overview, and `?run=` still opens
