@@ -7,23 +7,20 @@ import { reply, requestsTo } from "../test/backend";
 import { step } from "../test/liveSocket";
 import { overview } from "../test/overview";
 import { runSummary } from "../test/runs";
-
-/** The booking settings, as far as the home screen reads them. */
-const SETTINGS = { court: "S6 - Sân tennis", slots: ["15:00 - 16:00", "16:00 - 17:00"] };
+import { settings } from "../test/settings";
 
 function renderOverview(status: Overview) {
   return renderApp(paths.overview, {
     "GET /api/status": reply(status),
-    "GET /api/settings": reply(SETTINGS),
+    "GET /api/settings": reply(settings()),
     "GET /api/runs": reply([]),
   });
 }
 
-/** The link of the status line in the header. */
+/** The status line in the header. */
 async function statusLine() {
-  // The navigation's links come first; the status line's is the last link of the header.
-  await within(screen.getByRole("banner")).findByText(/●/);
-  return within(screen.getByRole("banner")).getAllByRole("link").at(-1) as HTMLElement;
+  const dot = await within(screen.getByRole("banner")).findByText(/●/);
+  return dot.closest("p") as HTMLElement;
 }
 
 beforeEach(() => {
@@ -40,74 +37,49 @@ describe("HomePage status line", () => {
   it("says everything is ready for the next start", async () => {
     renderOverview(overview());
 
-    const link = await statusLine();
-    expect(link.parentElement).toHaveTextContent("Mọi thứ đã sẵn sàng cho 06:00 sáng mai");
-    expect(link).toHaveTextContent("Kiểm tra máy");
-    expect(link).toHaveAttribute("href", paths.deviceSetup);
+    const line = await statusLine();
+    expect(line).toHaveTextContent("Sẵn sàng cho 06:00 sáng mai");
+    expect(within(line).queryByRole("link")).not.toBeInTheDocument();
   });
 
   it("asks to set up the device when auto setup never ran", async () => {
     renderOverview(overview({ setup: null }));
 
-    const link = await statusLine();
-    expect(link.parentElement).toHaveTextContent("Chưa thiết lập máy");
-    expect(link).toHaveTextContent("Thiết lập máy");
-  });
-
-  it("counts the setup items left", async () => {
-    renderOverview(
-      overview({
-        setup: { checked_at: "2026-10-14T21:00:00.000", left: ["app_installed", "mumu_screen"] },
-      }),
-    );
-
-    const link = await statusLine();
-    expect(link.parentElement).toHaveTextContent("Còn 2 mục thiết lập máy cần làm");
-    expect(link).toHaveAttribute("href", paths.deviceSetup);
-  });
-
-  it("asks to turn the schedule on", async () => {
-    const status = overview();
-    renderOverview({ ...status, schedule: { ...status.schedule, enabled: false } });
-
-    const link = await statusLine();
-    expect(link.parentElement).toHaveTextContent("Hẹn giờ đang tắt");
-    expect(link).toHaveTextContent("Bật hẹn giờ");
-    expect(link).toHaveAttribute("href", paths.schedule);
-  });
-});
-
-describe("HomePage next booking", () => {
-  it("shows the next start, when the PC wakes and what it will book", async () => {
-    renderOverview(overview());
-
-    const ticket = await screen.findByRole("region", { name: "Lần đặt tiếp theo" });
-    expect(within(ticket).getByText("06:00")).toBeInTheDocument();
-    expect(
-      within(ticket).getByText("sáng Thứ Sáu 16/10 · đánh thức máy lúc 05:50"),
-    ).toBeInTheDocument();
-    const facts = await within(ticket).findAllByRole("definition");
-    expect(facts.map((fact) => fact.textContent)).toEqual([
-      "Chủ Nhật 18/10",
-      "S6",
-      "15:00–16:00",
-      "16:00–17:00",
-    ]);
-  });
-
-  it("still says what would be booked with the schedule off, and how to turn it on", async () => {
-    const status = overview();
-    renderOverview({ ...status, schedule: { ...status.schedule, enabled: false } });
-
-    const ticket = await screen.findByRole("region", { name: "Hẹn giờ đang tắt" });
-    expect(
-      within(ticket).getByText(/Bật hẹn giờ để app tự đặt lúc 06:00 mỗi sáng/),
-    ).toBeInTheDocument();
-    expect(within(ticket).getByRole("link", { name: "Bật hẹn giờ" })).toHaveAttribute(
+    const line = await statusLine();
+    expect(line).toHaveTextContent("Chưa thiết lập máy");
+    expect(within(line).getByRole("link", { name: "Thiết lập máy" })).toHaveAttribute(
       "href",
-      paths.schedule,
+      paths.deviceSetup,
     );
-    expect(await within(ticket).findByText("Chủ Nhật 18/10")).toBeInTheDocument();
+  });
+
+  it("counts the setup items left before anything else", async () => {
+    const status = overview({
+      setup: { checked_at: "2026-10-14T21:00:00.000", left: ["app_installed", "mumu_screen"] },
+    });
+    renderOverview({
+      ...status,
+      schedule: { ...status.schedule, enabled: false, dry_run_passed: false },
+    });
+
+    expect(await statusLine()).toHaveTextContent("Còn 2 mục thiết lập máy cần làm");
+  });
+
+  it("asks for a dry run before the daily switch", async () => {
+    const status = overview();
+    renderOverview({
+      ...status,
+      schedule: { ...status.schedule, enabled: true, dry_run_passed: false },
+    });
+
+    expect(await statusLine()).toHaveTextContent("Chưa chạy thử đạt · bấm Chạy thử ngay");
+  });
+
+  it("asks to turn the daily booking on once a dry run passed", async () => {
+    const status = overview();
+    renderOverview({ ...status, schedule: { ...status.schedule, enabled: false } });
+
+    expect(await statusLine()).toHaveTextContent("Chạy thử đạt · bật Tự đặt mỗi sáng");
   });
 });
 
@@ -117,22 +89,18 @@ describe("HomePage while a run goes on", () => {
     ["dry_run", "Đang chạy thử"],
     ["manual", "Đang đặt sân (chạy thủ công)"],
     ["setup", "Đang thiết lập tự động"],
-  ])("names a %s run in the header and says what waits for it", async (trigger, words) => {
+  ])("names a %s run in the header", async (trigger, words) => {
     renderOverview(overview({ running: { trigger, pid: 4242, since: "05:50:02" } }));
 
     const header = screen.getByRole("banner");
     expect(await within(header).findByRole("status")).toHaveTextContent(words);
-    expect(
-      screen.getByText("Chạy thử và Thiết lập tự động tạm khóa cho tới khi xong"),
-    ).toBeInTheDocument();
   });
 
-  it("says nothing is locked while nothing runs", async () => {
+  it("shows no run while nothing runs", async () => {
     renderOverview(overview());
 
     await screen.findByRole("region", { name: "Lần đặt tiếp theo" });
     expect(within(screen.getByRole("banner")).queryByRole("status")).not.toBeInTheDocument();
-    expect(screen.queryByText(/tạm khóa/)).not.toBeInTheDocument();
   });
 });
 
@@ -186,12 +154,14 @@ describe("HomePage live run", () => {
       name: "Đang đặt cho Thứ Bảy 17/10 · sân S6",
     });
     expect(within(live).getByText("15:00–16:00")).toBeInTheDocument();
+    expect(within(live).getByText("LƯỢT 1/2")).toBeInTheDocument();
     const newest = within(live).getByRole("listitem", { current: "step" });
     expect(newest).toHaveTextContent("Lượt 1/2: 15:00–16:00đang chạy");
     expect(within(live).getByText("16:00–17:00 · chờ tới lượt")).toBeInTheDocument();
-    expect(within(live).getByText("0/2")).toBeInTheDocument();
-    expect(within(live).getByText("khung giờ đã đặt xong")).toBeInTheDocument();
-    expect(screen.getByText(/Bạn có thể đóng cửa sổ này/)).toBeInTheDocument();
+    expect(within(live).getByText("0/2").parentElement).toHaveTextContent("0/2 khung đã đặt xong");
+    expect(
+      within(live).getByText(/Ngày, sân, khung giờ và chạy thử mở lại khi lần này xong/),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Lần đặt tiếp theo" })).not.toBeInTheDocument();
   });
 
@@ -271,11 +241,35 @@ describe("HomePage live run", () => {
     expect(await screen.findByRole("region", { name: "Đang chuẩn bị" })).toBeInTheDocument();
   });
 
-  it("keeps the next booking in view during auto setup", async () => {
+  it("names a dry run as such", async () => {
+    const dry = STEPS.map((item, index) =>
+      index === 0 ? { ...item, data: { trigger: "dry_run", slots: SLOTS, dry_run: true } } : item,
+    );
+    renderApp(paths.overview, {
+      "GET /api/status": reply(
+        overview({
+          running: { trigger: "dry_run", pid: 4242, since: "2026-10-15T05:50:01.900" },
+          last_run: { ...RUNNING, dry_run: true, trigger: "dry_run" },
+        }),
+      ),
+      "GET /api/runs/30": reply({ ...RUNNING, steps: dry, log_lines: [] }),
+    });
+
+    const live = await screen.findByRole("region", {
+      name: "Đang chạy thử cho Thứ Bảy 17/10 · sân S6",
+    });
+    expect(within(live).getByText("0/2").parentElement).toHaveTextContent("0/2 khung đã qua");
+  });
+
+  it("keeps the next booking in view during auto setup, its dry run locked", async () => {
     renderOverview(overview({ running: { trigger: "setup", pid: 4242, since: "21:00:00" } }));
 
     expect(await screen.findByText("Đang thiết lập tự động")).toBeInTheDocument();
-    expect(await screen.findByRole("region", { name: "Lần đặt tiếp theo" })).toBeInTheDocument();
+    const ticket = await screen.findByRole("region", { name: "Lần đặt tiếp theo" });
+    expect(
+      within(ticket).getByText("Chạy thử và Thiết lập tự động tạm khóa cho tới khi xong"),
+    ).toBeInTheDocument();
+    expect(within(ticket).getByRole("button", { name: "Chạy thử ngay" })).toBeDisabled();
   });
 });
 
@@ -315,7 +309,7 @@ describe("HomePage on an app not used yet", () => {
       schedule: { ...status.schedule, dry_run_passed: true },
     });
 
-    expect(await statusLine()).toHaveTextContent("Bật hẹn giờ");
+    expect(await statusLine()).toHaveTextContent("Chạy thử đạt · bật Tự đặt mỗi sáng");
     expect(router.state.location.pathname).toBe(paths.overview);
   });
 

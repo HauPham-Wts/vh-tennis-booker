@@ -17,6 +17,15 @@ uses [Semantic Versioning](https://semver.org/).
 - The status line moved to the header, on every screen; while a run goes on it names the
   run in place of the banner over the Overview. The live run no longer links to the
   activity log.
+- The next booking's ticket holds the booking settings: the "Tự đặt mỗi sáng" switch, the
+  play day (three buttons named by their dates, "Thứ Ba 27/10 · đặt trước 2 ngày"), the
+  court and the slots, each press saved at once (no Save or Cancel), and the dry run with
+  its last result. The Schedule screen and the Booking tab of Settings are gone (their
+  addresses lead to the Overview). At most two slots can be chosen, as the app allows; a
+  third press says so. During a booking or a dry run the ticket shows the slot being
+  booked, the round, the progress and every step, the choices locked until it ends.
+- The status line asks for a dry run, then for the daily switch, before it says "Sẵn sàng
+  cho 06:00 sáng mai"; a passed dry run does not turn the switch on by itself.
 
 ## [0.11.0] - 2026-10-24
 

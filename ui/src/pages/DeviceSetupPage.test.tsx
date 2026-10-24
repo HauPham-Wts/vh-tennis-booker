@@ -87,15 +87,15 @@ describe("DeviceSetupPage manual steps", () => {
     expect(login).toHaveTextContent("Lần chạy gần nhất không vào được app.");
   });
 
-  it("sends a PC without a passed dry run to the schedule", async () => {
+  it("sends a PC without a passed dry run to the overview's dry run", async () => {
     const status = overview();
     renderSetup({ ...status, schedule: { ...status.schedule, dry_run_passed: false } });
 
     const login = await step("Đăng nhập app Vinhomes");
     expect(within(login).getByText("CHƯA RÕ")).toBeInTheDocument();
-    expect(within(login).getByRole("link", { name: "Mở Hẹn giờ" })).toHaveAttribute(
+    expect(within(login).getByRole("link", { name: "Chạy thử ở Tổng quan" })).toHaveAttribute(
       "href",
-      paths.schedule,
+      paths.overview,
     );
   });
 

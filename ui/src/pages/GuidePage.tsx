@@ -16,25 +16,25 @@ const STEPS = [
   },
   {
     name: "booking",
-    to: paths.bookingSettings,
-    screen: "nav.settings",
-    part: "pages.bookingSettings.title",
+    to: paths.overview,
+    screen: "nav.overview",
+    part: "pages.ticket.title",
   },
   {
     name: "dryRun",
-    to: paths.schedule,
-    screen: "nav.schedule",
-    part: "pages.schedule.dryRun.button",
+    to: paths.overview,
+    screen: "nav.overview",
+    part: "pages.ticket.dryRun.button",
   },
   {
     name: "schedule",
-    to: paths.schedule,
-    screen: "nav.schedule",
-    part: "pages.schedule.daily.title",
+    to: paths.overview,
+    screen: "nav.overview",
+    part: "pages.ticket.auto",
   },
 ] as const;
 
-const SCREENS = ["overview", "schedule", "settings"] as const;
+const SCREENS = ["overview", "settings"] as const;
 
 const TROUBLES = ["notRunning", "slotFull", "quota", "loggedOut", "setup"] as const;
 
@@ -54,15 +54,16 @@ export function GuidePage() {
     history: t("pages.history.title"),
     withDry: t("pages.history.withDry"),
     technical: t("pages.history.technical"),
-    booking: t("pages.bookingSettings.title"),
+    ticket: t("pages.ticket.title"),
+    daily: t("pages.ticket.auto"),
     device: t("pages.deviceSetup.title"),
     todo: t("pages.deviceSetup.state.todo"),
     check: t("pages.deviceSetup.manual.check"),
     auto: t("pages.deviceSetup.auto.run"),
     slotFull: t("reasons.slotFull"),
     loggedOut: t("reasons.loggedOut"),
-    slotsPlace: where(t("nav.settings"), t("pages.bookingSettings.title")),
-    dryRunPlace: where(t("nav.schedule"), t("pages.schedule.dryRun.button")),
+    slotsPlace: where(t("nav.overview"), t("pages.ticket.title")),
+    dryRunPlace: where(t("nav.overview"), t("pages.ticket.dryRun.button")),
   };
 
   return (

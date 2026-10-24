@@ -42,8 +42,9 @@
   --text-display-sm: 40px;
   --text-display: 52px; /* page titles */
   --text-display-lg: 60px;
-  --text-hero-sm: 96px;
-  --text-hero: 124px; /* the next start time */
+  --text-ticket: 112px; /* the next start time on the ticket */
+  --text-ticket-sm: 88px; /* the same in a window under 720 px high */
+  --text-ticket-slot: 84px; /* the slot being booked */
 
   --weight-regular: 400;
   --weight-medium: 500;

@@ -1,9 +1,7 @@
 /** The address of every screen; paths stay English in both languages. */
 export const paths = {
   overview: "/",
-  schedule: "/schedule",
   settings: "/settings",
-  bookingSettings: "/settings/booking",
   deviceSetup: "/settings/device",
   notificationSettings: "/settings/notifications",
   guide: "/guide",

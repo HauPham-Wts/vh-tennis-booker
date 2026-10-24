@@ -17,7 +17,6 @@ afterEach(() => {
 describe("routes", () => {
   it.each([
     [paths.overview, "Tổng quan"],
-    [paths.schedule, "Hẹn giờ"],
     [paths.guide, "Hướng dẫn"],
   ])("opens %s on the %s screen and names the window", async (path, title) => {
     renderAt(path);
@@ -34,8 +33,8 @@ describe("routes", () => {
   });
 
   it.each([
-    [paths.bookingSettings, "Đặt sân"],
     [paths.deviceSetup, "Thiết lập máy"],
+    [paths.notificationSettings, "Thông báo"],
   ])("opens %s as the %s tab of the settings", async (path, tab) => {
     renderAt(path);
 
@@ -50,7 +49,9 @@ describe("routes", () => {
     ["/history/bookings?month=2026-09", `${paths.overview}?month=2026-09`],
     ["/history/activity?run=25", `${paths.overview}?run=25`],
     ["/activity?run=25", `${paths.overview}?run=25`],
-  ])("sends the old History address %s on to %s", async (path, to) => {
+    ["/schedule", paths.overview],
+    ["/settings/booking", paths.overview],
+  ])("sends the old address %s on to %s", async (path, to) => {
     const router = renderAt(path);
 
     await screen.findByRole("region", { name: "Lịch sử" });
@@ -59,15 +60,15 @@ describe("routes", () => {
     expect(router.state.historyAction).toBe("REPLACE");
   });
 
-  it("opens the settings on the booking tab", async () => {
+  it("opens the settings on the device setup tab", async () => {
     const router = renderAt(paths.settings);
 
     const tabs = await screen.findByRole("navigation", { name: "Phần cài đặt" });
-    expect(within(tabs).getByRole("link", { name: "Đặt sân" })).toHaveAttribute(
+    expect(within(tabs).getByRole("link", { name: "Thiết lập máy" })).toHaveAttribute(
       "aria-current",
       "page",
     );
-    expect(router.state.location.pathname).toBe(paths.bookingSettings);
+    expect(router.state.location.pathname).toBe(paths.deviceSetup);
   });
 
   it("shows the not-found page for an unknown address", async () => {

@@ -4,12 +4,11 @@ import { paths } from "../paths";
 
 /** The parts of the settings, each at its own address. */
 const TABS = [
-  { to: paths.bookingSettings, label: "pages.bookingSettings.title" },
   { to: paths.deviceSetup, label: "pages.deviceSetup.title" },
   { to: paths.notificationSettings, label: "pages.notificationSettings.title" },
 ] as const;
 
-/** Hold the booking settings, the device setup and the notification, one tab each. */
+/** Hold the device setup and the notification, one tab each. */
 export function SettingsPage() {
   const { t } = useTranslation();
   return (

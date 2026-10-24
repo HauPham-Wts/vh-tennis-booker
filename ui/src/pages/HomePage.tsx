@@ -7,9 +7,9 @@ import { QueryView } from "../components/QueryView";
 import { paths } from "../paths";
 import { isFirstOpen, welcomeShown } from "../welcome";
 import styles from "./HomePage.module.css";
+import { BookingTicket } from "./home/BookingTicket";
 import { HistoryPanel } from "./home/HistoryPanel";
-import { LiveRun } from "./overview/LiveRun";
-import { NextBooking } from "./overview/NextBooking";
+import { LiveTicket } from "./home/LiveTicket";
 
 /**
  * Return the run that holds the lock: the newest run if it started after the lock was
@@ -24,8 +24,9 @@ function holderRun(running: Running, last: RunSummary | null): number | undefine
 }
 
 /**
- * Show the next booking, or the run as it goes, with the History beside it. An app not
- * used yet opens on the welcome screen instead, once per opening.
+ * Show the next booking as a ticket that holds its settings, or the run as it goes, with
+ * the History beside it. An app not used yet opens on the welcome screen instead, once per
+ * opening.
  */
 export function HomePage() {
   const { t } = useTranslation();
@@ -40,19 +41,14 @@ export function HomePage() {
       <div className={styles.columns}>
         <div className={styles.booking}>
           <QueryView query={overview}>
-            {({ schedule, running, last_run }) => (
-              <>
-                {running !== null && running.trigger !== "setup" ? (
-                  // A booking or a dry run: the run as it goes, in place of the next booking.
-                  <LiveRun runId={holderRun(running, last_run)} />
-                ) : (
-                  <NextBooking schedule={schedule} />
-                )}
-                {running !== null && (
-                  <p className={styles.locked}>{t("pages.overview.live.locked")}</p>
-                )}
-              </>
-            )}
+            {(data) =>
+              data.running !== null && data.running.trigger !== "setup" ? (
+                // A booking or a dry run: the run as it goes, in place of the choices.
+                <LiveTicket runId={holderRun(data.running, data.last_run)} />
+              ) : (
+                <BookingTicket overview={data} />
+              )
+            }
           </QueryView>
         </div>
         <HistoryPanel />

@@ -7,7 +7,7 @@
   padding-top: var(--space-5);
 }
 
-/* A long run scrolls inside its column rather than pushing the page down. */
+/* The ticket fills the column; a window lower than it scrolls the column. */
 .booking {
   flex: 1 1 auto;
   min-width: 0;
@@ -15,11 +15,4 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
-}
-
-.locked {
-  color: var(--color-muted);
-  font-family: var(--font-mono);
-  font-size: var(--text-small);
 }
