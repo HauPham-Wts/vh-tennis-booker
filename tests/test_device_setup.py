@@ -56,7 +56,8 @@ def test_registry_folders_are_paths():
 class FakeMuMu:
     """A MuMu instance with settings, a running state and an installed package list."""
 
-    def __init__(self, settings=None, started=True, packages=("com.vinhomes.resident",)):
+    def __init__(self, settings=None, started=True, packages=("com.vinhomes.resident",), index=0):
+        self.index = index
         self.values = dict(
             settings
             or {
@@ -84,7 +85,7 @@ class FakeMuMu:
         self.restarts += 1
 
     def adb_serial(self):
-        return "127.0.0.1:16384"
+        return f"127.0.0.1:{16384 + 32 * self.index}"
 
 
 def screen(width, height, dpi):
@@ -159,11 +160,12 @@ def test_wake_timer_check_without_powercfg():
 
 
 class FakeAdb:
-    """The adb of a running MuMu with ``packages`` installed."""
+    """The adb of a running MuMu with ``packages`` installed (``missing_on``: not there)."""
 
-    def __init__(self, packages=("com.vinhomes.resident",), fail=False):
+    def __init__(self, packages=("com.vinhomes.resident",), fail=False, missing_on=()):
         self.packages = packages
         self.fail = fail
+        self.missing_on = missing_on
 
     def ensure_server(self):
         pass
@@ -175,7 +177,9 @@ class FakeAdb:
 
     def shell(self, serial, *args):
         package = args[-1]
-        return f"package:/data/app/{package}/base.apk\n" if package in self.packages else ""
+        if package not in self.packages or serial in self.missing_on:
+            return ""
+        return f"package:/data/app/{package}/base.apk\n"
 
 
 def test_app_check():
@@ -280,6 +284,50 @@ def test_a_running_mumu_is_restarted_only_when_allowed(tmp_path):
     )
     assert done[1].status is Status.FIXED
     assert mumu.restarts == 1
+
+
+def test_the_other_instances_are_found_once_each(tmp_path):
+    manager = install_mumu(tmp_path / "MuMuPlayer")
+    instances = [{"mumu_index": 1}, {"mumu_index": 1}, {"mumu_index": 0}, {"mumu_index": 2}]
+
+    tools = device_setup.find_tools(Config(mumu_manager=str(manager), instances=instances))
+
+    assert [mumu.index for mumu in tools.mumus] == [0, 1, 2]
+
+
+def two_instances(tmp_path, second, adb=None):
+    """Return the tools of MuMu instance 0, right in every way, and ``second`` as instance 1."""
+    manager = install_mumu(tmp_path / "MuMuPlayer")
+    return Tools(manager, FakeMuMu(), adb or FakeAdb(), (second,))
+
+
+def test_every_instance_is_checked(tmp_path):
+    wrong = FakeMuMu(screen(540, 960, 240), index=1)
+    tools = two_instances(tmp_path, wrong, FakeAdb(missing_on=("127.0.0.1:16416",)))
+
+    results = device_setup.run_checks(config_for(tools), tools, FakePowercfg().run)
+
+    screen_check, app_check = results[1], results[3]
+    assert screen_check.status is Status.FIXABLE
+    assert screen_check.detail == (
+        "MuMu 0: Screen 540x1600 at 220 DPI; "
+        "MuMu 1: Screen 540x960 at 240 DPI; booking needs 540x1600 at 220 DPI"
+    )
+    assert app_check.status is Status.USER
+    assert app_check.detail.startswith("MuMu 0: com.vinhomes.resident installed; MuMu 1: ")
+
+
+def test_auto_setup_sets_the_screen_of_each_instance_that_needs_it(tmp_path):
+    wrong = FakeMuMu(screen(540, 960, 240), started=False, index=1)
+    tools = two_instances(tmp_path, wrong)
+
+    results = device_setup.auto_setup(
+        config_for(tools), tmp_path / "c.toml", tools, run=FakePowercfg().run
+    )
+
+    assert results[1].status is Status.FIXED  # the worse of OK and FIXED
+    assert "MuMu 1: Screen set to 540x1600 at 220 DPI" in results[1].detail
+    assert (tools.mumu.changed, wrong.changed) == ([], [device_setup.SCREEN_SETTINGS])
 
 
 def test_auto_setup_allows_wake_timers(tmp_path):

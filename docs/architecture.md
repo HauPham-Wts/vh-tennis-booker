@@ -105,6 +105,8 @@ Details live in the docstrings; this page says where things are and what must st
   `--config`; a relative `log_dir` resolves beside it.
 - `device_setup.py`: checks (MuMu installed, MuMu screen settings, wake timers, app installed)
   and `auto_setup` for the fixable ones; `court-booker setup [--auto]` and the API share it.
+  The screen and the app are checked on every instance (`[[instances]]` too) as one item: the
+  worst status, each instance's detail ("MuMu 1: …"); auto setup sets each wrong screen.
 - `schedule.py`: the Windows task (`schtasks`) that wakes the PC at `wake_at` and runs the
   runner folder's Python.
 

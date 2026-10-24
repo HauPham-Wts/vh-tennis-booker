@@ -15,6 +15,8 @@ uses [Semantic Versioning](https://semver.org/).
   fails or freezes holds up no other. Each has its own log file (`…-mumu1.log`), history
   entry and Windows notification ("MuMu 1 · …"). Without the table a run books as before.
   The runner must be upgraded before the table is added: an older one refuses it.
+- The setup checks (`court-booker setup`, the app's setup screen) check the screen and the
+  Vinhomes app on every MuMu instance, and auto setup sets the screen of each.
 
 ### Changed
 - Each run also turns off Android notification banners, in the same command that turns
