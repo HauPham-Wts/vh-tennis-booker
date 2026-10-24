@@ -45,8 +45,47 @@ def test_settings_leave_out_the_notification(client, saved):
     assert "notification_language" not in settings
 
 
-def test_settings_leave_out_the_other_instances(client, saved):
-    assert "instances" not in client.get("/api/settings").json()
+OTHER = {
+    "mumu_index": 1,
+    "days_ahead": 2,
+    "slots": ["20:00 - 21:00"],
+    "court": "S6 - Sân tennis",  # from the top of the file
+    "venue_keyword": "Origami",
+}
+
+
+def test_settings_show_each_other_instance_in_full(client, saved):
+    assert client.get("/api/settings").json()["instances"] == [OTHER]
+
+
+def test_an_instance_keeps_its_own_settings(client, context, saved):
+    settings = client.get("/api/settings").json()
+    settings["court"] = "S9 - Sân tennis"
+    settings["instances"][0]["slots"] = ["19:00 - 20:00", "20:00 - 21:00"]
+
+    response = client.put("/api/settings", json=settings)
+
+    assert response.status_code == 200
+    written = load_config(context.config_path)
+    assert written.court == "S9 - Sân tennis"
+    assert written.instances == [{**OTHER, "slots": ["19:00 - 20:00", "20:00 - 21:00"]}]
+    (step,) = steps(context)
+    assert step["data"] == {"changed": ["court", "instances"]}
+
+
+@pytest.mark.parametrize("instances", [[], [OTHER, {**OTHER, "mumu_index": 2}]])
+def test_instances_are_not_added_or_removed_here(client, context, saved, instances):
+    settings = client.get("/api/settings").json()
+    settings["instances"] = instances
+    before = context.config_path.read_bytes()
+
+    response = client.put("/api/settings", json=settings)
+
+    assert response.status_code == 422
+    assert response.json()["problems"] == [
+        "MuMu instances are added or removed in config.toml, not here"
+    ]
+    assert context.config_path.read_bytes() == before
 
 
 def test_settings_without_a_config_file_are_the_defaults(client, context):
@@ -78,7 +117,7 @@ def test_saved_settings_reach_the_file_and_the_activity_log(client, context, sav
     assert (written.slots, written.court) == (["20:00 - 21:00"], "S9 - Sân tennis")
     assert written.telegram_token == "secret-token"
     assert written.notification_language == "en"
-    assert written.instances == [{"mumu_index": 1, "slots": ["20:00 - 21:00"]}]
+    assert written.instances == [OTHER]  # now with all its settings
     (step,) = steps(context)
     assert (step["kind"], step["data"]) == ("settings_saved", {"changed": ["court", "slots"]})
 

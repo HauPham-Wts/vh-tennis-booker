@@ -9,8 +9,9 @@ uses [Semantic Versioning](https://semver.org/).
 ### Added
 - Booking with more MuMu instances side by side, each logged in to its own account with its
   own settings: an `[[instances]]` table per instance in `config.toml` (its `mumu_index`,
-  and its `days_ahead`, `slots`, `court`, `venue_keyword` where they differ; set by hand,
-  the app does not show it yet). The run starts one process per instance that books exactly
+  and its `days_ahead`, `slots`, `court`, `venue_keyword` where they differ; instances are
+  added in the file, after their MuMu instance and account are set up). The run starts one
+  process per instance that books exactly
   like a run with one instance, so all of them book at 06:00 at the same time, and one that
   fails or freezes holds up no other. Each has its own log file (`…-mumu1.log`), history
   entry and Windows notification ("MuMu 1 · …"). Without the table a run books as before.
@@ -20,6 +21,8 @@ uses [Semantic Versioning](https://semver.org/).
 - While instances book side by side the Overview shows a ticket for each ("MuMu 1 · Đang đặt
   cho …"), and the History names the instance of each run beside the first ("· MuMu 1").
   The history database records each run's instance (schema 2; older runs have none).
+- With more instances the next booking's ticket starts with a choice of instance ("Máy":
+  MuMu 0, MuMu 1); the play day, court and slots shown and saved are that instance's.
 
 ### Changed
 - Each run also turns off Android notification banners, in the same command that turns

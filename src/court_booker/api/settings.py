@@ -11,9 +11,11 @@ from court_booker.api.activity import record
 from court_booker.api.context import Context
 from court_booker.api.errors import InvalidSettingsError
 from court_booker.config import (
+    INSTANCE_KEYS,
     Config,
     config_from_dict,
     config_to_dict,
+    instance_config,
     save_config,
     validate_config,
 )
@@ -21,16 +23,9 @@ from court_booker.events import EventKind
 
 router = APIRouter(prefix="/api", tags=["settings"])
 
-HIDDEN = (
-    "telegram_token",
-    "telegram_chat_id",
-    "windows_notification",
-    "notification_language",
-    "instances",
-)
+HIDDEN = ("telegram_token", "telegram_chat_id", "windows_notification", "notification_language")
 """Config keys these routes neither show nor change: the Telegram summary is set up by hand,
-the Windows notification is not a booking setting, and other MuMu instances are set up by
-hand for now."""
+and the Windows notification is not a booking setting."""
 
 
 class LabelSettings(BaseModel):
@@ -59,6 +54,18 @@ class LabelSettings(BaseModel):
     registered: str
 
 
+class InstanceSettings(BaseModel):
+    """The booking settings of another MuMu instance, which books with its own account."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    mumu_index: int
+    days_ahead: int
+    slots: list[str]
+    court: str
+    venue_keyword: str
+
+
 class Settings(BaseModel):
     """Every booking setting; the UI changes the slots, court and day, and sends the rest back."""
 
@@ -85,6 +92,9 @@ class Settings(BaseModel):
     log_dir: str
     next_month_xy: tuple[float, float]
     prev_month_xy: tuple[float, float]
+    instances: list[InstanceSettings]
+    """Other MuMu instances with all their settings; the app changes them, never which
+    instances there are (each needs its own MuMu instance and account set up first)."""
     labels: LabelSettings
 
 
@@ -93,6 +103,11 @@ def settings_of(config: Config) -> dict[str, Any]:
     data = config_to_dict(config)
     for key in HIDDEN:
         data.pop(key)
+    # Each instance in full, with the settings it takes from the top of the file.
+    data["instances"] = [
+        {key: getattr(instance_config(config, table), key) for key in INSTANCE_KEYS}
+        for table in config.instances
+    ]
     return data
 
 
@@ -112,6 +127,8 @@ def save_settings(context: Context, settings: Settings) -> dict[str, Any]:
     old = context.config()
     config = config_from_dict({**config_to_dict(old), **settings.model_dump(by_alias=True)})
     problems = validate_config(config)
+    if _indexes(config) != _indexes(old):
+        problems.append("MuMu instances are added or removed in config.toml, not here")
     if problems:
         raise InvalidSettingsError(problems)
     before, after = settings_of(old), settings_of(config)
@@ -120,3 +137,7 @@ def save_settings(context: Context, settings: Settings) -> dict[str, Any]:
         save_config(config, context.config_path)
         record(context, EventKind.SETTINGS_SAVED, changed=changed)
     return after
+
+
+def _indexes(config: Config) -> list[Any]:
+    return [table.get("mumu_index") for table in config.instances]

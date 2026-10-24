@@ -82,27 +82,47 @@ interface ChoicesProps {
   nextStart: string;
 }
 
+/** What one MuMu instance books: the top of the settings, or one of their instances. */
+type Booking = Pick<Settings, "days_ahead" | "slots" | "court">;
+
+/** Return the settings with ``change`` made to instance ``index`` (0: the top). */
+function changed(settings: Settings, index: number, change: Partial<Booking>): Settings {
+  if (index === 0) {
+    return { ...settings, ...change };
+  }
+  const instances = settings.instances.map((instance, place) =>
+    place === index - 1 ? { ...instance, ...change } : instance,
+  );
+  return { ...settings, instances };
+}
+
 /**
- * The day, court and slots to book. Each press saves at once: the whole settings go back
- * as they came with the one change, so the developer's values stay. Presses wait while a
- * save is on its way, so two saves never cross.
+ * The day, court and slots to book, for each MuMu instance when several book side by side,
+ * each with its own account. Each press saves at once: the whole settings go back as they
+ * came with the one change, so the developer's values stay. Presses wait while a save is on
+ * its way, so two saves never cross.
  */
 function Choices({ saved, nextStart }: ChoicesProps) {
   const { t } = useTranslation();
   const f = useFormat();
   const save = useSaveSettings();
   const [warning, setWarning] = useState<string | null>(null);
+  const [instance, setInstance] = useState(0);
   const busy = save.isPending;
   // While a save is on its way, show what it saves.
-  const shown = busy && save.variables !== undefined ? save.variables : saved;
+  const settings = busy && save.variables !== undefined ? save.variables : saved;
+  const instances = [settings, ...settings.instances];
+  const index = Math.min(instance, instances.length - 1);
+  const shown: Booking = instances[index] ?? settings;
+  const own: Booking = [saved, ...saved.instances][index] ?? saved;
   const full = shown.slots.length >= MAX_SLOTS;
 
-  function choose(change: Partial<Settings>) {
+  function choose(change: Partial<Booking>) {
     if (busy) {
       return;
     }
     setWarning(null);
-    save.mutate({ ...saved, ...change });
+    save.mutate(changed(saved, index, change));
   }
 
   function toggle(slot: string) {
@@ -137,6 +157,29 @@ function Choices({ saved, nextStart }: ChoicesProps) {
 
   return (
     <div aria-busy={busy} className={styles.choices}>
+      {instances.length > 1 && (
+        <div role="group" aria-labelledby="instance-label" className={styles.group}>
+          <Overline as="span" id="instance-label">
+            {t("pages.ticket.instance")}
+          </Overline>
+          <div className={styles.buttons}>
+            {instances.map((item, place) => (
+              <button
+                key={item.mumu_index}
+                type="button"
+                aria-pressed={place === index}
+                className={`${styles.choice} ${styles.court}`}
+                onClick={() => {
+                  setWarning(null);
+                  setInstance(place);
+                }}
+              >
+                {t("pages.ticket.instanceName", { index: item.mumu_index })}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <div className={styles.row}>
         <div role="group" aria-labelledby="day-label" className={styles.group}>
           <Overline as="span" id="day-label">
@@ -166,7 +209,7 @@ function Choices({ saved, nextStart }: ChoicesProps) {
             {t("pages.ticket.court")}
           </Overline>
           <div className={styles.buttons}>
-            {courtChoices(saved.court).map((court) => {
+            {courtChoices(own.court).map((court) => {
               const on = shown.court === court;
               return (
                 <button
