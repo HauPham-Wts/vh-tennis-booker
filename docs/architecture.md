@@ -25,7 +25,8 @@ Details live in the docstrings; this page says where things are and what must st
   it does not start (not after a freeze). `--driver` picks one. Every device call runs on one
   worker thread (`watchdog.py`) and fails with `DeviceNotRespondingError` after 60 s; the run
   then ends (exit 3, through `os._exit`, as a stuck thread could hold the exit).
-- `runner.run_booking`: `prepare()` (app restarted, home screen), wait until
+- `runner.run_booking`: `prepare()` (animations and notification banners off in one shell
+  command, app restarted, home screen), wait until
   `start - warm_up_seconds`, measure the clock again, open the utilities list (`locate_entry`),
   read it again 2 s before the start, wait until start + 0.1 s, then one round per slot.
   A `BookingError` fails its round only, except: `DeviceNotRespondingError` ends the run after

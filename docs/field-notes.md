@@ -81,9 +81,10 @@ clickable "Đóng"; the page beneath leaves the dump.
 
 - **Closed hours** (a tap on "Sân Tennis" before 06:00 or after 21:00): "Ban quản lý BQL Grand
   Park chỉ nhận đăng ký Sân Tennis từ 06:00 đến 21:00 mỗi ngày". Back closes it and the list
-  shows 0.1 s later. A tap at 06:00:00.1 by NTP time still got it once while one at PC
-  05:59:59.92 did not, so which clock the app checks (server or MuMu) is unverified. The flow
-  closes it and taps again until `open_retry_seconds`.
+  shows 0.1 s later. The app most likely checks the MuMu clock: on 2026-10-24, with MuMu 0.71 s
+  behind NTP time, taps every 0.35 s still opened the calendar at 21:00:00.73 NTP (21:00:00.02
+  on MuMu) and got the notice from 21:00:01.14 NTP on, 0.05 s after the tap like the calendar.
+  The flow closes it and taps again until `open_retry_seconds`.
 - **Quota**: each apartment may book 2 slots a day and 8 a month; once either is used the app
   shows "Căn hộ đã hết hạn mức đăng ký tiện ích cho phép." (the same message for the day and the
   month), usually after the calendar's "Tiếp tục" (0.9 s after the tap, 2026-10-24), once after
