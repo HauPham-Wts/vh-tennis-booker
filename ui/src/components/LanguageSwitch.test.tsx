@@ -5,14 +5,14 @@ import { paths } from "../paths";
 import { renderApp } from "../test/app";
 import { reply, requestsTo } from "../test/backend";
 
-/** Render the whole app on the history screen. */
-function renderHistory() {
-  renderApp(paths.history);
+/** Render the whole app on the guide. */
+function renderGuide() {
+  renderApp(paths.guide);
 }
 
 describe("LanguageSwitch", () => {
   it("names each language in itself and presses the one in use", () => {
-    renderHistory();
+    renderGuide();
 
     const group = screen.getByRole("group", { name: "Ngôn ngữ" });
     expect(group).toBeInTheDocument();
@@ -27,36 +27,36 @@ describe("LanguageSwitch", () => {
   });
 
   it("switches the whole UI to English and remembers it", async () => {
-    renderHistory();
+    renderGuide();
 
     fireEvent.click(screen.getByRole("button", { name: "EN English" }));
 
-    expect(await screen.findByRole("heading", { level: 1, name: "History" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: "Guide" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Main navigation" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Overview" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "EN English" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
-    await waitFor(() => expect(document.title).toBe("History · Court Booker"));
+    await waitFor(() => expect(document.title).toBe("Guide · Court Booker"));
     expect(document.documentElement.lang).toBe("en");
     expect(localStorage.getItem(STORAGE_KEY)).toBe("en");
   });
 
   it("switches back to Vietnamese", async () => {
-    renderHistory();
+    renderGuide();
 
     fireEvent.click(screen.getByRole("button", { name: "EN English" }));
-    await screen.findByRole("heading", { level: 1, name: "History" });
+    await screen.findByRole("heading", { level: 1, name: "Guide" });
     fireEvent.click(screen.getByRole("button", { name: "VI Tiếng Việt" }));
 
-    expect(await screen.findByRole("heading", { level: 1, name: "Lịch sử" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: "Hướng dẫn" })).toBeInTheDocument();
     expect(document.documentElement.lang).toBe("vi");
     expect(localStorage.getItem(STORAGE_KEY)).toBe("vi");
   });
 
   it("gives the Windows notification the language chosen", async () => {
-    const { fetch } = renderApp(paths.history, {
+    const { fetch } = renderApp(paths.guide, {
       "GET /api/notifications": reply({ enabled: false, language: "vi" }),
       "PUT /api/notifications": reply({ enabled: false, language: "en" }),
     });
@@ -69,7 +69,7 @@ describe("LanguageSwitch", () => {
   });
 
   it("saves nothing when the notification has that language already", async () => {
-    const { fetch } = renderApp(paths.history, {
+    const { fetch } = renderApp(paths.guide, {
       "GET /api/notifications": reply({ enabled: true, language: "vi" }),
     });
 
@@ -80,12 +80,12 @@ describe("LanguageSwitch", () => {
   });
 
   it("switches the UI even when the notification cannot be saved", async () => {
-    renderApp(paths.history, {
+    renderApp(paths.guide, {
       "GET /api/notifications": reply({ error: "engine", detail: "broken" }, 500),
     });
 
     fireEvent.click(screen.getByRole("button", { name: "EN English" }));
 
-    expect(await screen.findByRole("heading", { level: 1, name: "History" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: "Guide" })).toBeInTheDocument();
   });
 });

@@ -19,4 +19,16 @@ describe("Stamp", () => {
 
     expect(screen.getByText("KHÔNG ĐẶT ĐƯỢC").className).toMatch(/failed/);
   });
+
+  it("comes in a small size for the rows of a list", () => {
+    render(
+      <>
+        <Stamp size="small">ĐÃ ĐẶT 2/2</Stamp>
+        <Stamp>ĐÃ ĐẶT 1/1</Stamp>
+      </>,
+    );
+
+    expect(screen.getByText("ĐÃ ĐẶT 2/2").className).toMatch(/small/);
+    expect(screen.getByText("ĐÃ ĐẶT 1/1").className).not.toMatch(/small|undefined/);
+  });
 });

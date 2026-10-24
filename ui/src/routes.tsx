@@ -1,16 +1,13 @@
 import { Navigate, type RouteObject } from "react-router";
 import { App } from "./App";
 import { Redirect } from "./components/Redirect";
-import { ActivityPage } from "./pages/ActivityPage";
-import { BookingsPage } from "./pages/BookingsPage";
 import { BookingSettingsPage } from "./pages/BookingSettingsPage";
 import { DeviceSetupPage } from "./pages/DeviceSetupPage";
 import { ErrorPage } from "./pages/ErrorPage";
 import { GuidePage } from "./pages/GuidePage";
-import { HistoryPage } from "./pages/HistoryPage";
+import { HomePage } from "./pages/HomePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { NotificationSettingsPage } from "./pages/NotificationSettingsPage";
-import { OverviewPage } from "./pages/OverviewPage";
 import { SchedulePage } from "./pages/SchedulePage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { WelcomePage } from "./pages/WelcomePage";
@@ -23,20 +20,12 @@ export const routes: RouteObject[] = [
     element: <App />,
     errorElement: <ErrorPage />,
     children: [
-      { index: true, element: <OverviewPage /> },
+      { index: true, element: <HomePage /> },
       { path: paths.schedule, element: <SchedulePage /> },
-      {
-        path: paths.history,
-        element: <HistoryPage />,
-        children: [
-          // History opens on its first tab, keeping the month asked for.
-          { index: true, element: <Redirect to={paths.bookings} /> },
-          { path: paths.bookings, element: <BookingsPage /> },
-          { path: paths.activity, element: <ActivityPage /> },
-        ],
-      },
-      // The address of the activity log before it became a tab of History.
-      { path: "/activity", element: <Redirect to={paths.activity} /> },
+      // The addresses of History and Activity before they joined the home screen; a
+      // `?run=` there opens that run beside the next booking.
+      { path: "/history/*", element: <Redirect to={paths.overview} /> },
+      { path: "/activity", element: <Redirect to={paths.overview} /> },
       {
         path: paths.settings,
         element: <SettingsPage />,

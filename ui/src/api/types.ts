@@ -17,8 +17,6 @@ export type ScheduleSwitch = Schemas["ScheduleSwitch"];
 
 /** One run as the History list shows it. */
 export type RunSummary = Schemas["RunSummary"];
-/** A month with real bookings: its runs and booked slots (the History picker). */
-export type MonthSummary = Schemas["MonthSummary"];
 /** One run in full: its slots, steps and technical log lines. */
 export type RunDetail = Schemas["RunDetail"];
 export type SlotResult = Schemas["SlotResult"];

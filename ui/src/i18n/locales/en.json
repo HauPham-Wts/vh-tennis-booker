@@ -13,7 +13,6 @@
     "label": "Main navigation",
     "overview": "Overview",
     "schedule": "Schedule",
-    "history": "History",
     "settings": "Settings",
     "guide": "Guide"
   },
@@ -45,14 +44,6 @@
         "court": "Court",
         "slots": "Slots"
       },
-      "last": {
-        "title": "Last booking",
-        "booked": "BOOKED",
-        "notBooked": "NOT BOOKED",
-        "meta": "{{day}} · court {{court}}",
-        "done": "Booked at {{time}} · took {{seconds}}",
-        "history": "See history →"
-      },
       "live": {
         "banner": {
           "scheduled": "Booking on schedule at {{start}}",
@@ -69,7 +60,6 @@
         "progress": "Progress",
         "booked": "slots booked",
         "through": "slots through",
-        "follow": "Follow in the activity log →",
         "note": "You can close this window. The booking goes on, and its result will be in History when you open the app again."
       }
     },
@@ -109,27 +99,27 @@
     },
     "history": {
       "title": "History",
-      "tabs": "History sections",
-      "month": "Month",
-      "summary": "{{month}}: {{slots}} slots booked in {{runs}} runs.",
-      "play": "Play {{day}}",
-      "runOn": "Run on {{day}}",
-      "slots": "{{slots}} · court {{court}}",
-      "noSlot": "No slot was tried",
-      "meta": "Booked {{date}} {{period}} · done at {{time}}",
-      "metaRunning": "Booked {{date}} {{period}}",
-      "activity": "activity",
-      "emptyMonth": "No bookings this month.",
-      "empty": "No real bookings yet."
-    },
-    "activity": {
-      "title": "Activity",
-      "lead": "Every step the app took, to see what happened when something went wrong.",
-      "runs": "Runs",
+      "withDry": "Include dry runs",
+      "days": "Last {{count}} days",
+      "more": "Show {{count}} days before",
       "empty": "No runs yet.",
-      "technical": "Technical details",
-      "runTitle": "{{day}} {{period}}",
-      "meta": "{{trigger}} · play {{day}} · court {{court}}"
+      "emptyReal": "No real bookings yet.",
+      "emptyRealDays": "No real bookings in the last {{count}} days.",
+      "play": "Play {{day}} · {{court}}",
+      "runOn": "Run on {{day}}",
+      "booked": "booked {{when}} · {{by}}",
+      "dry": "dry run {{when}}",
+      "back": "← History",
+      "slot": {
+        "booked": "BOOKED",
+        "failed": "NOT BOOKED",
+        "through": "REACHED CONFIRM",
+        "notThrough": "DID NOT PASS"
+      },
+      "done": "Done at {{time}} · took {{seconds}}",
+      "through": "Stopped before \"Confirm\", nothing booked",
+      "steps": "Every step",
+      "technical": "Technical details"
     },
     "settings": {
       "title": "Settings",
@@ -248,9 +238,8 @@
       },
       "screens": {
         "title": "Each screen",
-        "overview": "The next booking, the result of the last one, and whether the PC is ready. While a booking goes on, follow it live here.",
+        "overview": "The line at the top says whether the PC is ready. On the left, the next booking, or the booking live while it goes on. On the right, \"{{history}}\": each booking, which slots were booked, which were not and why; tick \"{{withDry}}\" to see the dry runs too. Press a row to see every step; when something goes wrong, open \"{{technical}}\" to see exactly what happened.",
         "schedule": "Do a dry run to check, then turn the schedule on so the app books every morning.",
-        "history": "\"{{bookings}}\": the slots booked, by the day of play, filtered by month. \"{{activity}}\": every step the app took; when something goes wrong, open \"{{technical}}\" to see exactly what happened.",
         "settings": "\"{{booking}}\": the slots, court and day. \"{{device}}\": prepare MuMu, the Vinhomes app and the PC."
       },
       "trouble": {
@@ -340,7 +329,6 @@
   },
   "format": {
     "seconds": "{{value}} s",
-    "month": "{{name}} {{year}}",
     "period": {
       "morning": "morning",
       "afternoon": "afternoon",
@@ -457,11 +445,20 @@
   "runs": {
     "stamp": {
       "booked": "BOOKED {{booked}}/{{total}}",
+      "partial": "BOOKED {{booked}}/{{total}}",
+      "none": "NOT BOOKED {{booked}}/{{total}}",
       "failed": "NOT BOOKED",
-      "dry": "DRY RUN {{booked}}/{{total}}",
+      "dry": "DRY RUN PASSED",
+      "dryPartial": "DRY RUN {{booked}}/{{total}}",
       "dryFailed": "DRY RUN FAILED",
       "interrupted": "STOPPED",
       "running": "RUNNING"
+    },
+    "by": {
+      "scheduled": "on schedule",
+      "manual": "by hand",
+      "dry_run": "dry run",
+      "unknown": "unknown"
     }
   },
   "reasons": {

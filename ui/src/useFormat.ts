@@ -10,7 +10,6 @@ import {
   formatShortDate,
   formatSlot,
   formatTime,
-  monthParts,
   relativeDay,
   slotStart,
 } from "./format";
@@ -42,11 +41,6 @@ export function useFormat() {
       time: formatTime,
       /** "7,0 giây", "7.0 s". */
       seconds: (value: number) => t("format.seconds", { value: formatDecimal(value, language) }),
-      /** "Tháng 10/2026", "October 2026"; a text it cannot read stays as it is. */
-      month: (text: string) => {
-        const parts = monthParts(text, language);
-        return parts === null ? text : t("format.month", { name: parts.name, year: parts.year });
-      },
       /** "sáng", "morning"; empty for a text it cannot read. */
       period: (text: string) => {
         const period = dayPeriod(text);

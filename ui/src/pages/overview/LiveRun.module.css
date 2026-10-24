@@ -130,12 +130,6 @@
   box-shadow: inset 0 0 0 var(--border) var(--color-perforation);
 }
 
-.follow {
-  margin-top: auto;
-  font-family: var(--font-mono);
-  font-size: var(--text-data);
-}
-
 .note {
   max-width: 680px;
   color: var(--color-muted);

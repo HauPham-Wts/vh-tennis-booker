@@ -93,6 +93,12 @@
 
   /* Layout and interaction */
   --page-width: 1080px;
+  --header-height: 64px;
+  /* The home screen fills the window: at most this wide, centred; scrolls below the minimum. */
+  --home-width: 1360px;
+  --home-min-width: 1240px;
+  --home-min-height: 640px;
+  --panel-width: 384px; /* the History beside the ticket */
   --touch-target: 44px; /* smallest height of anything clickable */
   --focus-ring: 3px solid var(--color-stamp);
   --focus-offset: 2px;

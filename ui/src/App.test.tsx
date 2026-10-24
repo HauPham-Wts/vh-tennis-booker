@@ -4,13 +4,15 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 import { App } from "./App";
 import { paths } from "./paths";
+import { stubBackend } from "./test/backend";
 import { createTestQueryClient } from "./test/queries";
 
 /**
  * Render the layout at `path` with a stand-in screen for the overview and the welcome; the
- * language switch in the header needs a cache.
+ * header's status line and language switch need a cache, and the backend answers nothing.
  */
 function renderAt(path: string) {
+  stubBackend({});
   const router = createMemoryRouter(
     [
       {

@@ -41,8 +41,8 @@ round 2 shows as it happens](docs/img/overview.png)
   the driver, measured on MuMu) and every button is found in it locally; waiting for a screen
   and finding its buttons is the same read. At the real 06:00 opening, the first slot has
   been booked 7 to 11 s after 06:00.
-- **Local web UI and full history.** Overview, schedule, history and settings screens in
-  Vietnamese and English, over a FastAPI backend on 127.0.0.1. Every run, slot and step is
+- **Local web UI and full history.** Overview with the history beside it, schedule and
+  settings screens in Vietnamese and English, over a FastAPI backend on 127.0.0.1. Every run, slot and step is
   kept in SQLite (about 0.13 ms per write), beside a daily log of every screen read.
 - **Tested without a device.** The Python tests replace the emulator, ADB, the clock and
   Task Scheduler with fakes, and the UI has component tests. CI runs Ruff, pytest on
@@ -194,13 +194,13 @@ backend listens on 127.0.0.1 only, and the 06:00 run does not need it; watching 
 the UI does not slow it down. Vietnamese is the default language, English is one click
 away.
 
-- **Tổng quan / Overview**: whether the next start is ready, or the one thing to do first;
-  the next booking as a ticket; the last booking of each slot. During a run, its steps as
-  they happen.
+- **Tổng quan / Overview**: the line at the top says whether the next start is ready, or
+  the one thing to do first. The next booking as a ticket, or during a run its steps as they
+  happen; beside it the history: each run with every slot booked or not and why (real
+  bookings, dry runs on request), and each run's steps with the technical log one click
+  away.
 - **Hẹn giờ / Schedule**: a dry run (one must pass), then the daily switch that creates or
   removes the Windows task.
-- **Lịch sử / History**: the courts booked, month by month, and the activity log of every
-  run in plain steps, with the technical log one click away.
 - **Cài đặt / Settings**: the slots, court and day to book; device setup, with an auto
   setup for what the app can fix; the Windows notification after every run, with a test
   button.

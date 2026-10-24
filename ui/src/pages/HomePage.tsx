@@ -2,15 +2,14 @@ import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router";
 import { useOverview } from "../api/queries";
 import type { Running, RunSummary } from "../api/types";
-import { PageHeader } from "../components/PageHeader";
+import { PageTitle } from "../components/PageTitle";
 import { QueryView } from "../components/QueryView";
 import { paths } from "../paths";
 import { isFirstOpen, welcomeShown } from "../welcome";
-import { LastBooking } from "./overview/LastBooking";
+import styles from "./HomePage.module.css";
+import { HistoryPanel } from "./home/HistoryPanel";
 import { LiveRun } from "./overview/LiveRun";
 import { NextBooking } from "./overview/NextBooking";
-import { RunningBanner } from "./overview/RunningBanner";
-import { StatusLine } from "./overview/StatusLine";
 
 /**
  * Return the run that holds the lock: the newest run if it started after the lock was
@@ -25,10 +24,10 @@ function holderRun(running: Running, last: RunSummary | null): number | undefine
 }
 
 /**
- * Show whether the next booking is ready, the next booking and the last one. An app not
+ * Show the next booking, or the run as it goes, with the History beside it. An app not
  * used yet opens on the welcome screen instead, once per opening.
  */
-export function OverviewPage() {
+export function HomePage() {
   const { t } = useTranslation();
   const overview = useOverview();
   if (overview.data !== undefined && isFirstOpen(overview.data) && !welcomeShown()) {
@@ -36,25 +35,28 @@ export function OverviewPage() {
   }
   return (
     <>
-      <PageHeader title={t("pages.overview.title")}>
-        {overview.data && <StatusLine overview={overview.data} />}
-      </PageHeader>
-      <QueryView query={overview}>
-        {({ schedule, running, last_run }) => (
-          <>
-            {running !== null && <RunningBanner running={running} startAt={schedule.start_at} />}
-            {running !== null && running.trigger !== "setup" ? (
-              // A booking or a dry run: the run as it goes, in place of the rest.
-              <LiveRun runId={holderRun(running, last_run)} />
-            ) : (
+      <PageTitle>{t("pages.overview.title")}</PageTitle>
+      <h1 className="visually-hidden">{t("pages.overview.title")}</h1>
+      <div className={styles.columns}>
+        <div className={styles.booking}>
+          <QueryView query={overview}>
+            {({ schedule, running, last_run }) => (
               <>
-                <NextBooking schedule={schedule} />
-                <LastBooking />
+                {running !== null && running.trigger !== "setup" ? (
+                  // A booking or a dry run: the run as it goes, in place of the next booking.
+                  <LiveRun runId={holderRun(running, last_run)} />
+                ) : (
+                  <NextBooking schedule={schedule} />
+                )}
+                {running !== null && (
+                  <p className={styles.locked}>{t("pages.overview.live.locked")}</p>
+                )}
               </>
             )}
-          </>
-        )}
-      </QueryView>
+          </QueryView>
+        </div>
+        <HistoryPanel />
+      </div>
     </>
   );
 }

@@ -1,0 +1,25 @@
+/* The booking on the left, the History beside it; both fill the height of the window. */
+.columns {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  gap: var(--space-6);
+  padding-top: var(--space-5);
+}
+
+/* A long run scrolls inside its column rather than pushing the page down. */
+.booking {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.locked {
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+}

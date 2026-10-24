@@ -6,6 +6,18 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- The Overview holds the History in a panel beside the next booking; the History and
+  Activity screens are gone (their addresses lead to the Overview, and `?run=` still opens
+  that run). The panel lists the runs of the last ten days, real bookings unless "Gồm cả
+  chạy thử" is ticked, ten more days on request. Each row says what the run booked, its
+  stamp ("ĐÃ ĐẶT 2/2", "ĐẶT ĐƯỢC 1/2", "KHÔNG ĐƯỢC 0/2", "CHẠY THỬ ĐẠT"), when and whether it
+  ran on schedule or by hand, and each slot booked or not with the reason; a run opens in
+  the panel with its slots, every step and the technical log.
+- The status line moved to the header, on every screen; while a run goes on it names the
+  run in place of the banner over the Overview. The live run no longer links to the
+  activity log.
+
 ## [0.11.0] - 2026-10-24
 
 ### Changed

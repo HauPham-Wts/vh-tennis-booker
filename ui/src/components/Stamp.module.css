@@ -10,6 +10,12 @@
   white-space: nowrap;
 }
 
+.small {
+  padding: 2px 7px;
+  border-width: var(--border);
+  font-size: var(--text-label);
+}
+
 .booked {
   color: var(--color-stamp);
 }

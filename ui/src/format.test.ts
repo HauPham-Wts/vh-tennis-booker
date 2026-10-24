@@ -11,7 +11,6 @@ import {
   formatTime,
   dayPeriod,
   localToday,
-  monthParts,
   parseLocal,
   relativeDay,
   slotStart,
@@ -134,17 +133,6 @@ describe("numbers", () => {
     [0, "vi", "0,0"],
   ] as const)("formatDecimal(%j, %s) is %j", (value, language, expected) => {
     expect(formatDecimal(value, language)).toBe(expected);
-  });
-});
-
-describe("monthParts", () => {
-  it("names the month in each language", () => {
-    expect(monthParts("2026-10", "vi")).toEqual({ month: 10, year: 2026, name: "Tháng 10" });
-    expect(monthParts("2026-10", "en")).toEqual({ month: 10, year: 2026, name: "October" });
-  });
-
-  it.each(["2026-13", "2026-00", "2026-1", "10/2026", ""])("gives null for %j", (text) => {
-    expect(monthParts(text, "en")).toBeNull();
   });
 });
 
