@@ -11,13 +11,13 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-from court_booker.history import connect
+from court_booker.history import SCHEMA_VERSION, connect
 
 DEFAULT_LIMIT = 50
 
 _RUN_COLUMNS = """
     runs.id, runs.trigger, runs.dry_run, runs.version, runs.started_at, runs.finished_at,
-    runs.play_date, runs.court, runs.status, runs.error,
+    runs.play_date, runs.court, runs.status, runs.error, runs.device,
     (SELECT COUNT(*) FROM run_slots WHERE run_slots.run_id = runs.id AND run_slots.ok) AS booked,
     (SELECT COUNT(*) FROM run_slots WHERE run_slots.run_id = runs.id) AS total
 """
@@ -30,16 +30,23 @@ def open_read_only(path: Path) -> sqlite3.Connection:
     """Open the history at ``path`` for reading; rows come back as ``sqlite3.Row``.
 
     A missing database is created first (empty, migrated), so a new install reads no runs
-    instead of failing. The connection may be used from another thread than the one that
-    opened it (the backend's worker threads); it only reads.
+    instead of failing, and an older one is migrated first, so the queries find every
+    column. The connection may be used from another thread than the one that opened it (the
+    backend's worker threads); it only reads.
     """
     if not path.exists():
         connect(path).close()
-    connection = sqlite3.connect(
-        f"{path.resolve().as_uri()}?mode=ro", uri=True, check_same_thread=False
-    )
+    connection = _read_only(path)
+    if connection.execute("PRAGMA user_version").fetchone()[0] < SCHEMA_VERSION:
+        connection.close()
+        connect(path).close()
+        connection = _read_only(path)
     connection.row_factory = sqlite3.Row
     return connection
+
+
+def _read_only(path: Path) -> sqlite3.Connection:
+    return sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True, check_same_thread=False)
 
 
 def list_runs(

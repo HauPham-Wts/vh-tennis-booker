@@ -476,6 +476,8 @@ export interface components {
             status: string;
             /** Error */
             error: string | null;
+            /** Device */
+            device: number | null;
             /** Booked */
             booked: number;
             /** Total */
@@ -512,6 +514,8 @@ export interface components {
             status: string;
             /** Error */
             error: string | null;
+            /** Device */
+            device: number | null;
             /** Booked */
             booked: number;
             /** Total */
@@ -530,6 +534,11 @@ export interface components {
             pid: number;
             /** Since */
             since: string | null;
+            /**
+             * Runs
+             * @default []
+             */
+            runs: number[];
         };
         /**
          * ScheduleState

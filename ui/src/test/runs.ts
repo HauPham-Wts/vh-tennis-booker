@@ -13,6 +13,7 @@ export function runSummary(id: number, fields: Partial<RunSummary> = {}): RunSum
     court: "S6 - Sân tennis",
     status: "ok",
     error: null,
+    device: null,
     booked: 2,
     total: 2,
     slots: [

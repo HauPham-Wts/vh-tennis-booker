@@ -17,6 +17,9 @@ uses [Semantic Versioning](https://semver.org/).
   The runner must be upgraded before the table is added: an older one refuses it.
 - The setup checks (`court-booker setup`, the app's setup screen) check the screen and the
   Vinhomes app on every MuMu instance, and auto setup sets the screen of each.
+- While instances book side by side the Overview shows a ticket for each ("MuMu 1 · Đang đặt
+  cho …"), and the History names the instance of each run beside the first ("· MuMu 1").
+  The history database records each run's instance (schema 2; older runs have none).
 
 ### Changed
 - Each run also turns off Android notification banners, in the same command that turns
