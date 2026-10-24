@@ -6,6 +6,37 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-10-24
+
+### Changed
+- The app's quota notice ("Căn hộ đã hết hạn mức đăng ký tiện ích cho phép.") stops the
+  run: the round fails at once as "Booking quota used up" (after "Tiếp tục" it waited 30 s
+  for the courts), the slots left are skipped without touching the app, and the log, the
+  history and the Windows notification say so. A new label, `quota_full` ("hết hạn mức"),
+  finds the notice; config.toml needs no change.
+- `docs/architecture.md` says what each module, route and UI part does and what must stay
+  true (43 KB to 12 KB); the details live in the docstrings.
+- The field notes keep the facts about the app and MuMu the code relies on (the verified
+  runs table and the dated accounts are gone: test evidence goes in the pull request); the
+  roadmap keeps the goal, what is left and the situations; the desktop spec keeps the product
+  decisions and the packaging plan; how-it-works is shorter.
+- README, CONTRIBUTING and CLAUDE.md follow the trimmed docs: a real booking's results go in
+  the pull request's description, a GitHub release page is optional, and CLAUDE.md's current
+  state points to the changelog and the session notes instead of repeating them.
+- Before the opening, only the first tap on the utility logs "Tapped" at info level (a tap
+  every 0.2 s filled the log with them: 121 lines on 2026-10-20); a new line says after how
+  many attempts the calendar opened.
+
+### Fixed
+- The settings model's description no longer mentions an "Advanced" section; the app
+  changes the slots, court and day only.
+- The Windows notification names the court the confirmation page showed, the one booked,
+  instead of the configured one (the app once booked another court than the one tapped).
+
+### Removed
+- The historical specs of 0.2.0 and 0.3.0 (`docs/specs`): the current design is in
+  `docs/architecture.md`, the old one in the git history.
+
 ## [0.10.0] - 2026-10-23
 
 ### Added

@@ -89,6 +89,12 @@ def test_notification_in_english():
     assert body.splitlines() == ["✅ 18:00 - 19:00 · S6", "❌ 19:00 - 20:00 · Fully booked"]
 
 
+def test_notification_names_the_court_the_app_booked():
+    booked = [RoundResult("18:00 - 19:00", True, "booked", 4.2, court="S9 - Sân tennis")]
+
+    assert notification(booked)[1] == "✅ 18:00 - 19:00 · S9"
+
+
 def test_notification_of_a_dry_run_says_so():
     passed = [RoundResult("18:00 - 19:00", True, "dry run passed", 3.0)]
 
@@ -127,6 +133,16 @@ def test_an_unknown_language_falls_back_to_vietnamese():
             "The app refused the booking: Quá số lần\nđặt",
             "App từ chối: Quá số lần\nđặt",
             "The app refused: Quá số lần\nđặt",
+        ),
+        (
+            "Booking quota used up: Căn hộ đã hết hạn mức đăng ký tiện ích cho phép.",
+            "Hết hạn mức đặt sân",
+            "Booking quota used up",
+        ),
+        (
+            "Skipped: the booking quota is used up",
+            "Bỏ qua vì đã hết hạn mức",
+            "Skipped: booking quota used up",
         ),
         (
             "Outcome unknown: no ticket 30 s after confirming",

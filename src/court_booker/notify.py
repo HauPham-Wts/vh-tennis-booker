@@ -80,6 +80,8 @@ REASONS = {
         "slotFull": "Hết chỗ",
         "courtFull": "Sân {court} đã kín",
         "refused": "App từ chối: {message}",
+        "quotaFull": "Hết hạn mức đặt sân",
+        "quotaSkipped": "Bỏ qua vì đã hết hạn mức",
         "unknown": "Không rõ đã đặt được chưa, xem app Vinhomes",
         "notOpen": "Ngày chưa mở đặt",
         "stuck": "App không chuyển màn hình",
@@ -91,6 +93,8 @@ REASONS = {
         "slotFull": "Fully booked",
         "courtFull": "Court {court} fully booked",
         "refused": "The app refused: {message}",
+        "quotaFull": "Booking quota used up",
+        "quotaSkipped": "Skipped: booking quota used up",
         "unknown": "Outcome unknown, check the Vinhomes app",
         "notOpen": "Not open for booking yet",
         "stuck": "The app did not move on",
@@ -105,6 +109,8 @@ _PATTERNS = [
     (re.compile(r"^Slot .+ is fully booked$"), "slotFull"),
     (re.compile(r"^Court (?P<court>.+) is fully booked$"), "courtFull"),
     (re.compile(r"^The app refused the booking: (?P<message>.*)$", re.DOTALL), "refused"),
+    (re.compile(r"^Booking quota used up:"), "quotaFull"),
+    (re.compile(r"^Skipped: the booking quota is used up$"), "quotaSkipped"),
     (re.compile(r"^Outcome unknown:"), "unknown"),
     (re.compile(r" not open after \d+ attempt"), "notOpen"),
     (re.compile(r" but the next screen did not appear$"), "stuck"),
@@ -182,8 +188,9 @@ def format_notification(
 ) -> tuple[str, str]:
     """Return the title and the text of the notification for a finished run.
 
-    The text has one line per round: the slot and the court, or why it failed. A run
-    that failed before its rounds has one line for its error instead.
+    The text has one line per round: the slot and the court the app booked (``court``
+    if the round did not read it), or why it failed. A run that failed before its rounds
+    has one line for its error instead.
     """
     if language not in TEXTS:  # the config is not validated when loaded
         language = DEFAULT_LANGUAGE
@@ -204,7 +211,7 @@ def format_notification(
     if dry_run:
         title += texts["dry_run"]
     lines = [
-        f"✅ {result.slot} · {court_name(court)}"
+        f"✅ {result.slot} · {court_name(result.court or court)}"
         if result.ok
         else f"❌ {result.slot} · {failure_reason(result.detail, language)}"
         for result in results

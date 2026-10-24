@@ -373,6 +373,8 @@ export interface components {
             residents: string;
             /** Notice */
             notice: string;
+            /** Quota Full */
+            quota_full: string;
             /** Booked Time */
             booked_time: string;
             /** Booked Place */
@@ -557,7 +559,7 @@ export interface components {
         };
         /**
          * Settings
-         * @description Every booking setting; the UI shows the first five, the rest under "Advanced".
+         * @description Every booking setting; the UI changes the slots, court and day, and sends the rest back.
          */
         Settings: {
             /** Slots */

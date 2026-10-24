@@ -34,14 +34,13 @@ round 2 shows as it happens](docs/img/overview.png)
   ticket. A refusal fails the round with the app's own message, and a round that shows
   neither within 30 s is reported as "outcome unknown", never as booked.
 - **Built for a slow app.** Each step taps as soon as its button appears, taps again every
-  2 s (3 s for "Xác nhận") while the app ignores it, and waits up to 30 s for a slow screen. A frozen emulator
-  ends the run after 60 s with a
-  clear error instead of hanging until the next morning.
-- **One read per screen.** A screen is read in a single accessibility dump (about 13 ms
-  with the driver, measured on MuMu) and every button is found in it locally;
-  waiting for a screen and finding its buttons is
-  the same read. At the real 06:00 opening, the first slot has been booked 7 to 11 s after
-  06:00.
+  2 s (3 s for "Xác nhận") while the app ignores it, and waits up to 30 s for a slow screen.
+  A frozen emulator ends the run after 60 s with a clear error instead of hanging until the
+  next morning; the app's quota notice ends it at once.
+- **One read per screen.** A screen is read in a single accessibility dump (about 13 ms with
+  the driver, measured on MuMu) and every button is found in it locally; waiting for a screen
+  and finding its buttons is the same read. At the real 06:00 opening, the first slot has
+  been booked 7 to 11 s after 06:00.
 - **Local web UI and full history.** Overview, schedule, history and settings screens in
   Vietnamese and English, over a FastAPI backend on 127.0.0.1. Every run, slot and step is
   kept in SQLite (about 0.13 ms per write), beside a daily log of every screen read.
@@ -102,10 +101,11 @@ Further reading:
 
 - [docs/how-it-works.md](docs/how-it-works.md): reading a Flutter app from the outside,
   navigation, lessons learned
-- [docs/architecture.md](docs/architecture.md): every module, backend route and UI layer
-- [docs/field-notes.md](docs/field-notes.md): what the app and the emulator were seen to
-  do, and the verified runs
-- [docs/roadmap.md](docs/roadmap.md): product decisions, phases and the situations handled
+- [docs/architecture.md](docs/architecture.md): what each module, backend route and UI part
+  does
+- [docs/field-notes.md](docs/field-notes.md): the facts about the app and the emulator the
+  code relies on
+- [docs/roadmap.md](docs/roadmap.md): the goal, what is left and the situations handled
 
 ## Quick start
 
@@ -260,10 +260,10 @@ src/court_booker/api/   FastAPI backend of the web UI
 ui/                     web UI: React, TypeScript, Vite
 tests/                  Python tests with a fake device, ADB, clock and Task Scheduler
 tools/                  screen inspector, runner folder, OpenAPI export
-docs/                   how it works, architecture, field notes, roadmap, design specs
+docs/                   how it works, architecture, field notes, roadmap, desktop app spec
 ```
 
-[docs/architecture.md](docs/architecture.md) describes every module.
+[docs/architecture.md](docs/architecture.md) says what each module does.
 
 ## Development
 
@@ -282,12 +282,9 @@ work in progress.
 ## Roadmap
 
 The 0.x versions go through four phases toward 1.0.0: it runs, it handles every situation,
-it is fast, it is friendly to use. Released: 0.10.0, with a Windows notification after
-every run; 0.9.0 brought the instrumentation driver and booking in either Vietnamese or
-English. Next on the desktop line: MuMu tuning from the
-logs, then several accounts booking in parallel (one MuMu each). Last before
-1.0.0: the desktop app with an installer. See [docs/roadmap.md](docs/roadmap.md) and the
-[changelog](CHANGELOG.md).
+it is fast, it is friendly to use. Released: 0.11.0 ([changelog](CHANGELOG.md)). Next: MuMu
+tuning from the logs, then several accounts booking in parallel (one MuMu each). Last before
+1.0.0: the desktop app with an installer. See [docs/roadmap.md](docs/roadmap.md).
 
 ## Credits
 

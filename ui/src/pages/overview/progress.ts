@@ -65,6 +65,7 @@ export function progressOf(steps: readonly Step[]): Progress {
     state: done.get(slot) ?? (slot === current && !finished ? "current" : "pending"),
   }));
   const booked = [...done.values()].filter((state) => state === "booked").length;
-  const waiting = slots.filter((slot) => !started.has(slot));
+  // A slot skipped after the quota notice fails without starting.
+  const waiting = slots.filter((slot) => !started.has(slot) && !done.has(slot));
   return { slots, dryRun, date, court, current, booked, finished, states, waiting };
 }

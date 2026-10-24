@@ -44,6 +44,7 @@ class LabelSettings(BaseModel):
     court_list: str
     residents: str
     notice: str
+    quota_full: str
     booked_time: str
     booked_place: str
     ticket: str
@@ -52,7 +53,7 @@ class LabelSettings(BaseModel):
 
 
 class Settings(BaseModel):
-    """Every booking setting; the UI shows the first five, the rest under "Advanced"."""
+    """Every booking setting; the UI changes the slots, court and day, and sends the rest back."""
 
     model_config = ConfigDict(extra="forbid")
 

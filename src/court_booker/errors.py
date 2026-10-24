@@ -1,7 +1,8 @@
 """Exception hierarchy.
 
-``BookingError`` aborts one booking round and later rounds still run. The other
-``CourtBookerError`` subclasses stop the whole run.
+``BookingError`` aborts one booking round and later rounds still run, except after a
+``QuotaFullError``, which leaves them unrun. The other ``CourtBookerError`` subclasses stop
+the whole run.
 """
 
 from __future__ import annotations
@@ -34,7 +35,14 @@ class BookingNotOpenError(BookingError):
 
 
 class BookingRejectedError(BookingError):
-    """The app answered the confirmation with a notice instead of the ticket."""
+    """The app answered with a notice instead of the next screen, such as the ticket."""
+
+
+class QuotaFullError(BookingRejectedError):
+    """The app's notice says the apartment's booking quota is used up.
+
+    Every round of a run books the same day, so no later round can book either.
+    """
 
 
 class BookingUnconfirmedError(BookingError):

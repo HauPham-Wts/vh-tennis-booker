@@ -17,6 +17,7 @@ from court_booker.errors import (
     DeviceNotRespondingError,
     ElementNotFoundError,
     NavigationError,
+    QuotaFullError,
     SlotUnavailableError,
 )
 from court_booker.events import EventKind, MemorySink, Reporter
@@ -57,6 +58,11 @@ NOTICE = [  # read from the device on 2026-10-10; the dialog hides the page bene
     node("Đóng", (47, 841, 493, 936)),
     node("7:43 PM", (6, 5, 50, 28), False),
     node("Wifi signal full.", (439, 5, 460, 26), False),
+]
+TAKEN_MESSAGE = "Tiện ích đã hết chỗ, vui lòng chọn vị trí/thời gian khác"  # 2026-10-15
+TAKEN_NOTICE = [  # someone else booked the slot first
+    (TAKEN_MESSAGE if desc == QUOTA_MESSAGE else desc, box, clickable)
+    for desc, box, clickable in NOTICE
 ]
 CONFIRM_PAGE = [
     node("Xác nhận đăng ký", (145, 52, 395, 89), False),
@@ -505,7 +511,7 @@ def test_notice_after_a_frame_without_labels_fails_the_round():
     app = refusing_app()
     app.taps_to[("confirm_ticked", "Xác nhận")] = ["loading", ("notice", 2)]
 
-    with pytest.raises(BookingRejectedError, match=f"refused the booking: {QUOTA_MESSAGE}"):
+    with pytest.raises(BookingRejectedError, match=f"refused the booking: {TAKEN_MESSAGE}"):
         Booker(app, Config()).book("11:00 - 12:00", TARGET)
 
 
@@ -704,12 +710,14 @@ def test_the_details_page_is_awaited_until_its_continue_button_is_enabled():
     assert app.screen == "ticket"
 
 
-def refusing_app(english=False, **options):
-    """Answer "Xác nhận" with a notice dialog, as when someone else took the slot first."""
+def refusing_app(
+    english=False, notice=TAKEN_NOTICE, after=("confirm_ticked", "Xác nhận"), **options
+):
+    """Answer the tap ``after`` with ``notice``, by default "Xác nhận" with the slot taken."""
     app = booking_app(**options)
-    app.screens["notice"] = NOTICE
-    app.taps_to[("confirm_ticked", "Xác nhận")] = "notice"
-    app.backs_to["notice"] = "confirm_ticked"
+    app.screens["notice"] = notice
+    app.taps_to[after] = "notice"
+    app.backs_to["notice"] = after[0]
     return in_english(app) if english else app
 
 
@@ -717,18 +725,63 @@ def test_notice_after_confirming_fails_the_round_with_its_message():
     app = refusing_app()
     booker = Booker(app, Config())
 
-    with pytest.raises(BookingRejectedError, match=f"refused the booking: {QUOTA_MESSAGE}"):
+    with pytest.raises(BookingRejectedError, match=f"refused the booking: {TAKEN_MESSAGE}") as e:
+        booker.book("11:00 - 12:00", TARGET)
+
+    assert not isinstance(e.value, QuotaFullError)
+    assert app.taps == FULL_ROUND
+    assert booker.commands == 16
+
+
+def test_the_quota_notice_after_confirming_fails_the_round_as_quota_full():
+    app = refusing_app(notice=NOTICE)
+    booker = Booker(app, Config())
+
+    with pytest.raises(QuotaFullError, match=f"^Booking quota used up: {QUOTA_MESSAGE}$"):
         booker.book("11:00 - 12:00", TARGET)
 
     assert app.taps == FULL_ROUND
     assert booker.commands == 16
 
 
+def test_the_quota_notice_after_the_calendar_fails_the_round_at_once(fake_time):
+    app = refusing_app(notice=NOTICE, after=("calendar_selected", "Tiếp tục"))
+    booker = Booker(app, Config())
+
+    with pytest.raises(QuotaFullError, match=f"^Booking quota used up: {QUOTA_MESSAGE}$"):
+        booker.book("11:00 - 12:00", TARGET)
+
+    assert app.taps == FULL_ROUND[:4]
+    assert app.calls == []  # the notice is left for the next round to close
+    assert fake_time[0] < 1  # it waited `timeout` (30 s) for the courts before
+
+
+def test_another_notice_after_the_calendar_fails_the_round_with_its_message():
+    app = refusing_app(after=("calendar_selected", "Tiếp tục"))
+
+    with pytest.raises(BookingRejectedError, match=f"refused the booking: {TAKEN_MESSAGE}") as e:
+        Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert not isinstance(e.value, QuotaFullError)
+    assert app.taps == FULL_ROUND[:4]
+
+
+def test_the_quota_notice_after_the_utility_is_not_tapped_through():
+    app = refusing_app(notice=NOTICE, after=("utilities", "Sân Tennis"))
+
+    with pytest.raises(QuotaFullError, match=QUOTA_MESSAGE):
+        Booker(app, Config()).book("11:00 - 12:00", TARGET)
+
+    assert app.taps == ["Sân Tennis"]
+    assert app.calls == []
+
+
 def test_a_notice_after_tapping_confirm_again_leaves_the_outcome_unknown():
-    app = refusing_app()
+    app = refusing_app(notice=NOTICE)
     app.swallow = {"Xác nhận": 1}
 
-    # The notice may answer the second tap of a booking the first one made.
+    # The notice may answer the second tap of a booking the first one made; even the quota
+    # notice: that booking may have used the quota up.
     with pytest.raises(
         BookingUnconfirmedError,
         match=f"a notice after 2 taps on 'Xác nhận': {QUOTA_MESSAGE}; an earlier tap may have",
@@ -984,7 +1037,7 @@ def test_a_back_the_app_missed_is_pressed_again_after_two_seconds(fake_time):
 
 
 def test_return_to_utilities_warns_about_a_notice_it_closes(caplog):
-    app = refusing_app()
+    app = refusing_app(notice=NOTICE)
     app.screen = "notice"
 
     Booker(app, Config()).return_to_utilities()
@@ -1188,7 +1241,7 @@ class OpeningBooker(Booker):
         self.entries = 0
         self.backs = 0
 
-    def tap_and_advance(self, screen, target, name, find_next):
+    def tap_and_advance(self, screen, target, name, find_next, quiet=False):
         self.entries += 1
         return None, Screen([])
 
@@ -1289,6 +1342,10 @@ def test_a_tap_before_the_opening_closes_the_notice_and_taps_again(caplog):
     message = f"Not open yet: {CLOSED_MESSAGE}; closing the notice and tapping again"
     assert logged == [(logging.INFO, message), (logging.DEBUG, message)]
     assert "Closing a notice" not in caplog.text  # expected here, so no warning
+    # Only the first tap of the utility logs at info, then the calendar opening.
+    taps = [r.levelno for r in caplog.records if r.getMessage() == "Tapped 'Sân Tennis'"]
+    assert taps == [logging.INFO, logging.DEBUG, logging.DEBUG]
+    assert "Calendar opened after 3 attempt(s)" in caplog.text
 
 
 def test_a_notice_that_stays_fails_the_round_after_the_retry_window(monkeypatch):
@@ -1387,17 +1444,20 @@ def test_an_app_in_english_shows_full_slots_and_courts(slot, courts, error):
         booker.book(slot, TARGET)
 
 
-def test_an_english_notice_after_confirming_fails_the_round_with_its_message():
-    app = refusing_app(english=True)
+@pytest.mark.parametrize(
+    "after", [("confirm_ticked", "Xác nhận"), ("calendar_selected", "Tiếp tục")]
+)
+def test_the_english_quota_notice_fails_the_round_as_quota_full(after):
+    app = refusing_app(english=True, notice=NOTICE, after=after)
     booker = prepared(app)
 
     with pytest.raises(
-        BookingRejectedError,
-        match="refused the booking: The apartment has reached the allowed utility registration",
+        QuotaFullError,
+        match=r"^Booking quota used up: The apartment has reached the allowed utility registration",
     ):
         booker.book("11:00 - 12:00", TARGET)
 
-    assert app.taps == english(FULL_ROUND)
+    assert app.taps == english(FULL_ROUND[: FULL_ROUND.index(after[1]) + 1])
 
 
 def test_an_english_notice_after_the_utility_tap_is_closed_and_the_utility_tapped_again():

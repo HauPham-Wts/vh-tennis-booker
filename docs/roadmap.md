@@ -2,111 +2,56 @@
 
 ## Product goal
 
-The only goal is to win the booking race: the app opens bookings at **06:00 every day** and
-the user must not need to be awake. Priority is unattended, scheduled, fastest-possible
-booking (decided 2026-10-07).
+Win the booking race: the app opens bookings at **06:00 every day**, and the user must not need
+to be awake. Unattended, scheduled, as fast as possible.
 
-- The target date is always today + `days_ahead` (default 2); there is no `--date`.
-- No stop button or cancellation token; Ctrl+C prints the summary instead.
-- The trigger is Windows Task Scheduler at `wake_at` (default 05:45), time-based, not
-  logon. The run itself starts MuMu, connects ADB and restarts the app. A real run that ran
-  its rounds closes MuMu at the end (since 0.7.0, no setting); MuMu stays open after a dry
-  run, Ctrl+C, an error before the rounds, or a freeze.
-- Each run waits on the home screen and opens the utilities list `warm_up_seconds` (60)
-  before the start time, so only the booking taps happen after 06:00 and the app has loaded
-  its data shortly before (2026-10-14).
-- ADB: reuse a running ADB server if present, then a configured adb path, then adb on
-  PATH; then detect emulator ports (MuMu 7555 and 16384+, LDPlayer/BlueStacks 5555+, Nox
-  62001). MuMu is started with `MuMuManager.exe` in `nx_main`: `info -v 0` returns JSON
-  with `is_android_started`, `adb_host_ip`, `adb_port` (16384 for instance 0);
-  `control -v 0 launch` starts it. MuMu ships its own `adb.exe` in the same folder.
-
-Out of scope: bypassing any app check, and automation through an AccessibilityService. ADB
-needs Android developer mode, which the app accepts. The app refuses to book while an
-accessibility service is enabled (2026-10-18, field notes, "Accessibility agent"). In scope
-since 2026-10-18 (decided by the user): the project's own driver APK, an instrumentation
-started with `am instrument` that uses UiAutomation as uiautomator2 does; it is not an
-accessibility service, leaves the Vinhomes app untouched, and the app books with it running
-(field notes, "Instrumentation driver").
+- The target date is today + `days_ahead` (0-2); there is no `--date`.
+- Windows Task Scheduler starts the run at `wake_at` (waking the PC). The run starts MuMu,
+  connects ADB, restarts the app, waits on the home screen and opens the utilities list
+  `warm_up_seconds` before the start, so only the booking taps happen after 06:00. A real run
+  that ran its rounds closes MuMu at the end.
+- Out of scope: getting around any check of the app, and accessibility services, which the app
+  refuses (field notes, "Accessibility agent"). In scope: the project's own instrumentation
+  driver (UiAutomation, as uiautomator2 uses); the app books with it running.
 
 ## Phases
 
 The 0.x versions go through four phases toward 1.0.0: (1) it runs, (2) it handles every
-situation, (3) it is fast, (4) it has a user-friendly UI. Speed came early (0.3.0) because
-it decides the 06:00 race. On 2026-10-12 the UI phase moved ahead of the remaining speed
-work: 0.4.0 waits for failures in the logs, and the core books reliably. Since 0.6.0 the
-0.6.x patches fix what the 06:00 logs and daily use show. On 2026-10-16 packaging the
-desktop app (the installer) moved to the very end, after the speed work, so it only wraps
-what has proven itself; it gets its version number when it starts. On 2026-10-18 an
-accessibility agent was tried for the speed work and dropped (the app refuses to book
-with one enabled); the same day an instrumentation driver took its place (0.8.0), which
-finds elements by label in the current tree before clicking. The speed work goes on in this order: the
-driver, MuMu tuning, several MuMu instances in parallel (the last step for two slots); each
-round is made as fast as it can be before rounds run side by side.
+situation, (3) it is fast, (4) it has a user-friendly UI. Releases 0.1.0 to 0.11.0 covered all
+four (CHANGELOG). Failures are fixed as the 06:00 logs show them. What is left:
 
-| Phase | Version | Scope |
+| Phase | Next | Scope |
 |---|---|---|
-| 1 Runs | 0.1.0 | Label-based booking flow (released) |
-| 1 Runs | 0.2.0 Unattended | Start MuMu, ADB auto-connect, timed start with NTP offset, opening retry, keep awake, log file, Telegram summary, Task Scheduler with wake (released; spec [0.2.0-unattended](specs/0.2.0-unattended.md)) |
-| 3 Fast | 0.3.0 Fast rounds | MuMu 540x1600, one dump per screen, taps by coordinates, entry located before the start, command count (released 2026-10-09; spec [0.3.0-fast-rounds](specs/0.3.0-fast-rounds.md)) |
-| 2 Every situation | 0.4.0 Hardening | Failure screen log; the situations below are fixed as the logs show them (released 2026-10-12) |
-| 4 UI | 0.5.0 Backend | Separate run folder, engine events, data folder, SQLite history and activity, run lock, device setup and auto setup, FastAPI backend (released 2026-10-13; spec [0.5.0-desktop-app](specs/0.5.0-desktop-app.md)) |
-| 2 Every situation | 0.5.1-0.5.3 | Refused bookings fail the round, every screen logged, warm-up on the utilities list (released 2026-10-14) |
-| 4 UI | 0.6.0 UI | React + TypeScript screens in the "Vé giấy" design, Vietnamese and English (released 2026-10-15) |
-| 2 Every situation | 0.6.1 | Court and date read on the confirmation page, ticket check (warning only), 60 s limit on device commands, labels saved only when changed (released 2026-10-15) |
-| 2 Every situation | 0.6.2 | Booked only once the ticket shows (unknown outcome fails the round), Back pressed as soon as each screen shows, clock check with fallback servers; `main`/`stable` branch flow (released 2026-10-16) |
-| 4 UI | 0.6.3 | Activity becomes the second tab of History (five menu items); both list ten days and "Xem thêm" (`GET /api/runs?days=`) (released 2026-10-16) |
-| 3 Fast | 0.7.0 | Taps as a bare touch down and up (about 0.5-0.7 s less a round); a real run closes MuMu once its rounds are done (released 2026-10-16) |
-| 2 Every situation | 0.7.1 | The court check on the booking details page (released 2026-10-18) |
-| 3 Fast | 0.8.0 | Instrumentation driver: reads the screen in about 13 ms instead of 100 ms and finds labelled elements in the current tree before clicking; uiautomator2 when it does not start (released 2026-10-18) |
-| 2 Every situation | 0.8.1 | NTP time anchored to a counter, renewed at warm-up, with a 0.1 s opening margin; closed-hours notice retried; disabled calendar button awaited; `develop`/`main` release workflow (released 2026-10-19) |
-| 2 Every situation | 0.8.2 | Every screen awaited up to `timeout`, now 30 s by default; repeat taps every 2 s only while the old element remains (released 2026-10-19) |
-| 2 Every situation | 0.8.3 | Repeat "Xác nhận" every 3 s while enabled with no ticket or notice; a notice after another tap leaves the outcome unknown (released 2026-10-20) |
-| 2 Every situation | 0.9.0 | The Vinhomes app in English as well as Vietnamese: the English labels built in, the language found on the app's first screen, no setting (released 2026-10-20) |
-| 4 UI | 0.10.0 | A Windows notification after every run, in the app's language; Settings › Notifications with a test button (released 2026-10-23) |
-| 3 Fast | **Next** | MuMu tuning (frame rate, performance, hidden bottlenecks); then several MuMu instances with separate accounts in parallel (one account cannot log in twice), the last speed step (now) |
-| 4 UI | Desktop app, last before 1.0.0 | Tauri shell with PyInstaller sidecar, installer, release automation; version number set when it starts (spec [0.5.0-desktop-app](specs/0.5.0-desktop-app.md), "Packaging") |
+| 3 Fast | MuMu tuning | Frame rate, performance, hidden bottlenecks |
+| 3 Fast | Parallel MuMu | Several MuMu instances with separate accounts (one account cannot log in twice), one slot each: the last speed step |
+| 4 UI | Desktop app, last before 1.0.0 | Tauri shell with a PyInstaller sidecar, installer, release automation; version number set when it starts ([spec](specs/0.5.0-desktop-app.md), "Packaging") |
 
-There is no 0.3.1: its candidate fixes were judged to have no impact.
-
-The 0.2.0 and 0.3.0 specs are historical designs for those releases. The desktop spec
-still holds the UI decisions and unfinished packaging plan; current implementation details
-are in [architecture.md](architecture.md).
-
-## Situations (phase 2)
-
-"Done" means handled, or at least reported clearly in the log file. Decided on 2026-10-10:
-failures are fixed as they show up in the log.
+## Situations
 
 | Area | Situation | Today |
 |---|---|---|
 | App | Logged out | Fails early (exit 4) |
-| App | App set to English | Works since 0.9.0: the language is found on the first screen |
-| App | Closed-hours dialog after a too-early tap | Seen 2026-10-19 at 06:00: Windows set the PC clock after the NTP check, so the tap came up to 0.76 s early; the round waited 10 s and failed. Fixed (0.8.1): the wait goes by NTP time on a counter, checked again at the warm-up, the tap comes 0.1 s after the start, and a notice after the utility tap is closed with Back and the utility tapped again until `open_retry_seconds` |
+| App | App set to English | Works: the language is found on the first screen |
+| App | Closed-hours notice (tap before 06:00) | Closed with Back and the utility tapped again until `open_retry_seconds`; the wait goes by NTP time on a counter, the first tap 0.1 s after the start |
 | App | Update prompt, other dialogs, network error | Not handled |
 | App | App crash or freeze during a round | Not handled |
-| App | Slow server at 06:00 | Every screen awaited up to `timeout` (30 s since 0.8.2; was 10 s), re-tap every 2 s while the element is still shown |
+| App | Slow server | Every screen awaited up to `timeout` (30 s), a tap repeated every 2 s while its element still shows |
 | Booking | New date not open yet | Calendar reloaded for `open_retry_seconds` |
-| Booking | Slot fully booked | Round fails; no fallback slot (by decision) |
-| Booking | Court fully booked | Round fails; no fallback court (by decision) |
-| Booking | Slot taken by someone else at "Xác nhận" | Round fails with the app's notice (0.5.1; was logged as booked on 2026-10-14) |
-| Booking | Booked court differs from the tapped one | Seen 2026-10-13 (S6 tapped, S9 booked), 2026-10-15 at 06:00 (the tap hit S9, fully booked: 2.45 s lost), 2026-10-16 (confirmation page on S9, refused by the quota) and 2026-10-17 at 06:00 (S9 booked). Cause: the court list moves up 232 px when the service info above it finishes loading (field notes). Since 0.6.1 the court on the confirmation page is logged (a warning when it differs) and kept in the history. Fixed (0.7.1): the booking details page must name the configured court, another one is left with Back and the court tapped again; a list that moved under a tap that opened nothing gets the tap again after 0.6 s. On 2026-10-18 both rounds of a real booking opened S9 and were set right this way (about 1.5 s each). |
-| Booking | Target date in the next month | Code exists; untested since 0.3.0. Only testable on the last two days of a month (30/10 → 1/11, 31/10 → 2/11): the calendar does not switch to a month without bookable days |
-| Booking | Booking limit per apartment | 2 slots per day and 8 per month; quota tracking is left to the user. A notice after "Xác nhận" is reported; a notice after the calendar's "Tiếp tục" is not recognised at that step and the round times out (field notes, "Dialogs") |
-| Device | MuMu not running / frozen | Started automatically / since 0.6.1 a command over 60 s ends the run with an error (exit code 3); no restart, no retry (by decision) |
+| Booking | Slot or court fully booked | Round fails; no fallback slot or court (by decision) |
+| Booking | Slot taken by someone else at "Xác nhận" | Round fails with the app's notice |
+| Booking | Booked court differs from the tapped one | The court list moves under the tap (field notes); the booking details page must name the configured court, another one is left with Back and the court tapped again |
+| Booking | Target date in the next month | Code exists, untested: first testable on 30/10 (for 1/11) |
+| Booking | Quota (2 slots a day, 8 a month per apartment) | Tracking is left to the user. The app's quota notice, after "Tiếp tục" or "Xác nhận", fails the round with "Booking quota used up" and skips the rounds left; the log and the notification say so (since 0.11.0). The 06:00 run books a new day, so there it means the month is used up |
+| Device | MuMu not running / frozen | Started automatically / a device command over 60 s ends the run (exit 3); no restart, no retry (by decision) |
 | Device | ADB lost during a run | Not handled |
 | Device | Wrong MuMu resolution | Works but scrolls; no warning |
-| Device | PC woke late, clock drift | Runs at once if under 10 min late; NTP time carried on a counter Windows does not set (0.8.1; was an offset to the PC clock) |
-| Reporting | Every failure reported | Log file and history database; a Windows notification after every run (on by default, set in the app); Telegram optional, not configured |
+| Device | PC woke late, clock drift | Runs at once if under 10 min late; NTP time on a counter Windows does not set |
+| Reporting | Every failure reported | Log file, history database, a Windows notification after every run; Telegram optional |
 
 ## Ruled out
 
-- 2026-10-09: opening the calendar before 06:00, two slots in one booking, pre-recorded
-  coordinates.
-- 2026-10-10: a health check before 06:00, fallback slots and courts (other users book
-  within seconds, a missed slot is lost), Telegram setup (the optional code stays), a run
-  history file (history came with the app's database in 0.5.0).
-- 2026-10-18: an on-device AccessibilityService agent. It read the screen in 3 ms and tapped
-  by label, but the app refuses to book while an accessibility service is enabled. Taps
-  written straight to `/dev/input/event4` came out no faster than the other ways to tap
-  once the same change detection was used (field notes, "Accessibility agent").
+- Opening the calendar before 06:00, two slots in one booking, pre-recorded coordinates.
+- A health check before 06:00; fallback slots and courts (other users book within seconds).
+- Setting up Telegram (the optional code stays).
+- An on-device accessibility agent: the app refuses to book while one is enabled.
+- Counting the month's bookings in the app's history before the run: the user tracks the quota.

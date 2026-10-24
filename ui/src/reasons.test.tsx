@@ -21,6 +21,11 @@ describe("failureReason", () => {
       "App từ chối: Căn hộ đã hết hạn mức đăng ký tiện ích cho phép.",
     ],
     [
+      "Booking quota used up: Căn hộ đã hết hạn mức đăng ký tiện ích cho phép.",
+      "Hết hạn mức đặt sân",
+    ],
+    ["Skipped: the booking quota is used up", "Bỏ qua vì đã hết hạn mức"],
+    [
       "Outcome unknown: neither the ticket nor a notice showed 10 s after confirming; " +
         "check the app",
       "Không rõ đã đặt được chưa, xem app Vinhomes",

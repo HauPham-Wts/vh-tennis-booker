@@ -29,6 +29,7 @@ from court_booker.errors import (
     BookingUnconfirmedError,
     ElementNotFoundError,
     NavigationError,
+    QuotaFullError,
     SlotUnavailableError,
 )
 from court_booker.events import EventKind, Reporter
@@ -246,8 +247,10 @@ class Booker:
                 raise ElementNotFoundError(f"{labels.continue_!r} stayed disabled")
             screen = found[1]
         shown, screen = self.tap_and_advance(
-            screen, self.continue_button, labels.continue_, self._court_list_or_venue
+            screen, self.continue_button, labels.continue_, self._after_calendar
         )
+        if self.notice(shown):
+            raise self._refusal(self.notice_text(screen) or "")
         if not self.court_list(shown):
             # Only the court list's heading counts after the venue: a read right after the
             # tap may still show the venue (2026-10-23), which ended the round at once.
@@ -280,7 +283,8 @@ class Booker:
         have passed, a notice in place of the calendar, such as the closed-hours notice,
         is closed with Back and the utility tapped again; and
         a date or slot the server does not list yet, right at the opening time, reloads
-        the calendar by leaving and entering it again. A fully booked slot fails at once.
+        the calendar by leaving and entering it again. A fully booked slot and the quota
+        notice fail at once.
         """
         deadline = time.monotonic() + self.config.open_retry_seconds
         attempt = 1
@@ -289,11 +293,19 @@ class Booker:
         self._entry = None
         while True:
             screen = self.return_to_utilities(screen)
+            # A tap after a notice logs at debug: before the opening one goes every 0.2 s.
             _, screen = self.tap_and_advance(
-                screen, self.utility, self.labels.utility, self._calendar_or_notice
+                screen,
+                self.utility,
+                self.labels.utility,
+                self._calendar_or_notice,
+                quiet=notices > 0,
             )
             message = self.notice_text(screen)
             if message is not None:
+                refusal = self._refusal(message)
+                if isinstance(refusal, QuotaFullError):  # never seen here; a new tap won't help
+                    raise refusal
                 message = message or "a notice without a message"
                 if time.monotonic() >= deadline:
                     raise BookingNotOpenError(
@@ -307,6 +319,8 @@ class Booker:
                 screen = self.go_back(screen, self._finder(self.utility))
                 attempt += 1
                 continue
+            if notices:
+                logger.info("Calendar opened after %d attempt(s)", attempt)
             self.report(EventKind.CALENDAR_OPENED, attempt=attempt)
             try:
                 self.select_date(screen, target)
@@ -400,13 +414,20 @@ class Booker:
     # Navigation -------------------------------------------------------------
 
     def tap_and_advance(
-        self, screen: Screen, target: Match, name: str, find_next: Finder[T]
+        self,
+        screen: Screen,
+        target: Match,
+        name: str,
+        find_next: Finder[T],
+        *,
+        quiet: bool = False,
     ) -> tuple[T, Screen]:
         """Tap ``target`` on ``screen`` and return what ``find_next`` finds on the next one.
 
         The next screen is awaited up to ``timeout``, and acted on as soon as a read shows
         it. A tap swallowed by a lagging app is repeated every :data:`_RETAP_AFTER` while
-        ``target`` is still shown, never while the app loads the next screen.
+        ``target`` is still shown, never while the app loads the next screen. ``quiet``
+        logs the tap at debug level, for a tap repeated many times.
         """
         node = screen.find(target)
         if node is None:
@@ -418,7 +439,7 @@ class Booker:
                 self.tap(node)
             found = self.wait_for(find_next, _retap_wait(deadline))
             if found is not None:
-                logger.info("Tapped %r", name)
+                (logger.debug if quiet else logger.info)("Tapped %r", name)
                 return found
             if time.monotonic() >= deadline:
                 raise NavigationError(f"Tapped {name!r} but the next screen did not appear")
@@ -680,7 +701,7 @@ class Booker:
                 f"{message or 'no message'}; an earlier tap may have booked, check the app"
             )
         if message is not None:
-            raise BookingRejectedError(f"The app refused the booking: {message or 'no message'}")
+            raise self._refusal(message)
         logger.info("Booking confirmed")
         return outcome[1]
 
@@ -817,9 +838,23 @@ class Booker:
 
         return find
 
-    def _court_list_or_venue(self, screen: Screen) -> Node | None:
-        """Return the court list's heading, or else the venue to tap, once either shows."""
-        return screen.find(self.court_list) or self._venue_entry(screen)
+    def _after_calendar(self, screen: Screen) -> Node | None:
+        """Return the court list's heading, the venue to tap or a notice's title, once shown.
+
+        The quota notice shows in place of the next screen after "Tiếp tục" (field notes,
+        "Dialogs"); waiting for the courts alone cost the round ``timeout``.
+        """
+        found = screen.find(self.court_list) or self._venue_entry(screen)
+        if found is None and self.notice_text(screen) is not None:
+            return screen.find(self.notice)
+        return found
+
+    def _refusal(self, message: str) -> BookingRejectedError:
+        """Return the error for the app's notice ``message`` in place of the next screen."""
+        quota = self.labels.quota_full
+        if quota and quota in message:
+            return QuotaFullError(f"Booking quota used up: {message}")
+        return BookingRejectedError(f"The app refused the booking: {message or 'no message'}")
 
     def _venue_entry(self, screen: Screen) -> Node | None:
         """Return the venue to tap below the venues' heading, once it is listed.

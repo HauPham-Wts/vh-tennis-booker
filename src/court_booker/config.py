@@ -58,6 +58,9 @@ class Labels:
     """Caption of the booking details page that follows the court list."""
     notice: str = "Thông báo"
     """Title of the app's message dialogs, e.g. the monthly quota or a refused booking."""
+    quota_full: str = "hết hạn mức"
+    """Part of the message of the notice that the apartment's quota is used up: "Căn hộ đã hết
+    hạn mức đăng ký tiện ích cho phép." No later round of the run can book then."""
     booked_time: str = "Thời gian đặt lịch"
     """Caption of the date and slot on the confirmation page and the ticket."""
     booked_place: str = "Vị trí/dịch vụ"
