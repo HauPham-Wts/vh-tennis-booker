@@ -6,6 +6,10 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- Each run also turns off Android notification banners, in the same command that turns
+  off animations, so none can drop over the app during a round.
+
 ## [0.12.0] - 2026-10-24
 
 ### Changed

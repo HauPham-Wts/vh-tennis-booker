@@ -96,12 +96,14 @@ _SETTLE_TIMEOUT = 1.0
 _SWIPE_SECONDS = 0.25
 _MIN_VISIBLE_RATIO = 0.6
 """A slot clipped to less than this share of a full slot's height is scrolled into view."""
-ANIMATION_SCALES = (
+QUIET_SETTINGS = (
     "window_animation_scale",
     "transition_animation_scale",
     "animator_duration_scale",
+    "heads_up_notifications_enabled",
 )
-"""Android settings that Accessibility > Remove animations sets to 0."""
+"""Android settings set to 0: those Accessibility > Remove animations sets, then the
+notification banners that would drop over the top of the app."""
 
 
 @dataclass
@@ -170,20 +172,21 @@ class Booker:
 
     # Public API -------------------------------------------------------------
 
-    def disable_animations(self) -> None:
-        """Turn off Android animations, as Accessibility > Remove animations does.
+    def quiet_device(self) -> None:
+        """Turn off Android animations and notification banners in one command.
 
-        Screens then change without transitions, so the next one can be read sooner. The
-        settings stay until changed, and a failure only costs that speed-up.
+        Screens then change without transitions, so the next one can be read sooner, and no
+        banner can cover the top of the app or add nodes to a dump mid-round. The settings
+        stay until changed, and a failure only costs these safeguards.
         """
-        command = "; ".join(f"settings put global {name} 0" for name in ANIMATION_SCALES)
+        command = "; ".join(f"settings put global {name} 0" for name in QUIET_SETTINGS)
         self.commands += 1
         try:
             self.device.shell(command)
         except Exception:  # uiautomator2 raises several unrelated types
-            logger.warning("Could not turn off animations", exc_info=True)
+            logger.warning("Could not turn off animations and banners", exc_info=True)
             return
-        logger.debug("Animations off")
+        logger.debug("Animations and notification banners off")
 
     def prepare(self) -> None:
         """Open the app and stop on its home screen, ready for the first round.
@@ -195,7 +198,7 @@ class Booker:
         these screens tells the app's language, whose labels the rounds then use.
         """
         package = self.config.package
-        self.disable_animations()
+        self.quiet_device()
         if self.config.restart_app:
             logger.info("Restarting %s", package)
             self.device.app_stop(package)
