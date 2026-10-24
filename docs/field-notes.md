@@ -86,8 +86,8 @@ clickable "Đóng"; the page beneath leaves the dump.
   closes it and taps again until `open_retry_seconds`.
 - **Quota**: each apartment may book 2 slots a day and 8 a month; once either is used the app
   shows "Căn hộ đã hết hạn mức đăng ký tiện ích cho phép." (the same message for the day and the
-  month), usually after the calendar's "Tiếp tục", once after "Xác nhận" (0.72 s after the
-  tap). The flow knows it by `quota_full` ("hết hạn mức") and the run skips the rounds left,
+  month), usually after the calendar's "Tiếp tục" (0.9 s after the tap, 2026-10-24), once after
+  "Xác nhận" (0.72 s after the tap). The flow knows it by `quota_full` ("hết hạn mức") and the run skips the rounds left,
   which book the same day.
 - **Slot taken** (someone booked it first): after "Xác nhận", "Tiện ích đã hết chỗ, vui lòng
   chọn vị trí/thời gian khác".
