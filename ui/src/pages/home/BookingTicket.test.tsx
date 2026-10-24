@@ -7,7 +7,6 @@ import { type Reply, reply, requestsTo } from "../../test/backend";
 import { overview } from "../../test/overview";
 import { runSummary } from "../../test/runs";
 import { settings } from "../../test/settings";
-import { WELCOMED_KEY } from "../../welcome";
 
 /** A dry run of 15/10 at 09:12, as GET /api/runs?dry_run=true gives it. */
 function dryRun(fields: Partial<RunSummary> = {}): RunSummary {
@@ -90,15 +89,13 @@ describe("BookingTicket start", () => {
   });
 
   it("keeps the switch locked until a dry run has passed", async () => {
-    // An app not used yet opens on the welcome screen, once per opening: it was shown.
-    sessionStorage.setItem(WELCOMED_KEY, "1");
     renderTicket({ status: schedule({ enabled: false, dry_run_passed: false }) });
 
     const top = await ticket();
     expect(within(top).getByRole("switch", { name: "Tự đặt mỗi sáng" })).toBeDisabled();
-    expect(within(top).getByText("Đang tắt")).toBeInTheDocument();
+    expect(within(top).getByText("Chưa bật")).toBeInTheDocument();
     expect(
-      within(top).getByText("Cần chạy thử thành công một lần trước khi bật hẹn giờ."),
+      within(top).getByText("Chạy thử thành công một lần thì mới bật được."),
     ).toBeInTheDocument();
   });
 
@@ -277,7 +274,9 @@ describe("BookingTicket dry run", () => {
     renderTicket();
 
     const top = await ticket();
-    expect(await within(top).findByText("Chưa chạy thử lần nào.")).toBeInTheDocument();
+    expect(
+      await within(top).findByText("Chưa chạy thử lần nào. Mất khoảng một phút, không đặt thật."),
+    ).toBeInTheDocument();
     expect(
       within(top).getByText(
         "Không chạy thử từ 05:50 đến 06:05, để không làm gián đoạn lần đặt sân.",

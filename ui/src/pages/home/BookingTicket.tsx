@@ -62,9 +62,11 @@ function NextStart({ schedule }: { schedule: ScheduleState }) {
             </>
           ) : (
             <>
-              <p className={`${styles.day} ${styles.off}`}>{t("pages.ticket.offTitle")}</p>
+              <p className={`${styles.day} ${styles.off}`}>
+                {t(locked ? "pages.ticket.lockedTitle" : "pages.ticket.offTitle")}
+              </p>
               <p className={styles.offLine}>
-                {locked ? t("errors.dry_run_required") : t("pages.ticket.offLine", { when })}
+                {locked ? t("pages.ticket.locked") : t("pages.ticket.offLine", { when })}
               </p>
             </>
           )}

@@ -105,9 +105,9 @@ const RUN_26 = {
 
 const REPLIES = { "GET /api/runs": reply(RUNS), "GET /api/runs/26": reply(RUN_26) };
 
-/** The History panel beside the next booking. */
+/** The History tab of the panel beside the next booking. */
 function panel() {
-  return screen.findByRole("region", { name: "Lịch sử" });
+  return screen.findByRole("tabpanel", { name: "Lịch sử" });
 }
 
 /** The rows of the list, as their text. */
@@ -197,7 +197,7 @@ describe("History list", () => {
     await i18n.changeLanguage("en");
     renderApp(paths.overview, REPLIES);
 
-    const history = await screen.findByRole("region", { name: "History" });
+    const history = await screen.findByRole("tabpanel", { name: "History" });
     const list = await within(history).findByRole("list");
     expect(within(list).getAllByRole("link")[0]).toHaveTextContent(
       "Play Sat 17 Oct · S6BOOKED 1/2booked this morning 15 Oct · on schedule✓ 15:00✕ 16:00 Fully booked",

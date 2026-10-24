@@ -67,24 +67,9 @@ export function saveNotifications(settings: NotificationSettings): Promise<Notif
   return call(client.PUT("/api/notifications", { body: settings }));
 }
 
-/** Show a sample notification in the saved language; fails with `notification`. */
-export function sendTestNotification(): Promise<void> {
-  return call(client.POST("/api/notifications/test"));
-}
-
-/** Check each device setup item. */
-export function getSetupChecks(): Promise<SetupItem[]> {
-  return call(client.GET("/api/setup"));
-}
-
 /** Fix what auto setup can fix and return the checks again. */
 export function runAutoSetup(request: AutoSetupRequest): Promise<SetupItem[]> {
   return call(client.POST("/api/setup/auto", { body: request }));
-}
-
-/** Read the daily schedule and the next booking. */
-export function getSchedule(): Promise<ScheduleState> {
-  return call(client.GET("/api/schedule"));
 }
 
 /** Switch the daily schedule on (needs a passed dry run) or off. */

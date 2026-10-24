@@ -47,20 +47,14 @@ export function staleKeysFor(step: Step): QueryKey[] {
     }
     const keys: QueryKey[] = [queryKeys.overview, ["runs"]];
     if (step.kind === "run_finished") {
-      // Its final status and technical log, and whether a dry run has passed now.
-      keys.push(queryKeys.run(step.run_id), queryKeys.schedule);
+      // Its final status and technical log; the overview says whether a dry run has passed.
+      keys.push(queryKeys.run(step.run_id));
     }
     return keys;
   }
   const keys: QueryKey[] = [queryKeys.overview];
-  if (step.category === "setup") {
-    keys.push(queryKeys.setup);
-  }
-  if (step.category === "schedule") {
-    keys.push(queryKeys.schedule);
-  }
   if (step.category === "settings") {
-    keys.push(queryKeys.settings, queryKeys.schedule);
+    keys.push(queryKeys.settings);
   }
   return keys;
 }

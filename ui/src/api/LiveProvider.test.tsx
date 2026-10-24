@@ -127,25 +127,24 @@ describe("staleKeysFor", () => {
       queryKeys.overview,
       ["runs"],
       queryKeys.run(3),
-      queryKeys.schedule,
     ]);
   });
 
   it("makes a settings step stale the settings and the schedule", () => {
     expect(
       staleKeysFor(step(1, { run_id: null, kind: "settings_saved", category: "settings" })),
-    ).toEqual([queryKeys.overview, queryKeys.settings, queryKeys.schedule]);
+    ).toEqual([queryKeys.overview, queryKeys.settings]);
   });
 
-  it("makes a setup step stale the setup checks", () => {
+  it("makes a setup step stale the overview, which holds the setup's summary", () => {
     expect(
       staleKeysFor(step(1, { run_id: null, kind: "setup_finished", category: "setup" })),
-    ).toEqual([queryKeys.overview, queryKeys.setup]);
+    ).toEqual([queryKeys.overview]);
   });
 
   it("makes a schedule step stale the schedule", () => {
     expect(
       staleKeysFor(step(1, { run_id: null, kind: "schedule_enabled", category: "schedule" })),
-    ).toEqual([queryKeys.overview, queryKeys.schedule]);
+    ).toEqual([queryKeys.overview]);
   });
 });

@@ -90,12 +90,6 @@ export function formatDay(text: string, language: Language): string {
   return time === null ? text : `${weekday(time, language)} ${dayMonth(time, language)}`;
 }
 
-/** Format a date-time as day, month and minutes: "12/10 06:00", "12 Oct 06:00". */
-export function formatDateTime(text: string, language: Language): string {
-  const time = parseLocal(text);
-  return time === null ? text : `${dayMonth(time, language)} ${pad(time.hour)}:${pad(time.minute)}`;
-}
-
 /** Format the time of a date-time to the second: "06:00:06". */
 export function formatClock(text: string): string {
   const time = parseLocal(text);

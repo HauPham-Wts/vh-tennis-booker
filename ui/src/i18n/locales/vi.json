@@ -9,12 +9,6 @@
     "on": "Đang bật",
     "off": "Đang tắt"
   },
-  "nav": {
-    "label": "Điều hướng chính",
-    "overview": "Tổng quan",
-    "settings": "Cài đặt",
-    "guide": "Hướng dẫn"
-  },
   "language": {
     "label": "Ngôn ngữ",
     "names": {
@@ -26,9 +20,7 @@
     "overview": {
       "title": "Tổng quan",
       "status": {
-        "noSetup": "Chưa thiết lập máy",
-        "setupLeft": "Còn {{count}} mục thiết lập máy cần làm",
-        "setupLink": "Thiết lập máy",
+        "setupLeft": "Còn {{count}} việc thiết lập, xem khung bên phải",
         "noDryRun": "Chưa chạy thử đạt · bấm Chạy thử ngay",
         "scheduleOff": "Chạy thử đạt · bật Tự đặt mỗi sáng",
         "ready": "Sẵn sàng cho {{time}} {{when}}"
@@ -70,7 +62,7 @@
       "dryRun": {
         "button": "Chạy thử ngay",
         "starting": "Đang bắt đầu…",
-        "none": "Chưa chạy thử lần nào.",
+        "none": "Chưa chạy thử lần nào. Mất khoảng một phút, không đặt thật.",
         "last": "Chạy thử gần nhất: {{when}} lúc {{time}}",
         "passed": "thành công",
         "failed": "không qua: {{reason}}",
@@ -87,41 +79,9 @@
         "running": "đang chạy",
         "waiting": "{{slot}} · chờ tới lượt",
         "locked": "Ngày, sân, khung giờ và chạy thử mở lại khi lần này xong. Bạn có thể đóng cửa sổ này."
-      }
-    },
-    "schedule": {
-      "title": "Hẹn giờ",
-      "lead": "Chạy thử một lần cho chắc, rồi bật hẹn giờ để app tự đặt sân lúc {{start}} mỗi sáng.",
-      "dryRun": {
-        "step": "Bước 1",
-        "title": "Chạy thử",
-        "about": "Đi hết các bước đặt sân nhưng dừng ngay trước nút \"Xác nhận\", nên không đặt thật. Mất khoảng một phút.",
-        "button": "Chạy thử ngay",
-        "starting": "Đang bắt đầu…",
-        "none": "Chưa chạy thử lần nào.",
-        "passed": "Lần chạy thử gần nhất: {{when}} lúc {{time}} · thành công",
-        "failed": "Lần chạy thử gần nhất: {{when}} lúc {{time}} · không qua: {{reason}}",
-        "stopped": "Lần chạy thử gần nhất: {{when}} lúc {{time}} · đã dừng giữa chừng",
-        "running": "Đang chạy thử.",
-        "follow": "Xem từng bước ở Tổng quan →"
       },
-      "daily": {
-        "step": "Bước 2",
-        "title": "Hẹn giờ mỗi sáng",
-        "wake": "Đánh thức máy",
-        "start": "Bắt đầu đặt",
-        "repeat": "Lặp lại",
-        "everyDay": "Mỗi ngày",
-        "next": "Lần tới: {{period}} {{day}} lúc {{time}}, chơi {{play}}.",
-        "off": "Đang tắt: máy sẽ không tự đặt sân.",
-        "change": "Đổi khung giờ hoặc sân"
-      },
-      "habits": {
-        "title": "Để hẹn giờ chạy được khi bạn ngủ",
-        "sleep": "Cho máy Sleep, đừng Shut down",
-        "signedIn": "Không đăng xuất khỏi Windows",
-        "plugged": "Laptop thì cắm sạc"
-      }
+      "lockedTitle": "Chưa bật",
+      "locked": "Chạy thử thành công một lần thì mới bật được."
     },
     "history": {
       "title": "Lịch sử",
@@ -147,201 +107,85 @@
       "steps": "Từng bước",
       "technical": "Chi tiết kỹ thuật"
     },
-    "settings": {
-      "title": "Cài đặt",
-      "tabs": "Phần cài đặt"
+    "panel": {
+      "title": "Lịch sử và thiết lập",
+      "setup": "Thiết lập",
+      "left": ", còn {{count}} việc"
     },
-    "bookingSettings": {
-      "title": "Đặt sân",
-      "slots": {
-        "title": "Khung giờ muốn đặt",
-        "lead": "Đặt lần lượt theo thứ tự bạn chọn. Mỗi khung giờ là một lượt đặt riêng.",
-        "morning": "Buổi sáng",
-        "afternoon": "Buổi chiều · tối",
-        "chosen": "{{slot}}, lượt {{order}}"
-      },
-      "place": {
-        "title": "Sân và ngày",
-        "court": "Sân",
-        "day": "Đặt cho ngày",
-        "dayHint": "App mở đặt sân trước tối đa 2 ngày."
-      },
-      "days": {
-        "today": "Hôm nay",
-        "tomorrow": "Ngày mai",
-        "dayAfter": "Ngày kia"
-      },
-      "note": "Thay đổi áp dụng từ lần đặt tiếp theo.",
-      "saved": "Đã lưu. Áp dụng từ lần đặt tiếp theo.",
-      "noSlot": "Chọn ít nhất một khung giờ.",
-      "cancel": "Hủy",
-      "save": "Lưu thay đổi",
-      "saving": "Đang lưu…"
-    },
-    "deviceSetup": {
-      "title": "Thiết lập máy",
-      "lead": "Chuẩn bị máy tính một lần. Những việc còn lại Court Booker tự lo mỗi lần đặt sân.",
-      "manual": {
-        "title": "Việc bạn cần làm",
-        "done": "Xong {{done}}/{{total}}",
-        "check": "Kiểm tra lại",
-        "checking": "Đang kiểm tra…",
-        "waitRun": "Đang có một lần chạy. Máy sẽ được kiểm tra khi lần chạy xong."
-      },
-      "items": {
-        "mumu": {
-          "title": "Cài MuMu Player",
-          "text": "Phần mềm giả lập điện thoại Android, để chạy app Vinhomes trên máy tính.",
-          "todo": "Tải MuMu Player ở mumuplayer.com và cài vào máy, rồi bấm Kiểm tra lại."
-        },
-        "app": {
-          "title": "Cài app Vinhomes Resident trong MuMu",
-          "text": "Mở CH Play trong MuMu, đăng nhập tài khoản Google, rồi tìm và cài Vinhomes Resident.",
-          "todo": "Cài xong thì bấm Kiểm tra lại.",
-          "unknown": "Mở MuMu rồi bấm Kiểm tra lại để xem app đã cài chưa."
-        },
-        "login": {
-          "title": "Đăng nhập app Vinhomes",
-          "text": "Mở app trong MuMu và đăng nhập bằng tài khoản cư dân. Court Booker không bao giờ đọc hay lưu mật khẩu.",
-          "todo": "Lần chạy gần nhất không vào được app. Đăng nhập lại rồi chạy thử.",
-          "unknown": "Chạy thử một lần để kiểm tra.",
-          "link": "Chạy thử ở Tổng quan"
+    "setup": {
+      "start": {
+        "title": "Court Booker đặt sân thay bạn lúc {{start}} mỗi sáng, kể cả khi bạn ngủ",
+        "steps": {
+          "1": "Làm các việc thiết lập bên dưới, một lần.",
+          "2": "Chọn ngày, sân và khung giờ trên vé bên trái.",
+          "3": "Bấm \"{{dryRun}}\", đạt thì bật \"{{daily}}\"."
         }
       },
-      "state": {
-        "done": "ĐÃ XONG",
-        "todo": "CHƯA XONG",
-        "unknown": "CHƯA RÕ",
-        "checking": "ĐANG KIỂM TRA"
+      "manual": {
+        "title": "Bạn tự làm, một lần · tích khi xong",
+        "mumu": {
+          "title": "Đã cài MuMu Player",
+          "hint": "Tải ở mumuplayer.com, cài như phần mềm thường."
+        },
+        "app": {
+          "title": "Đã cài app Vinhomes Resident trong MuMu",
+          "hint": "Mở CH Play trong MuMu, tìm Vinhomes Resident."
+        },
+        "login": {
+          "title": "Đã đăng nhập app Vinhomes",
+          "hint": "Tài khoản cư dân. Court Booker không đọc mật khẩu."
+        }
       },
       "auto": {
         "title": "Court Booker làm thay bạn",
-        "lead": "Bấm lại bao nhiêu lần cũng được: việc nào đã đúng thì bỏ qua.",
-        "caption": "Các việc thiết lập tự động",
+        "what": "MuMu, màn hình, máy tự thức dậy",
+        "never": "Chưa chạy lần nào",
+        "fix": "Cần sửa: {{items}}",
+        "ok": "✓ Cả 3 đã đúng · kiểm tra {{date}} lúc {{time}}",
         "items": {
-          "mumu_installed": "Tìm nơi cài MuMu",
-          "mumu_screen": "Màn hình MuMu 540 × 1600, DPI 220",
-          "wake_timers": "Cho phép máy tự thức dậy"
-        },
-        "statuses": {
-          "ok": "✓ Đã đúng",
-          "fixed": "Vừa sửa",
-          "fixable": "Cần sửa",
-          "user": "Không tự sửa được",
-          "unknown": "Chưa kiểm tra được"
+          "mumu_installed": "nơi cài MuMu",
+          "mumu_screen": "màn hình MuMu",
+          "wake_timers": "máy tự thức dậy"
         },
         "run": "Thiết lập tự động",
         "running": "Đang thiết lập…",
         "restart": "MuMu đang mở nên chưa đổi được màn hình. Cần khởi động lại MuMu.",
-        "restartButton": "Khởi động lại MuMu",
-        "quiet": "Tạm khóa từ {{from}} đến {{to}} để không làm gián đoạn lần đặt sân."
-      }
-    },
-    "notificationSettings": {
-      "title": "Thông báo",
-      "lead": "Court Booker báo kết quả mỗi lượt đặt sân ngay trên máy tính.",
-      "windows": {
-        "title": "Thông báo Windows",
-        "text": "Sau mỗi lượt, kể cả chạy thử, góc màn hình hiện ngày chơi và từng khung giờ với sân hoặc lý do không đặt được. Thông báo dùng ngôn ngữ của giao diện."
+        "restartButton": "Khởi động lại MuMu"
       },
-      "test": {
-        "send": "Gửi thử",
-        "sending": "Đang gửi…",
-        "sent": "Đã gửi. Xem góc phải dưới màn hình."
-      }
-    },
-    "guide": {
-      "title": "Hướng dẫn",
-      "lead": "Cách dùng từng phần của Court Booker.",
-      "welcome": "Xem lại phần giới thiệu",
-      "where": "{{screen}} › {{part}}",
-      "start": {
-        "title": "Bắt đầu trong 4 bước",
-        "device": "Thiết lập máy",
-        "booking": "Chọn ngày, sân và khung giờ",
-        "dryRun": "Chạy thử",
-        "schedule": "Bật Tự đặt mỗi sáng"
+      "options": {
+        "title": "Tùy chọn",
+        "notify": "Thông báo kết quả",
+        "notifyHint": "Góc màn hình Windows, sau mỗi lượt"
       },
-      "screens": {
-        "title": "Từng màn hình",
-        "overview": "Dòng trên cùng cho biết máy đã sẵn sàng chưa. Bên trái, vé \"{{ticket}}\": bật \"{{daily}}\", chọn ngày chơi, sân và tối đa hai khung giờ (bấm là lưu), và chạy thử; khi đang đặt sân, vé hiện tiến độ trực tiếp. Bên phải, \"{{history}}\": mỗi lần đặt, khung nào được, khung nào không và vì sao; tích \"{{withDry}}\" để xem cả chạy thử. Bấm một dòng để xem từng bước; khi có lỗi, mở \"{{technical}}\" để biết chính xác chuyện gì đã xảy ra.",
-        "settings": "\"{{device}}\": chuẩn bị MuMu, app Vinhomes và máy tính."
-      },
-      "trouble": {
-        "title": "Khi có sự cố",
-        "notRunning": {
-          "question": "Sáng nay app không chạy",
-          "answer": "Thường do máy đã Shut down thay vì Sleep, hoặc bạn đã đăng xuất khỏi Windows. Máy chỉ tự thức dậy được từ Sleep."
+      "guide": {
+        "title": "Hướng dẫn",
+        "howto": "Cách dùng trong 3 bước",
+        "morning": {
+          "title": "Mỗi sáng diễn ra thế nào",
+          "text": "{{wake}} máy tự thức dậy, mở MuMu và app Vinhomes. {{start}} đặt các khung đã chọn, thường xong trong 15 giây.",
+          "needs": "Máy cần:",
+          "needsText": "Sleep chứ đừng Shut down, vẫn đăng nhập Windows, laptop thì cắm sạc."
         },
-        "slotFull": {
-          "question": "Kết quả báo \"{{slotFull}}\"",
-          "answer": "Khung giờ đó đã có người đặt trước, hoặc chính bạn đã đặt tay bằng một tài khoản khác. Có thể chọn khung giờ khác ở {{slotsPlace}}."
-        },
-        "quota": {
-          "question": "App Vinhomes báo căn hộ đã hết hạn mức",
-          "answer": "Mỗi căn hộ đặt được tối đa 8 khung giờ mỗi tháng. Hủy những lượt không cần trong app Vinhomes để đặt tiếp."
-        },
-        "loggedOut": {
-          "question": "App Vinhomes bị đăng xuất",
-          "answer": "Kết quả báo \"{{loggedOut}}\". Mở app trong MuMu, đăng nhập lại bằng tài khoản cư dân, rồi chạy thử một lần ở {{dryRunPlace}}."
-        },
-        "setup": {
-          "question": "{{device}} báo \"{{todo}}\"",
-          "answer": "Làm theo hướng dẫn ở đúng mục đó, rồi bấm \"{{check}}\". Với các mục Court Booker tự làm, bấm \"{{auto}}\"."
+        "trouble": {
+          "title": "Khi có sự cố",
+          "notRunning": {
+            "question": "Sáng nay app không chạy",
+            "answer": "Máy đã Shut down thay vì Sleep, hoặc đã đăng xuất Windows."
+          },
+          "slotFull": {
+            "question": "Báo \"{{slotFull}}\"",
+            "answer": "Khung đó có người đặt trước. Chọn khung khác trên vé."
+          },
+          "quota": {
+            "question": "Căn hộ hết hạn mức",
+            "answer": "Tối đa 8 khung mỗi tháng. Hủy lượt không cần trong app Vinhomes."
+          },
+          "loggedOut": {
+            "question": "App bị đăng xuất",
+            "answer": "Đăng nhập lại trong MuMu, rồi chạy thử một lần."
+          }
         }
       }
-    },
-    "welcome": {
-      "title": "Chào mừng",
-      "steps": "Các bước bắt đầu",
-      "step": "{{number}} · {{name}}",
-      "names": {
-        "intro": "Giới thiệu",
-        "device": "Thiết lập máy",
-        "booking": "Chọn khung giờ",
-        "schedule": "Hẹn giờ"
-      },
-      "intro": {
-        "title": "Đặt sân tennis lúc {{start}}, kể cả khi bạn đang ngủ",
-        "lead": "App Vinhomes mở đặt sân lúc {{start}} mỗi sáng và các khung giờ đẹp hết trong vài giây. Court Booker bấm thay bạn, ngay giây đầu tiên.",
-        "morning": "Mỗi sáng diễn ra thế nào",
-        "wake": {
-          "title": "Máy tính tự thức dậy",
-          "text": "Từ chế độ Sleep, không cần bạn bật."
-        },
-        "open": {
-          "when": "Ngay sau đó",
-          "title": "Mở MuMu và app Vinhomes",
-          "text": "Rồi chờ sẵn ở mục Sân Tennis."
-        },
-        "book": {
-          "title": "Đặt các khung giờ bạn chọn",
-          "text": "Hai khung giờ thường xong trong khoảng 15 giây, rồi MuMu tự đóng."
-        },
-        "need": {
-          "title": "Bạn cần chuẩn bị",
-          "mumu": {
-            "name": "MuMu Player",
-            "text": "Phần mềm giả lập Android, cài trên máy tính này."
-          },
-          "app": {
-            "name": "App Vinhomes Resident",
-            "text": "Cài trong MuMu (cần tài khoản Google)."
-          },
-          "account": {
-            "name": "Tài khoản cư dân Vinhomes",
-            "text": "Để đăng nhập app."
-          },
-          "note": "Các bước tiếp theo sẽ hướng dẫn từng việc. Phần còn lại Court Booker tự làm.",
-          "privacy": "Court Booker chỉ chạy trên máy của bạn và không bao giờ đọc hay lưu mật khẩu.",
-          "start": "Bắt đầu thiết lập"
-        }
-      },
-      "back": "Quay lại",
-      "next": "Tiếp",
-      "later": "Để sau",
-      "done": "Xong, về Tổng quan",
-      "unsaved": "Bấm \"{{save}}\" hoặc \"{{cancel}}\" trước khi tiếp."
     },
     "notFound": {
       "title": "Không tìm thấy trang",

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router";
 import { useRunDays } from "../../api/queries";
@@ -11,7 +10,7 @@ import { DAYS_SHOWN, runDay } from "../../days";
 import { failureReason } from "../../reasons";
 import { runStamp } from "../../runs";
 import { useFormat } from "../../useFormat";
-import styles from "./HistoryPanel.module.css";
+import styles from "./HistoryTab.module.css";
 import { RunDetail } from "./RunDetail";
 import { runTitle, runWhen } from "./runText";
 
@@ -146,28 +145,21 @@ function RunList({ withDry, onWithDry }: { withDry: boolean; onWithDry: (on: boo
   );
 }
 
+interface HistoryTabProps {
+  withDry: boolean;
+  onWithDry: (on: boolean) => void;
+}
+
 /**
- * The History beside the next booking: the list of runs, or the run the address asks for
- * (`?run=12`) with every step, and a way back to the list.
+ * The History tab: the list of runs, or the run the address asks for (`?run=12`) with
+ * every step, and a way back to the list.
  */
-export function HistoryPanel() {
-  const { t } = useTranslation();
+export function HistoryTab({ withDry, onWithDry }: HistoryTabProps) {
   const [params] = useSearchParams();
-  // Kept here, so it survives opening a run and going back.
-  const [withDry, setWithDry] = useState(false);
   const runId = requestedRun(params);
-  return (
-    <section aria-labelledby="history-title" className={styles.panel}>
-      <div className={styles.tabs}>
-        <h2 id="history-title" className={styles.tab}>
-          {t("pages.history.title")}
-        </h2>
-      </div>
-      {runId === undefined ? (
-        <RunList withDry={withDry} onWithDry={setWithDry} />
-      ) : (
-        <RunDetail key={runId} runId={runId} />
-      )}
-    </section>
+  return runId === undefined ? (
+    <RunList withDry={withDry} onWithDry={onWithDry} />
+  ) : (
+    <RunDetail key={runId} runId={runId} />
   );
 }

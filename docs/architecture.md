@@ -125,8 +125,8 @@ After a route or model change: `python tools/export_openapi.py`, then `npm run a
 
 - Vite, React 19, strict TypeScript, ESLint (type-aware), Prettier, Vitest + Testing Library
   (jsdom). Version holds that need Node 22.22 (jsdom 30, React Router 8) are skipped by Dependabot.
-- `src/paths.ts` names every address; `routes.tsx` maps them to `pages/` (the old History
-  addresses lead to the Overview, keeping `?run=`). `i18n/` (Vietnamese
+- `src/paths.ts` names the one screen and the old addresses that lead to it, keeping
+  `?run=`; `routes.tsx` maps them to `pages/`. `i18n/` (Vietnamese
   default, English; same keys, checked by a test). `styles/` holds the tokens (contrast checked
   by `tokens.test.ts`); components use CSS Modules on them.
 - `src/api/`: types generated from `openapi.json` (`schema.d.ts`), a typed client, React Query
@@ -136,15 +136,17 @@ After a route or model change: `python tools/export_openapi.py`, then `npm run a
 - `steps.ts` words each event kind (a new kind fails the type check); `reasons.ts` turns the
   engine's English reasons into a few words (`notify.REASONS` holds the same words; a test
   compares them).
-- Screens (`src/pages`): Overview, with `pages/home/`: the ticket (`BookingTicket`: the
-  daily switch, the play day, court and up to two slots saved on each press, the dry run; or
-  `LiveTicket` while a booking or a dry run goes on) and the History panel beside it (runs
-  ten days at a time, real bookings unless dry runs are ticked, `?run=` opens one run's
-  slots, steps and log in the panel). Settings (device setup, notification), Guide (static),
-  Welcome (four steps, shown once per opening while nothing is set up). The header's status
-  line (`components/StatusLine.tsx`) shows the run going on, else the one thing to do, on
-  every screen. `booking.ts` holds the slot and court choices the developer maintains and
-  the two-slot limit.
+- One screen (`pages/HomePage.tsx`, parts in `pages/home/`): the ticket (`BookingTicket`:
+  the daily switch, the play day, court and up to two slots saved on each press, the dry run;
+  or `LiveTicket` while a booking or a dry run goes on) and `SidePanel` beside it, two tabs:
+  `HistoryTab` (runs ten days at a time, real bookings unless dry runs are ticked, `?run=`
+  opens one run's slots, steps and log) and `SetupTab` (the user's ticks, auto setup, the
+  notification switch, the guide). The header's status line (`components/StatusLine.tsx`)
+  shows the run going on, else the one thing to do. `manualSteps.ts` keeps the user's ticks in
+  `localStorage` (memory when storage fails); `setupState.ts` counts the setup tasks left and
+  picks the panel's first tab. `booking.ts` holds the slot and court choices the developer
+  maintains and the two-slot limit. The UI never calls `GET /api/setup` or
+  `POST /api/notifications/test` (the routes stay for the command line and tools).
 
 ## Driver (`android/`)
 
