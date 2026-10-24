@@ -20,8 +20,8 @@ packaged desktop app with an installer is the last step before 1.0.0.
 > [!IMPORTANT]
 > An educational, personal project, not affiliated with or endorsed by Vinhomes.
 
-![The Overview of the web UI during a dry run: round 1 of 2 is through, and each step of
-round 2 shows as it happens](docs/img/overview.png)
+![The web UI during a dry run: the ticket shows round 2 of 2 being booked large, one slot
+through, and each step as it happens; the History is beside it](docs/img/running.png)
 
 <sub>The web UI during a dry run. All screenshots show made-up data.</sub>
 
@@ -209,10 +209,11 @@ The UI is one screen, without a menu:
 Saving settings rewrites `config.toml` (its comments are dropped); the next run reads it.
 
 <p>
-  <img src="docs/img/history.png" width="49%" alt="History: the bookings of September,
-  one card per day of play with its slots, court and how many slots were booked">
-  <img src="docs/img/settings.png" width="49%" alt="Settings, Booking tab: the thirteen
-  slots as toggles numbered in booking order, then the court and the day to book">
+  <img src="docs/img/home.png" width="49%" alt="Ready for 06:00: the ticket with the daily
+  switch on, the play day, court and two slots numbered in booking order, the last dry run;
+  the History lists each booking with its stamp and slots">
+  <img src="docs/img/setup.png" width="49%" alt="First use: the Setup tab opens with a count
+  of three tasks, three lines on how to start and the steps to tick">
 </p>
 
 ## Command line
