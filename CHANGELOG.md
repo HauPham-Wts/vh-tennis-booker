@@ -35,6 +35,9 @@ uses [Semantic Versioning](https://semver.org/).
   app, opens first and shows the count of tasks left, which the status line repeats
   ("Còn 2 việc thiết lập"). The UI no longer asks the backend for the setup checks.
 
+- The README's screenshots show the one screen: during a dry run, ready for 06:00 with the
+  History, and a first use on the Setup tab.
+
 ### Fixed
 - The status line no longer says a device setup item is left because an old auto setup ran
   with MuMu closed: only the items auto setup fixes count, and the app's install is the
