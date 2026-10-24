@@ -36,14 +36,10 @@
   --text-lead: 17px; /* the line under a page title */
   --text-heading-xs: 18px;
   --text-heading-sm: 22px;
-  --text-heading: 26px; /* section titles, the logo */
-  --text-heading-lg: 30px;
-  --text-slot: 34px; /* a booked slot on its ticket */
-  --text-display-sm: 40px;
-  --text-display: 52px; /* page titles */
   --text-display-lg: 60px;
-  --text-hero-sm: 96px;
-  --text-hero: 124px; /* the next start time */
+  --text-ticket: 112px; /* the next start time on the ticket */
+  --text-ticket-sm: 88px; /* the same in a window under 720 px high */
+  --text-ticket-slot: 84px; /* the slot being booked */
 
   --weight-regular: 400;
   --weight-medium: 500;
@@ -54,14 +50,11 @@
   --leading-hero: 0.92;
   --leading-solid: 1;
   --leading-body: 1.4;
-  --leading-text: 1.5; /* paragraphs of several lines */
 
   --tracking-hero: -0.05em;
-  --tracking-display: -0.04em;
   --tracking-heading: -0.03em;
   --tracking-stamp: 0.08em;
   --tracking-label: 0.1em;
-  --tracking-caps: 0.12em;
 
   /* Space on a 4 px grid */
   --space-1: 4px;
@@ -86,13 +79,17 @@
   --border-hairline: 1px;
   --border: 2px;
   --border-stamp: 2.5px;
-  --border-heavy: 4px;
 
   --shadow-card: 0 1px 0 var(--color-shadow);
-  --ring-current: inset 0 0 0 var(--border) var(--color-ink); /* the card of the next step */
 
   /* Layout and interaction */
   --page-width: 1080px;
+  --header-height: 64px;
+  /* The home screen fills the window: at most this wide, centred; scrolls below the minimum. */
+  --home-width: 1360px;
+  --home-min-width: 1240px;
+  --home-min-height: 640px;
+  --panel-width: 384px; /* the History beside the ticket */
   --touch-target: 44px; /* smallest height of anything clickable */
   --focus-ring: 3px solid var(--color-stamp);
   --focus-offset: 2px;

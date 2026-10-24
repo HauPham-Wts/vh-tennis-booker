@@ -4,13 +4,11 @@ import {
   courtName,
   dayPeriod,
   formatClock,
-  formatDateTime,
   formatDay,
   formatDecimal,
   formatShortDate,
   formatSlot,
   formatTime,
-  monthParts,
   relativeDay,
   slotStart,
 } from "./format";
@@ -34,24 +32,12 @@ export function useFormat() {
       day: (text: string) => formatDay(text, language),
       /** "14/10", "14 Oct". */
       shortDate: (text: string) => formatShortDate(text, language),
-      /** "12/10 06:00", "12 Oct 06:00". */
-      dateTime: (text: string) => formatDateTime(text, language),
       /** "06:00:06". */
       clock: formatClock,
       /** "06:00". */
       time: formatTime,
       /** "7,0 giây", "7.0 s". */
       seconds: (value: number) => t("format.seconds", { value: formatDecimal(value, language) }),
-      /** "Tháng 10/2026", "October 2026"; a text it cannot read stays as it is. */
-      month: (text: string) => {
-        const parts = monthParts(text, language);
-        return parts === null ? text : t("format.month", { name: parts.name, year: parts.year });
-      },
-      /** "sáng", "morning"; empty for a text it cannot read. */
-      period: (text: string) => {
-        const period = dayPeriod(text);
-        return period === null ? "" : t(`format.period.${period}`);
-      },
       /**
        * When a time falls, from `today` ("2026-10-15"): "sáng nay", "sáng mai", "chiều hôm
        * qua", else "sáng Thứ Hai 12/10"; a text it cannot read stays as it is.

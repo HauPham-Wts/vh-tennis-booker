@@ -5,12 +5,9 @@ import {
   type EventsQuery,
   getOverview,
   getRun,
-  getSchedule,
   getNotifications,
   getSettings,
-  getSetupChecks,
   listEvents,
-  listRunMonths,
   listRuns,
   type RunsQuery,
 } from "./endpoints";
@@ -22,14 +19,11 @@ import {
 export const queryKeys = {
   overview: ["overview"] as const,
   runs: (query: RunsQuery = {}) => ["runs", query] as const,
-  months: ["runs", "months"] as const,
   runDays: ["runs", "days"] as const,
   run: (runId: number) => ["run", runId] as const,
   events: (query: EventsQuery = {}) => ["events", query] as const,
   settings: ["settings"] as const,
   notifications: ["notifications"] as const,
-  setup: ["setup"] as const,
-  schedule: ["schedule"] as const,
 };
 
 /** How often the Overview is read while a run is starting or letting go of the emulator. */
@@ -92,11 +86,6 @@ export function useRunDays() {
   });
 }
 
-/** Read the months of real bookings; a finished run refreshes them with the runs. */
-export function useRunMonths() {
-  return useQuery({ queryKey: queryKeys.months, queryFn: listRunMonths });
-}
-
 /** Read one run in full. */
 export function useRun(runId: number) {
   return useQuery({ queryKey: queryKeys.run(runId), queryFn: () => getRun(runId) });
@@ -115,18 +104,4 @@ export function useSettings() {
 /** Read the notification settings. */
 export function useNotifications() {
   return useQuery({ queryKey: queryKeys.notifications, queryFn: getNotifications });
-}
-
-/**
- * Read the device setup checks. They ask Windows, MuMu and adb, so they are never polled,
- * and a screen turns them off (`enabled` false) while a run holds the lock: a check must
- * never slow a booking.
- */
-export function useSetupChecks(enabled = true) {
-  return useQuery({ queryKey: queryKeys.setup, queryFn: getSetupChecks, enabled });
-}
-
-/** Read the daily schedule. */
-export function useSchedule() {
-  return useQuery({ queryKey: queryKeys.schedule, queryFn: getSchedule });
 }

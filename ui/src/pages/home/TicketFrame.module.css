@@ -1,0 +1,57 @@
+.ticket {
+  --notch: 24px;
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-card);
+  background: var(--color-paper);
+  box-shadow: var(--shadow-card);
+}
+
+.contained {
+  flex-shrink: 1;
+  min-height: 0;
+}
+
+.top {
+  flex: none;
+  padding: var(--space-5) var(--space-7) 22px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Half circles of the ground, centred on the perforation, cut the paper at each end. */
+.perforation {
+  position: relative;
+  flex: none;
+  border-top: var(--border) dashed var(--color-perforation);
+}
+
+.perforation::before,
+.perforation::after {
+  content: "";
+  position: absolute;
+  top: calc(var(--notch) / -2 - 1px);
+  width: var(--notch);
+  height: var(--notch);
+  border-radius: 50%;
+  background: var(--color-ground);
+}
+
+.perforation::before {
+  left: calc(var(--notch) / -2);
+}
+
+.perforation::after {
+  right: calc(var(--notch) / -2);
+}
+
+.bottom {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: var(--space-5) var(--space-7) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}

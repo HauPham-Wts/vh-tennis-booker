@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  addDays,
   addMinutes,
   courtName,
   formatClock,
-  formatDateTime,
   formatDay,
   formatDecimal,
   formatShortDate,
@@ -11,7 +11,6 @@ import {
   formatTime,
   dayPeriod,
   localToday,
-  monthParts,
   parseLocal,
   relativeDay,
   slotStart,
@@ -80,17 +79,9 @@ describe("dates", () => {
     expect(formatShortDate(text, language)).toBe(expected);
   });
 
-  it.each([
-    ["2026-10-12T06:00:11.056", "vi", "12/10 06:00"],
-    ["2026-10-12T19:43:00", "en", "12 Oct 19:43"],
-  ] as const)("formatDateTime(%j, %s) is %j", (text, language, expected) => {
-    expect(formatDateTime(text, language)).toBe(expected);
-  });
-
   it("shows a text it cannot read as it is", () => {
     expect(formatDay("soon", "vi")).toBe("soon");
     expect(formatShortDate("", "en")).toBe("");
-    expect(formatDateTime("2026-02-30T06:00", "vi")).toBe("2026-02-30T06:00");
   });
 });
 
@@ -125,6 +116,18 @@ describe("addMinutes", () => {
   });
 });
 
+describe("addDays", () => {
+  it("counts days from a date or a date-time, across a month and a year", () => {
+    expect(addDays("2026-10-25T06:00", 0)).toBe("2026-10-25");
+    expect(addDays("2026-10-30", 2)).toBe("2026-11-01");
+    expect(addDays("2026-12-31T06:00", 1)).toBe("2027-01-01");
+  });
+
+  it("leaves a text it cannot read as it is", () => {
+    expect(addDays("soon", 1)).toBe("soon");
+  });
+});
+
 describe("numbers", () => {
   it.each([
     [7, "vi", "7,0"],
@@ -134,17 +137,6 @@ describe("numbers", () => {
     [0, "vi", "0,0"],
   ] as const)("formatDecimal(%j, %s) is %j", (value, language, expected) => {
     expect(formatDecimal(value, language)).toBe(expected);
-  });
-});
-
-describe("monthParts", () => {
-  it("names the month in each language", () => {
-    expect(monthParts("2026-10", "vi")).toEqual({ month: 10, year: 2026, name: "Tháng 10" });
-    expect(monthParts("2026-10", "en")).toEqual({ month: 10, year: 2026, name: "October" });
-  });
-
-  it.each(["2026-13", "2026-00", "2026-1", "10/2026", ""])("gives null for %j", (text) => {
-    expect(monthParts(text, "en")).toBeNull();
   });
 });
 

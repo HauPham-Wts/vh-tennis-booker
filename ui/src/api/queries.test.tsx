@@ -9,9 +9,7 @@ import {
   SETTLING_POLL_MS,
   settlingInterval,
   useOverview,
-  useRunMonths,
   useRuns,
-  useSetupChecks,
 } from "./queries";
 import { runSummary } from "../test/runs";
 import type { Overview } from "./types";
@@ -88,17 +86,6 @@ describe("query hooks", () => {
     expect(result.current.data).toEqual(overview);
   });
 
-  it("read the months of real bookings", async () => {
-    const months = [{ month: "2026-10", runs: 5, booked: 10 }];
-    stubBackend({ "GET /api/runs/months": reply(months) });
-
-    const { result } = renderHook(() => useRunMonths(), {
-      wrapper: withQueryClient(createTestQueryClient()),
-    });
-
-    await waitFor(() => expect(result.current.data).toEqual(months));
-  });
-
   it("keep each History filter apart in the cache", async () => {
     const fetch = stubBackend({ "GET /api/runs": reply([]) });
     const wrapper = withQueryClient(createTestQueryClient());
@@ -109,22 +96,6 @@ describe("query hooks", () => {
     await waitFor(() => expect(october.result.current.isSuccess).toBe(true));
     await waitFor(() => expect(dryRuns.result.current.isSuccess).toBe(true));
     expect(requestsTo(fetch, "GET /api/runs")).toBe(2);
-  });
-
-  it("read the setup checks only when allowed, as no run holds the lock", async () => {
-    const fetch = stubBackend({ "GET /api/setup": reply([]) });
-    const wrapper = withQueryClient(createTestQueryClient());
-
-    const { result, rerender } = renderHook(({ enabled }) => useSetupChecks(enabled), {
-      wrapper,
-      initialProps: { enabled: false },
-    });
-    await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(requestsTo(fetch, "GET /api/setup")).toBe(0);
-
-    rerender({ enabled: true });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(requestsTo(fetch, "GET /api/setup")).toBe(1);
   });
 
   it("report a Problem as an ApiError without retrying", async () => {

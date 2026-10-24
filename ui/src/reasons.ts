@@ -31,11 +31,6 @@ const REASONS: [RegExp, Phrase][] = [
   [LOGGED_OUT, (t) => t("reasons.loggedOut")],
 ];
 
-/** Return whether a run stopped because the app did not open, as after a logout. */
-export function isLoggedOut(reason: string | null): boolean {
-  return reason !== null && LOGGED_OUT.test(reason);
-}
-
 /** Return a few words for an engine reason; an unknown one says to see the activity log. */
 export function failureReason(t: TFunction, f: Formatter, reason: string | null): string {
   for (const [pattern, phrase] of REASONS) {

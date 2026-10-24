@@ -35,26 +35,28 @@ describe("mutation hooks", () => {
     await waitFor(() => expect(requestsTo(fetch, "GET /api/status")).toBe(2));
   });
 
-  it("switch the schedule and cache its new state", async () => {
+  it("switch the schedule and refresh the overview to show it", async () => {
     const fetch = stubBackend({
       "GET /api/status": reply(overview),
       "PUT /api/schedule": reply(schedule),
     });
-    const { cache, mutationHook } = renderWithOverview(() => useSwitchSchedule());
+    const { overviewHook, mutationHook } = renderWithOverview(() => useSwitchSchedule());
+    await waitFor(() => expect(overviewHook.result.current.isSuccess).toBe(true));
 
     await act(() => mutationHook.result.current.mutateAsync(true));
 
-    expect(cache.getQueryData(queryKeys.schedule)).toEqual(schedule);
+    await waitFor(() => expect(requestsTo(fetch, "GET /api/status")).toBe(2));
     const put = fetch.mock.calls.map(([request]) => request).find((r) => r.method === "PUT");
     expect(await put?.json()).toEqual({ enabled: true });
   });
 
-  it("leave the cache alone when the backend refuses", async () => {
-    stubBackend({
+  it("refresh nothing when the backend refuses", async () => {
+    const fetch = stubBackend({
       "GET /api/status": reply(overview),
       "PUT /api/schedule": reply({ error: "dry_run_required", detail: "No dry run passed" }, 409),
     });
-    const { cache, mutationHook } = renderWithOverview(() => useSwitchSchedule());
+    const { overviewHook, mutationHook } = renderWithOverview(() => useSwitchSchedule());
+    await waitFor(() => expect(overviewHook.result.current.isSuccess).toBe(true));
 
     await act(async () => {
       await expect(mutationHook.result.current.mutateAsync(true)).rejects.toBeInstanceOf(ApiError);
@@ -62,7 +64,7 @@ describe("mutation hooks", () => {
 
     await waitFor(() => expect(mutationHook.result.current.isError).toBe(true));
     expect((mutationHook.result.current.error as ApiError).code).toBe("dry_run_required");
-    expect(cache.getQueryData(queryKeys.schedule)).toBeUndefined();
+    expect(requestsTo(fetch, "GET /api/status")).toBe(1);
   });
 
   it("start a dry run once and refresh the overview to show it", async () => {

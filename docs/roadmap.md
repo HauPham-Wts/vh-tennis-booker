@@ -17,7 +17,7 @@ to be awake. Unattended, scheduled, as fast as possible.
 ## Phases
 
 The 0.x versions go through four phases toward 1.0.0: (1) it runs, (2) it handles every
-situation, (3) it is fast, (4) it has a user-friendly UI. Releases 0.1.0 to 0.11.0 covered all
+situation, (3) it is fast, (4) it has a user-friendly UI. Releases 0.1.0 to 0.12.0 covered all
 four (CHANGELOG). Failures are fixed as the 06:00 logs show them. What is left:
 
 | Phase | Next | Scope |

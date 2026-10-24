@@ -2,19 +2,25 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3) var(--space-6);
-  padding-bottom: var(--space-4);
+  gap: var(--space-2) var(--space-5);
+  min-height: var(--header-height);
   border-bottom: var(--border) solid var(--color-ink);
 }
 
 .brand {
   font-weight: var(--weight-heavy);
-  font-size: var(--text-heading);
+  font-size: var(--text-heading-sm);
   letter-spacing: var(--tracking-heading);
   line-height: var(--leading-solid);
 }
 
 .dot {
   color: var(--color-stamp);
+}
+
+/* The status line takes the room left, set against the language switch. */
+.status {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: flex-end;
 }

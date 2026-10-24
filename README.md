@@ -20,8 +20,8 @@ packaged desktop app with an installer is the last step before 1.0.0.
 > [!IMPORTANT]
 > An educational, personal project, not affiliated with or endorsed by Vinhomes.
 
-![The Overview of the web UI during a dry run: round 1 of 2 is through, and each step of
-round 2 shows as it happens](docs/img/overview.png)
+![The web UI during a dry run: the ticket shows round 2 of 2 being booked large, one slot
+through, and each step as it happens; the History is beside it](docs/img/running.png)
 
 <sub>The web UI during a dry run. All screenshots show made-up data.</sub>
 
@@ -41,8 +41,8 @@ round 2 shows as it happens](docs/img/overview.png)
   the driver, measured on MuMu) and every button is found in it locally; waiting for a screen
   and finding its buttons is the same read. At the real 06:00 opening, the first slot has
   been booked 7 to 11 s after 06:00.
-- **Local web UI and full history.** Overview, schedule, history and settings screens in
-  Vietnamese and English, over a FastAPI backend on 127.0.0.1. Every run, slot and step is
+- **Local web UI and full history.** One screen that holds the booking settings, the
+  schedule, the history and the setup, in Vietnamese and English, over a FastAPI backend on 127.0.0.1. Every run, slot and step is
   kept in SQLite (about 0.13 ms per write), beside a daily log of every screen read.
 - **Tested without a device.** The Python tests replace the emulator, ADB, the clock and
   Task Scheduler with fakes, and the UI has component tests. CI runs Ruff, pytest on
@@ -194,26 +194,26 @@ backend listens on 127.0.0.1 only, and the 06:00 run does not need it; watching 
 the UI does not slow it down. Vietnamese is the default language, English is one click
 away.
 
-- **Tổng quan / Overview**: whether the next start is ready, or the one thing to do first;
-  the next booking as a ticket; the last booking of each slot. During a run, its steps as
-  they happen.
-- **Hẹn giờ / Schedule**: a dry run (one must pass), then the daily switch that creates or
-  removes the Windows task.
-- **Lịch sử / History**: the courts booked, month by month, and the activity log of every
-  run in plain steps, with the technical log one click away.
-- **Cài đặt / Settings**: the slots, court and day to book; device setup, with an auto
-  setup for what the app can fix; the Windows notification after every run, with a test
-  button.
-- **Hướng dẫn / Guide**: four steps to start, what each screen is for, the usual problems.
+The UI is one screen, without a menu:
 
-An app not used yet opens on a four-step Welcome instead. Saving settings rewrites
-`config.toml` (its comments are dropped); the next run reads it.
+- **The line at the top** says whether the next start is ready, or the one thing to do first.
+- **The ticket** on the left is the next booking and its settings: the daily switch (it
+  creates or removes the Windows task, once a dry run passed), the play day, court and up to
+  two slots, saved on each press, and a dry run; during a run, its steps as they happen.
+- **Lịch sử / History** on the right: each run with every slot booked or not and why (real
+  bookings, dry runs on request), and each run's steps with the technical log one click away.
+- **Thiết lập / Setup** beside it: the steps only you can do (install MuMu and the Vinhomes
+  app, log in), ticked by you; an auto setup for what the app can fix; the Windows
+  notification switch; a short guide. It opens first, with a count, while anything is left.
+
+Saving settings rewrites `config.toml` (its comments are dropped); the next run reads it.
 
 <p>
-  <img src="docs/img/history.png" width="49%" alt="History: the bookings of September,
-  one card per day of play with its slots, court and how many slots were booked">
-  <img src="docs/img/settings.png" width="49%" alt="Settings, Booking tab: the thirteen
-  slots as toggles numbered in booking order, then the court and the day to book">
+  <img src="docs/img/home.png" width="49%" alt="Ready for 06:00: the ticket with the daily
+  switch on, the play day, court and two slots numbered in booking order, the last dry run;
+  the History lists each booking with its stamp and slots">
+  <img src="docs/img/setup.png" width="49%" alt="First use: the Setup tab opens with a count
+  of three tasks, three lines on how to start and the steps to tick">
 </p>
 
 ## Command line
@@ -282,7 +282,7 @@ work in progress.
 ## Roadmap
 
 The 0.x versions go through four phases toward 1.0.0: it runs, it handles every situation,
-it is fast, it is friendly to use. Released: 0.11.0 ([changelog](CHANGELOG.md)). Next: MuMu
+it is fast, it is friendly to use. Released: 0.12.0 ([changelog](CHANGELOG.md)). Next: MuMu
 tuning from the logs, then several accounts booking in parallel (one MuMu each). Last before
 1.0.0: the desktop app with an installer. See [docs/roadmap.md](docs/roadmap.md).
 

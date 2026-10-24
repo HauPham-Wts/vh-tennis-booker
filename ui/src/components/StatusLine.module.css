@@ -1,0 +1,42 @@
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) 10px;
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+}
+
+/* Ready for the next start: the ball-yellow of the 06:00 moment. */
+.ready {
+  padding: 6px 10px;
+  border-radius: var(--radius-bar);
+  background: var(--color-highlight);
+}
+
+/* Something to do first: the dot in orange-red, the words in ink. */
+.todo > span {
+  color: var(--color-failed);
+}
+
+/* A run goes on: an ink pill with a yellow light. */
+.running {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 7px var(--space-3);
+  border-radius: var(--radius-stamp);
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+}
+
+/* It does not blink, so it never distracts or re-renders. */
+.light {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-highlight);
+}

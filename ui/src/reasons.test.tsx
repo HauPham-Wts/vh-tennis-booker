@@ -2,7 +2,7 @@ import { act, renderHook } from "@testing-library/react";
 import { useTranslation } from "react-i18next";
 import { describe, expect, it } from "vitest";
 import i18n from "./i18n";
-import { failureReason, isLoggedOut } from "./reasons";
+import { failureReason } from "./reasons";
 import { useFormat } from "./useFormat";
 
 async function reasonOf(reason: string | null, language: "vi" | "en" = "vi") {
@@ -51,17 +51,5 @@ describe("failureReason", () => {
     expect(await reasonOf("Court S6 - Sân tennis is fully booked", "en")).toBe(
       "Court S6 fully booked",
     );
-  });
-});
-
-describe("isLoggedOut", () => {
-  it("tells a run the app never let in from other failures", () => {
-    expect(
-      isLoggedOut(
-        "The app did not show 'Trang chủ' or 'Sân Tennis' in 60 s; check that it is logged in",
-      ),
-    ).toBe(true);
-    expect(isLoggedOut("Slot 18:00 - 19:00 is fully booked")).toBe(false);
-    expect(isLoggedOut(null)).toBe(false);
   });
 });

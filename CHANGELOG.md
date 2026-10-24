@@ -6,6 +6,45 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-24
+
+### Changed
+- The Overview holds the History in a panel beside the next booking; the History and
+  Activity screens are gone (their addresses lead to the Overview, and `?run=` still opens
+  that run). The panel lists the runs of the last ten days, real bookings unless "Gồm cả
+  chạy thử" is ticked, ten more days on request. Each row says what the run booked, its
+  stamp ("ĐÃ ĐẶT 2/2", "ĐẶT ĐƯỢC 1/2", "KHÔNG ĐƯỢC 0/2", "CHẠY THỬ ĐẠT"), when and whether it
+  ran on schedule or by hand, and each slot booked or not with the reason; a run opens in
+  the panel with its slots, every step and the technical log.
+- The status line moved to the header, on every screen; while a run goes on it names the
+  run in place of the banner over the Overview. The live run no longer links to the
+  activity log.
+- The next booking's ticket holds the booking settings: the "Tự đặt mỗi sáng" switch, the
+  play day (three buttons named by their dates, "Thứ Ba 27/10 · đặt trước 2 ngày"), the
+  court and the slots, each press saved at once (no Save or Cancel), and the dry run with
+  its last result. The Schedule screen and the Booking tab of Settings are gone (their
+  addresses lead to the Overview). At most two slots can be chosen, as the app allows; a
+  third press says so. During a booking or a dry run the ticket shows the slot being
+  booked, the round, the progress and every step, the choices locked until it ends.
+- The status line asks for a dry run, then for the daily switch, before it says "Sẵn sàng
+  cho 06:00 sáng mai"; a passed dry run does not turn the switch on by itself.
+- The UI is one screen without a menu: the panel beside the ticket has two tabs, Lịch sử and
+  Thiết lập. The Settings, Device setup, Notification, Guide and Welcome screens are gone
+  (their addresses lead to the one screen). The Setup tab holds three steps the user ticks
+  (MuMu, the Vinhomes app, the login; kept in the browser, not checked by the app), auto
+  setup in one line with its button, the notification switch (no more sample notification)
+  and a short guide; while anything is left it starts with three lines on how to use the
+  app, opens first and shows the count of tasks left, which the status line repeats
+  ("Còn 2 việc thiết lập"). The UI no longer asks the backend for the setup checks.
+
+- The README's screenshots show the one screen: during a dry run, ready for 06:00 with the
+  History, and a first use on the Setup tab.
+
+### Fixed
+- The status line no longer says a device setup item is left because an old auto setup ran
+  with MuMu closed: only the items auto setup fixes count, and the app's install is the
+  user's own tick.
+
 ## [0.11.0] - 2026-10-24
 
 ### Changed

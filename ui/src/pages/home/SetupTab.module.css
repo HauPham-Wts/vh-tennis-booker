@@ -1,0 +1,176 @@
+/* The tab scrolls inside the panel. */
+.tab {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 var(--space-5) var(--space-4);
+}
+
+/* "Cách dùng", first while anything is left: ball yellow, as the next thing to do. */
+.start {
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-button);
+  background: var(--color-highlight);
+}
+
+.startTitle {
+  font-size: var(--text-control);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-body);
+}
+
+.howto {
+  margin: var(--space-2) 0 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-data);
+}
+
+.heading {
+  padding: var(--space-4) 0 2px;
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  border-bottom: var(--border-hairline) dotted var(--color-rule);
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: 9px 0;
+  cursor: pointer;
+}
+
+.check input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 2px 0 0;
+  accent-color: var(--color-stamp);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.title {
+  font-size: var(--text-control);
+  font-weight: var(--weight-bold);
+}
+
+.hint,
+.plain {
+  color: var(--color-muted);
+  font-size: var(--text-small);
+}
+
+.ok {
+  color: var(--color-stamp);
+  font-size: var(--text-small);
+}
+
+.todo {
+  color: var(--color-failed);
+  font-size: var(--text-small);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 9px 0 12px;
+  border-bottom: var(--border-hairline) dotted var(--color-rule);
+}
+
+.row > button {
+  flex: none;
+}
+
+.restart {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: 10px 0;
+  font-size: var(--text-data);
+}
+
+.problem {
+  padding-top: var(--space-2);
+  color: var(--color-failed);
+  font-size: var(--text-data);
+}
+
+.note {
+  padding-top: var(--space-2);
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 46px;
+  font-size: var(--text-control);
+  font-weight: var(--weight-bold);
+  cursor: pointer;
+  list-style: none;
+}
+
+.summary::-webkit-details-marker {
+  display: none;
+}
+
+/* A chevron that turns as the row opens. */
+.summary::after {
+  content: "▸";
+  color: var(--color-muted);
+}
+
+details[open] > .summary::after {
+  content: "▾";
+}
+
+.answer,
+.item > .howto {
+  margin: 0;
+  padding: 0 0 var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: var(--text-data);
+}
+
+.item > .howto {
+  padding-left: 20px;
+}
+
+.answer dt {
+  font-weight: var(--weight-semibold);
+}
+
+.answer dd {
+  margin: 0;
+  color: var(--color-muted);
+}

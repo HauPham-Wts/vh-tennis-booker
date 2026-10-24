@@ -90,12 +90,6 @@ export function formatDay(text: string, language: Language): string {
   return time === null ? text : `${weekday(time, language)} ${dayMonth(time, language)}`;
 }
 
-/** Format a date-time as day, month and minutes: "12/10 06:00", "12 Oct 06:00". */
-export function formatDateTime(text: string, language: Language): string {
-  const time = parseLocal(text);
-  return time === null ? text : `${dayMonth(time, language)} ${pad(time.hour)}:${pad(time.minute)}`;
-}
-
 /** Format the time of a date-time to the second: "06:00:06". */
 export function formatClock(text: string): string {
   const time = parseLocal(text);
@@ -114,27 +108,6 @@ export function formatDecimal(value: number, language: Language): string {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
   }).format(value);
-}
-
-/** The parts of a month for its message: the number, the year and its name. */
-export interface MonthParts {
-  month: number;
-  year: number;
-  name: string;
-}
-
-/** Read a month as the History filter sends it ("2026-10"); anything else gives null. */
-export function monthParts(text: string, language: Language): MonthParts | null {
-  const match = /^(\d{4})-(\d{2})$/.exec(text);
-  const month = Number(match?.[2]);
-  if (match === null || month < 1 || month > 12) {
-    return null;
-  }
-  const year = Number(match[1]);
-  const name = new Intl.DateTimeFormat(language, { month: "long", timeZone: "UTC" }).format(
-    new Date(Date.UTC(year, month - 1, 1)),
-  );
-  return { month, year, name };
 }
 
 /** The part of the day a time falls in; its word is `format.period.*` in the language files. */
@@ -172,6 +145,16 @@ export function relativeDay(text: string, today: string): RelativeDay | null {
     return "today";
   }
   return days === 1 ? "tomorrow" : null;
+}
+
+/** Return the date `days` after a date or date-time (`2026-10-25`); another text as it is. */
+export function addDays(text: string, days: number): string {
+  const time = parseLocal(text);
+  if (time === null) {
+    return text;
+  }
+  const day = new Date(utcDay(time).getTime() + days * DAY_MS);
+  return `${day.getUTCFullYear()}-${pad(day.getUTCMonth() + 1)}-${pad(day.getUTCDate())}`;
 }
 
 /** Return today's date on this machine, in the backend's form ("2026-10-15"). */

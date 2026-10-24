@@ -2,7 +2,7 @@
  * The choices of the booking settings. The developer keeps them in step with the Vinhomes
  * app: its slots and courts change only when the app does, and then this file does too.
  */
-import { slotStart } from "./format";
+import { addDays, slotStart } from "./format";
 
 /** The slots the app offers each day (06-12 and 14-21), as config.toml writes them. */
 export const SLOTS = [
@@ -32,6 +32,9 @@ export const COURTS = [
 /** How many days after today a booking may be for (the app opens two days ahead). */
 export const DAYS_AHEAD = [0, 1, 2] as const;
 
+/** The most slots to book: the app gives a flat two slots a day. */
+export const MAX_SLOTS = 2;
+
 /** Slots that start before this are the morning ones. */
 const NOON = "12:00";
 
@@ -53,9 +56,25 @@ export function slotChoices(chosen: readonly string[]): SlotChoices {
   };
 }
 
-/** Turn a slot off, or on as the last one booked: the list's order is the booking order. */
+/**
+ * Turn a slot off, or on as the last one booked: the list's order is the booking order.
+ * With two slots chosen another one is not added; more set by hand stay until turned off.
+ */
 export function toggleSlot(chosen: readonly string[], slot: string): string[] {
-  return chosen.includes(slot) ? chosen.filter((other) => other !== slot) : [...chosen, slot];
+  if (chosen.includes(slot)) {
+    return chosen.filter((other) => other !== slot);
+  }
+  return chosen.length >= MAX_SLOTS ? [...chosen] : [...chosen, slot];
+}
+
+/**
+ * Return the day each choice of "days ahead" books for, counted from the day of the next
+ * run (`next_start`), so the buttons name real dates.
+ */
+export function playDates(
+  nextStart: string,
+): { daysAhead: (typeof DAYS_AHEAD)[number]; date: string }[] {
+  return DAYS_AHEAD.map((daysAhead) => ({ daysAhead, date: addDays(nextStart, daysAhead) }));
 }
 
 /** Return the courts to offer: the venue's, and the one the settings hold if it is not one. */

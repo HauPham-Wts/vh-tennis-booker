@@ -4,16 +4,19 @@ import styles from "./App.module.css";
 import { SiteHeader } from "./components/SiteHeader";
 import { paths } from "./paths";
 
-/** Lay out every screen: the header, then the current screen in the main area. */
+/**
+ * Lay out every screen: the header, then the current screen in the main area. The home
+ * screen fills the window; the not-found and error pages make one centred column.
+ */
 export function App() {
   const { t } = useTranslation();
-  const welcome = useMatch(paths.welcome) !== null;
+  const home = useMatch(paths.overview) !== null;
   return (
-    <div className={styles.page}>
+    <div className={home ? `${styles.page} ${styles.fill}` : styles.page}>
       <a className={styles.skipLink} href="#main">
         {t("app.skipToContent")}
       </a>
-      <SiteHeader navigation={!welcome} />
+      <SiteHeader />
       <main id="main" tabIndex={-1} className={styles.main}>
         <Outlet />
       </main>

@@ -1,0 +1,105 @@
+.toolbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-5);
+  border-bottom: var(--border-hairline) dotted var(--color-rule);
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+  font-size: var(--text-data);
+  cursor: pointer;
+}
+
+.check input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--color-ink);
+}
+
+.days {
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+}
+
+.scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* "Đang tải…" and the empty lists keep clear of the panel's edges. */
+.scroll > p {
+  padding: var(--space-4) var(--space-5);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  border-bottom: var(--border-hairline) dotted var(--color-rule);
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-5);
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.row:hover {
+  background: var(--color-ground);
+  color: var(--color-ink);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.title {
+  font-weight: var(--weight-bold);
+}
+
+.meta,
+.slots {
+  color: var(--color-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+}
+
+.slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) 10px;
+}
+
+.booked {
+  color: var(--color-stamp);
+}
+
+.failed {
+  color: var(--color-failed);
+}
+
+.more {
+  align-self: center;
+  margin: 14px var(--space-5) 18px;
+}
