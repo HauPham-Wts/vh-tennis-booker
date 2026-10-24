@@ -125,7 +125,8 @@ After a route or model change: `python tools/export_openapi.py`, then `npm run a
 
 - Vite, React 19, strict TypeScript, ESLint (type-aware), Prettier, Vitest + Testing Library
   (jsdom). Version holds that need Node 22.22 (jsdom 30, React Router 8) are skipped by Dependabot.
-- `src/paths.ts` names every address; `routes.tsx` maps them to `pages/`. `i18n/` (Vietnamese
+- `src/paths.ts` names every address; `routes.tsx` maps them to `pages/` (the old History
+  addresses lead to the Overview, keeping `?run=`). `i18n/` (Vietnamese
   default, English; same keys, checked by a test). `styles/` holds the tokens (contrast checked
   by `tokens.test.ts`); components use CSS Modules on them.
 - `src/api/`: types generated from `openapi.json` (`schema.d.ts`), a typed client, React Query
@@ -135,10 +136,12 @@ After a route or model change: `python tools/export_openapi.py`, then `npm run a
 - `steps.ts` words each event kind (a new kind fails the type check); `reasons.ts` turns the
   engine's English reasons into a few words (`notify.REASONS` holds the same words; a test
   compares them).
-- Screens (`src/pages`): Overview (status, next and last booking, live run), Schedule (dry run,
-  switch), History (bookings | activity, ten days at a time), Settings (booking, device setup,
-  notification), Guide (static), Welcome (four steps, shown once per opening while nothing is
-  set up). `booking.ts` holds the slot and court choices the developer maintains.
+- Screens (`src/pages`): Overview (the next booking or the live run, with the History panel
+  beside it: runs ten days at a time, real bookings unless dry runs are ticked, `?run=` opens
+  one run's slots, steps and log in the panel), Schedule (dry run, switch), Settings (booking,
+  device setup, notification), Guide (static), Welcome (four steps, shown once per opening
+  while nothing is set up). The header's status line (`components/StatusLine.tsx`) shows the
+  run going on, else the one thing to do, on every screen. `booking.ts` holds the slot and court choices the developer maintains.
 
 ## Driver (`android/`)
 

@@ -2,9 +2,6 @@
 export const paths = {
   overview: "/",
   schedule: "/schedule",
-  history: "/history",
-  bookings: "/history/bookings",
-  activity: "/history/activity",
   settings: "/settings",
   bookingSettings: "/settings/booking",
   deviceSetup: "/settings/device",

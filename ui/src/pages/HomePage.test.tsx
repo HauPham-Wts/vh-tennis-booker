@@ -8,22 +8,22 @@ import { step } from "../test/liveSocket";
 import { overview } from "../test/overview";
 import { runSummary } from "../test/runs";
 
-/** The booking settings, as far as the Overview reads them. */
+/** The booking settings, as far as the home screen reads them. */
 const SETTINGS = { court: "S6 - Sân tennis", slots: ["15:00 - 16:00", "16:00 - 17:00"] };
 
-function renderOverview(status: Overview, lastRuns: unknown[] = []) {
+function renderOverview(status: Overview) {
   return renderApp(paths.overview, {
     "GET /api/status": reply(status),
     "GET /api/settings": reply(SETTINGS),
-    "GET /api/runs": reply(lastRuns),
+    "GET /api/runs": reply([]),
   });
 }
 
-/** The status line beside the title. */
+/** The link of the status line in the header. */
 async function statusLine() {
-  const heading = await screen.findByRole("heading", { level: 1, name: "Tổng quan" });
-  const header = heading.parentElement?.parentElement as HTMLElement;
-  return within(header).findByRole("link");
+  // The navigation's links come first; the status line's is the last link of the header.
+  await within(screen.getByRole("banner")).findByText(/●/);
+  return within(screen.getByRole("banner")).getAllByRole("link").at(-1) as HTMLElement;
 }
 
 beforeEach(() => {
@@ -36,7 +36,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe("OverviewPage status line", () => {
+describe("HomePage status line", () => {
   it("says everything is ready for the next start", async () => {
     renderOverview(overview());
 
@@ -77,7 +77,7 @@ describe("OverviewPage status line", () => {
   });
 });
 
-describe("OverviewPage next booking", () => {
+describe("HomePage next booking", () => {
   it("shows the next start, when the PC wakes and what it will book", async () => {
     renderOverview(overview());
 
@@ -111,104 +111,32 @@ describe("OverviewPage next booking", () => {
   });
 });
 
-describe("OverviewPage last booking", () => {
-  /** This morning's booking: the first slot booked, the second full. */
-  const LAST = runSummary(26, {
-    status: "partial",
-    booked: 1,
-    slots: [
-      {
-        slot: "15:00 - 16:00",
-        ok: true,
-        reason: null,
-        finished_at: "2026-10-15T06:00:06.120",
-        seconds: 6,
-        commands: 54,
-      },
-      {
-        slot: "16:00 - 17:00",
-        ok: false,
-        reason: "Slot 16:00 - 17:00 is fully booked",
-        finished_at: "2026-10-15T06:00:11.300",
-        seconds: 4.3,
-        commands: 30,
-      },
-    ],
-  });
-
-  it("shows the newest real booking, one card per slot", async () => {
-    const { fetch } = renderOverview(overview(), [LAST]);
-
-    const section = await screen.findByRole("region", {
-      name: "Lần đặt gần nhất · sáng nay 15/10",
-    });
-    expect(within(section).getAllByText("ĐẶT ĐƯỢC 1/2")).toHaveLength(1);
-    const cards = within(section).getAllByRole("article");
-    expect(cards[0]).toHaveTextContent("15:00–16:00ĐÃ ĐẶT");
-    expect(cards[0]).toHaveTextContent("Thứ Bảy 17/10 · sân S6");
-    expect(cards[0]).toHaveTextContent("Đặt xong lúc 06:00:06 · mất 6,0 giây");
-    expect(cards[1]).toHaveTextContent("16:00–17:00KHÔNG ĐẶT ĐƯỢC");
-    expect(cards[1]).toHaveTextContent("Hết chỗ");
-    expect(within(section).getByRole("link", { name: "Xem lịch sử →" })).toHaveAttribute(
-      "href",
-      paths.bookings,
-    );
-    const query = fetch.mock.calls
-      .map(([request]) => new URL(request.url))
-      .find(({ pathname }) => pathname === "/api/runs")?.searchParams;
-    expect(query?.get("dry_run")).toBe("false");
-    expect(query?.get("limit")).toBe("1");
-  });
-
-  it("says why a run stopped before any slot", async () => {
-    const stopped = runSummary(27, {
-      status: "failed",
-      booked: 0,
-      total: 0,
-      slots: [],
-      error: "Another run is in progress: dry_run run (pid 17156) since 05:49:12",
-    });
-    renderOverview(overview(), [stopped]);
-
-    const section = await screen.findByRole("region", { name: /Lần đặt gần nhất/ });
-    expect(within(section).getByText("KHÔNG ĐẶT ĐƯỢC")).toBeInTheDocument();
-    expect(within(section).getByText("Đang có lần chạy khác")).toBeInTheDocument();
-  });
-
-  it("shows nothing before a first real booking", async () => {
-    renderOverview(overview(), []);
-
-    await screen.findByRole("region", { name: "Lần đặt tiếp theo" });
-    expect(screen.queryByRole("region", { name: /Lần đặt gần nhất/ })).not.toBeInTheDocument();
-  });
-});
-
-describe("OverviewPage while a run goes on", () => {
+describe("HomePage while a run goes on", () => {
   it.each([
     ["scheduled", "Đang đặt sân theo hẹn giờ 06:00"],
     ["dry_run", "Đang chạy thử"],
     ["manual", "Đang đặt sân (chạy thủ công)"],
     ["setup", "Đang thiết lập tự động"],
-  ])("names a %s run in a banner and says what waits for it", async (trigger, words) => {
+  ])("names a %s run in the header and says what waits for it", async (trigger, words) => {
     renderOverview(overview({ running: { trigger, pid: 4242, since: "05:50:02" } }));
 
-    // The stub's "Đang tải…" is a status too: find the banner by its words.
-    const locked = await screen.findByText(
-      "Chạy thử và Thiết lập tự động tạm khóa cho tới khi xong",
-    );
-    const banner = locked.closest('[role="status"]');
-    expect(banner).toHaveTextContent(words);
+    const header = screen.getByRole("banner");
+    expect(await within(header).findByRole("status")).toHaveTextContent(words);
+    expect(
+      screen.getByText("Chạy thử và Thiết lập tự động tạm khóa cho tới khi xong"),
+    ).toBeInTheDocument();
   });
 
-  it("shows no banner while nothing runs", async () => {
+  it("says nothing is locked while nothing runs", async () => {
     renderOverview(overview());
 
     await screen.findByRole("region", { name: "Lần đặt tiếp theo" });
+    expect(within(screen.getByRole("banner")).queryByRole("status")).not.toBeInTheDocument();
     expect(screen.queryByText(/tạm khóa/)).not.toBeInTheDocument();
   });
 });
 
-describe("OverviewPage live run", () => {
+describe("HomePage live run", () => {
   const SLOTS = ["15:00 - 16:00", "16:00 - 17:00"];
   /** The 06:00 run so far: started, waited, booking the first slot. */
   const STEPS = [
@@ -251,7 +179,7 @@ describe("OverviewPage live run", () => {
     });
   }
 
-  it("shows the run as it goes in place of the next and last booking", async () => {
+  it("shows the run as it goes in place of the next booking", async () => {
     renderLive();
 
     const live = await screen.findByRole("region", {
@@ -263,10 +191,6 @@ describe("OverviewPage live run", () => {
     expect(within(live).getByText("16:00–17:00 · chờ tới lượt")).toBeInTheDocument();
     expect(within(live).getByText("0/2")).toBeInTheDocument();
     expect(within(live).getByText("khung giờ đã đặt xong")).toBeInTheDocument();
-    expect(within(live).getByRole("link", { name: "Xem nhật ký trực tiếp →" })).toHaveAttribute(
-      "href",
-      "/history/activity?run=30",
-    );
     expect(screen.getByText(/Bạn có thể đóng cửa sổ này/)).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Lần đặt tiếp theo" })).not.toBeInTheDocument();
   });
@@ -345,10 +269,9 @@ describe("OverviewPage live run", () => {
     });
 
     expect(await screen.findByRole("region", { name: "Đang chuẩn bị" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Xem nhật ký trực tiếp →" })).not.toBeInTheDocument();
   });
 
-  it("keeps the usual Overview under the banner during auto setup", async () => {
+  it("keeps the next booking in view during auto setup", async () => {
     renderOverview(overview({ running: { trigger: "setup", pid: 4242, since: "21:00:00" } }));
 
     expect(await screen.findByText("Đang thiết lập tự động")).toBeInTheDocument();
@@ -356,7 +279,7 @@ describe("OverviewPage live run", () => {
   });
 });
 
-describe("OverviewPage on an app not used yet", () => {
+describe("HomePage on an app not used yet", () => {
   /** No dry run has passed and the schedule is off. */
   function unused(fields: Partial<Overview> = {}): Overview {
     const status = overview();
@@ -371,7 +294,7 @@ describe("OverviewPage on an app not used yet", () => {
 
     expect(await screen.findByRole("navigation", { name: "Các bước bắt đầu" })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe(paths.welcome);
-    // Replaced, so going back does not land on the Overview and send the user on again.
+    // Replaced, so going back does not land on the home screen and send the user on again.
     expect(router.state.historyAction).toBe("REPLACE");
   });
 
@@ -385,7 +308,7 @@ describe("OverviewPage on an app not used yet", () => {
     expect(router.state.location.pathname).toBe(paths.overview);
   });
 
-  it("stays on the Overview once a dry run has passed", async () => {
+  it("stays on the home screen once a dry run has passed", async () => {
     const status = unused();
     const { router } = renderOverview({
       ...status,

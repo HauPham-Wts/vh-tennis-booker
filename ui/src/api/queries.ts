@@ -10,7 +10,6 @@ import {
   getSettings,
   getSetupChecks,
   listEvents,
-  listRunMonths,
   listRuns,
   type RunsQuery,
 } from "./endpoints";
@@ -22,7 +21,6 @@ import {
 export const queryKeys = {
   overview: ["overview"] as const,
   runs: (query: RunsQuery = {}) => ["runs", query] as const,
-  months: ["runs", "months"] as const,
   runDays: ["runs", "days"] as const,
   run: (runId: number) => ["run", runId] as const,
   events: (query: EventsQuery = {}) => ["events", query] as const,
@@ -90,11 +88,6 @@ export function useRunDays() {
     getNextPageParam: nextRunDays,
     select: (data) => data.pages.flat(),
   });
-}
-
-/** Read the months of real bookings; a finished run refreshes them with the runs. */
-export function useRunMonths() {
-  return useQuery({ queryKey: queryKeys.months, queryFn: listRunMonths });
 }
 
 /** Read one run in full. */

@@ -1,10 +1,8 @@
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
 import { useRunSteps } from "../../api/runSteps";
 import type { Step } from "../../api/types";
 import { Overline } from "../../components/Overline";
 import { Ticket } from "../../components/Ticket";
-import { paths } from "../../paths";
 import { stepMessage } from "../../steps";
 import { useFormat } from "../../useFormat";
 import styles from "./LiveRun.module.css";
@@ -15,7 +13,7 @@ import { progressOf } from "./progress";
  * newest one marked, the slots still to come, and the progress on the stub. It is drawn
  * from the steps the live feed brings: no request per step.
  */
-function LiveTicket({ runId, steps }: { runId?: number; steps: readonly Step[] }) {
+function LiveTicket({ steps }: { steps: readonly Step[] }) {
   const { t } = useTranslation();
   const f = useFormat();
   const progress = progressOf(steps);
@@ -38,14 +36,6 @@ function LiveTicket({ runId, steps }: { runId?: number; steps: readonly Step[] }
               <span key={slot} className={`${styles.bar} ${styles[state]}`} />
             ))}
           </div>
-          {runId !== undefined && (
-            <Link
-              to={{ pathname: paths.activity, search: `?run=${runId}` }}
-              className={styles.follow}
-            >
-              {t("pages.overview.live.follow")}
-            </Link>
-          )}
         </>
       }
     >
@@ -101,7 +91,7 @@ function LiveTicket({ runId, steps }: { runId?: number; steps: readonly Step[] }
 
 function LiveRunSteps({ runId }: { runId: number }) {
   const { steps } = useRunSteps(runId);
-  return <LiveTicket runId={runId} steps={steps} />;
+  return <LiveTicket steps={steps} />;
 }
 
 /**

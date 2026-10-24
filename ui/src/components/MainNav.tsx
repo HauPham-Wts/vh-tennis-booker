@@ -3,11 +3,10 @@ import { NavLink } from "react-router";
 import { paths } from "../paths";
 import styles from "./MainNav.module.css";
 
-/** The screens in the navigation, in the order of the mockups. */
+/** The screens in the navigation; the History is part of the overview. */
 const ITEMS = [
   { to: paths.overview, label: "nav.overview" },
   { to: paths.schedule, label: "nav.schedule" },
-  { to: paths.history, label: "nav.history" },
   { to: paths.settings, label: "nav.settings" },
   { to: paths.guide, label: "nav.guide" },
 ] as const;

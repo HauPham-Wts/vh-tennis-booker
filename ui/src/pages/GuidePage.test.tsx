@@ -18,11 +18,13 @@ function trouble(question: string): HTMLDetailsElement {
 }
 
 describe("GuidePage", () => {
-  it("sends no request", async () => {
+  it("sends no request of its own", async () => {
     const { fetch } = renderGuide();
 
     expect(await screen.findByRole("heading", { level: 1, name: "Hướng dẫn" })).toBeInTheDocument();
-    expect(fetch).not.toHaveBeenCalled();
+    // Only the header's status line reads the backend.
+    const asked = fetch.mock.calls.map(([request]) => new URL(request.url).pathname);
+    expect(asked).toEqual(["/api/status"]);
   });
 
   it("links back to the introduction", () => {
@@ -64,9 +66,9 @@ describe("GuidePage", () => {
     const names = within(list)
       .getAllByRole("term")
       .map((term) => term.textContent);
-    expect(names).toEqual(["Tổng quan", "Hẹn giờ", "Lịch sử", "Cài đặt"]);
+    expect(names).toEqual(["Tổng quan", "Hẹn giờ", "Cài đặt"]);
     expect(
-      within(list).getByText(/^"Lịch sử": .* "Nhật ký": .* mở "Chi tiết kỹ thuật"/),
+      within(list).getByText(/"Lịch sử": .* tích "Gồm cả chạy thử" .* mở "Chi tiết kỹ thuật"/),
     ).toBeInTheDocument();
     expect(within(list).getByText(/^"Đặt sân": .* "Thiết lập máy": /)).toBeInTheDocument();
   });

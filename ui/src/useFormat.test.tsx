@@ -15,7 +15,6 @@ describe("useFormat", () => {
     expect(format.clock("2026-10-14T06:00:06.781")).toBe("06:00:06");
     expect(format.time("2026-10-15T06:00")).toBe("06:00");
     expect(format.seconds(7)).toBe("7,0 giây");
-    expect(format.month("2026-10")).toBe("Tháng 10/2026");
     expect(format.period("2026-10-15T05:50")).toBe("sáng");
     expect(format.period("2026-10-15T14:00")).toBe("chiều");
     expect(format.period("2026-10-15T19:43")).toBe("tối");
@@ -34,7 +33,6 @@ describe("useFormat", () => {
     expect(format.day("2026-10-14")).toBe("Wed 14 Oct");
     expect(format.dateTime("2026-10-12T19:43:00")).toBe("12 Oct 19:43");
     expect(format.seconds(4.3)).toBe("4.3 s");
-    expect(format.month("2026-10")).toBe("October 2026");
     expect(format.period("2026-10-15T05:50")).toBe("morning");
   });
 
@@ -57,7 +55,6 @@ describe("useFormat", () => {
   it("shows what it cannot read as it is, or nothing for a period", () => {
     const { result } = renderHook(() => useFormat());
 
-    expect(result.current.month("10/2026")).toBe("10/2026");
     expect(result.current.period("soon")).toBe("");
   });
 });

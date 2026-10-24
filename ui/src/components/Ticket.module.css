@@ -47,20 +47,3 @@
 .bottom {
   bottom: calc(var(--notch) / -2);
 }
-
-.small {
-  --notch: 24px;
-  box-shadow: none;
-}
-
-.small .main {
-  flex: 3 1 380px;
-  padding: var(--space-5) 26px;
-  gap: 6px;
-}
-
-.small .stub {
-  flex: 0 1 200px;
-  padding: var(--space-5) var(--space-6);
-  align-items: center;
-}

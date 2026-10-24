@@ -1,4 +1,4 @@
-/** How a run's result is shown: its stamp, and a short mark for lists. */
+/** How a run is shown in the History: its stamp and how it started. */
 import type { TFunction } from "i18next";
 import type { RunSummary } from "./api/types";
 
@@ -6,44 +6,46 @@ type RunCounts = Pick<RunSummary, "dry_run" | "status" | "booked" | "total">;
 
 export interface RunMark {
   text: string;
-  tone: "booked" | "failed" | "plain";
+  tone: "booked" | "failed" | "muted";
 }
 
 /**
- * Return a run's stamp: "ĐẶT ĐƯỢC 2/2" in stamp blue when every slot was booked, the same
- * words in orange-red when only some were. A dry run says "CHẠY THỬ ĐẠT": it booked nothing.
+ * Return a run's stamp: "ĐÃ ĐẶT 2/2" in stamp blue when every slot was booked, "ĐẶT ĐƯỢC
+ * 1/2" in orange-red when only some were, "KHÔNG ĐƯỢC 0/2" when none was. A dry run that
+ * went through says "CHẠY THỬ ĐẠT" in grey: it booked nothing.
  */
-export function runStamp(t: TFunction, run: RunCounts): RunMark & { tone: "booked" | "failed" } {
+export function runStamp(t: TFunction, run: RunCounts): RunMark {
   if (run.status === "running") {
     return { text: t("runs.stamp.running"), tone: "booked" };
   }
   if (run.status === "interrupted") {
     return { text: t("runs.stamp.interrupted"), tone: "failed" };
   }
-  if (run.booked === 0) {
-    return { text: t(run.dry_run ? "runs.stamp.dryFailed" : "runs.stamp.failed"), tone: "failed" };
-  }
   const counts = { booked: run.booked, total: run.total };
-  return {
-    text: t(run.dry_run ? "runs.stamp.dry" : "runs.stamp.booked", counts),
-    tone: run.booked === run.total ? "booked" : "failed",
-  };
-}
-
-/** Return a run's mark for a list: "✓ 2/2", "✕ 0/1", or "…" while it runs. */
-export function runResult(run: RunCounts): RunMark {
-  if (run.status === "running") {
-    return { text: "…", tone: "plain" };
+  if (run.dry_run) {
+    if (run.booked === 0) {
+      return { text: t("runs.stamp.dryFailed"), tone: "failed" };
+    }
+    return run.booked === run.total
+      ? { text: t("runs.stamp.dry"), tone: "muted" }
+      : { text: t("runs.stamp.dryPartial", counts), tone: "failed" };
   }
-  const counts = run.total === 0 ? "" : ` ${run.booked}/${run.total}`;
-  return run.total > 0 && run.booked === run.total && run.status !== "interrupted"
-    ? { text: `✓${counts}`, tone: "booked" }
-    : { text: `✕${counts}`, tone: "failed" };
+  if (run.booked === 0) {
+    // A run that stopped before any slot has no count to show.
+    return {
+      text: t(run.total === 0 ? "runs.stamp.failed" : "runs.stamp.none", counts),
+      tone: "failed",
+    };
+  }
+  return run.booked === run.total
+    ? { text: t("runs.stamp.booked", counts), tone: "booked" }
+    : { text: t("runs.stamp.partial", counts), tone: "failed" };
 }
 
-const TRIGGERS = ["scheduled", "dry_run", "manual", "setup"] as const;
+/** What starts a run (cli.run_trigger); the History tells the 06:00 runs from the others. */
+const ORIGINS = ["scheduled", "manual", "dry_run"] as const;
 
-/** Name what started a run ("hẹn giờ", "chạy thử"); an unknown value reads "không rõ". */
-export function triggerName(t: TFunction, trigger: string | undefined): string {
-  return t(`triggers.${TRIGGERS.find((known) => known === trigger) ?? "unknown"}`);
+/** Say how a run started ("theo hẹn giờ", "chạy tay"); an unknown value reads "không rõ". */
+export function runOrigin(t: TFunction, trigger: string): string {
+  return t(`runs.by.${ORIGINS.find((known) => known === trigger) ?? "unknown"}`);
 }

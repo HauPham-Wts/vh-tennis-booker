@@ -9,7 +9,6 @@ import {
   SETTLING_POLL_MS,
   settlingInterval,
   useOverview,
-  useRunMonths,
   useRuns,
   useSetupChecks,
 } from "./queries";
@@ -86,17 +85,6 @@ describe("query hooks", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(overview);
-  });
-
-  it("read the months of real bookings", async () => {
-    const months = [{ month: "2026-10", runs: 5, booked: 10 }];
-    stubBackend({ "GET /api/runs/months": reply(months) });
-
-    const { result } = renderHook(() => useRunMonths(), {
-      wrapper: withQueryClient(createTestQueryClient()),
-    });
-
-    await waitFor(() => expect(result.current.data).toEqual(months));
   });
 
   it("keep each History filter apart in the cache", async () => {

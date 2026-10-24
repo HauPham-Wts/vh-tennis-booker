@@ -3,7 +3,6 @@ import type {
   AutoSetupRequest,
   DryRunStarted,
   Health,
-  MonthSummary,
   NotificationSettings,
   Overview,
   RunDetail,
@@ -33,11 +32,6 @@ export function getOverview(): Promise<Overview> {
 /** List runs newest first. */
 export function listRuns(query: RunsQuery = {}): Promise<RunSummary[]> {
   return call(client.GET("/api/runs", { params: { query } }));
-}
-
-/** List the months of real bookings, newest first, with their runs and booked slots. */
-export function listRunMonths(): Promise<MonthSummary[]> {
-  return call(client.GET("/api/runs/months"));
 }
 
 /** Read one run with its slots, steps and technical log lines. */

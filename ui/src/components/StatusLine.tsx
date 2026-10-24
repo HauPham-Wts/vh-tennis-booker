@@ -1,19 +1,40 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
-import type { Overview } from "../../api/types";
-import { localToday } from "../../format";
-import { paths } from "../../paths";
-import { useFormat } from "../../useFormat";
+import type { Overview, Running } from "../api/types";
+import { localToday } from "../format";
+import { paths } from "../paths";
+import { useFormat } from "../useFormat";
 import styles from "./StatusLine.module.css";
 
+const TRIGGERS = ["scheduled", "dry_run", "manual", "setup"] as const;
+
 /**
- * One line on whether the next booking can happen, and the one thing to do if not:
- * set up the device, finish its setup, or turn the schedule on.
+ * The ink pill while a run holds the emulator: what runs. Screen readers hear it once,
+ * when it appears.
+ */
+function RunningStatus({ running, startAt }: { running: Running; startAt: string }) {
+  const { t } = useTranslation();
+  const trigger = TRIGGERS.find((known) => known === running.trigger) ?? "other";
+  return (
+    <p role="status" className={styles.running}>
+      <span aria-hidden="true" className={styles.light} />
+      {t(`pages.overview.live.banner.${trigger}`, { start: startAt })}
+    </p>
+  );
+}
+
+/**
+ * One line in the header on whether the next booking can happen: the run going on, else
+ * the one thing to do (set up the device, finish its setup, turn the schedule on), else
+ * ready for the next start.
  */
 export function StatusLine({ overview }: { overview: Overview }) {
   const { t } = useTranslation();
   const f = useFormat();
-  const { setup, schedule } = overview;
+  const { running, setup, schedule } = overview;
+  if (running !== null) {
+    return <RunningStatus running={running} startAt={schedule.start_at} />;
+  }
   let words: string;
   let link: { to: string; text: string };
   let ready = false;

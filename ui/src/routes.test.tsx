@@ -46,24 +46,14 @@ describe("routes", () => {
   });
 
   it.each([
-    [paths.bookings, "Lịch sử"],
-    [paths.activity, "Nhật ký"],
-  ])("opens %s as the %s tab of the history", async (path, tab) => {
-    renderAt(path);
-
-    expect(await screen.findByRole("heading", { level: 1, name: "Lịch sử" })).toBeInTheDocument();
-    const tabs = screen.getByRole("navigation", { name: "Phần lịch sử" });
-    expect(within(tabs).getByRole("link", { name: tab })).toHaveAttribute("aria-current", "page");
-    await waitFor(() => expect(document.title).toBe("Lịch sử · Court Booker"));
-  });
-
-  it.each([
-    [`${paths.history}?month=2026-09`, `${paths.bookings}?month=2026-09`],
-    ["/activity?run=25", `${paths.activity}?run=25`],
-  ])("sends %s on to %s", async (path, to) => {
+    ["/history", paths.overview],
+    ["/history/bookings?month=2026-09", `${paths.overview}?month=2026-09`],
+    ["/history/activity?run=25", `${paths.overview}?run=25`],
+    ["/activity?run=25", `${paths.overview}?run=25`],
+  ])("sends the old History address %s on to %s", async (path, to) => {
     const router = renderAt(path);
 
-    await screen.findByRole("navigation", { name: "Phần lịch sử" });
+    await screen.findByRole("region", { name: "Lịch sử" });
     const { pathname, search } = router.state.location;
     expect(pathname + search).toBe(to);
     expect(router.state.historyAction).toBe("REPLACE");

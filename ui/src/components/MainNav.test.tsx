@@ -21,7 +21,7 @@ function currentLinks(): string[] {
 }
 
 describe("MainNav", () => {
-  it("links every screen in the order of the mockups", () => {
+  it("links every screen", () => {
     renderAt(paths.overview);
 
     const nav = screen.getByRole("navigation", { name: "Điều hướng chính" });
@@ -29,7 +29,6 @@ describe("MainNav", () => {
     expect(links.map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
       ["Tổng quan", paths.overview],
       ["Hẹn giờ", paths.schedule],
-      ["Lịch sử", paths.history],
       ["Cài đặt", paths.settings],
       ["Hướng dẫn", paths.guide],
     ]);
@@ -38,8 +37,6 @@ describe("MainNav", () => {
   it.each([
     [paths.overview, "Tổng quan"],
     [paths.schedule, "Hẹn giờ"],
-    [paths.bookings, "Lịch sử"],
-    [paths.activity, "Lịch sử"],
     [paths.bookingSettings, "Cài đặt"],
     [paths.deviceSetup, "Cài đặt"],
     [paths.guide, "Hướng dẫn"],
