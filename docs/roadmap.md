@@ -24,6 +24,7 @@ four (CHANGELOG). Failures are fixed as the 06:00 logs show them. What is left:
 |---|---|---|
 | 3 Fast | MuMu tuning | Frame rate, performance, hidden bottlenecks |
 | 3 Fast | Parallel MuMu | Several MuMu instances with separate accounts (one account cannot log in twice), one slot each: the last speed step |
+| 4 UI | One-screen UI | The ticket holds the booking settings; a History / Setup panel beside it replaces the other screens ([spec](specs/0.5.0-desktop-app.md), "Screens") |
 | 4 UI | Desktop app, last before 1.0.0 | Tauri shell with a PyInstaller sidecar, installer, release automation; version number set when it starts ([spec](specs/0.5.0-desktop-app.md), "Packaging") |
 
 ## Situations

@@ -41,8 +41,8 @@ round 2 shows as it happens](docs/img/overview.png)
   the driver, measured on MuMu) and every button is found in it locally; waiting for a screen
   and finding its buttons is the same read. At the real 06:00 opening, the first slot has
   been booked 7 to 11 s after 06:00.
-- **Local web UI and full history.** An overview that holds the booking settings, the
-  schedule and the history, and a settings screen, in Vietnamese and English, over a FastAPI backend on 127.0.0.1. Every run, slot and step is
+- **Local web UI and full history.** One screen that holds the booking settings, the
+  schedule, the history and the setup, in Vietnamese and English, over a FastAPI backend on 127.0.0.1. Every run, slot and step is
   kept in SQLite (about 0.13 ms per write), beside a daily log of every screen read.
 - **Tested without a device.** The Python tests replace the emulator, ADB, the clock and
   Task Scheduler with fakes, and the UI has component tests. CI runs Ruff, pytest on
@@ -194,18 +194,19 @@ backend listens on 127.0.0.1 only, and the 06:00 run does not need it; watching 
 the UI does not slow it down. Vietnamese is the default language, English is one click
 away.
 
-- **Tổng quan / Overview**: the line at the top says whether the next start is ready, or
-  the one thing to do first. The next booking as a ticket: the daily switch (it creates or
-  removes the Windows task, once a dry run passed), the play day, court and up to two slots,
-  saved on each press, and a dry run; during a run, its steps as they happen. Beside it the
-  history: each run with every slot booked or not and why (real bookings, dry runs on
-  request), and each run's steps with the technical log one click away.
-- **Cài đặt / Settings**: device setup, with an auto setup for what the app can fix; the
-  Windows notification after every run, with a test button.
-- **Hướng dẫn / Guide**: four steps to start, what each screen is for, the usual problems.
+The UI is one screen, without a menu:
 
-An app not used yet opens on a four-step Welcome instead. Saving settings rewrites
-`config.toml` (its comments are dropped); the next run reads it.
+- **The line at the top** says whether the next start is ready, or the one thing to do first.
+- **The ticket** on the left is the next booking and its settings: the daily switch (it
+  creates or removes the Windows task, once a dry run passed), the play day, court and up to
+  two slots, saved on each press, and a dry run; during a run, its steps as they happen.
+- **Lịch sử / History** on the right: each run with every slot booked or not and why (real
+  bookings, dry runs on request), and each run's steps with the technical log one click away.
+- **Thiết lập / Setup** beside it: the steps only you can do (install MuMu and the Vinhomes
+  app, log in), ticked by you; an auto setup for what the app can fix; the Windows
+  notification switch; a short guide. It opens first, with a count, while anything is left.
+
+Saving settings rewrites `config.toml` (its comments are dropped); the next run reads it.
 
 <p>
   <img src="docs/img/history.png" width="49%" alt="History: the bookings of September,

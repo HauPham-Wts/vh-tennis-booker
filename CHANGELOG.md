@@ -26,6 +26,19 @@ uses [Semantic Versioning](https://semver.org/).
   booked, the round, the progress and every step, the choices locked until it ends.
 - The status line asks for a dry run, then for the daily switch, before it says "Sẵn sàng
   cho 06:00 sáng mai"; a passed dry run does not turn the switch on by itself.
+- The UI is one screen without a menu: the panel beside the ticket has two tabs, Lịch sử and
+  Thiết lập. The Settings, Device setup, Notification, Guide and Welcome screens are gone
+  (their addresses lead to the one screen). The Setup tab holds three steps the user ticks
+  (MuMu, the Vinhomes app, the login; kept in the browser, not checked by the app), auto
+  setup in one line with its button, the notification switch (no more sample notification)
+  and a short guide; while anything is left it starts with three lines on how to use the
+  app, opens first and shows the count of tasks left, which the status line repeats
+  ("Còn 2 việc thiết lập"). The UI no longer asks the backend for the setup checks.
+
+### Fixed
+- The status line no longer says a device setup item is left because an old auto setup ran
+  with MuMu closed: only the items auto setup fixes count, and the app's install is the
+  user's own tick.
 
 ## [0.11.0] - 2026-10-24
 

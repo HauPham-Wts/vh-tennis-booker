@@ -1,4 +1,4 @@
-import { act, screen, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Overview } from "../api/types";
 import { paths } from "../paths";
@@ -8,6 +8,7 @@ import { step } from "../test/liveSocket";
 import { overview } from "../test/overview";
 import { runSummary } from "../test/runs";
 import { settings } from "../test/settings";
+import { STORAGE_KEY } from "../manualSteps";
 
 function renderOverview(status: Overview) {
   return renderApp(paths.overview, {
@@ -23,7 +24,13 @@ async function statusLine() {
   return dot.closest("p") as HTMLElement;
 }
 
+/** Tick the setup steps only the user can do. */
+function tickSteps(done = { mumu: true, app: true, login: true }) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(done));
+}
+
 beforeEach(() => {
+  tickSteps();
   // "Tomorrow" is 16/10: the page reads today from the clock.
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(2026, 9, 15, 0, 30));
@@ -42,18 +49,14 @@ describe("HomePage status line", () => {
     expect(within(line).queryByRole("link")).not.toBeInTheDocument();
   });
 
-  it("asks to set up the device when auto setup never ran", async () => {
+  it("counts auto setup that never ran as a setup task", async () => {
     renderOverview(overview({ setup: null }));
 
-    const line = await statusLine();
-    expect(line).toHaveTextContent("Chưa thiết lập máy");
-    expect(within(line).getByRole("link", { name: "Thiết lập máy" })).toHaveAttribute(
-      "href",
-      paths.deviceSetup,
-    );
+    expect(await statusLine()).toHaveTextContent("Còn 1 việc thiết lập, xem khung bên phải");
   });
 
-  it("counts the setup items left before anything else", async () => {
+  it("counts the steps not ticked and auto setup left, before anything else", async () => {
+    tickSteps({ mumu: true, app: false, login: true });
     const status = overview({
       setup: { checked_at: "2026-10-14T21:00:00.000", left: ["app_installed", "mumu_screen"] },
     });
@@ -62,7 +65,7 @@ describe("HomePage status line", () => {
       schedule: { ...status.schedule, enabled: false, dry_run_passed: false },
     });
 
-    expect(await statusLine()).toHaveTextContent("Còn 2 mục thiết lập máy cần làm");
+    expect(await statusLine()).toHaveTextContent("Còn 2 việc thiết lập, xem khung bên phải");
   });
 
   it("asks for a dry run before the daily switch", async () => {
@@ -273,52 +276,62 @@ describe("HomePage live run", () => {
   });
 });
 
-describe("HomePage on an app not used yet", () => {
-  /** No dry run has passed and the schedule is off. */
-  function unused(fields: Partial<Overview> = {}): Overview {
-    const status = overview();
-    return overview({
-      schedule: { ...status.schedule, enabled: false, dry_run_passed: false },
-      ...fields,
-    });
-  }
+describe("HomePage panel", () => {
+  it("opens on the History once everything is set up", async () => {
+    renderOverview(overview());
+    await statusLine();
 
-  it("opens the welcome screen in its place", async () => {
-    const { router } = renderOverview(unused());
-
-    expect(await screen.findByRole("navigation", { name: "Các bước bắt đầu" })).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe(paths.welcome);
-    // Replaced, so going back does not land on the home screen and send the user on again.
-    expect(router.state.historyAction).toBe("REPLACE");
-  });
-
-  it("sends the user there only once per opening", async () => {
-    const { router } = renderOverview(unused());
-    await screen.findByRole("navigation", { name: "Các bước bắt đầu" });
-
-    await act(() => router.navigate(paths.overview));
-
-    expect(await screen.findByRole("heading", { level: 1, name: "Tổng quan" })).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe(paths.overview);
-  });
-
-  it("stays on the home screen once a dry run has passed", async () => {
-    const status = unused();
-    const { router } = renderOverview({
-      ...status,
-      schedule: { ...status.schedule, dry_run_passed: true },
-    });
-
-    expect(await statusLine()).toHaveTextContent("Chạy thử đạt · bật Tự đặt mỗi sáng");
-    expect(router.state.location.pathname).toBe(paths.overview);
-  });
-
-  it("leaves a run going on in view", async () => {
-    const { router } = renderOverview(
-      unused({ running: { trigger: "setup", pid: 4242, since: "2026-10-15T09:12:00.000" } }),
+    expect(screen.getByRole("tab", { name: "Lịch sử" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Thiết lập" })).toHaveAttribute(
+      "aria-selected",
+      "false",
     );
+  });
 
-    await screen.findByText("Đang thiết lập tự động");
-    expect(router.state.location.pathname).toBe(paths.overview);
+  it("opens on the Setup while a task is left, with their count", async () => {
+    tickSteps({ mumu: true, app: true, login: false });
+    renderOverview(overview());
+
+    expect(await screen.findByRole("tab", { name: "Thiết lập, còn 1 việc" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByRole("tabpanel", { name: "Thiết lập, còn 1 việc" })).toBeInTheDocument();
+  });
+
+  it("opens on the Setup until the daily booking is on", async () => {
+    const status = overview();
+    renderOverview({ ...status, schedule: { ...status.schedule, enabled: false } });
+
+    // The panel waits on the History until the status comes in.
+    await waitFor(() =>
+      expect(screen.getByRole("tab", { name: "Thiết lập" })).toHaveAttribute(
+        "aria-selected",
+        "true",
+      ),
+    );
+  });
+
+  it("opens on the History when the address asks for a run", async () => {
+    tickSteps({ mumu: false, app: false, login: false });
+    renderApp(`${paths.overview}?run=26`, { "GET /api/status": reply(overview()) });
+
+    expect(await screen.findByRole("tab", { name: /^Lịch sử/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+
+  it("changes tabs on a press and with the arrow keys", async () => {
+    renderOverview(overview());
+    await statusLine();
+    const history = screen.getByRole("tab", { name: "Lịch sử" });
+
+    fireEvent.click(screen.getByRole("tab", { name: "Thiết lập" }));
+    expect(screen.getByRole("tab", { name: "Thiết lập" })).toHaveAttribute("aria-selected", "true");
+
+    fireEvent.keyDown(screen.getByRole("tab", { name: "Thiết lập" }), { key: "ArrowLeft" });
+    expect(history).toHaveAttribute("aria-selected", "true");
+    expect(history).toHaveFocus();
   });
 });

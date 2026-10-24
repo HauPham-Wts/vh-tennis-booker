@@ -19,12 +19,6 @@
   color: var(--color-failed);
 }
 
-.link {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--touch-target);
-}
-
 /* A run goes on: an ink pill with a yellow light. */
 .running {
   display: inline-flex;

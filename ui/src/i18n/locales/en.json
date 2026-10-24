@@ -9,12 +9,6 @@
     "on": "On",
     "off": "Off"
   },
-  "nav": {
-    "label": "Main navigation",
-    "overview": "Overview",
-    "settings": "Settings",
-    "guide": "Guide"
-  },
   "language": {
     "label": "Language",
     "names": {
@@ -26,9 +20,7 @@
     "overview": {
       "title": "Overview",
       "status": {
-        "noSetup": "Device not set up yet",
-        "setupLeft": "Device setup: {{count}} left to do",
-        "setupLink": "Device setup",
+        "setupLeft": "Setup: {{count}} left, see the panel on the right",
         "noDryRun": "No dry run passed yet · press Dry run now",
         "scheduleOff": "Dry run passed · turn on Book every morning",
         "ready": "Ready for {{time}} {{when}}"
@@ -70,7 +62,7 @@
       "dryRun": {
         "button": "Dry run now",
         "starting": "Starting…",
-        "none": "No dry run yet.",
+        "none": "No dry run yet. It takes about a minute and books nothing.",
         "last": "Last dry run: {{when}} at {{time}}",
         "passed": "passed",
         "failed": "did not pass: {{reason}}",
@@ -87,41 +79,9 @@
         "running": "running",
         "waiting": "{{slot}} · waiting for its turn",
         "locked": "Day, court, slots and dry run open again when this ends. You can close this window."
-      }
-    },
-    "schedule": {
-      "title": "Schedule",
-      "lead": "Do one dry run to be sure, then turn the schedule on so the app books at {{start}} every morning.",
-      "dryRun": {
-        "step": "Step 1",
-        "title": "Dry run",
-        "about": "Goes through every booking step but stops right before \"Xác nhận\", so nothing is booked. Takes about a minute.",
-        "button": "Dry run now",
-        "starting": "Starting…",
-        "none": "No dry run yet.",
-        "passed": "Last dry run: {{when}} at {{time}} · passed",
-        "failed": "Last dry run: {{when}} at {{time}} · did not pass: {{reason}}",
-        "stopped": "Last dry run: {{when}} at {{time}} · stopped halfway",
-        "running": "A dry run is going on.",
-        "follow": "Follow each step on the Overview →"
       },
-      "daily": {
-        "step": "Step 2",
-        "title": "Book every morning",
-        "wake": "Wake the PC",
-        "start": "Start booking",
-        "repeat": "Repeat",
-        "everyDay": "Every day",
-        "next": "Next: {{day}} at {{time}} ({{period}}), to play {{play}}.",
-        "off": "Off: the PC will not book by itself.",
-        "change": "Change the slots or court"
-      },
-      "habits": {
-        "title": "So the schedule runs while you sleep",
-        "sleep": "Put the PC to Sleep, never Shut down",
-        "signedIn": "Stay signed in to Windows",
-        "plugged": "Keep a laptop plugged in"
-      }
+      "lockedTitle": "Not on yet",
+      "locked": "It turns on once a dry run has passed."
     },
     "history": {
       "title": "History",
@@ -147,201 +107,85 @@
       "steps": "Every step",
       "technical": "Technical details"
     },
-    "settings": {
-      "title": "Settings",
-      "tabs": "Settings sections"
+    "panel": {
+      "title": "History and setup",
+      "setup": "Setup",
+      "left": ", {{count}} left"
     },
-    "bookingSettings": {
-      "title": "Booking",
-      "slots": {
-        "title": "Slots to book",
-        "lead": "Booked one after another, in the order you pick them. Each slot is a booking of its own.",
-        "morning": "Morning",
-        "afternoon": "Afternoon · evening",
-        "chosen": "{{slot}}, round {{order}}"
-      },
-      "place": {
-        "title": "Court and day",
-        "court": "Court",
-        "day": "Book for",
-        "dayHint": "The app opens bookings up to two days ahead."
-      },
-      "days": {
-        "today": "Today",
-        "tomorrow": "Tomorrow",
-        "dayAfter": "The day after tomorrow"
-      },
-      "note": "Changes apply from the next booking.",
-      "saved": "Saved. It applies from the next booking.",
-      "noSlot": "Choose at least one slot.",
-      "cancel": "Cancel",
-      "save": "Save changes",
-      "saving": "Saving…"
-    },
-    "deviceSetup": {
-      "title": "Device setup",
-      "lead": "Prepare the PC once. Court Booker takes care of the rest at every booking.",
-      "manual": {
-        "title": "What you need to do",
-        "done": "{{done}} of {{total}} done",
-        "check": "Check again",
-        "checking": "Checking…",
-        "waitRun": "A run is going on. The PC is checked once it ends."
-      },
-      "items": {
-        "mumu": {
-          "title": "Install MuMu Player",
-          "text": "An Android phone emulator, to run the Vinhomes app on the PC.",
-          "todo": "Download MuMu Player from mumuplayer.com and install it, then press Check again."
-        },
-        "app": {
-          "title": "Install Vinhomes Resident in MuMu",
-          "text": "Open the Play Store in MuMu, sign in with a Google account, then find and install Vinhomes Resident.",
-          "todo": "Once installed, press Check again.",
-          "unknown": "Open MuMu, then press Check again to see whether the app is installed."
-        },
-        "login": {
-          "title": "Log in to the Vinhomes app",
-          "text": "Open the app in MuMu and log in with your resident account. Court Booker never reads or stores passwords.",
-          "todo": "The last run could not get into the app. Log in again, then do a dry run.",
-          "unknown": "Do one dry run to check.",
-          "link": "Dry run on the Overview"
+    "setup": {
+      "start": {
+        "title": "Court Booker books for you at {{start}} every morning, even while you sleep",
+        "steps": {
+          "1": "Do the setup tasks below, once.",
+          "2": "Choose the day, court and slots on the ticket on the left.",
+          "3": "Press \"{{dryRun}}\"; once it passes, turn on \"{{daily}}\"."
         }
       },
-      "state": {
-        "done": "DONE",
-        "todo": "TO DO",
-        "unknown": "NOT SURE",
-        "checking": "CHECKING"
+      "manual": {
+        "title": "Yours to do, once · tick when done",
+        "mumu": {
+          "title": "MuMu Player is installed",
+          "hint": "Download it from mumuplayer.com and install it like any program."
+        },
+        "app": {
+          "title": "Vinhomes Resident is installed in MuMu",
+          "hint": "Open the Play Store in MuMu and look for Vinhomes Resident."
+        },
+        "login": {
+          "title": "The Vinhomes app is logged in",
+          "hint": "The resident account. Court Booker never reads the password."
+        }
       },
       "auto": {
-        "title": "Court Booker does it for you",
-        "lead": "Press it as often as you like: whatever is already right is skipped.",
-        "caption": "Auto setup items",
+        "title": "Court Booker does the rest",
+        "what": "MuMu, its screen, waking the PC",
+        "never": "Not run yet",
+        "fix": "To fix: {{items}}",
+        "ok": "✓ All 3 right · checked {{date}} at {{time}}",
         "items": {
-          "mumu_installed": "Find where MuMu is installed",
-          "mumu_screen": "MuMu screen 540 × 1600, 220 DPI",
-          "wake_timers": "Let the PC wake itself up"
-        },
-        "statuses": {
-          "ok": "✓ Already right",
-          "fixed": "Just fixed",
-          "fixable": "To fix",
-          "user": "Cannot fix it",
-          "unknown": "Could not check"
+          "mumu_installed": "where MuMu is",
+          "mumu_screen": "MuMu's screen",
+          "wake_timers": "waking the PC"
         },
         "run": "Auto setup",
         "running": "Setting up…",
         "restart": "MuMu is open, so its screen could not change yet. MuMu needs a restart.",
-        "restartButton": "Restart MuMu",
-        "quiet": "Locked from {{from}} to {{to}} so it never gets in the way of a booking."
-      }
-    },
-    "notificationSettings": {
-      "title": "Notifications",
-      "lead": "Court Booker reports every booking run right on this PC.",
-      "windows": {
-        "title": "Windows notification",
-        "text": "After every run, dry runs too, the corner of the screen shows the play day and each slot with its court or why it was not booked. It uses the language of this interface."
+        "restartButton": "Restart MuMu"
       },
-      "test": {
-        "send": "Send a test",
-        "sending": "Sending…",
-        "sent": "Sent. Look at the bottom right of the screen."
-      }
-    },
-    "guide": {
-      "title": "Guide",
-      "lead": "How to use each part of Court Booker.",
-      "welcome": "See the introduction again",
-      "where": "{{screen}} › {{part}}",
-      "start": {
-        "title": "Get started in 4 steps",
-        "device": "Set up the device",
-        "booking": "Choose the day, court and slots",
-        "dryRun": "Do a dry run",
-        "schedule": "Turn on Book every morning"
+      "options": {
+        "title": "Options",
+        "notify": "Result notifications",
+        "notifyHint": "In the corner of the Windows screen, after every run"
       },
-      "screens": {
-        "title": "Each screen",
-        "overview": "The line at the top says whether the PC is ready. On the left, the \"{{ticket}}\" ticket: turn on \"{{daily}}\", choose the play day, the court and up to two slots (saved on each press), and do a dry run; while a booking goes on, the ticket shows it live. On the right, \"{{history}}\": each booking, which slots were booked, which were not and why; tick \"{{withDry}}\" to see the dry runs too. Press a row to see every step; when something goes wrong, open \"{{technical}}\" to see exactly what happened.",
-        "settings": "\"{{device}}\": prepare MuMu, the Vinhomes app and the PC."
-      },
-      "trouble": {
-        "title": "When something goes wrong",
-        "notRunning": {
-          "question": "The app did not run this morning",
-          "answer": "Usually the PC was shut down instead of put to Sleep, or you signed out of Windows. The PC can only wake itself up from Sleep."
+      "guide": {
+        "title": "Guide",
+        "howto": "How to use it, in 3 steps",
+        "morning": {
+          "title": "What happens every morning",
+          "text": "At {{wake}} the PC wakes and opens MuMu and the Vinhomes app. At {{start}} it books the slots chosen, usually within 15 seconds.",
+          "needs": "The PC needs to",
+          "needsText": "sleep rather than shut down, stay signed in to Windows, and be plugged in if it is a laptop."
         },
-        "slotFull": {
-          "question": "The result says \"{{slotFull}}\"",
-          "answer": "Someone booked that slot first, or you booked it yourself by hand with another account. You can choose other slots in {{slotsPlace}}."
-        },
-        "quota": {
-          "question": "The Vinhomes app says the flat has used up its bookings",
-          "answer": "Each flat can book up to 8 slots a month. Cancel the bookings you do not need in the Vinhomes app to book again."
-        },
-        "loggedOut": {
-          "question": "The Vinhomes app was logged out",
-          "answer": "The result says \"{{loggedOut}}\". Open the app in MuMu, log in again with the resident account, then do one dry run in {{dryRunPlace}}."
-        },
-        "setup": {
-          "question": "{{device}} says \"{{todo}}\"",
-          "answer": "Follow the instructions of that item, then press \"{{check}}\". For the items Court Booker does itself, press \"{{auto}}\"."
+        "trouble": {
+          "title": "When something goes wrong",
+          "notRunning": {
+            "question": "Nothing ran this morning",
+            "answer": "The PC was shut down instead of asleep, or signed out of Windows."
+          },
+          "slotFull": {
+            "question": "It says \"{{slotFull}}\"",
+            "answer": "Someone booked that slot first. Choose another on the ticket."
+          },
+          "quota": {
+            "question": "The flat used up its bookings",
+            "answer": "8 slots a month at most. Cancel the ones you do not need in the Vinhomes app."
+          },
+          "loggedOut": {
+            "question": "The app was logged out",
+            "answer": "Log in again in MuMu, then do one dry run."
+          }
         }
       }
-    },
-    "welcome": {
-      "title": "Welcome",
-      "steps": "Getting started",
-      "step": "{{number}} · {{name}}",
-      "names": {
-        "intro": "Introduction",
-        "device": "Device setup",
-        "booking": "Choose slots",
-        "schedule": "Schedule"
-      },
-      "intro": {
-        "title": "Book a tennis court at {{start}}, even while you sleep",
-        "lead": "The Vinhomes app opens bookings at {{start}} every morning and the good slots are gone in seconds. Court Booker taps for you, in the very first second.",
-        "morning": "What happens every morning",
-        "wake": {
-          "title": "The PC wakes itself up",
-          "text": "From Sleep, without you turning it on."
-        },
-        "open": {
-          "when": "Right after",
-          "title": "Opens MuMu and the Vinhomes app",
-          "text": "Then waits on the Sân Tennis page."
-        },
-        "book": {
-          "title": "Books the slots you chose",
-          "text": "Two slots usually take about 15 seconds, then MuMu closes."
-        },
-        "need": {
-          "title": "What you need",
-          "mumu": {
-            "name": "MuMu Player",
-            "text": "An Android emulator, installed on this PC."
-          },
-          "app": {
-            "name": "The Vinhomes Resident app",
-            "text": "Installed in MuMu (needs a Google account)."
-          },
-          "account": {
-            "name": "A Vinhomes resident account",
-            "text": "To log in to the app."
-          },
-          "note": "The next steps guide you through each of these. Court Booker does the rest.",
-          "privacy": "Court Booker runs only on your PC and never reads or stores your password.",
-          "start": "Start the setup"
-        }
-      },
-      "back": "Back",
-      "next": "Next",
-      "later": "Not now",
-      "done": "Done, go to the overview",
-      "unsaved": "Press \"{{save}}\" or \"{{cancel}}\" before going on."
     },
     "notFound": {
       "title": "Page not found",

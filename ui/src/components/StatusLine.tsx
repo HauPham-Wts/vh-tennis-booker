@@ -1,8 +1,8 @@
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
 import type { Overview, Running } from "../api/types";
 import { localToday } from "../format";
-import { paths } from "../paths";
+import { useManualSteps } from "../manualSteps";
+import { setupLeft } from "../setupState";
 import { useFormat } from "../useFormat";
 import styles from "./StatusLine.module.css";
 
@@ -25,34 +25,23 @@ function RunningStatus({ running, startAt }: { running: Running; startAt: string
 
 /**
  * One line in the header on whether the next booking can happen, in this order: the run
- * going on; the device setup to do (with a link to it); no dry run passed yet; the daily
- * switch off; else ready for the next start. The ticket holds what fixes the last three.
+ * going on; the setup tasks left (the Setup tab lists them); no dry run passed yet; the
+ * daily switch off; else ready for the next start. The ticket holds what fixes the last two.
  */
 export function StatusLine({ overview }: { overview: Overview }) {
   const { t } = useTranslation();
   const f = useFormat();
-  const { running, setup, schedule } = overview;
+  const manual = useManualSteps();
+  const { running, schedule } = overview;
   if (running !== null) {
     return <RunningStatus running={running} startAt={schedule.start_at} />;
   }
+  const left = setupLeft(overview, manual);
   let words: string;
   let ready = false;
-  if (setup === null || setup.left.length > 0) {
-    return (
-      <p className={styles.status}>
-        <span className={styles.todo}>
-          <span aria-hidden="true">● </span>
-          {setup === null
-            ? t("pages.overview.status.noSetup")
-            : t("pages.overview.status.setupLeft", { count: setup.left.length })}
-        </span>
-        <Link to={paths.deviceSetup} className={styles.link}>
-          {t("pages.overview.status.setupLink")}
-        </Link>
-      </p>
-    );
-  }
-  if (!schedule.dry_run_passed) {
+  if (left > 0) {
+    words = t("pages.overview.status.setupLeft", { count: left });
+  } else if (!schedule.dry_run_passed) {
     words = t("pages.overview.status.noDryRun");
   } else if (!schedule.enabled) {
     words = t("pages.overview.status.scheduleOff");

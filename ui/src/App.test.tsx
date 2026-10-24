@@ -8,8 +8,8 @@ import { stubBackend } from "./test/backend";
 import { createTestQueryClient } from "./test/queries";
 
 /**
- * Render the layout at `path` with a stand-in screen for the overview and the welcome; the
- * header's status line and language switch need a cache, and the backend answers nothing.
+ * Render the layout at `path` with a stand-in screen for the home screen; the header's
+ * status line and language switch need a cache, and the backend answers nothing.
  */
 function renderAt(path: string) {
   stubBackend({});
@@ -18,10 +18,7 @@ function renderAt(path: string) {
       {
         path: paths.overview,
         element: <App />,
-        children: [
-          { index: true, element: <p>Overview screen</p> },
-          { path: paths.welcome, element: <p>Welcome screen</p> },
-        ],
+        children: [{ index: true, element: <p>Home screen</p> }],
       },
     ],
     { initialEntries: [path] },
@@ -37,25 +34,16 @@ describe("App", () => {
   it("shows the current screen inside the main area", () => {
     renderAt(paths.overview);
 
-    expect(within(screen.getByRole("main")).getByText("Overview screen")).toBeInTheDocument();
+    expect(within(screen.getByRole("main")).getByText("Home screen")).toBeInTheDocument();
   });
 
-  it("shows the name and the navigation in the header", () => {
+  it("shows the name and the language switch in the header, and no menu", () => {
     renderAt(paths.overview);
 
     const header = screen.getByRole("banner");
     expect(header).toHaveTextContent("court booker");
-    expect(
-      within(header).getByRole("navigation", { name: "Điều hướng chính" }),
-    ).toBeInTheDocument();
-  });
-
-  it("leaves the navigation out of the welcome screen", () => {
-    renderAt(paths.welcome);
-
-    expect(screen.getByRole("banner")).toHaveTextContent("court booker");
+    expect(within(header).getByRole("group", { name: "Ngôn ngữ" })).toBeInTheDocument();
     expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
-    expect(within(screen.getByRole("main")).getByText("Welcome screen")).toBeInTheDocument();
   });
 
   it("starts with a link that skips to the main area", () => {

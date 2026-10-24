@@ -1,15 +1,10 @@
 import { useOverview } from "../api/queries";
 import { LanguageSwitch } from "./LanguageSwitch";
-import { MainNav } from "./MainNav";
 import styles from "./SiteHeader.module.css";
 import { StatusLine } from "./StatusLine";
 
-/**
- * Show the app's name and the language switch above every screen, ruled off in ink, with the
- * navigation and the status line unless the screen leads the user step by step (the
- * first-launch welcome).
- */
-export function SiteHeader({ navigation }: { navigation: boolean }) {
+/** Show the app's name, the status line and the language switch, ruled off in ink. */
+export function SiteHeader() {
   const overview = useOverview();
   return (
     <header className={styles.header}>
@@ -19,9 +14,8 @@ export function SiteHeader({ navigation }: { navigation: boolean }) {
           .
         </span>
       </span>
-      {navigation && <MainNav />}
       <div className={styles.status}>
-        {navigation && overview.data && <StatusLine overview={overview.data} />}
+        {overview.data && <StatusLine overview={overview.data} />}
       </div>
       <LanguageSwitch />
     </header>

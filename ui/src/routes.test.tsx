@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import type { RouteObject } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { paths } from "./paths";
@@ -15,33 +15,11 @@ afterEach(() => {
 });
 
 describe("routes", () => {
-  it.each([
-    [paths.overview, "Tổng quan"],
-    [paths.guide, "Hướng dẫn"],
-  ])("opens %s on the %s screen and names the window", async (path, title) => {
-    renderAt(path);
+  it("opens / on the home screen and names the window", async () => {
+    renderAt(paths.overview);
 
-    expect(await screen.findByRole("heading", { level: 1, name: title })).toBeInTheDocument();
-    await waitFor(() => expect(document.title).toBe(`${title} · Court Booker`));
-  });
-
-  it("opens /welcome on its steps and names the window", async () => {
-    renderAt(paths.welcome);
-
-    expect(await screen.findByRole("navigation", { name: "Các bước bắt đầu" })).toBeInTheDocument();
-    await waitFor(() => expect(document.title).toBe("Chào mừng · Court Booker"));
-  });
-
-  it.each([
-    [paths.deviceSetup, "Thiết lập máy"],
-    [paths.notificationSettings, "Thông báo"],
-  ])("opens %s as the %s tab of the settings", async (path, tab) => {
-    renderAt(path);
-
-    expect(await screen.findByRole("heading", { level: 1, name: "Cài đặt" })).toBeInTheDocument();
-    const tabs = screen.getByRole("navigation", { name: "Phần cài đặt" });
-    expect(within(tabs).getByRole("link", { name: tab })).toHaveAttribute("aria-current", "page");
-    await waitFor(() => expect(document.title).toBe("Cài đặt · Court Booker"));
+    expect(await screen.findByRole("heading", { level: 1, name: "Tổng quan" })).toBeInTheDocument();
+    await waitFor(() => expect(document.title).toBe("Tổng quan · Court Booker"));
   });
 
   it.each([
@@ -50,25 +28,19 @@ describe("routes", () => {
     ["/history/activity?run=25", `${paths.overview}?run=25`],
     ["/activity?run=25", `${paths.overview}?run=25`],
     ["/schedule", paths.overview],
+    ["/settings", paths.overview],
     ["/settings/booking", paths.overview],
+    ["/settings/device", paths.overview],
+    ["/settings/notifications", paths.overview],
+    ["/guide", paths.overview],
+    ["/welcome?step=2", `${paths.overview}?step=2`],
   ])("sends the old address %s on to %s", async (path, to) => {
     const router = renderAt(path);
 
-    await screen.findByRole("region", { name: "Lịch sử" });
+    await screen.findByRole("tab", { name: /^Lịch sử/ });
     const { pathname, search } = router.state.location;
     expect(pathname + search).toBe(to);
     expect(router.state.historyAction).toBe("REPLACE");
-  });
-
-  it("opens the settings on the device setup tab", async () => {
-    const router = renderAt(paths.settings);
-
-    const tabs = await screen.findByRole("navigation", { name: "Phần cài đặt" });
-    expect(within(tabs).getByRole("link", { name: "Thiết lập máy" })).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
-    expect(router.state.location.pathname).toBe(paths.deviceSetup);
   });
 
   it("shows the not-found page for an unknown address", async () => {

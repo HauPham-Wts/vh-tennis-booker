@@ -4,7 +4,6 @@ import {
   addMinutes,
   courtName,
   formatClock,
-  formatDateTime,
   formatDay,
   formatDecimal,
   formatShortDate,
@@ -80,17 +79,9 @@ describe("dates", () => {
     expect(formatShortDate(text, language)).toBe(expected);
   });
 
-  it.each([
-    ["2026-10-12T06:00:11.056", "vi", "12/10 06:00"],
-    ["2026-10-12T19:43:00", "en", "12 Oct 19:43"],
-  ] as const)("formatDateTime(%j, %s) is %j", (text, language, expected) => {
-    expect(formatDateTime(text, language)).toBe(expected);
-  });
-
   it("shows a text it cannot read as it is", () => {
     expect(formatDay("soon", "vi")).toBe("soon");
     expect(formatShortDate("", "en")).toBe("");
-    expect(formatDateTime("2026-02-30T06:00", "vi")).toBe("2026-02-30T06:00");
   });
 });
 

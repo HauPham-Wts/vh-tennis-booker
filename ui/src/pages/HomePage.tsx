@@ -1,15 +1,15 @@
 import { useTranslation } from "react-i18next";
-import { Navigate } from "react-router";
+import { useSearchParams } from "react-router";
 import { useOverview } from "../api/queries";
 import type { Running, RunSummary } from "../api/types";
 import { PageTitle } from "../components/PageTitle";
 import { QueryView } from "../components/QueryView";
-import { paths } from "../paths";
-import { isFirstOpen, welcomeShown } from "../welcome";
+import { manualDone } from "../manualSteps";
+import { setupDone } from "../setupState";
 import styles from "./HomePage.module.css";
 import { BookingTicket } from "./home/BookingTicket";
-import { HistoryPanel } from "./home/HistoryPanel";
 import { LiveTicket } from "./home/LiveTicket";
+import { SidePanel } from "./home/SidePanel";
 
 /**
  * Return the run that holds the lock: the newest run if it started after the lock was
@@ -25,15 +25,15 @@ function holderRun(running: Running, last: RunSummary | null): number | undefine
 
 /**
  * Show the next booking as a ticket that holds its settings, or the run as it goes, with
- * the History beside it. An app not used yet opens on the welcome screen instead, once per
- * opening.
+ * the History and the Setup beside it. The panel opens on the Setup while anything is left
+ * to set up, else on the History; a `?run=` in the address opens that run.
  */
 export function HomePage() {
   const { t } = useTranslation();
   const overview = useOverview();
-  if (overview.data !== undefined && isFirstOpen(overview.data) && !welcomeShown()) {
-    return <Navigate to={paths.welcome} replace />;
-  }
+  const [params] = useSearchParams();
+  const setup =
+    overview.data !== undefined && !params.has("run") && !setupDone(overview.data, manualDone());
   return (
     <>
       <PageTitle>{t("pages.overview.title")}</PageTitle>
@@ -51,7 +51,11 @@ export function HomePage() {
             }
           </QueryView>
         </div>
-        <HistoryPanel />
+        {/* The tab to open on is chosen once, when the status first comes in. */}
+        <SidePanel
+          key={overview.data === undefined ? "waiting" : "ready"}
+          initialTab={setup ? "setup" : "history"}
+        />
       </div>
     </>
   );

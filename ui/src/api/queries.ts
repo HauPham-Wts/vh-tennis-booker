@@ -5,10 +5,8 @@ import {
   type EventsQuery,
   getOverview,
   getRun,
-  getSchedule,
   getNotifications,
   getSettings,
-  getSetupChecks,
   listEvents,
   listRuns,
   type RunsQuery,
@@ -26,8 +24,6 @@ export const queryKeys = {
   events: (query: EventsQuery = {}) => ["events", query] as const,
   settings: ["settings"] as const,
   notifications: ["notifications"] as const,
-  setup: ["setup"] as const,
-  schedule: ["schedule"] as const,
 };
 
 /** How often the Overview is read while a run is starting or letting go of the emulator. */
@@ -108,18 +104,4 @@ export function useSettings() {
 /** Read the notification settings. */
 export function useNotifications() {
   return useQuery({ queryKey: queryKeys.notifications, queryFn: getNotifications });
-}
-
-/**
- * Read the device setup checks. They ask Windows, MuMu and adb, so they are never polled,
- * and a screen turns them off (`enabled` false) while a run holds the lock: a check must
- * never slow a booking.
- */
-export function useSetupChecks(enabled = true) {
-  return useQuery({ queryKey: queryKeys.setup, queryFn: getSetupChecks, enabled });
-}
-
-/** Read the daily schedule. */
-export function useSchedule() {
-  return useQuery({ queryKey: queryKeys.schedule, queryFn: getSchedule });
 }

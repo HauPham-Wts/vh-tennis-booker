@@ -1,15 +1,10 @@
-import { Navigate, type RouteObject } from "react-router";
+import type { RouteObject } from "react-router";
 import { App } from "./App";
 import { Redirect } from "./components/Redirect";
-import { DeviceSetupPage } from "./pages/DeviceSetupPage";
 import { ErrorPage } from "./pages/ErrorPage";
-import { GuidePage } from "./pages/GuidePage";
 import { HomePage } from "./pages/HomePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
-import { NotificationSettingsPage } from "./pages/NotificationSettingsPage";
-import { SettingsPage } from "./pages/SettingsPage";
-import { WelcomePage } from "./pages/WelcomePage";
-import { paths } from "./paths";
+import { OLD_PATHS, paths } from "./paths";
 
 /** Every screen under the app's layout; shared by the browser router and the tests. */
 export const routes: RouteObject[] = [
@@ -19,24 +14,7 @@ export const routes: RouteObject[] = [
     errorElement: <ErrorPage />,
     children: [
       { index: true, element: <HomePage /> },
-      // Screens that joined the home screen: the schedule and the booking settings are on
-      // its ticket, History and Activity beside it, where a `?run=` opens that run.
-      { path: "/schedule", element: <Redirect to={paths.overview} /> },
-      { path: "/settings/booking", element: <Redirect to={paths.overview} /> },
-      { path: "/history/*", element: <Redirect to={paths.overview} /> },
-      { path: "/activity", element: <Redirect to={paths.overview} /> },
-      {
-        path: paths.settings,
-        element: <SettingsPage />,
-        children: [
-          // Settings opens on its first tab.
-          { index: true, element: <Navigate to={paths.deviceSetup} replace /> },
-          { path: paths.deviceSetup, element: <DeviceSetupPage /> },
-          { path: paths.notificationSettings, element: <NotificationSettingsPage /> },
-        ],
-      },
-      { path: paths.guide, element: <GuidePage /> },
-      { path: paths.welcome, element: <WelcomePage /> },
+      ...OLD_PATHS.map((path) => ({ path, element: <Redirect to={paths.overview} /> })),
       { path: "*", element: <NotFoundPage /> },
     ],
   },
