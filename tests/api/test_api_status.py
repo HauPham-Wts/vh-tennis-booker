@@ -44,6 +44,7 @@ def test_the_lock_holder_runs(context):
         "trigger": "scheduled",
         "pid": pid,
         "since": "2026-10-14T05:50:01",
+        "runs": [],
     }
 
 
@@ -52,7 +53,35 @@ def test_a_starting_dry_run_runs(context):
         "trigger": "dry_run",
         "pid": 4321,
         "since": None,
+        "runs": [],
     }
+
+
+def run(run_id, started_at, device):
+    return {"id": run_id, "started_at": f"2026-10-14T{started_at}", "device": device}
+
+
+def test_the_holder_runs_with_the_runs_of_its_instances():
+    recent = [  # newest first, as the History lists them
+        run(9, "05:50:03.400", 2),
+        run(8, "05:50:03.300", 1),
+        run(7, "05:50:01.200", 0),
+        run(6, "05:50:00.900", 1),  # an instance's run of the run before
+    ]
+
+    assert status.runs_of("2026-10-14T05:50:01", recent, own=0) == [7, 8, 9]
+
+
+def test_a_run_of_one_instance_runs_alone():
+    recent = [run(7, "05:50:01.200", None), run(6, "05:49:00.000", None)]  # before 0.13.0
+
+    assert status.runs_of("2026-10-14T05:50:01", recent, own=0) == [7]
+
+
+def test_the_holder_has_no_run_until_its_own_starts():
+    recent = [run(6, "05:40:00.000", 0)]  # the last run, from before the lock was taken
+
+    assert status.runs_of("2026-10-14T05:50:01", recent, own=0) == []
 
 
 @pytest.fixture

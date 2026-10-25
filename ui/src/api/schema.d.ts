@@ -343,6 +343,22 @@ export interface components {
             version: string;
         };
         /**
+         * InstanceSettings
+         * @description The booking settings of another MuMu instance, which books with its own account.
+         */
+        InstanceSettings: {
+            /** Mumu Index */
+            mumu_index: number;
+            /** Days Ahead */
+            days_ahead: number;
+            /** Slots */
+            slots: string[];
+            /** Court */
+            court: string;
+            /** Venue Keyword */
+            venue_keyword: string;
+        };
+        /**
          * LabelSettings
          * @description Accessibility labels of the Vinhomes app, in its language.
          */
@@ -476,6 +492,8 @@ export interface components {
             status: string;
             /** Error */
             error: string | null;
+            /** Device */
+            device: number | null;
             /** Booked */
             booked: number;
             /** Total */
@@ -512,6 +530,8 @@ export interface components {
             status: string;
             /** Error */
             error: string | null;
+            /** Device */
+            device: number | null;
             /** Booked */
             booked: number;
             /** Total */
@@ -530,6 +550,11 @@ export interface components {
             pid: number;
             /** Since */
             since: string | null;
+            /**
+             * Runs
+             * @default []
+             */
+            runs: number[];
         };
         /**
          * ScheduleState
@@ -610,6 +635,8 @@ export interface components {
                 number,
                 number
             ];
+            /** Instances */
+            instances: components["schemas"]["InstanceSettings"][];
             labels: components["schemas"]["LabelSettings"];
         };
         /**

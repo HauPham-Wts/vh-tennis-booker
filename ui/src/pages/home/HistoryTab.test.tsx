@@ -186,6 +186,15 @@ describe("History list", () => {
     expect(await within(await panel()).findByText("Chưa có lần chạy nào.")).toBeInTheDocument();
   });
 
+  it("names the MuMu instance of a run that booked beside the first one", async () => {
+    const other = runSummary(27, { device: 1, court: "S9 - Sân tennis", booked: 2 });
+    renderApp(paths.overview, { "GET /api/runs": reply([other, { ...PARTIAL, device: 0 }]) });
+
+    const [first, second] = await rows();
+    expect(first).toContain("đặt sáng nay 15/10 · theo hẹn giờ · MuMu 1");
+    expect(second).toContain("đặt sáng nay 15/10 · theo hẹn giờ✓"); // the first instance
+  });
+
   it("says when there are dry runs only", async () => {
     renderApp(paths.overview, { "GET /api/runs": reply([DRY]) });
 

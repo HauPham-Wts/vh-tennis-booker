@@ -16,6 +16,17 @@ Details live in the docstrings; this page says where things are and what must st
   every path it logs the summary, records the run, sends the optional Telegram summary and the
   Windows notification (`notify.py`; a failure only logs a warning). After a real run with at
   least one round, `close_emulator` shuts MuMu down.
+- Other MuMu instances (`[[instances]]` in the config, each with its own account and its own
+  `mumu_index`, `days_ahead`, `slots`, `court`, `venue_keyword`; `config.instance_config`):
+  the run's process, once it holds the lock and has cleared stale runs, starts one process per
+  entry (`start_instances`: the same command with `--instance N`, without `--days`, `--slots`,
+  `--device`; console output dropped) and waits for them, holding its lock. Each such process is a
+  whole run of its own with its instance's settings: its lock `run-mumu<N>.lock`, its log file
+  `court-booker-<date>-mumu<N>.log`, its history run, its notification titled "MuMu N · …"
+  (the first instance's too, as "MuMu 0"); it never clears stale runs. So an instance that
+  fails or freezes holds up no other. Several instances need `mumu_manager` and
+  `device = "auto"`; otherwise, or for an entry repeating an instance, the run books with its
+  own instance alone (warning). Each run's `run_started` names its instance as `device`.
 - `lock.py` + `processes.py`: the run lock `run.lock` in the data folder (pid and process start
   time, so a reused pid is never taken for the holder). A scheduled run takes over a holder
   2 minutes before the start; a stale lock is cleared. The quiet time refuses a dry run or auto
@@ -25,7 +36,8 @@ Details live in the docstrings; this page says where things are and what must st
   it does not start (not after a freeze). `--driver` picks one. Every device call runs on one
   worker thread (`watchdog.py`) and fails with `DeviceNotRespondingError` after 60 s; the run
   then ends (exit 3, through `os._exit`, as a stuck thread could hold the exit).
-- `runner.run_booking`: `prepare()` (app restarted, home screen), wait until
+- `runner.run_booking`: `prepare()` (animations and notification banners off in one shell
+  command, app restarted, home screen), wait until
   `start - warm_up_seconds`, measure the clock again, open the utilities list (`locate_entry`),
   read it again 2 s before the start, wait until start + 0.1 s, then one round per slot.
   A `BookingError` fails its round only, except: `DeviceNotRespondingError` ends the run after
@@ -76,10 +88,11 @@ Details live in the docstrings; this page says where things are and what must st
   booking. The CLI emits `run_started`, `device_ready`, `run_finished`; `run_booking` the run's
   steps and `slot_booked`/`slot_failed`; `Booker` the steps of a round.
 - `history.py`: `booker.db` (SQLite, WAL, migrations by `PRAGMA user_version`) as an event sink:
-  `runs`, `run_slots`, `events`, and the run's log lines. The first database error turns history
-  off for the process.
+  `runs` (with the MuMu instance as `device`, from schema 2; empty for older runs), `run_slots`,
+  `events`, and the run's log lines. The first database error turns history off for the process.
+  Schema changes only add columns, so an older runner still writes to a newer database.
 - `history_read.py`: read-only queries for the backend (runs, one run, events, the live feed's
-  `events_after`, `dry_run_passed`, `last_setup`).
+  `events_after`, `dry_run_passed`, `last_setup`); it migrates an older database first.
 
 ## Configuration and data folder
 
@@ -93,6 +106,8 @@ Details live in the docstrings; this page says where things are and what must st
   `--config`; a relative `log_dir` resolves beside it.
 - `device_setup.py`: checks (MuMu installed, MuMu screen settings, wake timers, app installed)
   and `auto_setup` for the fixable ones; `court-booker setup [--auto]` and the API share it.
+  The screen and the app are checked on every instance (`[[instances]]` too) as one item: the
+  worst status, each instance's detail ("MuMu 1: …"); auto setup sets each wrong screen.
 - `schedule.py`: the Windows task (`schtasks`) that wakes the PC at `wake_at` and runs the
   runner folder's Python.
 
@@ -108,10 +123,10 @@ values 422 `invalid_request`.
 | Route | Does |
 |---|---|
 | `GET /api/health` | Version; no device access |
-| `GET /api/status` | The Overview in one call: running run, schedule, last run, setup; never calls MuMu |
+| `GET /api/status` | The Overview in one call: running run (with `runs`: the lock holder's run, then those of the instances it started), schedule, last run, setup; never calls MuMu |
 | `GET /api/runs`, `/api/runs/{id}`, `/api/runs/months` | Runs newest first (filters, paging by id or by days), one run with steps and log lines, months of real bookings |
 | `GET /api/events` | Activity steps newest first |
-| `GET`/`PUT /api/settings` | Booking settings without the hidden keys (`HIDDEN`); `PUT` validates, saves only on a change |
+| `GET`/`PUT /api/settings` | Booking settings without the hidden keys (`HIDDEN`: Telegram, the notification), with each `[[instances]]` entry in full; `PUT` validates, refuses added or removed instances, saves only on a change |
 | `GET`/`PUT /api/notifications`, `POST .../test` | The Windows notification's switch and language; a sample notification |
 | `GET /api/setup`, `POST /api/setup/auto` | Device checks; auto setup (quiet time and lock respected) |
 | `GET`/`PUT /api/schedule` | The task: state, times; switching on needs a passed dry run. Never switch it on from a development backend: the task would run the development Python |
@@ -137,8 +152,10 @@ After a route or model change: `python tools/export_openapi.py`, then `npm run a
   engine's English reasons into a few words (`notify.REASONS` holds the same words; a test
   compares them).
 - One screen (`pages/HomePage.tsx`, parts in `pages/home/`): the ticket (`BookingTicket`:
-  the daily switch, the play day, court and up to two slots saved on each press, the dry run;
-  or `LiveTicket` while a booking or a dry run goes on) and `SidePanel` beside it, two tabs:
+  the daily switch, the play day, court and up to two slots saved on each press, of the MuMu
+  instance chosen first when there are several, the dry run;
+  or `LiveTicket` while a booking or a dry run goes on: one ticket per run of `running.runs`,
+  named "MuMu N" when several instances book side by side) and `SidePanel` beside it, two tabs:
   `HistoryTab` (runs ten days at a time, real bookings unless dry runs are ticked, `?run=`
   opens one run's slots, steps and log) and `SetupTab` (the user's ticks, auto setup, the
   notification switch, the guide). The header's status line (`components/StatusLine.tsx`)

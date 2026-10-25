@@ -61,3 +61,11 @@ booked_place = "Vị trí/dịch vụ"      # caption of the court to book
 ticket = "Chi tiết đặt lịch"         # title of the ticket: the booking went through
 processing = "Đang xử lý"            # ticket status while the server handles it
 registered = "Đã đăng ký"            # ticket status once registered
+
+# Optional: more MuMu instances, each logged in to its own account, booking side by side
+# with this one in a process of its own. Each table sets that instance's mumu_index and,
+# if they differ from the settings above, its days_ahead, slots, court and venue_keyword.
+# [[instances]]
+# mumu_index = 1
+# slots = ["20:00 - 21:00", "21:00 - 22:00"]
+# court = "S9 - Sân tennis"

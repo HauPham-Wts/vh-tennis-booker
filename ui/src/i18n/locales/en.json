@@ -45,6 +45,8 @@
       "wake": "The PC wakes at {{wake}}",
       "offTitle": "Off",
       "offLine": "No booking {{when}}.",
+      "instance": "Instance",
+      "instanceName": "MuMu {{index}}",
       "day": "Play day",
       "dayHint": {
         "0": "same day",
@@ -73,6 +75,7 @@
         "booking": "Booking for {{day}} · court {{court}}",
         "dryRun": "Dry run for {{day}} · court {{court}}",
         "preparing": "Getting ready",
+        "instance": "MuMu {{index}} · {{text}}",
         "round": "ROUND {{round}}/{{rounds}}",
         "booked": "slots booked",
         "through": "slots through",
@@ -95,6 +98,7 @@
       "runOn": "Run on {{day}}",
       "booked": "booked {{when}} · {{by}}",
       "dry": "dry run {{when}}",
+      "instance": "{{text}} · MuMu {{index}}",
       "back": "← History",
       "slot": {
         "booked": "BOOKED",

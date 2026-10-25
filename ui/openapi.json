@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Court Booker",
-    "version": "0.12.0"
+    "version": "0.13.0"
   },
   "paths": {
     "/api/health": {
@@ -974,6 +974,44 @@
         "title": "Health",
         "description": "The backend answers and runs this version."
       },
+      "InstanceSettings": {
+        "properties": {
+          "mumu_index": {
+            "type": "integer",
+            "title": "Mumu Index"
+          },
+          "days_ahead": {
+            "type": "integer",
+            "title": "Days Ahead"
+          },
+          "slots": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Slots"
+          },
+          "court": {
+            "type": "string",
+            "title": "Court"
+          },
+          "venue_keyword": {
+            "type": "string",
+            "title": "Venue Keyword"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "mumu_index",
+          "days_ahead",
+          "slots",
+          "court",
+          "venue_keyword"
+        ],
+        "title": "InstanceSettings",
+        "description": "The booking settings of another MuMu instance, which books with its own account."
+      },
       "LabelSettings": {
         "properties": {
           "home": {
@@ -1310,6 +1348,17 @@
             ],
             "title": "Error"
           },
+          "device": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device"
+          },
           "booked": {
             "type": "integer",
             "title": "Booked"
@@ -1352,6 +1401,7 @@
           "court",
           "status",
           "error",
+          "device",
           "booked",
           "total",
           "slots",
@@ -1431,6 +1481,17 @@
             ],
             "title": "Error"
           },
+          "device": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device"
+          },
           "booked": {
             "type": "integer",
             "title": "Booked"
@@ -1459,6 +1520,7 @@
           "court",
           "status",
           "error",
+          "device",
           "booked",
           "total",
           "slots"
@@ -1486,6 +1548,14 @@
               }
             ],
             "title": "Since"
+          },
+          "runs": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Runs",
+            "default": []
           }
         },
         "type": "object",
@@ -1659,6 +1729,13 @@
             "minItems": 2,
             "title": "Prev Month Xy"
           },
+          "instances": {
+            "items": {
+              "$ref": "#/components/schemas/InstanceSettings"
+            },
+            "type": "array",
+            "title": "Instances"
+          },
           "labels": {
             "$ref": "#/components/schemas/LabelSettings"
           }
@@ -1687,6 +1764,7 @@
           "log_dir",
           "next_month_xy",
           "prev_month_xy",
+          "instances",
           "labels"
         ],
         "title": "Settings",

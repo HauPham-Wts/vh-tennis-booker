@@ -1169,7 +1169,7 @@ def test_located_entry_opens_the_utilities_list_from_home_then_reads_it_again():
     assert app.ops[0] == ("click", "Sân Tennis")
 
 
-def test_prepare_turns_animations_off_first():
+def test_prepare_turns_animations_and_banners_off_first():
     app = booking_app(screen="loading")
 
     Booker(app, Config()).prepare()
@@ -1177,11 +1177,12 @@ def test_prepare_turns_animations_off_first():
     assert app.shells == [
         "settings put global window_animation_scale 0; "
         "settings put global transition_animation_scale 0; "
-        "settings put global animator_duration_scale 0"
+        "settings put global animator_duration_scale 0; "
+        "settings put global heads_up_notifications_enabled 0"
     ]
 
 
-def test_animations_that_stay_on_do_not_stop_the_run(caplog):
+def test_animations_and_banners_that_stay_on_do_not_stop_the_run(caplog):
     class NoShellApp(FakeApp):
         def shell(self, command):
             raise RuntimeError("adb shell timeout")
@@ -1192,7 +1193,7 @@ def test_animations_that_stay_on_do_not_stop_the_run(caplog):
     Booker(app, Config()).prepare()
 
     assert app.screen == "home"
-    assert "Could not turn off animations" in caplog.text
+    assert "Could not turn off animations and banners" in caplog.text
 
 
 def test_prepare_reports_logged_out_app():
@@ -1372,7 +1373,7 @@ def test_prepare_finds_the_language_of_the_app_without_extra_commands(name, capl
 
     assert booker.language.name == name
     assert app.screen == "home"
-    assert booker.commands == 2  # animations off, one read of the home screen
+    assert booker.commands == 2  # animations and banners off, one read of the home screen
     logged = [r.getMessage() for r in caplog.records if "language" in r.getMessage()]
     assert logged == [f"App language: {name}"]
 

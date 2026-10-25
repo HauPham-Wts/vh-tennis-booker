@@ -93,7 +93,7 @@ describe("HomePage while a run goes on", () => {
     ["manual", "Đang đặt sân (chạy thủ công)"],
     ["setup", "Đang thiết lập tự động"],
   ])("names a %s run in the header", async (trigger, words) => {
-    renderOverview(overview({ running: { trigger, pid: 4242, since: "05:50:02" } }));
+    renderOverview(overview({ running: { trigger, pid: 4242, since: "05:50:02", runs: [] } }));
 
     const header = screen.getByRole("banner");
     expect(await within(header).findByRole("status")).toHaveTextContent(words);
@@ -142,7 +142,12 @@ describe("HomePage live run", () => {
     return renderApp(paths.overview, {
       "GET /api/status": reply(
         overview({
-          running: { trigger: "scheduled", pid: 4242, since: "2026-10-15T05:50:01.900" },
+          running: {
+            trigger: "scheduled",
+            pid: 4242,
+            since: "2026-10-15T05:50:01.900",
+            runs: [30],
+          },
           last_run: RUNNING,
         }),
       ),
@@ -206,7 +211,12 @@ describe("HomePage live run", () => {
     renderApp(paths.overview, {
       "GET /api/status": reply(
         overview({
-          running: { trigger: "scheduled", pid: 4242, since: "2026-10-15T05:50:01.900" },
+          running: {
+            trigger: "scheduled",
+            pid: 4242,
+            since: "2026-10-15T05:50:01.900",
+            runs: [30],
+          },
           last_run: ended,
         }),
       ),
@@ -220,12 +230,12 @@ describe("HomePage live run", () => {
     expect(within(live).queryByRole("listitem", { current: "step" })).not.toBeInTheDocument();
   });
 
-  it("does not take the run before the lock for the one holding it", async () => {
+  it("gets ready until the run holding the lock has started", async () => {
     const before = runSummary(29, { started_at: "2026-10-14T06:00:00.000" });
     renderApp(paths.overview, {
       "GET /api/status": reply(
         overview({
-          running: { trigger: "dry_run", pid: 4242, since: "2026-10-15T10:00:00.000" },
+          running: { trigger: "dry_run", pid: 4242, since: "2026-10-15T10:00:00.000", runs: [] },
           last_run: before,
         }),
       ),
@@ -234,10 +244,42 @@ describe("HomePage live run", () => {
     expect(await screen.findByRole("region", { name: "Đang chuẩn bị" })).toBeInTheDocument();
   });
 
+  it("shows each MuMu instance's run when several book side by side", async () => {
+    const other = { ...RUNNING, id: 31, device: 1 };
+    const otherSteps = STEPS.map((item) => ({ ...item, id: item.id + 100, run_id: 31 }));
+    renderApp(paths.overview, {
+      "GET /api/status": reply(
+        overview({
+          running: {
+            trigger: "scheduled",
+            pid: 4242,
+            since: "2026-10-15T05:50:01.900",
+            runs: [30, 31],
+          },
+          last_run: other,
+        }),
+      ),
+      "GET /api/runs/30": reply({ ...RUNNING, device: 0, steps: STEPS, log_lines: [] }),
+      "GET /api/runs/31": reply({ ...other, steps: otherSteps, log_lines: [] }),
+    });
+
+    const first = await screen.findByRole("region", {
+      name: "MuMu 0 · Đang đặt cho Thứ Bảy 17/10 · sân S6",
+    });
+    const second = await screen.findByRole("region", {
+      name: "MuMu 1 · Đang đặt cho Thứ Bảy 17/10 · sân S6",
+    });
+    expect(within(first).getByText("LƯỢT 1/2")).toBeInTheDocument();
+    expect(within(second).getByText("LƯỢT 1/2")).toBeInTheDocument();
+    // The note that the choices wait comes once, under the last ticket.
+    expect(screen.getAllByText(/mở lại khi lần này xong/)).toHaveLength(1);
+    expect(within(second).getByText(/mở lại khi lần này xong/)).toBeInTheDocument();
+  });
+
   it("gets ready while a dry run the app started has no step yet", async () => {
     renderApp(paths.overview, {
       "GET /api/status": reply(
-        overview({ running: { trigger: "dry_run", pid: 4242, since: null } }),
+        overview({ running: { trigger: "dry_run", pid: 4242, since: null, runs: [] } }),
       ),
     });
 
@@ -251,7 +293,7 @@ describe("HomePage live run", () => {
     renderApp(paths.overview, {
       "GET /api/status": reply(
         overview({
-          running: { trigger: "dry_run", pid: 4242, since: "2026-10-15T05:50:01.900" },
+          running: { trigger: "dry_run", pid: 4242, since: "2026-10-15T05:50:01.900", runs: [30] },
           last_run: { ...RUNNING, dry_run: true, trigger: "dry_run" },
         }),
       ),
@@ -265,7 +307,9 @@ describe("HomePage live run", () => {
   });
 
   it("keeps the next booking in view during auto setup, its dry run locked", async () => {
-    renderOverview(overview({ running: { trigger: "setup", pid: 4242, since: "21:00:00" } }));
+    renderOverview(
+      overview({ running: { trigger: "setup", pid: 4242, since: "21:00:00", runs: [] } }),
+    );
 
     expect(await screen.findByText("Đang thiết lập tự động")).toBeInTheDocument();
     const ticket = await screen.findByRole("region", { name: "Lần đặt tiếp theo" });

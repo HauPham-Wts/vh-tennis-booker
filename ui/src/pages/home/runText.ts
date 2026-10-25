@@ -16,19 +16,21 @@ export function runTitle(t: TFunction, f: Formatter, run: RunFacts): string {
 
 /**
  * Say when and how a run went: "đặt sáng nay 24/10 · theo hẹn giờ", "chạy thử chiều hôm qua
- * 23/10". A day further away names itself already ("sáng Thứ Hai 19/10").
+ * 23/10". A day further away names itself already ("sáng Thứ Hai 19/10"). A run of another
+ * MuMu instance, booking side by side with the first, ends with it ("· MuMu 1").
  */
 export function runWhen(
   t: TFunction,
   f: Formatter,
-  run: RunFacts & Pick<RunSummary, "dry_run" | "trigger">,
+  run: RunFacts & Pick<RunSummary, "dry_run" | "trigger"> & { device?: number | null },
   today: string = localToday(),
 ): string {
   const near = relativeDay(run.started_at, today) !== null;
   const when = near
     ? `${f.when(run.started_at, today)} ${f.shortDate(run.started_at)}`
     : f.when(run.started_at, today);
-  return run.dry_run
+  const text = run.dry_run
     ? t("pages.history.dry", { when })
     : t("pages.history.booked", { when, by: runOrigin(t, run.trigger) });
+  return run.device ? t("pages.history.instance", { text, index: run.device }) : text;
 }

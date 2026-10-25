@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from court_booker import history
+from court_booker import history, history_read
 from court_booker.events import EventKind, Reporter
 
 START = datetime(2026, 10, 13, 5, 50, 3, 257000)
@@ -36,6 +36,7 @@ def play_run(report):
         slots=["18:00 - 19:00", "19:00 - 20:00"],
         start="2026-10-13T06:00:00",
         version="0.5.0",
+        device=1,
     )
     report(EventKind.DEVICE_READY)
     report(EventKind.APP_READY)
@@ -90,6 +91,25 @@ def test_newer_database_is_left_as_it_is(connection):
     assert tables(connection) == {"runs", "run_slots", "events", "log_lines"}
 
 
+def test_runs_of_the_first_schema_keep_no_device(tmp_path):
+    path = tmp_path / "booker.db"
+    first = sqlite3.connect(path)
+    first.executescript(history.MIGRATIONS[0])
+    first.execute("PRAGMA user_version = 1")
+    first.execute(
+        "INSERT INTO runs (trigger, dry_run, version, started_at, status)"
+        " VALUES ('scheduled', 0, '0.12.0', '2026-10-24T05:50:00', 'ok')"
+    )
+    first.commit()
+    first.close()
+
+    connection = history_read.open_read_only(path)  # migrates it before reading
+    (run,) = history_read.list_runs(connection)
+    connection.close()
+
+    assert run["device"] is None
+
+
 def test_slots_need_an_existing_run(connection):
     with pytest.raises(sqlite3.IntegrityError):
         connection.execute(
@@ -115,6 +135,7 @@ def test_a_run_and_its_slots_are_recorded(connection):
             "court": "S6 - Sân tennis",
             "status": "partial",
             "error": None,
+            "device": 1,
         }
     ]
     assert rows(connection, "SELECT * FROM run_slots") == [

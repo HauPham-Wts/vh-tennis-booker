@@ -26,6 +26,14 @@ def test_file_gets_debug_and_console_gets_info(tmp_path, capsys):
         handler.close()
 
 
+def test_another_instance_logs_to_a_file_of_its_own(tmp_path):
+    path = add_file_handler(tmp_path / "logs", today=date(2026, 10, 25), suffix="-mumu1")
+    for handler in logging.getLogger(LOGGER_NAME).handlers:
+        handler.close()
+
+    assert path.name == "court-booker-2026-10-25-mumu1.log"
+
+
 def test_no_console_handler_without_stdout(monkeypatch):
     monkeypatch.setattr(sys, "stdout", None)
     configure_logging()

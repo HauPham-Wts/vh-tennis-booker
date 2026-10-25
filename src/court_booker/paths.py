@@ -39,6 +39,10 @@ class DataFolder:
     def lock(self) -> Path:
         return self.root / "run.lock"
 
+    def instance_lock(self, index: int) -> Path:
+        """Return the run lock of the ``[[instances]]`` entry for MuMu instance ``index``."""
+        return self.root / f"run-mumu{index}.lock"
+
     def ensure(self) -> DataFolder:
         """Create the folder and its log folder if missing, and return it."""
         self.logs.mkdir(parents=True, exist_ok=True)

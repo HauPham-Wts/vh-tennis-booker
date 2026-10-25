@@ -59,6 +59,8 @@ class RunSummary(BaseModel):
     court: Optional[str]
     status: str
     error: Optional[str]
+    device: Optional[int]
+    """The MuMu instance it booked with; empty for runs before 0.13.0."""
     booked: int
     total: int
     slots: list[SlotResult]

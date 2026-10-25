@@ -45,6 +45,8 @@
       "wake": "Máy tự thức dậy lúc {{wake}}",
       "offTitle": "Đang tắt",
       "offLine": "Máy sẽ không tự đặt sân {{when}}.",
+      "instance": "Máy",
+      "instanceName": "MuMu {{index}}",
       "day": "Ngày chơi",
       "dayHint": {
         "0": "đặt cùng ngày",
@@ -73,6 +75,7 @@
         "booking": "Đang đặt cho {{day}} · sân {{court}}",
         "dryRun": "Đang chạy thử cho {{day}} · sân {{court}}",
         "preparing": "Đang chuẩn bị",
+        "instance": "MuMu {{index}} · {{text}}",
         "round": "LƯỢT {{round}}/{{rounds}}",
         "booked": "khung đã đặt xong",
         "through": "khung đã qua",
@@ -95,6 +98,7 @@
       "runOn": "Lần chạy {{day}}",
       "booked": "đặt {{when}} · {{by}}",
       "dry": "chạy thử {{when}}",
+      "instance": "{{text}} · MuMu {{index}}",
       "back": "← Lịch sử",
       "slot": {
         "booked": "ĐÃ ĐẶT",

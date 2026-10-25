@@ -176,6 +176,57 @@ describe("BookingTicket choices", () => {
     expect(await screen.findByText("✓ Đã lưu")).toBeInTheDocument();
   });
 
+  it("offers no instance choice for one MuMu instance", async () => {
+    renderTicket();
+
+    await screen.findByRole("group", { name: "Sân" });
+    expect(screen.queryByRole("group", { name: "Máy" })).not.toBeInTheDocument();
+  });
+
+  it("shows and saves the choices of each MuMu instance", async () => {
+    const other = {
+      mumu_index: 1,
+      days_ahead: 2,
+      slots: ["20:00 - 21:00"],
+      court: "S9 - Sân tennis",
+      venue_keyword: "Origami",
+    };
+    const saved = settings({ instances: [other] });
+    const { fetch, replies } = renderTicket({ saved });
+    const instances = await screen.findByRole("group", { name: "Máy" });
+    const courts = screen.getByRole("group", { name: "Sân" });
+    expect(within(instances).getByRole("button", { name: "MuMu 0" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(within(courts).getByRole("button", { name: "S6" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    fireEvent.click(within(instances).getByRole("button", { name: "MuMu 1" }));
+
+    expect(within(courts).getByRole("button", { name: "S9" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    const slots = screen.getByRole("group", { name: /^Khung giờ/ });
+    expect(within(slots).getByRole("button", { name: "20:00–21:00, lượt 1" })).toBeInTheDocument();
+    const moved = { ...other, court: "S10 - Sân tennis" };
+    replies["PUT /api/settings"] = reply({ ...saved, instances: [moved] });
+
+    fireEvent.click(within(courts).getByRole("button", { name: "S10" }));
+
+    await waitFor(() =>
+      expect(within(courts).getByRole("button", { name: "S10" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      ),
+    );
+    // The first instance keeps its own court.
+    expect(await bodies(fetch, "PUT /api/settings")).toEqual([{ ...saved, instances: [moved] }]);
+  });
+
   it("takes no press while a save is on its way", async () => {
     let answer: (response: Response) => void = () => undefined;
     const { fetch } = renderTicket();

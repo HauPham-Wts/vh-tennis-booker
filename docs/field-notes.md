@@ -81,9 +81,10 @@ clickable "Đóng"; the page beneath leaves the dump.
 
 - **Closed hours** (a tap on "Sân Tennis" before 06:00 or after 21:00): "Ban quản lý BQL Grand
   Park chỉ nhận đăng ký Sân Tennis từ 06:00 đến 21:00 mỗi ngày". Back closes it and the list
-  shows 0.1 s later. A tap at 06:00:00.1 by NTP time still got it once while one at PC
-  05:59:59.92 did not, so which clock the app checks (server or MuMu) is unverified. The flow
-  closes it and taps again until `open_retry_seconds`.
+  shows 0.1 s later. The app most likely checks the MuMu clock: on 2026-10-24, with MuMu 0.71 s
+  behind NTP time, taps every 0.35 s still opened the calendar at 21:00:00.73 NTP (21:00:00.02
+  on MuMu) and got the notice from 21:00:01.14 NTP on, 0.05 s after the tap like the calendar.
+  The flow closes it and taps again until `open_retry_seconds`.
 - **Quota**: each apartment may book 2 slots a day and 8 a month; once either is used the app
   shows "Căn hộ đã hết hạn mức đăng ký tiện ích cho phép." (the same message for the day and the
   month), usually after the calendar's "Tiếp tục" (0.9 s after the tap, 2026-10-24), once after
@@ -140,6 +141,18 @@ slots and the booked date and time read the same.
   and `MuMuManager control shutdown` answers but does nothing; `MuMuNxDevice` must be ended by
   hand. A running MuMu shuts down with it within 18 s and starts again in about 24 s (42-48 s
   when the run starts it from cold).
+- A second instance for a second account (2026-10-25): `MuMuManager clone -v 0`, with
+  instance 0 off, copies its disk (5.4 GB, about 70 s) with the app, the driver and the screen
+  settings. The command prints `-502 mainnx request failed` after 10 s while MuMu's main process
+  finishes the copy (`MPCopyEmulator code=0` in `%APPDATA%\Netease\MuMuPlayerGlobal\logs\nx_main.log`).
+  The clone gets its own `android_id` and MAC address and ADB port 16416 (instance 0: 16384).
+  Both boot side by side in about 35 s. The clone holds instance 0's app session: its app data
+  was cleared (`pm clear com.vinhomes.resident`) before the app ever opened there, then the
+  second account logged in, and instance 0 stayed logged in.
+- Two instances side by side (timed dry run, 2026-10-25 04:01, one process each): both booted
+  from cold in 23-26 s, connected the driver in 4-5 s and were ready on the home screen in
+  6 s, as one alone; both tapped the utility 0.06 s after the start, and both retapped through
+  the closed-hours notice at the same pace (43-44 times in 5 s).
 
 ## Accessibility agent (refused by the app)
 
