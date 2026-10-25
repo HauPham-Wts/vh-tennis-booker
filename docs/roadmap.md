@@ -20,7 +20,7 @@ to be awake. Unattended, scheduled, as fast as possible.
 ## Phases
 
 The 0.x versions go through four phases toward 1.0.0: (1) it runs, (2) it handles every
-situation, (3) it is fast, (4) it has a user-friendly UI. Releases 0.1.0 to 0.13.0 covered all
+situation, (3) it is fast, (4) it has a user-friendly UI. Releases 0.1.0 to 0.13.1 covered all
 four (CHANGELOG); 0.13.0 ended phase 3 with MuMu instances side by side. Failures are fixed
 as the 06:00 logs show them. What is left:
 
