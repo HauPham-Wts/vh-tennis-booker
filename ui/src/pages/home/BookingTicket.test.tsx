@@ -80,11 +80,9 @@ describe("BookingTicket start", () => {
 
     const top = await ticket();
     expect(within(top).getByText("06:00")).toBeInTheDocument();
-    expect(within(top).getByText("sáng mai · Thứ Sáu 16/10")).toBeInTheDocument();
-    expect(within(top).getByText("Ngày chơi", { exact: false })).toHaveTextContent(
-      "Ngày chơi Chủ Nhật 18/10",
-    );
-    expect(within(top).getByText("Máy tự thức dậy lúc 05:50")).toBeInTheDocument();
+    expect(within(top).getByText("sáng mai · T6 16/10")).toBeInTheDocument();
+    expect(within(top).getByText("Sân CN 18/10")).toBeInTheDocument();
+    expect(within(top).getByText("Thức 05:50")).toBeInTheDocument();
     const toggle = within(top).getByRole("switch", { name: "Tự đặt mỗi sáng" });
     expect(toggle).toHaveAttribute("aria-checked", "true");
     expect(toggle).toHaveTextContent("BẬT");
@@ -124,7 +122,7 @@ describe("BookingTicket choices", () => {
     renderTicket();
 
     await screen.findByRole("group", { name: "Sân" });
-    expect(screen.queryByRole("group", { name: "Ngày chơi" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /18\/10/ })).not.toBeInTheDocument();
   });
 
   it("shows the court and the slots in booking order, the rest blocked at two", async () => {

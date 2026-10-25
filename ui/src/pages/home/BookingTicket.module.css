@@ -63,12 +63,24 @@
   text-transform: uppercase;
 }
 
-/* "Ngày chơi Chủ Nhật 18/10": always two days after the start. */
+/* The day the run books, always two days after the start: the fact that matters most, so
+   it sits on ball yellow, as a tag tied to the start time. */
 .play {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: var(--space-2);
+  padding: 2px var(--space-3) 2px var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-highlight);
   font-size: var(--text-control);
+  font-weight: var(--weight-bold);
 }
 
 .wake {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   color: var(--color-muted);
   font-family: var(--font-mono);
   font-size: var(--text-small);

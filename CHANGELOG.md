@@ -6,6 +6,11 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- The top of the ticket says less: the start day with a short weekday ("Sáng mai · T2 26/10"),
+  the play day as a yellow tag with a calendar icon ("Sân T4 28/10") and the wake time with a
+  clock icon ("Thức 05:50").
+
 ### Removed
 - The play day is no longer a setting: a run always books two days ahead, the newest day the
   app opens at 06:00. The ticket shows the play day above the perforation instead of three

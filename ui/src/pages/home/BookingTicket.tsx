@@ -6,6 +6,7 @@ import { useRuns, useSettings } from "../../api/queries";
 import type { Overview, Running, RunSummary, ScheduleState, Settings } from "../../api/types";
 import { courtChoices, MAX_SLOTS, slotChoices, toggleSlot } from "../../booking";
 import { Button } from "../../components/Button";
+import { Icon } from "../../components/Icon";
 import { Overline } from "../../components/Overline";
 import { QueryView } from "../../components/QueryView";
 import { Switch } from "../../components/Switch";
@@ -58,11 +59,17 @@ function NextStart({ schedule }: { schedule: ScheduleState }) {
         <div className={styles.when}>
           {schedule.enabled ? (
             <>
-              <p className={styles.day}>{t("pages.ticket.when", { when, day: f.day(start) })}</p>
-              <p className={styles.play}>
-                {t("pages.ticket.play")} <strong>{f.day(schedule.next_play_date)}</strong>
+              <p className={styles.day}>
+                {t("pages.ticket.when", { when, day: f.shortDay(start) })}
               </p>
-              <p className={styles.wake}>{t("pages.ticket.wake", { wake: schedule.wake_at })}</p>
+              <p className={styles.play}>
+                <Icon name="calendar" />
+                {t("pages.ticket.play", { day: f.shortDay(schedule.next_play_date) })}
+              </p>
+              <p className={styles.wake}>
+                <Icon name="clock" />
+                {t("pages.ticket.wake", { wake: schedule.wake_at })}
+              </p>
             </>
           ) : (
             <>

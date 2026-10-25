@@ -7,6 +7,7 @@ import {
   formatDay,
   formatDecimal,
   formatShortDate,
+  formatShortDay,
   formatSlot,
   formatTime,
   relativeDay,
@@ -30,6 +31,8 @@ export function useFormat() {
       language,
       /** "Thứ Tư 14/10", "Wed 14 Oct". */
       day: (text: string) => formatDay(text, language),
+      /** "T4 14/10", "Wed 14 Oct". */
+      shortDay: (text: string) => formatShortDay(text, language),
       /** "14/10", "14 Oct". */
       shortDate: (text: string) => formatShortDate(text, language),
       /** "06:00:06". */

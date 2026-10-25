@@ -90,6 +90,20 @@ export function formatDay(text: string, language: Language): string {
   return time === null ? text : `${weekday(time, language)} ${dayMonth(time, language)}`;
 }
 
+/** Format a date with a short weekday, for tight places: "T4 14/10", "CN 18/10", "Wed 14 Oct". */
+export function formatShortDay(text: string, language: Language): string {
+  const time = parseLocal(text);
+  if (time === null) {
+    return text;
+  }
+  if (language === "en") {
+    return formatDay(text, language);
+  }
+  // Vietnamese writes Monday to Saturday as T2 to T7 and Sunday as CN.
+  const index = utcDay(time).getUTCDay();
+  return `${index === 0 ? "CN" : `T${index + 1}`} ${dayMonth(time, language)}`;
+}
+
 /** Format the time of a date-time to the second: "06:00:06". */
 export function formatClock(text: string): string {
   const time = parseLocal(text);
