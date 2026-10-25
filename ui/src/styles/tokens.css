@@ -37,8 +37,7 @@
   --text-heading-xs: 18px;
   --text-heading-sm: 22px;
   --text-display-lg: 60px;
-  --text-ticket: 112px; /* the next start time on the ticket */
-  --text-ticket-sm: 88px; /* the same in a window under 720 px high */
+  --text-summary: 30px; /* the day, court and slots the next booking is for */
   --text-ticket-slot: 84px; /* the slot being booked */
 
   --weight-regular: 400;
