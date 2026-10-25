@@ -13,6 +13,8 @@ uses [Semantic Versioning](https://semver.org/).
 - A date in the next month switches the calendar at once: a month shows only its own days, so
   the 1.5 s wait for the date on the current month is skipped (the last two days of a month
   at 06:00).
+- The History names the court the app booked, as its ticket showed it, instead of the configured
+  court (until a slot is booked, a run still shows the configured court).
 
 ## [0.13.0] - 2026-10-25
 

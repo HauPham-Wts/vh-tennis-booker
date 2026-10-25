@@ -88,7 +88,8 @@ Details live in the docstrings; this page says where things are and what must st
   booking. The CLI emits `run_started`, `device_ready`, `run_finished`; `run_booking` the run's
   steps and `slot_booked`/`slot_failed`; `Booker` the steps of a round.
 - `history.py`: `booker.db` (SQLite, WAL, migrations by `PRAGMA user_version`) as an event sink:
-  `runs` (with the MuMu instance as `device`, from schema 2; empty for older runs), `run_slots`,
+  `runs` (with the MuMu instance as `device`, from schema 2; empty for older runs; `court` is
+  the configured court until a slot is booked, then the court the app booked), `run_slots`,
   `events`, and the run's log lines. The first database error turns history off for the process.
   Schema changes only add columns, so an older runner still writes to a newer database.
 - `history_read.py`: read-only queries for the backend (runs, one run, events, the live feed's
