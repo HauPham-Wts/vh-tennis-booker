@@ -28,7 +28,7 @@ def test_settings_show_the_config(client, saved):
     assert settings["slots"] == ["18:00 - 19:00", "19:00 - 20:00"]
     assert settings["court"] == "S6 - Sân tennis"
     assert settings["labels"]["continue"] == "Tiếp tục"
-    assert settings["next_month_xy"] == [0.953, 0.122]
+    assert settings["next_month_xy"] == [0.930, 0.122]
 
 
 def test_settings_never_show_the_telegram_token(client, saved):

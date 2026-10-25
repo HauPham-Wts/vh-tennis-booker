@@ -122,9 +122,9 @@ class Config:
     """Show the outcome of every run, dry runs too, as a Windows notification."""
     notification_language: str = "vi"
     """Language of the Windows notification, one of :data:`NOTIFICATION_LANGUAGES`."""
-    next_month_xy: tuple[float, float] = (0.953, 0.122)
+    next_month_xy: tuple[float, float] = (0.930, 0.122)
     """Fallback tap position (screen ratio) when the next-month button has no label."""
-    prev_month_xy: tuple[float, float] = (0.873, 0.122)
+    prev_month_xy: tuple[float, float] = (0.807, 0.122)
     """Fallback tap position (screen ratio) when the previous-month button has no label."""
     instances: list[dict[str, Any]] = field(default_factory=list)
     """Other MuMu instances, each logged in to its own account and booking with its own
