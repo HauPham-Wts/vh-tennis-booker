@@ -279,6 +279,11 @@ class History:
                     data["commands"],
                 ),
             )
+            # The court the app booked, as it named it, in place of the configured one.
+            if kind is EventKind.SLOT_BOOKED and data.get("shown_court"):
+                db.execute(
+                    "UPDATE runs SET court = ? WHERE id = ?", (data["shown_court"], self.run_id)
+                )
         elif kind is EventKind.RUN_FINISHED:
             db.execute(
                 "UPDATE runs SET finished_at = ?, status = ?, error = ? WHERE id = ?",

@@ -122,7 +122,7 @@ slots and the booked date and time read the same.
 | `processing` | Đang xử lý | Processing |
 | `registered` | Đã đăng ký | Registered |
 | `notice` | Thông báo | Notification |
-| `quota_full` | hết hạn mức | registration quota (not yet seen in a run) |
+| `quota_full` | hết hạn mức | registration quota (seen in a dry run, 2026-10-25) |
 | (dialog button) | Đóng | Close |
 
 - A day reads `21, Wednesday, October 21, 2026`.
