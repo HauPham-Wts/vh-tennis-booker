@@ -204,10 +204,10 @@ away.
 The UI is one screen, without a menu:
 
 - **The line at the top** says whether the next start is ready, or the one thing to do first.
-- **The ticket** on the left is the next booking and its settings: the daily switch (it
-  creates or removes the Windows task, once a dry run passed) and the play day on top; the
-  court and up to two slots below, saved on each press, and a dry run; during a run, its
-  steps as they happen.
+- **The ticket** on the left is the next booking in two parts: on top the daily switch (it
+  creates or removes the Windows task, once a dry run passed) and what is set, the play day,
+  court and slots; below, the court and up to two slots to choose, saved on each press, and
+  a dry run. During a run it shows the steps as they happen.
 - **Lịch sử / History** on the right: each run in two lines, its play day, court and count
   ("2/2"), then every slot booked or not and when it started (real bookings, dry runs on
   request); one click opens the reasons, the steps and the technical log.

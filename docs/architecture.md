@@ -153,9 +153,9 @@ After a route or model change: `python tools/export_openapi.py`, then `npm run a
   engine's English reasons into a few words (`notify.REASONS` holds the same words; a test
   compares them).
 - One screen (`pages/HomePage.tsx`, parts in `pages/home/`): the ticket (`BookingTicket`:
-  the daily switch and the play day on top; under the perforation the court and up to two
-  slots saved on each press, of the MuMu instance chosen first when there are several, the
-  dry run;
+  on top the daily switch and what is set, the play day, court and slots of the MuMu
+  instance chosen below, following each press as its save goes out; under the perforation
+  that instance's court and up to two slots, saved on each press, and the dry run;
   or `LiveTicket` while a booking or a dry run goes on: one ticket per run of `running.runs`,
   named "MuMu N" when several instances book side by side) and `SidePanel` beside it, two tabs:
   `HistoryTab` (runs ten days at a time, real bookings unless dry runs are ticked, `?run=`
