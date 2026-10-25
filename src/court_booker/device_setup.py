@@ -14,7 +14,7 @@ import logging
 import re
 import subprocess
 import sys
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, replace
 from datetime import datetime
 from enum import Enum
@@ -221,27 +221,58 @@ class Tools:
     manager: Path | None
     mumu: MuMu | None
     adb: Adb | None
+    others: tuple[MuMu, ...] = ()
+    """The instances of the config's ``[[instances]]``, checked like ``mumu``."""
+
+    @property
+    def mumus(self) -> list[MuMu]:
+        """Every MuMu instance the runs book with, the config's own first."""
+        return [] if self.mumu is None else [self.mumu, *self.others]
 
 
 def find_tools(config: Config) -> Tools:
     """Find MuMu and adb as a run would, without starting anything."""
     manager = find_mumu_manager(config.mumu_manager)
     mumu = MuMu(manager, config.mumu_index) if manager else None
+    others: list[MuMu] = []
+    indexes = {config.mumu_index}
+    for table in config.instances:
+        index = table.get("mumu_index")
+        if manager and isinstance(index, int) and index >= 0 and index not in indexes:
+            indexes.add(index)
+            others.append(MuMu(manager, index))
     try:
         adb = Adb(find_adb(config.adb_path, [manager.parent] if manager else []))
     except AdbNotFoundError:
         adb = None
-    return Tools(manager, mumu, adb)
+    return Tools(manager, mumu, adb, tuple(others))
 
 
 def run_checks(config: Config, tools: Tools, run: Run = run_command) -> list[Check]:
-    """Check every setup item; nothing is changed."""
+    """Check every setup item, on every MuMu instance; nothing is changed."""
     return [
         check_mumu(tools.manager, config.mumu_manager),
-        check_screen(tools.mumu),
+        _on_each(tools, check_screen),
         check_wake_timers(run),
-        check_app(tools.mumu, tools.adb, config.package),
+        _on_each(tools, lambda mumu: check_app(mumu, tools.adb, config.package)),
     ]
+
+
+_SEVERITY = (Status.OK, Status.FIXED, Status.UNKNOWN, Status.FIXABLE, Status.USER)
+"""Item statuses from best to worst: an item checked on several instances takes the worst."""
+
+
+def _on_each(tools: Tools, check: Callable[[MuMu | None], Check]) -> Check:
+    """Return ``check`` of every MuMu instance as one result: the worst status, each detail.
+
+    With one instance that is its own result, as before there could be more.
+    """
+    results = [(mumu, check(mumu)) for mumu in tools.mumus] or [(None, check(None))]
+    if len(results) == 1:
+        return results[0][1]
+    status = max((result.status for _, result in results), key=_SEVERITY.index)
+    detail = "; ".join(f"MuMu {mumu.index}: {result.detail}" for mumu, result in results if mumu)
+    return Check(results[0][1].item, status, detail)
 
 
 def auto_setup(
@@ -263,7 +294,7 @@ def auto_setup(
             if check.item == MUMU_INSTALLED:
                 check = _save_mumu_path(config, config_path, tools)
             elif check.item == MUMU_SCREEN:
-                check = _set_screen(tools, restart_mumu)
+                check = _on_each(tools, lambda mumu: _set_screen(mumu, restart_mumu))
             elif check.item == WAKE_TIMERS:
                 check = _allow_wake_timers(run)
         logger.info("Setup %s: %s (%s)", check.item, check.status.value, check.detail)
@@ -320,19 +351,23 @@ def _save_mumu_path(config: Config, config_path: Path, tools: Tools) -> Check:
     return Check(MUMU_INSTALLED, Status.FIXED, f"Saved the MuMu path {tools.manager}")
 
 
-def _set_screen(tools: Tools, restart_mumu: bool) -> Check:
-    if tools.mumu is None:
+def _set_screen(mumu: MuMu | None, restart_mumu: bool) -> Check:
+    """Set the screen of ``mumu`` unless it is right already."""
+    if mumu is None:
         return Check(MUMU_SCREEN, Status.UNKNOWN, "MuMu not found")
+    check = check_screen(mumu)
+    if check.status is not Status.FIXABLE:  # right already, or not readable
+        return check
     try:
-        running = tools.mumu.is_started()
+        running = mumu.is_started()
         if running and not restart_mumu:
             return Check(
                 MUMU_SCREEN, Status.FIXABLE, "MuMu is running; allow a restart to set its screen"
             )
-        tools.mumu.change_settings(SCREEN_SETTINGS)
-        written = tools.mumu.settings(*SCREEN_SETTINGS)
+        mumu.change_settings(SCREEN_SETTINGS)
+        written = mumu.settings(*SCREEN_SETTINGS)
         if running:
-            tools.mumu.restart()
+            mumu.restart()
     except EmulatorError as exc:
         return Check(MUMU_SCREEN, Status.USER, f"Could not set the MuMu screen: {exc}")
     if not all(_same(written.get(key), value) for key, value in SCREEN_SETTINGS.items()):
