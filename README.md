@@ -292,7 +292,7 @@ work in progress.
 ## Roadmap
 
 The 0.x versions go through four phases toward 1.0.0: it runs, it handles every situation,
-it is fast, it is friendly to use. Released: 0.13.0 ([changelog](CHANGELOG.md)), with several
+it is fast, it is friendly to use. Released: 0.13.1 ([changelog](CHANGELOG.md)), with several
 accounts booking side by side (one MuMu instance each). Last before 1.0.0: the desktop app
 with an installer. See [docs/roadmap.md](docs/roadmap.md).
 

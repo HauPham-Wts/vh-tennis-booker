@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-10-25
+
 ### Fixed
 - The previous-month button is tapped where it is: its fallback point was on the next-month
   button, so going back a month went forward. Both month buttons are now tapped in their
