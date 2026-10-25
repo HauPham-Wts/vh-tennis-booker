@@ -45,6 +45,8 @@
       "wake": "The PC wakes at {{wake}}",
       "offTitle": "Off",
       "offLine": "No booking {{when}}.",
+      "instance": "Instance",
+      "instanceName": "MuMu {{index}}",
       "day": "Play day",
       "dayHint": {
         "0": "same day",

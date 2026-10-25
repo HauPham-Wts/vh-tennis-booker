@@ -3,7 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 It is also the shared project guidance for Codex, whose entry point is `AGENTS.md`.
 
-Last updated: 2026-10-23.
+Last updated: 2026-10-25.
 
 ## Project
 
@@ -101,6 +101,9 @@ npm run api:types                                    # src/api/schema.d.ts from 
 
 - `cli.py` run entry: overrides, log file, NTP offset, keep awake, run lock, exit codes
   (`RequestError` 2, `DeviceError` 3, `AppNotReadyError` 4, `LockHeldError` 5, Ctrl+C 130).
+  Each `[[instances]]` table (another MuMu instance, own account and settings) gets its own
+  `--instance N` process with its own lock, log and history run; the main process starts
+  them after taking its lock and waits for them before releasing it.
 - `runner.py` connects the device (`emulator.py` MuMuManager, `adb.py`, the instrumentation
   driver with uiautomator2 as fallback) and runs the rounds: prepare, warm up
   `warm_up_seconds` before the start, one round per slot.
@@ -176,7 +179,8 @@ list. Details in `docs/field-notes.md`.
 - Node.js 22.19, npm 10.9 for `ui/`. Node 22.22 would allow jsdom 30 and React Router 8,
   which Dependabot skips until then.
 - MuMu in `C:\Program Files\Netease\MuMuPlayer` (instance 0 serves ADB on
-  `127.0.0.1:16384`, renderer Vulkan); adb is found and connected automatically
+  `127.0.0.1:16384`, its clone instance 1 on `127.0.0.1:16416` with a second account,
+  renderer Vulkan); adb is found and connected automatically
   (`device = "auto"`).
 - The daily task (wake 05:50 on this machine, start 06:00) runs the runner folder
   `D:\VH-Booker\runner` (git worktree at the last release tag, own `.venv`, its

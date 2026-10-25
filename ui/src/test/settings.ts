@@ -24,6 +24,7 @@ export function settings(fields: Partial<Settings> = {}): Settings {
     log_dir: "logs",
     next_month_xy: [0.9, 0.3],
     prev_month_xy: [0.1, 0.3],
+    instances: [],
     labels: {
       home: "Trang chủ",
       utility: "Sân Tennis",

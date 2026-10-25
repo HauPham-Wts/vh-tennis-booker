@@ -126,7 +126,7 @@ values 422 `invalid_request`.
 | `GET /api/status` | The Overview in one call: running run (with `runs`: the lock holder's run, then those of the instances it started), schedule, last run, setup; never calls MuMu |
 | `GET /api/runs`, `/api/runs/{id}`, `/api/runs/months` | Runs newest first (filters, paging by id or by days), one run with steps and log lines, months of real bookings |
 | `GET /api/events` | Activity steps newest first |
-| `GET`/`PUT /api/settings` | Booking settings without the hidden keys (`HIDDEN`: Telegram, the notification, `instances`); `PUT` validates, saves only on a change |
+| `GET`/`PUT /api/settings` | Booking settings without the hidden keys (`HIDDEN`: Telegram, the notification), with each `[[instances]]` entry in full; `PUT` validates, refuses added or removed instances, saves only on a change |
 | `GET`/`PUT /api/notifications`, `POST .../test` | The Windows notification's switch and language; a sample notification |
 | `GET /api/setup`, `POST /api/setup/auto` | Device checks; auto setup (quiet time and lock respected) |
 | `GET`/`PUT /api/schedule` | The task: state, times; switching on needs a passed dry run. Never switch it on from a development backend: the task would run the development Python |
@@ -152,7 +152,8 @@ After a route or model change: `python tools/export_openapi.py`, then `npm run a
   engine's English reasons into a few words (`notify.REASONS` holds the same words; a test
   compares them).
 - One screen (`pages/HomePage.tsx`, parts in `pages/home/`): the ticket (`BookingTicket`:
-  the daily switch, the play day, court and up to two slots saved on each press, the dry run;
+  the daily switch, the play day, court and up to two slots saved on each press, of the MuMu
+  instance chosen first when there are several, the dry run;
   or `LiveTicket` while a booking or a dry run goes on: one ticket per run of `running.runs`,
   named "MuMu N" when several instances book side by side) and `SidePanel` beside it, two tabs:
   `HistoryTab` (runs ten days at a time, real bookings unless dry runs are ticked, `?run=`

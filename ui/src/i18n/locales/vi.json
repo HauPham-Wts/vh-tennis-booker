@@ -45,6 +45,8 @@
       "wake": "Máy tự thức dậy lúc {{wake}}",
       "offTitle": "Đang tắt",
       "offLine": "Máy sẽ không tự đặt sân {{when}}.",
+      "instance": "Máy",
+      "instanceName": "MuMu {{index}}",
       "day": "Ngày chơi",
       "dayHint": {
         "0": "đặt cùng ngày",
