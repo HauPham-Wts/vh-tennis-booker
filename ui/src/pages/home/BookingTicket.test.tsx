@@ -81,6 +81,9 @@ describe("BookingTicket start", () => {
     const top = await ticket();
     expect(within(top).getByText("06:00")).toBeInTheDocument();
     expect(within(top).getByText("sáng mai · Thứ Sáu 16/10")).toBeInTheDocument();
+    expect(within(top).getByText("Ngày chơi", { exact: false })).toHaveTextContent(
+      "Ngày chơi Chủ Nhật 18/10",
+    );
     expect(within(top).getByText("Máy tự thức dậy lúc 05:50")).toBeInTheDocument();
     const toggle = within(top).getByRole("switch", { name: "Tự đặt mỗi sáng" });
     expect(toggle).toHaveAttribute("aria-checked", "true");
@@ -117,21 +120,11 @@ describe("BookingTicket start", () => {
 });
 
 describe("BookingTicket choices", () => {
-  it("names the play days by their dates, from the day of the next run", async () => {
+  it("offers no play day: it is always two days after the start", async () => {
     renderTicket();
 
-    const days = await screen.findByRole("group", { name: "Ngày chơi" });
-    const buttons = within(days).getAllByRole("button");
-    expect(buttons.map((button) => button.textContent)).toEqual([
-      "Thứ Sáu 16/10đặt cùng ngày",
-      "Thứ Bảy 17/10đặt trước 1 ngày",
-      "Chủ Nhật 18/10đặt trước 2 ngày",
-    ]);
-    expect(buttons.map((button) => button.getAttribute("aria-pressed"))).toEqual([
-      "false",
-      "false",
-      "true",
-    ]);
+    await screen.findByRole("group", { name: "Sân" });
+    expect(screen.queryByRole("group", { name: "Ngày chơi" })).not.toBeInTheDocument();
   });
 
   it("shows the court and the slots in booking order, the rest blocked at two", async () => {
@@ -186,7 +179,6 @@ describe("BookingTicket choices", () => {
   it("shows and saves the choices of each MuMu instance", async () => {
     const other = {
       mumu_index: 1,
-      days_ahead: 2,
       slots: ["20:00 - 21:00"],
       court: "S9 - Sân tennis",
       venue_keyword: "Origami",

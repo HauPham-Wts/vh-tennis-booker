@@ -168,7 +168,7 @@ describe("HomePage live run", () => {
     expect(within(live).getByText("16:00–17:00 · chờ tới lượt")).toBeInTheDocument();
     expect(within(live).getByText("0/2").parentElement).toHaveTextContent("0/2 khung đã đặt xong");
     expect(
-      within(live).getByText(/Ngày, sân, khung giờ và chạy thử mở lại khi lần này xong/),
+      within(live).getByText(/Sân, khung giờ và chạy thử mở lại khi lần này xong/),
     ).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Lần đặt tiếp theo" })).not.toBeInTheDocument();
   });

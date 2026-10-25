@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  addDays,
   addMinutes,
   courtName,
   formatClock,
@@ -113,18 +112,6 @@ describe("addMinutes", () => {
 
   it("leaves a text it cannot read as it is", () => {
     expect(addMinutes("6 am", 5)).toBe("6 am");
-  });
-});
-
-describe("addDays", () => {
-  it("counts days from a date or a date-time, across a month and a year", () => {
-    expect(addDays("2026-10-25T06:00", 0)).toBe("2026-10-25");
-    expect(addDays("2026-10-30", 2)).toBe("2026-11-01");
-    expect(addDays("2026-12-31T06:00", 1)).toBe("2027-01-01");
-  });
-
-  it("leaves a text it cannot read as it is", () => {
-    expect(addDays("soon", 1)).toBe("soon");
   });
 });
 

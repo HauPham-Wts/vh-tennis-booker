@@ -5,7 +5,6 @@ export function settings(fields: Partial<Settings> = {}): Settings {
   return {
     slots: ["15:00 - 16:00", "16:00 - 17:00"],
     court: "S6 - Sân tennis",
-    days_ahead: 2,
     wake_at: "05:50",
     start_at: "06:00",
     venue_keyword: "Origami",

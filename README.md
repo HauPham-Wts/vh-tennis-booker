@@ -38,7 +38,7 @@ through, and each step as it happens; the History is beside it](docs/img/running
   A frozen emulator ends the run after 60 s with a clear error instead of hanging until the
   next morning; the app's quota notice ends it at once.
 - **More accounts side by side.** Each extra MuMu instance books with its own account and its
-  own day, court and slots, in a process of its own: all of them tap at 06:00 together, and
+  own court and slots, in a process of its own: all of them tap at 06:00 together, and
   one that fails or freezes holds up no other.
 - **One read per screen.** A screen is read in a single accessibility dump (about 13 ms with
   the driver, measured on MuMu) and every button is found in it locally; waiting for a screen
@@ -140,7 +140,6 @@ Edit `config.toml`, or later use Settings in the web UI. The keys you usually ch
 |---|---|---|
 | `slots` | `["18:00 - 19:00", "19:00 - 20:00"]` | Slots to book, one round each, in this order: put the most wanted first |
 | `court` | `"S10 - Sân tennis"` | The court, as the app names it (S6, S8, S9 or S10) |
-| `days_ahead` | `2` | Book for today plus 0, 1 or 2 days (the app opens bookings two days ahead) |
 | `start_at` | `"06:00"` | When the app opens bookings |
 | `wake_at` | `"05:45"` | When the daily task wakes the PC and starts preparing |
 
@@ -149,8 +148,8 @@ explained in `config.example.toml`.
 
 To book with more accounts at once, clone the MuMu instance in MuMu's multi-instance manager,
 log the clone in to another account, and add an `[[instances]]` table for it (example in
-`config.example.toml`): its `mumu_index`, and any of `days_ahead`, `slots`, `court` and
-`venue_keyword` that differ. The web UI then shows each instance's settings.
+`config.example.toml`): its `mumu_index`, and any of `slots`, `court` and `venue_keyword`
+that differ. The web UI then shows each instance's settings.
 
 ### 3. Set up the PC and the emulator
 
@@ -206,8 +205,9 @@ The UI is one screen, without a menu:
 
 - **The line at the top** says whether the next start is ready, or the one thing to do first.
 - **The ticket** on the left is the next booking and its settings: the daily switch (it
-  creates or removes the Windows task, once a dry run passed), the play day, court and up to
-  two slots, saved on each press, and a dry run; during a run, its steps as they happen.
+  creates or removes the Windows task, once a dry run passed) and the play day on top; the
+  court and up to two slots below, saved on each press, and a dry run; during a run, its
+  steps as they happen.
 - **Lịch sử / History** on the right: each run with every slot booked or not and why (real
   bookings, dry runs on request), and each run's steps with the technical log one click away.
 - **Thiết lập / Setup** beside it: the steps only you can do (install MuMu and the Vinhomes
@@ -218,8 +218,8 @@ Saving settings rewrites `config.toml` (its comments are dropped); the next run 
 
 <p>
   <img src="docs/img/home.png" width="49%" alt="Ready for 06:00: the ticket with the daily
-  switch on, the play day, court and two slots numbered in booking order, the last dry run;
-  the History lists each booking with its stamp and slots">
+  switch on and the play day, the court and two slots numbered in booking order, the last dry
+  run; the History lists each booking with its stamp and slots">
   <img src="docs/img/setup.png" width="49%" alt="First use: the Setup tab opens with a count
   of three tasks, three lines on how to start and the steps to tick">
 </p>
@@ -232,7 +232,7 @@ Saving settings rewrites `config.toml` (its comments are dropped); the next run 
 | `court-booker --dry-run` | Walk the whole flow and stop before "Xác nhận" |
 | `court-booker --at 06:00` | Prepare now, start booking at 06:00:00 |
 | `court-booker --scheduled` | The same at `start_at` (what the daily task runs) |
-| `court-booker --slots "18:00 - 19:00" --days 1` | Other slots or another day, for this run only |
+| `court-booker --slots "18:00 - 19:00"` | Other slots, for this run only |
 | `court-booker --verbose` | Also print every screen read and every tap |
 | `court-booker --driver instrumentation` / `--driver uiautomator2` | Use only that driver; the default `auto` tries instrumentation, then falls back to uiautomator2 |
 | `court-booker setup [--auto]` | Check the PC and the emulator, or fix them |

@@ -4,7 +4,7 @@ import { errorMessage } from "../../api/errors";
 import { useSaveSettings, useStartDryRun, useSwitchSchedule } from "../../api/mutations";
 import { useRuns, useSettings } from "../../api/queries";
 import type { Overview, Running, RunSummary, ScheduleState, Settings } from "../../api/types";
-import { courtChoices, MAX_SLOTS, playDates, slotChoices, toggleSlot } from "../../booking";
+import { courtChoices, MAX_SLOTS, slotChoices, toggleSlot } from "../../booking";
 import { Button } from "../../components/Button";
 import { Overline } from "../../components/Overline";
 import { QueryView } from "../../components/QueryView";
@@ -20,8 +20,9 @@ import { TicketFrame } from "./TicketFrame";
 const GRID_COLUMNS = 7;
 
 /**
- * The top of the ticket: the daily switch, then the start time large with its day and
- * wake time, or that nothing is booked while the switch is off. The switch stays locked
+ * The top of the ticket: the daily switch, then the start time large with its day, the
+ * play day (always two days later) and the wake time, or that nothing is booked while the
+ * switch is off. The switch stays locked
  * until a dry run has passed; once one has, a switch still off is set off in yellow.
  */
 function NextStart({ schedule }: { schedule: ScheduleState }) {
@@ -58,6 +59,9 @@ function NextStart({ schedule }: { schedule: ScheduleState }) {
           {schedule.enabled ? (
             <>
               <p className={styles.day}>{t("pages.ticket.when", { when, day: f.day(start) })}</p>
+              <p className={styles.play}>
+                {t("pages.ticket.play")} <strong>{f.day(schedule.next_play_date)}</strong>
+              </p>
               <p className={styles.wake}>{t("pages.ticket.wake", { wake: schedule.wake_at })}</p>
             </>
           ) : (
@@ -77,13 +81,8 @@ function NextStart({ schedule }: { schedule: ScheduleState }) {
   );
 }
 
-interface ChoicesProps {
-  saved: Settings;
-  nextStart: string;
-}
-
 /** What one MuMu instance books: the top of the settings, or one of their instances. */
-type Booking = Pick<Settings, "days_ahead" | "slots" | "court">;
+type Booking = Pick<Settings, "slots" | "court">;
 
 /** Return the settings with ``change`` made to instance ``index`` (0: the top). */
 function changed(settings: Settings, index: number, change: Partial<Booking>): Settings {
@@ -97,12 +96,12 @@ function changed(settings: Settings, index: number, change: Partial<Booking>): S
 }
 
 /**
- * The day, court and slots to book, for each MuMu instance when several book side by side,
- * each with its own account. Each press saves at once: the whole settings go back as they
- * came with the one change, so the developer's values stay. Presses wait while a save is on
- * its way, so two saves never cross.
+ * The court and slots to book, for each MuMu instance when several book side by side, each
+ * with its own account. Each press saves at once: the whole settings go back as they came
+ * with the one change, so the developer's values stay. Presses wait while a save is on its
+ * way, so two saves never cross.
  */
-function Choices({ saved, nextStart }: ChoicesProps) {
+function Choices({ saved }: { saved: Settings }) {
   const { t } = useTranslation();
   const f = useFormat();
   const save = useSaveSettings();
@@ -180,51 +179,26 @@ function Choices({ saved, nextStart }: ChoicesProps) {
           </div>
         </div>
       )}
-      <div className={styles.row}>
-        <div role="group" aria-labelledby="day-label" className={styles.group}>
-          <Overline as="span" id="day-label">
-            {t("pages.ticket.day")}
-          </Overline>
-          <div className={styles.buttons}>
-            {playDates(nextStart).map(({ daysAhead, date }) => {
-              const on = shown.days_ahead === daysAhead;
-              return (
-                <button
-                  key={daysAhead}
-                  type="button"
-                  aria-pressed={on}
-                  aria-disabled={busy || undefined}
-                  className={`${styles.choice} ${styles.dayChoice}`}
-                  onClick={() => !on && choose({ days_ahead: daysAhead })}
-                >
-                  <span className={styles.date}>{f.day(date)}</span>
-                  <span className={styles.hint}>{t(`pages.ticket.dayHint.${daysAhead}`)}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        <div role="group" aria-labelledby="court-label" className={styles.group}>
-          <Overline as="span" id="court-label">
-            {t("pages.ticket.court")}
-          </Overline>
-          <div className={styles.buttons}>
-            {courtChoices(own.court).map((court) => {
-              const on = shown.court === court;
-              return (
-                <button
-                  key={court}
-                  type="button"
-                  aria-pressed={on}
-                  aria-disabled={busy || undefined}
-                  className={`${styles.choice} ${styles.court}`}
-                  onClick={() => !on && choose({ court })}
-                >
-                  {f.court(court)}
-                </button>
-              );
-            })}
-          </div>
+      <div role="group" aria-labelledby="court-label" className={styles.group}>
+        <Overline as="span" id="court-label">
+          {t("pages.ticket.court")}
+        </Overline>
+        <div className={styles.buttons}>
+          {courtChoices(own.court).map((court) => {
+            const on = shown.court === court;
+            return (
+              <button
+                key={court}
+                type="button"
+                aria-pressed={on}
+                aria-disabled={busy || undefined}
+                className={`${styles.choice} ${styles.court}`}
+                onClick={() => !on && choose({ court })}
+              >
+                {f.court(court)}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -338,18 +312,16 @@ function DryRunRow({ running, schedule }: DryRunRowProps) {
 }
 
 /**
- * The next booking as a ticket that holds its settings: the daily switch and the start
- * time on top; the day, court and slots under the perforation, saved on each press; the
- * dry run at the foot.
+ * The next booking as a ticket that holds its settings: what is set (the daily switch, the
+ * start time and the play day) on top; the court and slots to choose under the
+ * perforation, saved on each press; the dry run at the foot.
  */
 export function BookingTicket({ overview }: { overview: Overview }) {
   const settings = useSettings();
   const { schedule, running } = overview;
   return (
     <TicketFrame aria-labelledby="next-title" top={<NextStart schedule={schedule} />}>
-      <QueryView query={settings}>
-        {(saved) => <Choices saved={saved} nextStart={schedule.next_start} />}
-      </QueryView>
+      <QueryView query={settings}>{(saved) => <Choices saved={saved} />}</QueryView>
       <DryRunRow running={running} schedule={schedule} />
     </TicketFrame>
   );

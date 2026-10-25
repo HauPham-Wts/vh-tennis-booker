@@ -17,11 +17,11 @@ Details live in the docstrings; this page says where things are and what must st
   Windows notification (`notify.py`; a failure only logs a warning). After a real run with at
   least one round, `close_emulator` shuts MuMu down.
 - Other MuMu instances (`[[instances]]` in the config, each with its own account and its own
-  `mumu_index`, `days_ahead`, `slots`, `court`, `venue_keyword`; `config.instance_config`):
+  `mumu_index`, `slots`, `court`, `venue_keyword`; `config.instance_config`):
   the run's process, once it holds the lock and has cleared stale runs, starts one process per
-  entry (`start_instances`: the same command with `--instance N`, without `--days`, `--slots`,
-  `--device`; console output dropped) and waits for them, holding its lock. Each such process is a
-  whole run of its own with its instance's settings: its lock `run-mumu<N>.lock`, its log file
+  entry (`start_instances`: the same command with `--instance N`, without `--slots`,
+  `--device`; console output dropped) and waits for them, holding its lock. Each such process
+  is a whole run of its own with its instance's settings: its lock `run-mumu<N>.lock`, its log file
   `court-booker-<date>-mumu<N>.log`, its history run, its notification titled "MuMu N · …"
   (the first instance's too, as "MuMu 0"); it never clears stale runs. So an instance that
   fails or freezes holds up no other. Several instances need `mumu_manager` and
@@ -153,8 +153,9 @@ After a route or model change: `python tools/export_openapi.py`, then `npm run a
   engine's English reasons into a few words (`notify.REASONS` holds the same words; a test
   compares them).
 - One screen (`pages/HomePage.tsx`, parts in `pages/home/`): the ticket (`BookingTicket`:
-  the daily switch, the play day, court and up to two slots saved on each press, of the MuMu
-  instance chosen first when there are several, the dry run;
+  the daily switch and the play day on top; under the perforation the court and up to two
+  slots saved on each press, of the MuMu instance chosen first when there are several, the
+  dry run;
   or `LiveTicket` while a booking or a dry run goes on: one ticket per run of `running.runs`,
   named "MuMu N" when several instances book side by side) and `SidePanel` beside it, two tabs:
   `HistoryTab` (runs ten days at a time, real bookings unless dry runs are ticked, `?run=`

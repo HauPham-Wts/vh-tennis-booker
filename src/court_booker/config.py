@@ -20,15 +20,17 @@ else:  # pragma: no cover
     import tomli as tomllib
 
 DEFAULT_MUMU_MANAGER = "C:/Program Files/Netease/MuMuPlayer/nx_main/MuMuManager.exe"
-MAX_DAYS_AHEAD = 2
-"""The app books from today to today + 2."""
+DAYS_AHEAD = 2
+"""The run books today + 2: the newest day, which the app opens for booking at 06:00."""
 WARM_UP_RANGE = (5, 600)
 """Allowed ``warm_up_seconds``: time to load the utilities list, at most ten minutes ahead."""
 NOTIFICATION_LANGUAGES = ("vi", "en")
 """Languages of the Windows notification: those of the app's own interface."""
-INSTANCE_KEYS = ("mumu_index", "days_ahead", "slots", "court", "venue_keyword")
+INSTANCE_KEYS = ("mumu_index", "slots", "court", "venue_keyword")
 """Keys of an ``[[instances]]`` table: the booking settings of another MuMu instance, which
 books with its own account; ``mumu_index`` is required, the others default to the file's."""
+_IGNORED_KEYS = ("days_ahead",)
+"""Keys of older files, read and dropped: the play day was a setting until 0.13.1."""
 _WRITTEN_WHEN_CHANGED = ("windows_notification", "notification_language", "instances")
 """Keys ``save_config`` writes only when they differ from the default (see there)."""
 _SLOT_PATTERN = re.compile(r"\d{2}:\d{2} - \d{2}:\d{2}")
@@ -85,7 +87,6 @@ class Config:
     adb_path: str = ""
     """adb executable; empty searches PATH, then the emulator folder."""
     package: str = "com.vinhomes.resident"
-    days_ahead: int = 2
     slots: list[str] = field(default_factory=lambda: ["11:00 - 12:00", "14:00 - 15:00"])
     court: str = "S10 - Sân tennis"
     venue_keyword: str = "Origami"
@@ -155,7 +156,7 @@ def config_from_dict(data: dict[str, Any]) -> Config:
             config.instances = _instance_tables(value)
         elif key in known_keys:
             setattr(config, key, tuple(value) if key.endswith("_xy") else value)
-        else:
+        elif key not in _IGNORED_KEYS:
             raise ConfigError(f"Unknown configuration key: {key!r}")
     return config
 
@@ -227,8 +228,6 @@ def validate_config(config: Config) -> list[str]:
         problems.append("a slot is listed twice")
     if not config.court.strip():
         problems.append("court is empty")
-    if not 0 <= config.days_ahead <= MAX_DAYS_AHEAD:
-        problems.append(f"days_ahead must be 0 to {MAX_DAYS_AHEAD}")
     times = {}
     for name in ("wake_at", "start_at"):
         try:
@@ -276,13 +275,16 @@ def instance_config(config: Config, table: dict[str, Any]) -> Config:
 def _instance_tables(value: Any) -> list[dict[str, Any]]:
     if not isinstance(value, list) or not all(isinstance(table, dict) for table in value):
         raise ConfigError("instances must be [[instances]] tables")
-    for table in value:
+    tables = [
+        {key: item for key, item in table.items() if key not in _IGNORED_KEYS} for table in value
+    ]
+    for table in tables:
         if "mumu_index" not in table:
             raise ConfigError("Each [[instances]] table needs mumu_index")
         unknown = sorted(set(table) - set(INSTANCE_KEYS))
         if unknown:
             raise ConfigError(f"Unknown key in [[instances]]: {unknown[0]!r}")
-    return value
+    return tables
 
 
 def _apply_labels(labels: Labels, values: dict[str, str]) -> None:

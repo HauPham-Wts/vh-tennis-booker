@@ -6,6 +6,13 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Removed
+- The play day is no longer a setting: a run always books two days ahead, the newest day the
+  app opens at 06:00. The ticket shows the play day above the perforation instead of three
+  buttons; `days_ahead` is dropped from the settings, `[[instances]]` and `config.example.toml`,
+  and `--days` from the command line. A `days_ahead` line in an existing `config.toml` is
+  read and ignored.
+
 ## [0.13.1] - 2026-10-25
 
 ### Fixed

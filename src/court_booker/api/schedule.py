@@ -12,6 +12,7 @@ from court_booker.api.activity import record
 from court_booker.api.context import AppContext, Context
 from court_booker.api.errors import DryRunRequiredError
 from court_booker.clock import parse_time
+from court_booker.config import DAYS_AHEAD
 from court_booker.errors import RequestError
 from court_booker.events import EventKind
 
@@ -46,7 +47,7 @@ def schedule_state(context: AppContext) -> ScheduleState:
         wake_at=config.wake_at,
         start_at=config.start_at,
         next_start=start.isoformat(timespec="minutes"),
-        next_play_date=(start.date() + timedelta(days=config.days_ahead)).isoformat(),
+        next_play_date=(start.date() + timedelta(days=DAYS_AHEAD)).isoformat(),
         dry_run_passed=passed,
     )
 
