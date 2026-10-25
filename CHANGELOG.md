@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-10-25
+
 ### Added
 - Booking with more MuMu instances side by side, each logged in to its own account with its
   own settings: an `[[instances]]` table per instance in `config.toml` (its `mumu_index`,
