@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { COURTS, courtChoices, playDates, SLOTS, slotChoices, toggleSlot } from "./booking";
+import { COURTS, courtChoices, SLOTS, slotChoices, toggleSlot } from "./booking";
 
 describe("slotChoices", () => {
   it("splits the app's 13 slots into morning and afternoon", () => {
@@ -38,16 +38,6 @@ describe("toggleSlot", () => {
 
     expect(toggleSlot(chosen, "07:00 - 08:00")).toEqual(chosen);
     expect(toggleSlot([...chosen, "20:00 - 21:00"], "07:00 - 08:00")).toHaveLength(3);
-  });
-});
-
-describe("playDates", () => {
-  it("names the day of each choice from the day of the next run", () => {
-    expect(playDates("2026-10-30T06:00")).toEqual([
-      { daysAhead: 0, date: "2026-10-30" },
-      { daysAhead: 1, date: "2026-10-31" },
-      { daysAhead: 2, date: "2026-11-01" },
-    ]);
   });
 });
 

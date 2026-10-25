@@ -42,17 +42,12 @@
       "on": "ON",
       "off": "OFF",
       "when": "{{when}} · {{day}}",
+      "play": "Play day",
       "wake": "The PC wakes at {{wake}}",
       "offTitle": "Off",
       "offLine": "No booking {{when}}.",
       "instance": "Instance",
       "instanceName": "MuMu {{index}}",
-      "day": "Play day",
-      "dayHint": {
-        "0": "same day",
-        "1": "1 day ahead",
-        "2": "2 days ahead"
-      },
       "court": "Court",
       "slots": "Slots · booked in the order pressed, {{max}} at most",
       "slot": "{{slot}}, turn {{order}}",
@@ -81,7 +76,7 @@
         "through": "slots through",
         "running": "running",
         "waiting": "{{slot}} · waiting for its turn",
-        "locked": "Day, court, slots and dry run open again when this ends. You can close this window."
+        "locked": "Court, slots and dry run open again when this ends. You can close this window."
       },
       "lockedTitle": "Not on yet",
       "locked": "It turns on once a dry run has passed."
@@ -121,7 +116,7 @@
         "title": "Court Booker books for you at {{start}} every morning, even while you sleep",
         "steps": {
           "1": "Do the setup tasks below, once.",
-          "2": "Choose the day, court and slots on the ticket on the left.",
+          "2": "Choose the court and slots on the ticket on the left.",
           "3": "Press \"{{dryRun}}\"; once it passes, turn on \"{{daily}}\"."
         }
       },

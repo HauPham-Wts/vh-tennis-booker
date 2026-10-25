@@ -11,7 +11,7 @@ from typing import Any
 
 from court_booker.adb import Adb, find_adb, resolve_device
 from court_booker.clock import NtpClock, wait_until
-from court_booker.config import Config
+from court_booker.config import DAYS_AHEAD, Config
 from court_booker.driver import PACKAGE as DRIVER_PACKAGE
 from court_booker.driver import connect_driver
 from court_booker.emulator import MuMu
@@ -159,10 +159,10 @@ def run_booking(
     """Prepare the app, wait for ``start`` if given, then book every configured slot.
 
     The wait goes by ``clock`` (the PC clock if not given), measured again at the warm-up,
-    and ends :data:`OPENING_MARGIN` after ``start``. The target date is ``days_ahead``
-    after the start date. After the app's quota notice the slots left fail unrun. Results
-    are appended to ``results`` as rounds finish, so an interrupted caller still sees them;
-    progress goes to ``report`` as events.
+    and ends :data:`OPENING_MARGIN` after ``start``. The target date is
+    :data:`~court_booker.config.DAYS_AHEAD` after the start date. After the app's quota
+    notice the slots left fail unrun. Results are appended to ``results`` as rounds finish,
+    so an interrupted caller still sees them; progress goes to ``report`` as events.
     """
     results = [] if results is None else results
     report = Reporter() if report is None else report
@@ -190,7 +190,7 @@ def run_booking(
     except Exception:  # the caller logs the error itself
         log_last_screen(booker)
         raise
-    target = (start or datetime.now()).date() + timedelta(days=config.days_ahead)
+    target = (start or datetime.now()).date() + timedelta(days=DAYS_AHEAD)
     logger.info(
         "Target date %s, slots: %s%s",
         target.isoformat(),

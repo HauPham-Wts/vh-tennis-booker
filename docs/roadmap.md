@@ -5,13 +5,14 @@
 Win the booking race: the app opens bookings at **06:00 every day**, and the user must not need
 to be awake. Unattended, scheduled, as fast as possible.
 
-- The target date is today + `days_ahead` (0-2); there is no `--date`.
+- The target date is always today + 2 (`config.DAYS_AHEAD`), the newest day the app opens at
+  06:00; neither the config nor the command line changes it.
 - Windows Task Scheduler starts the run at `wake_at` (waking the PC). The run starts MuMu,
   connects ADB, restarts the app, waits on the home screen and opens the utilities list
   `warm_up_seconds` before the start, so only the booking taps happen after 06:00. A real run
   that ran its rounds closes MuMu at the end.
 - More accounts book side by side: each other MuMu instance (`[[instances]]`) runs the same
-  run in its own process, with its own account, day, court and slots. Each books only its own
+  run in its own process, with its own account, court and slots. Each books only its own
   slots, so 4 hours take 2 slots on each of 2 instances.
 - Out of scope: getting around any check of the app, and accessibility services, which the app
   refuses (field notes, "Accessibility agent"). In scope: the project's own instrumentation

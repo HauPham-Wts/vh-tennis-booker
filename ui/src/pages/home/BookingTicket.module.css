@@ -63,6 +63,11 @@
   text-transform: uppercase;
 }
 
+/* "Ngày chơi Chủ Nhật 18/10": always two days after the start. */
+.play {
+  font-size: var(--text-control);
+}
+
 .wake {
   color: var(--color-muted);
   font-family: var(--font-mono);
@@ -83,12 +88,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
-}
-
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-5) var(--space-8);
 }
 
 .group {
@@ -121,28 +120,6 @@
 .choice {
   min-height: 56px;
   border-radius: var(--radius-button);
-}
-
-.dayChoice {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 0 14px;
-}
-
-.date {
-  font-weight: var(--weight-bold);
-}
-
-.hint {
-  color: var(--color-muted);
-  font-family: var(--font-mono);
-  font-size: 11px;
-}
-
-.choice[aria-pressed="true"] .hint {
-  color: var(--color-on-ink-muted);
 }
 
 .court {
