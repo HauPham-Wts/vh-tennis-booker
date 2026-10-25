@@ -10,6 +10,9 @@ to be awake. Unattended, scheduled, as fast as possible.
   connects ADB, restarts the app, waits on the home screen and opens the utilities list
   `warm_up_seconds` before the start, so only the booking taps happen after 06:00. A real run
   that ran its rounds closes MuMu at the end.
+- More accounts book side by side: each other MuMu instance (`[[instances]]`) runs the same
+  run in its own process, with its own account, day, court and slots. Each books only its own
+  slots, so 4 hours take 2 slots on each of 2 instances.
 - Out of scope: getting around any check of the app, and accessibility services, which the app
   refuses (field notes, "Accessibility agent"). In scope: the project's own instrumentation
   driver (UiAutomation, as uiautomator2 uses); the app books with it running.
@@ -18,11 +21,12 @@ to be awake. Unattended, scheduled, as fast as possible.
 
 The 0.x versions go through four phases toward 1.0.0: (1) it runs, (2) it handles every
 situation, (3) it is fast, (4) it has a user-friendly UI. Releases 0.1.0 to 0.12.0 covered all
-four (CHANGELOG). Failures are fixed as the 06:00 logs show them. What is left:
+four (CHANGELOG), and MuMu instances side by side ended phase 3. Failures are fixed as the
+06:00 logs show them. What is left:
 
 | Phase | Next | Scope |
 |---|---|---|
-| 3 Fast | Parallel MuMu | Several MuMu instances with separate accounts (one account cannot log in twice), one slot each: the last speed step |
+| 3 Fast | Two instances booking for real at once | Each instance booked for real alone and both together in a dry run (2026-10-25); a real booking with both is due in November, when both accounts have slots left |
 | 4 UI | Desktop app, last before 1.0.0 | Tauri shell with a PyInstaller sidecar, installer, release automation; version number set when it starts ([spec](specs/0.5.0-desktop-app.md), "Packaging") |
 
 ## Situations
@@ -42,6 +46,7 @@ four (CHANGELOG). Failures are fixed as the 06:00 logs show them. What is left:
 | Booking | Target date in the next month | Code exists, untested: first testable on 30/10 (for 1/11) |
 | Booking | Quota (2 slots a day, 8 a month per apartment) | Tracking is left to the user. The app's quota notice, after "Tiếp tục" or "Xác nhận", fails the round with "Booking quota used up" and skips the rounds left; the log and the notification say so (since 0.11.0). The 06:00 run books a new day, so there it means the month is used up |
 | Device | MuMu not running / frozen | Started automatically / a device command over 60 s ends the run (exit 3); no restart, no retry (by decision) |
+| Device | One of several MuMu instances fails or freezes | Only its own process ends; the others book on, and the main log names its exit code. Its slots are not moved to another instance (by decision) |
 | Device | ADB lost during a run | Not handled |
 | Device | Wrong MuMu resolution | Works but scrolls; no warning |
 | Device | PC woke late, clock drift | Runs at once if under 10 min late; NTP time on a counter Windows does not set |

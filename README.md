@@ -37,6 +37,9 @@ through, and each step as it happens; the History is beside it](docs/img/running
   2 s (3 s for "Xác nhận") while the app ignores it, and waits up to 30 s for a slow screen.
   A frozen emulator ends the run after 60 s with a clear error instead of hanging until the
   next morning; the app's quota notice ends it at once.
+- **More accounts side by side.** Each extra MuMu instance books with its own account and its
+  own day, court and slots, in a process of its own: all of them tap at 06:00 together, and
+  one that fails or freezes holds up no other.
 - **One read per screen.** A screen is read in a single accessibility dump (about 13 ms with
   the driver, measured on MuMu) and every button is found in it locally; waiting for a screen
   and finding its buttons is the same read. At the real 06:00 opening, the first slot has
@@ -144,6 +147,11 @@ Edit `config.toml`, or later use Settings in the web UI. The keys you usually ch
 Everything else (the app's labels, timeouts, the MuMu folder) has a working default,
 explained in `config.example.toml`.
 
+To book with more accounts at once, clone the MuMu instance in MuMu's multi-instance manager,
+log the clone in to another account, and add an `[[instances]]` table for it (example in
+`config.example.toml`): its `mumu_index`, and any of `days_ahead`, `slots`, `court` and
+`venue_keyword` that differ. The web UI then shows each instance's settings.
+
 ### 3. Set up the PC and the emulator
 
 ```bash
@@ -245,9 +253,11 @@ the one in the data folder).
 | 130 | interrupted with Ctrl+C |
 
 - **Logs**: each run appends to `logs/court-booker-YYYY-MM-DD.log` beside `config.toml`,
-  with every screen it read and every tap.
-- **Data folder**: the history database `booker.db` and the run lock `run.lock` are in
-  `%LOCALAPPDATA%\CourtBooker`; set `COURT_BOOKER_HOME` to move them.
+  with every screen it read and every tap; each other MuMu instance to its own
+  `…-mumuN.log`.
+- **Data folder**: the history database `booker.db` and the run lock `run.lock` (and
+  `run-mumuN.lock` for each other instance) are in `%LOCALAPPDATA%\CourtBooker`; set
+  `COURT_BOOKER_HOME` to move them.
 - **One run at a time**: a second run is refused (exit code 5), and the scheduled run waits
   for a run already going, then stops it two minutes before the start time. No dry run or
   auto setup starts from `wake_at` to five minutes after `start_at`.
