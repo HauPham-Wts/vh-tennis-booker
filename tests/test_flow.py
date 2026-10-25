@@ -1228,8 +1228,30 @@ def test_select_date_switches_to_next_month(caplog):
 
     booker.select_date(booker.snapshot(), date(2026, 11, 1))
 
-    assert app.taps == ["Tháng sau", day_nov_1]
+    # October lists only its own days, so the month is switched without reading again.
+    assert app.ops == ["dump", ("click", "Tháng sau"), "dump", ("click", day_nov_1)]
     assert f"Date 2026-11-01 not shown; first day listed: {day_31!r}" in caplog.text
+
+
+def test_select_date_waits_for_a_day_of_the_month_shown():
+    day_26 = "26, Thứ Hai, 26 tháng 10, 2026"
+    day_27 = "27, Thứ Ba, 27 tháng 10, 2026"
+    app = FakeApp(
+        screens={
+            "loading": [node(day_26, (11, 518, 85, 575))],
+            "october": [node(day_26, (11, 518, 85, 575)), node(day_27, (85, 518, 159, 575))],
+            "slots": [],
+        },
+        taps_to={("october", day_27): "slots"},
+        backs_to={},
+        screen="loading",
+    )
+    app.go([("loading", 0), ("october", 3)])
+    booker = Booker(app, Config())
+
+    booker.select_date(booker.snapshot(), date(2026, 10, 27))
+
+    assert app.taps == [day_27]
 
 
 class OpeningBooker(Booker):
@@ -1474,7 +1496,8 @@ def test_an_english_notice_after_the_utility_tap_is_closed_and_the_utility_tappe
 
 
 def test_an_english_calendar_switches_month_by_the_day_it_shows():
-    prev_arrow, next_arrow = (450, 180, 490, 220), (490, 180, 530, 220)  # unlabelled
+    # Unlabelled, where the app shows them at 540x1600 (2026-10-25).
+    prev_arrow, next_arrow = (403, 162, 469, 228), (469, 162, 535, 228)
     day_31 = "31, Saturday, October 31, 2026"
     app = FakeApp(
         screens={
