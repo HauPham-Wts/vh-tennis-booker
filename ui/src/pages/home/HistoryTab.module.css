@@ -78,8 +78,12 @@
   font-weight: var(--weight-bold);
 }
 
-.meta,
-.slots {
+/* The slots on the left, when the run started on the right. */
+.line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
   color: var(--color-muted);
   font-family: var(--font-mono);
   font-size: var(--text-label);
@@ -89,6 +93,14 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-1) 10px;
+}
+
+.when {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  align-self: center;
 }
 
 .booked {

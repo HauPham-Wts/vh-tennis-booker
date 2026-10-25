@@ -90,6 +90,7 @@
       "emptyReal": "No real bookings yet.",
       "emptyRealDays": "No real bookings in the last {{count}} days.",
       "play": "Play {{day}} · {{court}}",
+      "short": "{{day}} · {{court}}",
       "runOn": "Run on {{day}}",
       "booked": "booked {{when}} · {{by}}",
       "dry": "dry run {{when}}",
@@ -319,6 +320,15 @@
       "dry": "DRY RUN PASSED",
       "dryPartial": "DRY RUN {{booked}}/{{total}}",
       "dryFailed": "DRY RUN FAILED",
+      "interrupted": "STOPPED",
+      "running": "RUNNING"
+    },
+    "mark": {
+      "count": "{{booked}}/{{total}}",
+      "failed": "✕",
+      "dry": "DRY",
+      "dryCount": "DRY {{booked}}/{{total}}",
+      "dryFailed": "DRY ✕",
       "interrupted": "STOPPED",
       "running": "RUNNING"
     },

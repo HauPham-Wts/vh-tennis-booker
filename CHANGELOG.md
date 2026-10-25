@@ -10,6 +10,10 @@ uses [Semantic Versioning](https://semver.org/).
 - The top of the ticket says less: the start day with a short weekday ("Sáng mai · T2 26/10"),
   the play day as a yellow tag with a calendar icon ("Sân T4 28/10") and the wake time with a
   clock icon ("Thức 05:50").
+- Each run in the History takes two lines: the play day and court with a count ("2/2",
+  "1/2", "0/2"; "THỬ" for a dry run) in place of the worded stamp, then the slots and when the
+  run started, after a clock (on schedule) or a person (by hand). Why a slot failed shows on
+  hover and in the run, which keeps its full stamp.
 
 ### Removed
 - The play day is no longer a setting: a run always books two days ahead, the newest day the
