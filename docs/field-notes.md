@@ -34,8 +34,14 @@ One Back from the ticket returns to the Utilities list, where the next round sta
   11-40 ms after the slot tap booked the slot selected before, 60-100 ms after it the slot
   tapped (the flow waits 0.1 s). "Tiếp tục" usually shows enabled in the same read as the slot
   list, but once (06:00:10, 2026-10-19) the list showed with it still disabled.
-- The month buttons have no label (`next_month_xy` / `prev_month_xy` are ratio fallbacks). How
-  the calendar shows next-month days is unverified: first testable on 30/10 for 1/11.
+- A month shows only its own days (no days of the next month on its last row), so a date in
+  the next month needs the next-month button. The calendar opens on the current month.
+- The month buttons, `‹` and `›` right of "Tháng 10 ▾ 2026 ▾", are unlabelled `Button`
+  nodes at 540x1600: `‹` [403,162][469,228], `›` [469,162][535,228] (2026-10-25). Both are
+  greyed out and not clickable while that month has no bookable day. `next_month_xy` and
+  `prev_month_xy` tap their middles; the driver clicks the smallest clickable element at the
+  point, so a point right of x 469 is the next-month button. Switching to a month with
+  bookable days is unverified: first possible on 30/10 for 1/11.
 
 ## Court list moves under the tap
 
@@ -116,7 +122,7 @@ slots and the booked date and time read the same.
 | `processing` | Đang xử lý | Processing |
 | `registered` | Đã đăng ký | Registered |
 | `notice` | Thông báo | Notification |
-| `quota_full` | hết hạn mức | registration quota (not yet seen in a run) |
+| `quota_full` | hết hạn mức | registration quota (seen in a dry run, 2026-10-25) |
 | (dialog button) | Đóng | Close |
 
 - A day reads `21, Wednesday, October 21, 2026`.

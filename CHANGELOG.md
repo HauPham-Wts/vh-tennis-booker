@@ -6,6 +6,18 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-10-25
+
+### Fixed
+- The previous-month button is tapped where it is: its fallback point was on the next-month
+  button, so going back a month went forward. Both month buttons are now tapped in their
+  middle (`next_month_xy` 0.930, `prev_month_xy` 0.807, measured in the app).
+- A date in the next month switches the calendar at once: a month shows only its own days, so
+  the 1.5 s wait for the date on the current month is skipped (the last two days of a month
+  at 06:00).
+- The History names the court the app booked, as its ticket showed it, instead of the configured
+  court (until a slot is booked, a run still shows the configured court).
+
 ## [0.13.0] - 2026-10-25
 
 ### Added

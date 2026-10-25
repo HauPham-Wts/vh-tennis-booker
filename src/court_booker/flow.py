@@ -502,6 +502,8 @@ class Booker:
         current: Screen | None = screen
         for attempt in range(5):
             wait = _FIRST_DATE_WAIT if attempt == 0 else _NEXT_DATE_WAIT
+            if attempt == 0 and self._month_shown(screen) not in (None, target_month):
+                wait = 0  # a month shows only its own days: switch at once
             found = self.wait_for(self._finder(match), wait, current)
             if found is not None:
                 self.tap(found[0])
@@ -514,9 +516,7 @@ class Booker:
                 target.isoformat(),
                 first_day.desc if first_day else None,
             )
-            shown = (
-                None if first_day is None else self.language.month_index_from_label(first_day.desc)
-            )
+            shown = self._month_shown(self.last_screen)
             forward = attempt % 2 == 0 if shown is None else shown < target_month
             self._switch_month(self.last_screen, forward)
             current = None
@@ -911,6 +911,11 @@ class Booker:
                 return screen
             previous = boxes
             time.sleep(_POLL_INTERVAL)
+
+    def _month_shown(self, screen: Screen) -> int | None:
+        """Return the month index of the first day ``screen`` lists, ``None`` without one."""
+        first_day = screen.find(self.any_day)
+        return None if first_day is None else self.language.month_index_from_label(first_day.desc)
 
     def _switch_month(self, screen: Screen, forward: bool) -> None:
         button = screen.find(self.next_month if forward else self.prev_month)

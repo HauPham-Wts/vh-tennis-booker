@@ -162,6 +162,25 @@ def test_a_run_and_its_slots_are_recorded(connection):
     ]
 
 
+def test_a_booked_slot_records_the_court_the_app_booked(connection):
+    store = history.History(connection)
+    report = Reporter(store, clock=ticking_clock())
+    report(EventKind.RUN_STARTED, trigger="manual", dry_run=False, version="0.13.1")
+    report(EventKind.BOOKING_STARTED, date="2026-11-01", court="S6 - Sân tennis", slots=[])
+    report(EventKind.SLOT_FAILED, slot="18:00 - 19:00", reason="full", seconds=2, commands=9)
+    assert rows(connection, "SELECT court FROM runs") == [{"court": "S6 - Sân tennis"}]
+
+    report(
+        EventKind.SLOT_BOOKED,
+        slot="19:00 - 20:00",
+        seconds=4,
+        commands=16,
+        shown_court="S8 - Sân tennis",
+    )
+
+    assert rows(connection, "SELECT court FROM runs") == [{"court": "S8 - Sân tennis"}]
+
+
 def test_a_run_stays_running_until_it_finishes(connection):
     report = Reporter(history.History(connection), clock=ticking_clock())
 

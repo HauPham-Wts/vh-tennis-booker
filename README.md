@@ -43,7 +43,7 @@ through, and each step as it happens; the History is beside it](docs/img/running
 - **One read per screen.** A screen is read in a single accessibility dump (about 13 ms with
   the driver, measured on MuMu) and every button is found in it locally; waiting for a screen
   and finding its buttons is the same read. At the real 06:00 opening, the first slot has
-  been booked 7 to 11 s after 06:00.
+  been booked 6 to 7 s after 06:00.
 - **Local web UI and full history.** One screen that holds the booking settings, the
   schedule, the history and the setup, in Vietnamese and English, over a FastAPI backend on 127.0.0.1. Every run, slot and step is
   kept in SQLite (about 0.13 ms per write), beside a daily log of every screen read.
@@ -292,7 +292,7 @@ work in progress.
 ## Roadmap
 
 The 0.x versions go through four phases toward 1.0.0: it runs, it handles every situation,
-it is fast, it is friendly to use. Released: 0.13.0 ([changelog](CHANGELOG.md)), with several
+it is fast, it is friendly to use. Released: 0.13.1 ([changelog](CHANGELOG.md)), with several
 accounts booking side by side (one MuMu instance each). Last before 1.0.0: the desktop app
 with an installer. See [docs/roadmap.md](docs/roadmap.md).
 
