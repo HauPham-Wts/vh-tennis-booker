@@ -4,6 +4,8 @@ import styles from "./Icon.module.css";
 const PATHS = {
   /** A clock: a time set ahead, such as the wake time or a run on schedule. */
   clock: "M8 2.5a5.5 5.5 0 1 0 0 11a5.5 5.5 0 1 0 0-11zM8 5v3.25l2 1.25",
+  /** A person: something someone started by hand. */
+  person: "M8 2.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 1 0 0-5zM3 13.5c.7-2.4 2.6-3.5 5-3.5s4.3 1.1 5 3.5",
 } as const;
 
 export type IconName = keyof typeof PATHS;

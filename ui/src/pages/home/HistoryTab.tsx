@@ -3,16 +3,17 @@ import { Link, useSearchParams } from "react-router";
 import { useRunDays } from "../../api/queries";
 import type { RunSummary } from "../../api/types";
 import { Button } from "../../components/Button";
+import { Icon, type IconName } from "../../components/Icon";
 import { QueryView } from "../../components/QueryView";
 import { EmptyState } from "../../components/States";
 import { Stamp } from "../../components/Stamp";
 import { DAYS_SHOWN, runDay } from "../../days";
 import { failureReason } from "../../reasons";
-import { runStamp } from "../../runs";
+import { runMark, runOrigin, runStamp } from "../../runs";
 import { useFormat } from "../../useFormat";
 import styles from "./HistoryTab.module.css";
 import { RunDetail } from "./RunDetail";
-import { runTitle, runWhen } from "./runText";
+import { runShortTitle } from "./runText";
 
 /** Return the run asked for in the address (`?run=12`), if it is a run id. */
 function requestedRun(params: URLSearchParams): number | undefined {
@@ -21,8 +22,9 @@ function requestedRun(params: URLSearchParams): number | undefined {
 }
 
 /**
- * Each slot of a run by its start: "✓ 18:00", "✕ 19:00 Hết chỗ"; a dry run marks a slot it
- * went through with "○", having booked nothing. A run that stopped before any slot says why.
+ * Each slot of a run by its start: "✓ 18:00", "✕ 19:00"; a dry run marks a slot it went
+ * through with "○", having booked nothing. Why a slot failed shows on hover and in the run
+ * itself, so the row stays one line. A run that stopped before any slot says why.
  */
 function SlotMarks({ run }: { run: RunSummary }) {
   const { t } = useTranslation();
@@ -39,9 +41,11 @@ function SlotMarks({ run }: { run: RunSummary }) {
       {run.slots.map(({ slot, ok, reason }) => {
         const start = f.slotStart(slot);
         if (!ok) {
+          const why = failureReason(t, f, reason);
           return (
-            <span key={slot} className={styles.failed}>
-              ✕ {start} {failureReason(t, f, reason)}
+            <span key={slot} className={styles.failed} title={why}>
+              ✕ {start}
+              <span className="visually-hidden"> {why}</span>
             </span>
           );
         }
@@ -57,22 +61,61 @@ function SlotMarks({ run }: { run: RunSummary }) {
   );
 }
 
-/** One run: what it booked, its stamp, when and how it went, and each slot; it opens the run. */
+/** The icon of how a run started: a clock on schedule, a person by hand or as a dry run. */
+const ORIGIN_ICONS: Record<string, IconName> = {
+  scheduled: "clock",
+  manual: "person",
+  dry_run: "person",
+};
+
+/**
+ * When a run started, short ("15/10 08:32", the day alone on schedule), after the icon of how
+ * it started; the MuMu instance of a run beside the first ends it.
+ */
+function StartedAt({ run }: { run: RunSummary }) {
+  const { t } = useTranslation();
+  const f = useFormat();
+  const origin = runOrigin(t, run.trigger);
+  const icon = ORIGIN_ICONS[run.trigger];
+  return (
+    <span className={styles.when} title={origin}>
+      {icon !== undefined && <Icon name={icon} />}
+      <span className="visually-hidden">{origin} </span>
+      {f.shortDate(run.started_at)}
+      {/* A run on schedule starts at the wake time, the same every day. */}
+      {run.trigger === "scheduled" ? "" : ` ${f.time(run.started_at)}`}
+      {run.device ? ` · ${t("pages.ticket.instanceName", { index: run.device })}` : ""}
+    </span>
+  );
+}
+
+/**
+ * One run in two lines: what it booked and its mark ("2/2"), then each slot and when it
+ * started; it opens the run, where the full stamp, the reasons and the steps are.
+ */
 function RunRow({ run }: { run: RunSummary }) {
   const { t } = useTranslation();
   const f = useFormat();
+  const mark = runMark(t, run);
   const stamp = runStamp(t, run);
   return (
     <li className={styles.item}>
       <Link to={{ search: `?run=${run.id}` }} className={styles.row}>
         <span className={styles.head}>
-          <span className={styles.title}>{runTitle(t, f, run)}</span>
-          <Stamp tone={stamp.tone} size="small">
-            {stamp.text}
-          </Stamp>
+          <span className={styles.title}>{runShortTitle(t, f, run)}</span>
+          <span title={stamp.text}>
+            <span aria-hidden="true">
+              <Stamp tone={mark.tone} size="small">
+                {mark.text}
+              </Stamp>
+            </span>
+            <span className="visually-hidden">{stamp.text}</span>
+          </span>
         </span>
-        <span className={styles.meta}>{runWhen(t, f, run)}</span>
-        <SlotMarks run={run} />
+        <span className={styles.line}>
+          <SlotMarks run={run} />
+          <StartedAt run={run} />
+        </span>
       </Link>
     </li>
   );

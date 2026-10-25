@@ -90,6 +90,7 @@
       "emptyReal": "Chưa có lần đặt thật nào.",
       "emptyRealDays": "Không có lần đặt thật nào trong {{count}} ngày gần nhất.",
       "play": "Chơi {{day}} · {{court}}",
+      "short": "{{day}} · {{court}}",
       "runOn": "Lần chạy {{day}}",
       "booked": "đặt {{when}} · {{by}}",
       "dry": "chạy thử {{when}}",
@@ -320,6 +321,15 @@
       "dryPartial": "CHẠY THỬ ĐẠT {{booked}}/{{total}}",
       "dryFailed": "CHẠY THỬ LỖI",
       "interrupted": "ĐÃ DỪNG",
+      "running": "ĐANG CHẠY"
+    },
+    "mark": {
+      "count": "{{booked}}/{{total}}",
+      "failed": "✕",
+      "dry": "THỬ",
+      "dryCount": "THỬ {{booked}}/{{total}}",
+      "dryFailed": "THỬ ✕",
+      "interrupted": "DỪNG",
       "running": "ĐANG CHẠY"
     },
     "by": {

@@ -208,8 +208,9 @@ The UI is one screen, without a menu:
   creates or removes the Windows task, once a dry run passed) and what is set, the play day,
   court and slots; below, the court and up to two slots to choose, saved on each press, and
   a dry run. During a run it shows the steps as they happen.
-- **Lịch sử / History** on the right: each run with every slot booked or not and why (real
-  bookings, dry runs on request), and each run's steps with the technical log one click away.
+- **Lịch sử / History** on the right: each run in two lines, its play day, court and count
+  ("2/2"), then every slot booked or not and when it started (real bookings, dry runs on
+  request); one click opens the reasons, the steps and the technical log.
 - **Thiết lập / Setup** beside it: the steps only you can do (install MuMu and the Vinhomes
   app, log in), ticked by you; an auto setup for what the app can fix; the Windows
   notification switch; a short guide. It opens first, with a count, while anything is left.
@@ -219,7 +220,7 @@ Saving settings rewrites `config.toml` (its comments are dropped); the next run 
 <p>
   <img src="docs/img/home.png" width="49%" alt="Ready for 06:00: the ticket with the daily
   switch on and the play day, the court and two slots numbered in booking order, the last dry
-  run; the History lists each booking with its stamp and slots">
+  run; the History lists each booking with its count and slots">
   <img src="docs/img/setup.png" width="49%" alt="First use: the Setup tab opens with a count
   of three tasks, three lines on how to start and the steps to tick">
 </p>
