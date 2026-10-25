@@ -172,3 +172,9 @@
 .locked svg {
   flex: none;
 }
+
+/* The tickets of the MuMu instances that book side by side, one under the other. */
+.tickets {
+  display: grid;
+  gap: var(--space-6);
+}

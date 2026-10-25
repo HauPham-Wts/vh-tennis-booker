@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useRunSteps } from "../../api/runSteps";
 import type { Step } from "../../api/types";
@@ -29,14 +29,23 @@ function Padlock() {
   );
 }
 
+interface LiveProps {
+  steps: readonly Step[];
+  /** The MuMu instance, named when several book side by side. */
+  instance?: number;
+  /** Ends with the note that the choices wait for the run; once, under the last ticket. */
+  locked?: boolean;
+}
+
 /**
  * The run as it goes: the slot being booked large with its round and the progress on top,
  * every step so far under the perforation with the newest one marked, then the slots still
  * to come. It is drawn from the steps the live feed brings: no request per step.
  */
-function Live({ steps }: { steps: readonly Step[] }) {
+function Live({ steps, instance, locked = true }: LiveProps) {
   const { t } = useTranslation();
   const f = useFormat();
+  const id = useId();
   const listRef = useRef<HTMLOListElement>(null);
   const progress = progressOf(steps);
   const big = progress.current ?? progress.slots[0];
@@ -51,16 +60,20 @@ function Live({ steps }: { steps: readonly Step[] }) {
     }
   }, [steps.length]);
 
+  const title =
+    progress.date !== undefined && progress.court !== undefined
+      ? t(progress.dryRun ? "pages.ticket.live.dryRun" : "pages.ticket.live.booking", {
+          day: f.day(progress.date),
+          court: f.court(progress.court),
+        })
+      : t("pages.ticket.live.preparing");
   const top = (
     <>
       <div className={styles.head}>
-        <Overline as="h2" id="live">
-          {progress.date !== undefined && progress.court !== undefined
-            ? t(progress.dryRun ? "pages.ticket.live.dryRun" : "pages.ticket.live.booking", {
-                day: f.day(progress.date),
-                court: f.court(progress.court),
-              })
-            : t("pages.ticket.live.preparing")}
+        <Overline as="h2" id={id}>
+          {instance === undefined
+            ? title
+            : t("pages.ticket.live.instance", { index: instance, text: title })}
         </Overline>
         {round > 0 && (
           <span className={styles.round}>
@@ -88,7 +101,7 @@ function Live({ steps }: { steps: readonly Step[] }) {
   );
 
   return (
-    <TicketFrame aria-labelledby="live" top={top} contained>
+    <TicketFrame aria-labelledby={id} top={top} contained>
       <ol ref={listRef} className={styles.steps}>
         {steps.map((step, index) => {
           const message = stepMessage(t, f, step);
@@ -125,23 +138,49 @@ function Live({ steps }: { steps: readonly Step[] }) {
           </li>
         ))}
       </ol>
-      <p className={styles.locked}>
-        <Padlock />
-        {t("pages.ticket.live.locked")}
-      </p>
+      {locked && (
+        <p className={styles.locked}>
+          <Padlock />
+          {t("pages.ticket.live.locked")}
+        </p>
+      )}
     </TicketFrame>
   );
 }
 
-function LiveSteps({ runId }: { runId: number }) {
-  const { steps } = useRunSteps(runId);
-  return <Live steps={steps} />;
+function LiveSteps({
+  runId,
+  several,
+  locked,
+}: {
+  runId: number;
+  several: boolean;
+  locked: boolean;
+}) {
+  const { run, steps } = useRunSteps(runId);
+  const instance = several ? (run.data?.device ?? undefined) : undefined;
+  return <Live steps={steps} instance={instance} locked={locked} />;
 }
 
 /**
- * The ticket while a booking or a dry run holds the emulator, in place of the choices; it
- * says "Đang chuẩn bị" while a dry run the app just started has not written a step yet.
+ * The tickets while a booking or a dry run holds the emulator, in place of the choices: one
+ * per run, as each MuMu instance books in a run of its own, named when there are several. It
+ * says "Đang chuẩn bị" while the run has not written a step yet.
  */
-export function LiveTicket({ runId }: { runId?: number }) {
-  return runId === undefined ? <Live steps={[]} /> : <LiveSteps runId={runId} />;
+export function LiveTicket({ runs }: { runs: readonly number[] }) {
+  if (runs.length === 0) {
+    return <Live steps={[]} />;
+  }
+  return (
+    <div className={styles.tickets}>
+      {runs.map((runId, index) => (
+        <LiveSteps
+          key={runId}
+          runId={runId}
+          several={runs.length > 1}
+          locked={index === runs.length - 1}
+        />
+      ))}
+    </div>
+  );
 }

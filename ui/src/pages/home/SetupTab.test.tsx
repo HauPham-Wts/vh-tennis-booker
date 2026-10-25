@@ -164,7 +164,9 @@ describe("SetupTab auto setup", () => {
   });
 
   it("waits while a run holds the emulator", async () => {
-    renderSetup(overview({ running: { trigger: "setup", pid: 4242, since: "10:00:00" } }));
+    renderSetup(
+      overview({ running: { trigger: "setup", pid: 4242, since: "10:00:00", runs: [] } }),
+    );
 
     const tab = await setupTab();
     expect(within(tab).getByRole("button", { name: "Thiết lập tự động" })).toBeDisabled();

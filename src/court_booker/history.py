@@ -67,6 +67,10 @@ MIGRATIONS = (
     CREATE INDEX events_by_run ON events (run_id);
     CREATE INDEX log_lines_by_run ON log_lines (run_id);
     """,
+    # The MuMu instance a run booked with, since runs can book side by side (0.13.0).
+    """
+    ALTER TABLE runs ADD COLUMN device INTEGER;
+    """,
 )
 """Schema changes in order; ``PRAGMA user_version`` counts the ones applied."""
 
@@ -249,9 +253,9 @@ class History:
         kind, data, stamp = event.kind, event.data, _stamp(event.time)
         if kind is EventKind.RUN_STARTED:
             cursor = db.execute(
-                "INSERT INTO runs (trigger, dry_run, version, started_at, status)"
-                " VALUES (?, ?, ?, ?, 'running')",
-                (data["trigger"], data["dry_run"], data["version"], stamp),
+                "INSERT INTO runs (trigger, dry_run, version, started_at, status, device)"
+                " VALUES (?, ?, ?, ?, 'running', ?)",
+                (data["trigger"], data["dry_run"], data["version"], stamp, data.get("device")),
             )
             self.run_id = cursor.lastrowid
         elif self.run_id is None:

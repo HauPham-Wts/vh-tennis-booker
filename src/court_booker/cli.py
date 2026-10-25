@@ -468,11 +468,13 @@ def main(argv: list[str] | None = None) -> int:
         and not frozen
     ):
         close_emulator(config)
+    if not frozen:
+        # Holding the lock meanwhile: the run, with its instances, is still going on.
+        wait_for_instances(instances)
     if lock is not None:
         lock.release()
     if history is not None:
         close_history(history)
     if frozen:
         end_process(code)
-    wait_for_instances(instances)
     return code

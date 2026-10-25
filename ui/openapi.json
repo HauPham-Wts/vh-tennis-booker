@@ -1310,6 +1310,17 @@
             ],
             "title": "Error"
           },
+          "device": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device"
+          },
           "booked": {
             "type": "integer",
             "title": "Booked"
@@ -1352,6 +1363,7 @@
           "court",
           "status",
           "error",
+          "device",
           "booked",
           "total",
           "slots",
@@ -1431,6 +1443,17 @@
             ],
             "title": "Error"
           },
+          "device": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device"
+          },
           "booked": {
             "type": "integer",
             "title": "Booked"
@@ -1459,6 +1482,7 @@
           "court",
           "status",
           "error",
+          "device",
           "booked",
           "total",
           "slots"
@@ -1486,6 +1510,14 @@
               }
             ],
             "title": "Since"
+          },
+          "runs": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Runs",
+            "default": []
           }
         },
         "type": "object",

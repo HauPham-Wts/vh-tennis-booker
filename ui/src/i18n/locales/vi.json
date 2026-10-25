@@ -73,6 +73,7 @@
         "booking": "Đang đặt cho {{day}} · sân {{court}}",
         "dryRun": "Đang chạy thử cho {{day}} · sân {{court}}",
         "preparing": "Đang chuẩn bị",
+        "instance": "MuMu {{index}} · {{text}}",
         "round": "LƯỢT {{round}}/{{rounds}}",
         "booked": "khung đã đặt xong",
         "through": "khung đã qua",
@@ -95,6 +96,7 @@
       "runOn": "Lần chạy {{day}}",
       "booked": "đặt {{when}} · {{by}}",
       "dry": "chạy thử {{when}}",
+      "instance": "{{text}} · MuMu {{index}}",
       "back": "← Lịch sử",
       "slot": {
         "booked": "ĐÃ ĐẶT",
