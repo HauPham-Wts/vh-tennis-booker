@@ -6,6 +6,15 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- The ticket is in two parts: above the perforation only what is set, the play day, court
+  and slots in booking order, large ("T4 28/10 · S6 · ① 18:00–19:00 ② 19:00–20:00"), and one
+  line on when the run starts and the PC wakes; below it the choices, each press showing on
+  top at once. The large start time is gone.
+
+### Fixed
+- The ticket's column no longer scrolls sideways: the perforation's notches reached past it.
+
 ### Removed
 - The play day is no longer a setting: a run always books two days ahead, the newest day the
   app opens at 06:00. The ticket shows the play day above the perforation instead of three

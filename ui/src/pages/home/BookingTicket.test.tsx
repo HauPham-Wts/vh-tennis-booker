@@ -49,6 +49,13 @@ function schedule(fields: Partial<ScheduleState>): Overview {
   return { ...status, schedule: { ...status.schedule, ...fields } };
 }
 
+/** The values on top of the ticket: play day, court, slots. */
+function shown(top: HTMLElement): (string | null)[] {
+  return within(top)
+    .getAllByRole("definition")
+    .map((value) => value.textContent);
+}
+
 function ticket() {
   return screen.findByRole("region", { name: "Lần đặt tiếp theo" });
 }
@@ -75,16 +82,13 @@ afterEach(() => {
 });
 
 describe("BookingTicket start", () => {
-  it("shows the next start, its day and when the PC wakes, with the switch on", async () => {
+  it("shows what is set: the play day, court and slots, and when it starts", async () => {
     renderTicket();
 
     const top = await ticket();
-    expect(within(top).getByText("06:00")).toBeInTheDocument();
-    expect(within(top).getByText("sáng mai · Thứ Sáu 16/10")).toBeInTheDocument();
-    expect(within(top).getByText("Ngày chơi", { exact: false })).toHaveTextContent(
-      "Ngày chơi Chủ Nhật 18/10",
-    );
-    expect(within(top).getByText("Máy tự thức dậy lúc 05:50")).toBeInTheDocument();
+    // The badge before each slot gives its booking order.
+    await waitFor(() => expect(shown(top)).toEqual(["CN 18/10", "S6", "115:00–16:00216:00–17:00"]));
+    expect(within(top).getByText("Đặt lúc 06:00 sáng mai · máy thức 05:50")).toBeInTheDocument();
     const toggle = within(top).getByRole("switch", { name: "Tự đặt mỗi sáng" });
     expect(toggle).toHaveAttribute("aria-checked", "true");
     expect(toggle).toHaveTextContent("BẬT");
@@ -124,7 +128,7 @@ describe("BookingTicket choices", () => {
     renderTicket();
 
     await screen.findByRole("group", { name: "Sân" });
-    expect(screen.queryByRole("group", { name: "Ngày chơi" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /18\/10/ })).not.toBeInTheDocument();
   });
 
   it("shows the court and the slots in booking order, the rest blocked at two", async () => {
@@ -204,6 +208,7 @@ describe("BookingTicket choices", () => {
     );
     const slots = screen.getByRole("group", { name: /^Khung giờ/ });
     expect(within(slots).getByRole("button", { name: "20:00–21:00, lượt 1" })).toBeInTheDocument();
+    expect(shown(await ticket())).toEqual(["CN 18/10", "S9", "120:00–21:00"]);
     const moved = { ...other, court: "S10 - Sân tennis" };
     replies["PUT /api/settings"] = reply({ ...saved, instances: [moved] });
 
@@ -234,6 +239,7 @@ describe("BookingTicket choices", () => {
 
     fireEvent.click(within(courts).getByRole("button", { name: "S8" }));
     expect(await screen.findByText("Đang lưu…")).toBeInTheDocument();
+    expect(shown(await ticket())[1]).toBe("S8"); // the top follows the press at once
     expect(within(courts).getByRole("button", { name: "S8" })).toHaveAttribute(
       "aria-pressed",
       "true",

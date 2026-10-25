@@ -6,6 +6,7 @@ import { useRuns, useSettings } from "../../api/queries";
 import type { Overview, Running, RunSummary, ScheduleState, Settings } from "../../api/types";
 import { courtChoices, MAX_SLOTS, slotChoices, toggleSlot } from "../../booking";
 import { Button } from "../../components/Button";
+import { Icon } from "../../components/Icon";
 import { Overline } from "../../components/Overline";
 import { QueryView } from "../../components/QueryView";
 import { Switch } from "../../components/Switch";
@@ -19,13 +20,48 @@ import { TicketFrame } from "./TicketFrame";
 /** The slots sit in rows of this many: the six of the morning, then the seven after. */
 const GRID_COLUMNS = 7;
 
+/** What one MuMu instance books: the top of the settings, or one of their instances. */
+type Booking = Pick<Settings, "slots" | "court">;
+
+/** Return what instance `index` books (0: the top of the settings), the last if it is gone. */
+function bookingOf(settings: Settings, index: number): { index: number; booking: Booking } {
+  const all = [settings, ...settings.instances];
+  const place = Math.min(index, all.length - 1);
+  return { index: place, booking: all[place] ?? settings };
+}
+
+/** Return the settings with ``change`` made to instance ``index`` (0: the top). */
+function changed(settings: Settings, index: number, change: Partial<Booking>): Settings {
+  if (index === 0) {
+    return { ...settings, ...change };
+  }
+  const instances = settings.instances.map((instance, place) =>
+    place === index - 1 ? { ...instance, ...change } : instance,
+  );
+  return { ...settings, instances };
+}
+
+type SaveSettings = ReturnType<typeof useSaveSettings>;
+
+/** Return the settings to show: while a save is on its way, what it saves. */
+function shownSettings(saved: Settings, save: SaveSettings): Settings {
+  return save.isPending && save.variables !== undefined ? save.variables : saved;
+}
+
+interface NextBookingProps {
+  schedule: ScheduleState;
+  /** What the choices below hold, `undefined` until the settings have loaded. */
+  booking: Booking | undefined;
+}
+
 /**
- * The top of the ticket: the daily switch, then the start time large with its day, the
- * play day (always two days later) and the wake time, or that nothing is booked while the
- * switch is off. The switch stays locked
- * until a dry run has passed; once one has, a switch still off is set off in yellow.
+ * The top of the ticket shows what is set, and only that: the daily switch, then the play
+ * day (always two days after the start), the court and the slots in booking order as the
+ * choices below hold them, and a line on when the run starts and the PC wakes, or that
+ * nothing is booked while the switch is off. The switch stays locked until a dry run has
+ * passed; once one has, a switch still off is set off in yellow.
  */
-function NextStart({ schedule }: { schedule: ScheduleState }) {
+function NextBooking({ schedule, booking }: NextBookingProps) {
   const { t } = useTranslation();
   const f = useFormat();
   const toggle = useSwitchSchedule();
@@ -51,48 +87,53 @@ function NextStart({ schedule }: { schedule: ScheduleState }) {
           />
         </div>
       </div>
-      <div className={styles.start}>
-        <p className={schedule.enabled ? styles.time : `${styles.time} ${styles.off}`}>
-          {f.time(start)}
-        </p>
-        <div className={styles.when}>
-          {schedule.enabled ? (
-            <>
-              <p className={styles.day}>{t("pages.ticket.when", { when, day: f.day(start) })}</p>
-              <p className={styles.play}>
-                {t("pages.ticket.play")} <strong>{f.day(schedule.next_play_date)}</strong>
-              </p>
-              <p className={styles.wake}>{t("pages.ticket.wake", { wake: schedule.wake_at })}</p>
-            </>
-          ) : (
-            <>
-              <p className={`${styles.day} ${styles.off}`}>
-                {t(locked ? "pages.ticket.lockedTitle" : "pages.ticket.offTitle")}
-              </p>
-              <p className={styles.offLine}>
-                {locked ? t("pages.ticket.locked") : t("pages.ticket.offLine", { when })}
-              </p>
-            </>
-          )}
-          {toggle.isError && <p className={styles.problem}>{errorMessage(t, toggle.error)}</p>}
+      <dl className={schedule.enabled ? styles.summary : `${styles.summary} ${styles.off}`}>
+        <div className={styles.field}>
+          <Overline as="dt">{t("pages.ticket.day")}</Overline>
+          <dd>{f.shortDay(schedule.next_play_date)}</dd>
         </div>
-      </div>
+        <div className={styles.field}>
+          <Overline as="dt">{t("pages.ticket.court")}</Overline>
+          <dd>{booking === undefined ? "–" : f.court(booking.court)}</dd>
+        </div>
+        <div className={styles.field}>
+          <Overline as="dt">{t("pages.ticket.chosenSlots")}</Overline>
+          <dd className={styles.chosen}>
+            {booking === undefined
+              ? "–"
+              : booking.slots.map((slot, place) => (
+                  <span key={slot} className={styles.chosenSlot}>
+                    <span aria-hidden="true" className={styles.badge}>
+                      {place + 1}
+                    </span>
+                    {f.slot(slot)}
+                  </span>
+                ))}
+          </dd>
+        </div>
+      </dl>
+      <p className={styles.plan}>
+        <Icon name="clock" />
+        {schedule.enabled ? (
+          t("pages.ticket.plan", { time: f.time(start), when, wake: schedule.wake_at })
+        ) : (
+          <>
+            <strong>{t(locked ? "pages.ticket.lockedTitle" : "pages.ticket.offTitle")}</strong>{" "}
+            {locked ? t("pages.ticket.locked") : t("pages.ticket.offLine", { when })}
+          </>
+        )}
+      </p>
+      {toggle.isError && <p className={styles.problem}>{errorMessage(t, toggle.error)}</p>}
     </>
   );
 }
 
-/** What one MuMu instance books: the top of the settings, or one of their instances. */
-type Booking = Pick<Settings, "slots" | "court">;
-
-/** Return the settings with ``change`` made to instance ``index`` (0: the top). */
-function changed(settings: Settings, index: number, change: Partial<Booking>): Settings {
-  if (index === 0) {
-    return { ...settings, ...change };
-  }
-  const instances = settings.instances.map((instance, place) =>
-    place === index - 1 ? { ...instance, ...change } : instance,
-  );
-  return { ...settings, instances };
+interface ChoicesProps {
+  saved: Settings;
+  save: SaveSettings;
+  /** The MuMu instance whose choices show (0: the top of the settings). */
+  instance: number;
+  onInstance: (index: number) => void;
 }
 
 /**
@@ -101,19 +142,15 @@ function changed(settings: Settings, index: number, change: Partial<Booking>): S
  * with the one change, so the developer's values stay. Presses wait while a save is on its
  * way, so two saves never cross.
  */
-function Choices({ saved }: { saved: Settings }) {
+function Choices({ saved, save, instance, onInstance }: ChoicesProps) {
   const { t } = useTranslation();
   const f = useFormat();
-  const save = useSaveSettings();
   const [warning, setWarning] = useState<string | null>(null);
-  const [instance, setInstance] = useState(0);
   const busy = save.isPending;
-  // While a save is on its way, show what it saves.
-  const settings = busy && save.variables !== undefined ? save.variables : saved;
+  const settings = shownSettings(saved, save);
   const instances = [settings, ...settings.instances];
-  const index = Math.min(instance, instances.length - 1);
-  const shown: Booking = instances[index] ?? settings;
-  const own: Booking = [saved, ...saved.instances][index] ?? saved;
+  const { index, booking: shown } = bookingOf(settings, instance);
+  const { booking: own } = bookingOf(saved, index);
   const full = shown.slots.length >= MAX_SLOTS;
 
   function choose(change: Partial<Booking>) {
@@ -170,7 +207,7 @@ function Choices({ saved }: { saved: Settings }) {
                 className={`${styles.choice} ${styles.court}`}
                 onClick={() => {
                   setWarning(null);
-                  setInstance(place);
+                  onInstance(place);
                 }}
               >
                 {t("pages.ticket.instanceName", { index: item.mumu_index })}
@@ -312,16 +349,30 @@ function DryRunRow({ running, schedule }: DryRunRowProps) {
 }
 
 /**
- * The next booking as a ticket that holds its settings: what is set (the daily switch, the
- * start time and the play day) on top; the court and slots to choose under the
- * perforation, saved on each press; the dry run at the foot.
+ * The next booking as a ticket in two parts: on top what is set (the daily switch, the play
+ * day, court and slots, when it starts), under the perforation the court and slots to
+ * choose, saved on each press, and the dry run at the foot. A press shows on top at once,
+ * as the save goes out.
  */
 export function BookingTicket({ overview }: { overview: Overview }) {
   const settings = useSettings();
+  const save = useSaveSettings();
+  const [instance, setInstance] = useState(0);
   const { schedule, running } = overview;
+  const booking =
+    settings.data === undefined
+      ? undefined
+      : bookingOf(shownSettings(settings.data, save), instance).booking;
   return (
-    <TicketFrame aria-labelledby="next-title" top={<NextStart schedule={schedule} />}>
-      <QueryView query={settings}>{(saved) => <Choices saved={saved} />}</QueryView>
+    <TicketFrame
+      aria-labelledby="next-title"
+      top={<NextBooking schedule={schedule} booking={booking} />}
+    >
+      <QueryView query={settings}>
+        {(saved) => (
+          <Choices saved={saved} save={save} instance={instance} onInstance={setInstance} />
+        )}
+      </QueryView>
       <DryRunRow running={running} schedule={schedule} />
     </TicketFrame>
   );

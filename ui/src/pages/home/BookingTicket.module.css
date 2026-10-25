@@ -20,63 +20,75 @@
   background: var(--color-highlight);
 }
 
-.start {
+/* What the run books, as the choices below hold it: three values side by side, wrapping in
+   a narrow window. */
+.summary {
   display: flex;
-  align-items: flex-end;
-  gap: var(--space-6);
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-9);
+  margin: var(--space-3) 0 0;
 }
 
-/* The start time, the largest thing in the app; smaller in a low window. */
-.time {
-  font-size: var(--text-ticket);
-  font-weight: var(--weight-heavy);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: var(--tracking-hero);
-  line-height: var(--leading-hero);
-}
-
-@media (max-height: 719px) {
-  .time {
-    font-size: var(--text-ticket-sm);
-  }
-}
-
-.off {
-  color: var(--color-muted);
-}
-
-.when {
+.field {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  padding-bottom: 10px;
+  min-width: 0;
 }
 
-.day {
-  font-size: var(--text-heading-sm);
-  font-weight: var(--weight-bold);
+.field dd {
+  margin: 0;
+  font-size: var(--text-summary);
+  font-weight: var(--weight-heavy);
+  font-variant-numeric: tabular-nums;
   letter-spacing: var(--tracking-heading);
+  line-height: 1.15;
 }
 
-/* "sáng mai · Chủ Nhật 25/10" opens the line. */
-.day::first-letter {
-  text-transform: uppercase;
-}
-
-/* "Ngày chơi Chủ Nhật 18/10": always two days after the start. */
-.play {
-  font-size: var(--text-control);
-}
-
-.wake {
+.off dd {
   color: var(--color-muted);
+}
+
+.chosen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-5);
+}
+
+.chosenSlot {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+
+/* The booking order, the same ball-yellow badge as on the chosen slots below. */
+.badge {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-highlight);
+  color: var(--color-ink);
   font-family: var(--font-mono);
-  font-size: var(--text-small);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0;
 }
 
-.offLine {
+/* When the run starts and the PC wakes, or that the switch is off. */
+.plan {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
   color: var(--color-muted);
   font-size: var(--text-control);
+}
+
+.plan strong {
+  color: var(--color-ink);
 }
 
 .problem {

@@ -4,6 +4,7 @@ import {
   courtName,
   formatClock,
   formatDay,
+  formatShortDay,
   formatDecimal,
   formatShortDate,
   formatSlot,
@@ -78,8 +79,19 @@ describe("dates", () => {
     expect(formatShortDate(text, language)).toBe(expected);
   });
 
+  it.each([
+    ["2026-10-14", "vi", "T4 14/10"],
+    ["2026-10-18", "vi", "CN 18/10"],
+    ["2026-10-19T06:00", "vi", "T2 19/10"],
+    ["2026-10-24", "vi", "T7 24/10"],
+    ["2026-10-14", "en", "Wed 14 Oct"],
+  ] as const)("formatShortDay(%j, %s) is %j", (text, language, expected) => {
+    expect(formatShortDay(text, language)).toBe(expected);
+  });
+
   it("shows a text it cannot read as it is", () => {
     expect(formatDay("soon", "vi")).toBe("soon");
+    expect(formatShortDay("soon", "vi")).toBe("soon");
     expect(formatShortDate("", "en")).toBe("");
   });
 });
