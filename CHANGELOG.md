@@ -6,6 +6,16 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- Booking with more MuMu instances side by side, each logged in to its own account with its
+  own settings: an `[[instances]]` table per instance in `config.toml` (its `mumu_index`,
+  and its `days_ahead`, `slots`, `court`, `venue_keyword` where they differ; set by hand,
+  the app does not show it yet). The run starts one process per instance that books exactly
+  like a run with one instance, so all of them book at 06:00 at the same time, and one that
+  fails or freezes holds up no other. Each has its own log file (`…-mumu1.log`), history
+  entry and Windows notification ("MuMu 1 · …"). Without the table a run books as before.
+  The runner must be upgraded before the table is added: an older one refuses it.
+
 ### Changed
 - Each run also turns off Android notification banners, in the same command that turns
   off animations, so none can drop over the app during a round.

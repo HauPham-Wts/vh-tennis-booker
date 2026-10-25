@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import pytest
@@ -6,6 +7,7 @@ from court_booker.config import (
     Config,
     ConfigError,
     ensure_config,
+    instance_config,
     load_config,
     save_config,
     validate_config,
@@ -108,6 +110,84 @@ def test_notification_keys_are_saved_only_when_changed(tmp_path):
     assert "windows_notification = false" in text
     assert 'notification_language = "en"' in text
     assert load_config(path) == Config(windows_notification=False, notification_language="en")
+
+
+INSTANCE = {"mumu_index": 1, "slots": ["20:00 - 21:00"], "court": "S9 - Sân tennis"}
+
+
+def test_another_instance_has_its_own_booking_settings(tmp_path):
+    path = tmp_path / "config.toml"
+    path.write_text(
+        'slots = ["18:00 - 19:00"]\ntimeout = 20\n\n[[instances]]\nmumu_index = 1\n'
+        'slots = ["20:00 - 21:00"]\ncourt = "S9 - Sân tennis"\n',
+        encoding="utf-8",
+    )
+
+    config = load_config(path)
+    other = instance_config(config, config.instances[0])
+
+    assert config.instances == [INSTANCE]
+    assert (other.mumu_index, other.slots, other.court) == (1, ["20:00 - 21:00"], "S9 - Sân tennis")
+    assert (other.timeout, other.days_ahead, other.instances) == (20, 2, [])  # the rest is shared
+    assert config.slots == ["18:00 - 19:00"]
+
+
+@pytest.mark.parametrize(
+    ("text", "error"),
+    [
+        ("instances = 1\n", "instances must be [[instances]] tables"),
+        ("[[instances]]\nslots = []\n", "Each [[instances]] table needs mumu_index"),
+        ("[[instances]]\nmumu_index = 1\ntimeout = 5\n", "Unknown key in [[instances]]: 'timeout'"),
+    ],
+)
+def test_instance_tables_with_unknown_keys_are_refused(tmp_path, text, error):
+    path = tmp_path / "config.toml"
+    path.write_text(text, encoding="utf-8")
+
+    with pytest.raises(ConfigError, match=re.escape(error)):
+        load_config(path)
+
+
+def test_instances_are_saved_only_when_set(tmp_path):
+    path = tmp_path / "config.toml"
+
+    save_config(Config(), path)
+    # A runner of 0.12.0 refuses the key: a config with one instance must not name it.
+    assert "instances" not in path.read_text(encoding="utf-8")
+
+    save_config(Config(instances=[INSTANCE]), path)
+    assert "[[instances]]" in path.read_text(encoding="utf-8")
+    assert load_config(path).instances == [INSTANCE]
+
+
+@pytest.mark.parametrize(
+    ("changes", "problem"),
+    [
+        ({"instances": [{"mumu_index": 0}]}, "MuMu instance 0 is listed twice"),
+        ({"instances": [INSTANCE, INSTANCE]}, "MuMu instance 1 is listed twice"),
+        ({"instances": [{"mumu_index": -1}]}, "instance mumu_index -1 must be 0 or more"),
+        (
+            {"instances": [{"mumu_index": 1, "slots": ["8:00"]}]},
+            "MuMu instance 1: slot '8:00' must look like '18:00 - 19:00'",
+        ),
+        (
+            {"instances": [INSTANCE], "device": "127.0.0.1:16384"},
+            'instances need mumu_manager and device = "auto"',
+        ),
+    ],
+)
+def test_invalid_instances_are_reported(changes, problem):
+    config = Config()
+    for name, value in changes.items():
+        setattr(config, name, value)
+
+    assert validate_config(config) == [problem]
+
+
+def test_a_shared_problem_is_reported_once():
+    config = Config(timeout=0, instances=[INSTANCE])
+
+    assert validate_config(config) == ["timeout must be positive"]
 
 
 def test_invalid_config_is_not_saved(tmp_path):

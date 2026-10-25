@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import re
 import sys
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field, fields, replace
 from pathlib import Path
 from typing import Any
 
@@ -26,7 +26,10 @@ WARM_UP_RANGE = (5, 600)
 """Allowed ``warm_up_seconds``: time to load the utilities list, at most ten minutes ahead."""
 NOTIFICATION_LANGUAGES = ("vi", "en")
 """Languages of the Windows notification: those of the app's own interface."""
-_WRITTEN_WHEN_CHANGED = ("windows_notification", "notification_language")
+INSTANCE_KEYS = ("mumu_index", "days_ahead", "slots", "court", "venue_keyword")
+"""Keys of an ``[[instances]]`` table: the booking settings of another MuMu instance, which
+books with its own account; ``mumu_index`` is required, the others default to the file's."""
+_WRITTEN_WHEN_CHANGED = ("windows_notification", "notification_language", "instances")
 """Keys ``save_config`` writes only when they differ from the default (see there)."""
 _SLOT_PATTERN = re.compile(r"\d{2}:\d{2} - \d{2}:\d{2}")
 
@@ -123,6 +126,9 @@ class Config:
     """Fallback tap position (screen ratio) when the next-month button has no label."""
     prev_month_xy: tuple[float, float] = (0.873, 0.122)
     """Fallback tap position (screen ratio) when the previous-month button has no label."""
+    instances: list[dict[str, Any]] = field(default_factory=list)
+    """Other MuMu instances, each logged in to its own account and booking with its own
+    settings (:data:`INSTANCE_KEYS`) in a process of its own, side by side with this one."""
     labels: Labels = field(default_factory=Labels)
 
 
@@ -145,6 +151,8 @@ def config_from_dict(data: dict[str, Any]) -> Config:
     for key, value in data.items():
         if key == "labels":
             _apply_labels(config.labels, value)
+        elif key == "instances":
+            config.instances = _instance_tables(value)
         elif key in known_keys:
             setattr(config, key, tuple(value) if key.endswith("_xy") else value)
         else:
@@ -243,7 +251,38 @@ def validate_config(config: Config) -> list[str]:
         point = getattr(config, name)
         if len(point) != 2 or not all(0 <= value <= 1 for value in point):
             problems.append(f"{name} must be two screen ratios between 0 and 1")
+    if config.instances and (not config.mumu_manager or config.device != "auto"):
+        problems.append('instances need mumu_manager and device = "auto"')
+    indexes = [config.mumu_index]
+    for table in config.instances:
+        index = table.get("mumu_index")
+        if not isinstance(index, int) or index < 0:
+            problems.append(f"instance mumu_index {index!r} must be 0 or more")
+        elif index in indexes:
+            problems.append(f"MuMu instance {index} is listed twice")
+        else:
+            indexes.append(index)
+            # Only its own problems: the shared settings are reported once, above.
+            own = validate_config(instance_config(config, table))
+            problems += [f"MuMu instance {index}: {item}" for item in own if item not in problems]
     return problems
+
+
+def instance_config(config: Config, table: dict[str, Any]) -> Config:
+    """Return the settings of the instance ``table`` describes: ``config`` with its keys."""
+    return replace(config, **table, instances=[])
+
+
+def _instance_tables(value: Any) -> list[dict[str, Any]]:
+    if not isinstance(value, list) or not all(isinstance(table, dict) for table in value):
+        raise ConfigError("instances must be [[instances]] tables")
+    for table in value:
+        if "mumu_index" not in table:
+            raise ConfigError("Each [[instances]] table needs mumu_index")
+        unknown = sorted(set(table) - set(INSTANCE_KEYS))
+        if unknown:
+            raise ConfigError(f"Unknown key in [[instances]]: {unknown[0]!r}")
+    return value
 
 
 def _apply_labels(labels: Labels, values: dict[str, str]) -> None:

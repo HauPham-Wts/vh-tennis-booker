@@ -141,6 +141,18 @@ slots and the booked date and time read the same.
   and `MuMuManager control shutdown` answers but does nothing; `MuMuNxDevice` must be ended by
   hand. A running MuMu shuts down with it within 18 s and starts again in about 24 s (42-48 s
   when the run starts it from cold).
+- A second instance for a second account (2026-10-25): `MuMuManager clone -v 0`, with
+  instance 0 off, copies its disk (5.4 GB, about 70 s) with the app, the driver and the screen
+  settings. The command prints `-502 mainnx request failed` after 10 s while MuMu's main process
+  finishes the copy (`MPCopyEmulator code=0` in `%APPDATA%\Netease\MuMuPlayerGlobal\logs\nx_main.log`).
+  The clone gets its own `android_id` and MAC address and ADB port 16416 (instance 0: 16384).
+  Both boot side by side in about 35 s. The clone holds instance 0's app session: its app data
+  was cleared (`pm clear com.vinhomes.resident`) before the app ever opened there, then the
+  second account logged in, and instance 0 stayed logged in.
+- Two instances side by side (timed dry run, 2026-10-25 04:01, one process each): both booted
+  from cold in 23-26 s, connected the driver in 4-5 s and were ready on the home screen in
+  6 s, as one alone; both tapped the utility 0.06 s after the start, and both retapped through
+  the closed-hours notice at the same pace (43-44 times in 5 s).
 
 ## Accessibility agent (refused by the app)
 

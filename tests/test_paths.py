@@ -28,6 +28,7 @@ def test_files_live_in_the_folder(tmp_path):
     assert folder.database == tmp_path / "booker.db"
     assert folder.logs == tmp_path / "logs"
     assert folder.lock == tmp_path / "run.lock"
+    assert folder.instance_lock(1) == tmp_path / "run-mumu1.lock"
 
 
 def test_ensure_creates_the_folder_once(tmp_path):

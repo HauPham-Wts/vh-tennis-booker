@@ -16,6 +16,7 @@ def saved(context):
         telegram_token="secret-token",
         telegram_chat_id="42",
         notification_language="en",
+        instances=[{"mumu_index": 1, "slots": ["20:00 - 21:00"]}],
     )
     save_config(config, context.config_path)
     return config
@@ -42,6 +43,10 @@ def test_settings_leave_out_the_notification(client, saved):
 
     assert "windows_notification" not in settings
     assert "notification_language" not in settings
+
+
+def test_settings_leave_out_the_other_instances(client, saved):
+    assert "instances" not in client.get("/api/settings").json()
 
 
 def test_settings_without_a_config_file_are_the_defaults(client, context):
@@ -73,6 +78,7 @@ def test_saved_settings_reach_the_file_and_the_activity_log(client, context, sav
     assert (written.slots, written.court) == (["20:00 - 21:00"], "S9 - Sân tennis")
     assert written.telegram_token == "secret-token"
     assert written.notification_language == "en"
+    assert written.instances == [{"mumu_index": 1, "slots": ["20:00 - 21:00"]}]
     (step,) = steps(context)
     assert (step["kind"], step["data"]) == ("settings_saved", {"changed": ["court", "slots"]})
 
