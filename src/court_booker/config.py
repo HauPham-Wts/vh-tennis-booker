@@ -112,6 +112,7 @@ class Config:
     No step of a booking by hand ever took 30 s, also on busy days (user, 2026-10-19); the
     ticket once took over 10 s after "Xác nhận" (2026-10-19, 10:03)."""
     max_swipes: int = 6
+    """Swipes allowed to bring a hidden slot or court into view."""
     mumu_manager: str = DEFAULT_MUMU_MANAGER
     """MuMuManager.exe used to start the emulator; empty skips starting it."""
     mumu_index: int = 0

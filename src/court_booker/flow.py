@@ -270,10 +270,7 @@ class Booker:
                 _, screen = self.tap_and_advance(
                     screen, venue, shown.desc, self._finder(self.court_list)
                 )
-            found = self.wait_for(self._finder(self.any_court), self.config.timeout, screen)
-            if found is None:
-                raise ElementNotFoundError(f"Court {self.config.court!r} is not on the court list")
-            court, screen = found
+            court, screen = self.find_court(screen)
             if labels.fully_booked in court.desc:
                 raise SlotUnavailableError(f"Court {self.config.court} is fully booked")
             screen = self.select_court(screen)
@@ -345,6 +342,35 @@ class Booker:
                 logger.info("Not open yet (%s); reloading the calendar", exc)
             screen = None
             attempt += 1
+
+    def find_court(self, screen: Screen) -> tuple[Node, Screen]:
+        """Return the court on the court list ``screen`` and the read that shows it whole.
+
+        The list can run below the screen: the last of seven basketball courts shows only its
+        top few pixels at 540x1600 (field notes, "Other sports"), and the whole list shows
+        232 px lower until the service info above it has loaded. Dump bounds are clipped to
+        what shows, so an element that reaches the bottom edge is cut off. While the court is
+        cut off, or missing with the list cut off, the list is swiped up, up to
+        ``max_swipes`` times; a missing court is awaited up to ``timeout`` otherwise.
+        """
+        name = self.config.court
+        deadline = time.monotonic() + self.config.timeout
+        swipes = 0
+        while True:
+            remaining = max(0.0, deadline - time.monotonic())
+            found = self.wait_for(self._court_or_cut_off, remaining, screen)
+            if found is None:
+                raise ElementNotFoundError(f"Court {name!r} is not on the court list")
+            node, screen = found
+            if self.any_court(node) and not _cut_off(screen, node):
+                if swipes:
+                    logger.info("Court %r shown after %d swipe(s)", name, swipes)
+                return node, screen
+            if swipes >= self.config.max_swipes or time.monotonic() >= deadline:
+                raise ElementNotFoundError(f"Court {name!r} not shown after {swipes} swipe(s)")
+            self._scroll(screen, down=True)
+            swipes += 1
+            screen = self._settled_screen(Match(clickable=True))
 
     def select_court(self, screen: Screen) -> Screen:
         """Tap the court on the court list ``screen`` and return the booking details page.
@@ -601,7 +627,7 @@ class Booker:
                 break
             self._scroll(screen, down)
             swipes += 1
-            screen = self._settled_screen()
+            screen = self._settled_screen(self.any_slot)
         raise ElementNotFoundError(f"Slot {slot} not found after {swipes} swipe(s)")
 
     # Confirmation screen ----------------------------------------------------
@@ -867,6 +893,16 @@ class Booker:
 
         return find
 
+    def _court_or_cut_off(self, screen: Screen) -> Node | None:
+        """Return the court on the court list, or else an element the bottom edge cuts off.
+
+        The court list's heading has shown already; a swipe may move it off the screen.
+        """
+        court = screen.find(self.any_court)
+        if court is not None:
+            return court
+        return next((node for node in screen.nodes if _cut_off(screen, node)), None)
+
     def _details_page(self, screen: Screen) -> Node | None:
         """Return the booking details page's continue button once it is enabled."""
         button = screen.find(self.continue_button)
@@ -937,13 +973,13 @@ class Booker:
         logger.debug("Swipe %s", "down the list" if down else "up the list")
         self.device.swipe(width * 0.5, height * start, width * 0.5, height * end, _SWIPE_SECONDS)
 
-    def _settled_screen(self) -> Screen:
-        """Read the screen until the slot list stops moving after a swipe."""
+    def _settled_screen(self, moving: Match) -> Screen:
+        """Read the screen until the elements ``moving`` matches stop moving after a swipe."""
         deadline = time.monotonic() + _SETTLE_TIMEOUT
         previous = None
         while True:
             screen = self.snapshot()
-            boxes = [node.box for node in screen.find_all(self.any_slot)]
+            boxes = [node.box for node in screen.find_all(moving)]
             if boxes == previous or time.monotonic() >= deadline:
                 return screen
             previous = boxes
@@ -977,6 +1013,11 @@ def log_screen(screen: Screen, title: str) -> None:
 def _retap_wait(deadline: float, after: float = _RETAP_AFTER) -> float:
     """Return how long to wait for the next screen before a tap may be repeated."""
     return min(after, max(0.0, deadline - time.monotonic()))
+
+
+def _cut_off(screen: Screen, node: Node) -> bool:
+    """Return whether the bottom edge of ``screen`` cuts off ``node``, a labelled control."""
+    return node.clickable and bool(node.desc) and node.box[3] >= screen.size[1]
 
 
 def _controls(screen: Screen) -> set[Node]:

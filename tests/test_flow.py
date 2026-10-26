@@ -1382,6 +1382,91 @@ def test_a_notice_that_stays_fails_the_round_after_the_retry_window(monkeypatch)
     assert app.screen == "closed"
 
 
+# A court list longer than the screen ------------------------------------------
+
+BASKETBALL = [  # the order of the app's list, 2026-10-26
+    "S10 - Sân bóng rổ nửa sân 03",
+    "S10 - Sân tập bóng rổ 01",
+    "S6 - Sân bóng rổ tập ném 01",
+    "S6 - Sân bóng rổ tập ném 02",
+    "S8 - Sân bóng rổ nửa sân",
+    "S9 - Sân bóng rổ tập ném 01",
+    "S9 - Sân bóng rổ tập ném 02",
+]
+SWIPE_PIXELS = 384  # a swipe from 0.62 to 0.38 of the height
+
+
+def court_rows(top):
+    """Return the basketball courts from ``top`` down, clipped to the screen as dumps are."""
+    rows = []
+    for index, name in enumerate(BASKETBALL):
+        y = top + 133 * index
+        if 0 <= y < HEIGHT:
+            rows.append(node(name, (35, y, 505, min(y + 120, HEIGHT))))
+    return rows
+
+
+def basketball_app(court, top=796):
+    """Return an app whose court list starts at ``top`` and moves up with each swipe.
+
+    At 796 the seventh court shows its top 6 px (y 1594-1600), as on the device.
+    """
+    app = booking_app(courts=court_rows(top), shown=(details(court=court),))
+    app.screens["details"][0] = node(court, (116, 975, 274, 1004), False)
+    app.taps_to[("courts", court)] = app.taps_to.pop(("courts", "S10 - Sân tennis"))
+    tops = [top]
+
+    def swipe(app):
+        tops[0] -= SWIPE_PIXELS
+        app.screens["courts"] = [COURT_LIST, *court_rows(tops[0])]
+
+    app.on_swipe = swipe
+    return app
+
+
+def test_a_court_cut_off_by_the_bottom_edge_is_swiped_into_view(caplog):
+    caplog.set_level(logging.INFO, logger="court_booker")
+    app = basketball_app(BASKETBALL[6])
+
+    booker = Booker(app, Config(court=BASKETBALL[6]))
+    booker.book("11:00 - 12:00", TARGET)
+
+    assert app.swipes == 1
+    assert BASKETBALL[6] in app.taps
+    assert app.screen == "ticket"
+    assert f"Court {BASKETBALL[6]!r} shown after 1 swipe(s)" in caplog.text
+
+
+def test_a_court_below_the_screen_is_swiped_into_view():
+    app = basketball_app(BASKETBALL[6], top=1028)  # the list before the service info loads
+    assert BASKETBALL[6] not in [desc for desc, _, _ in app.screens["courts"]]
+
+    Booker(app, Config(court=BASKETBALL[6])).book("11:00 - 12:00", TARGET)
+
+    assert app.swipes == 1
+    assert app.screen == "ticket"
+
+
+def test_a_court_on_the_screen_needs_no_swipe():
+    app = basketball_app(BASKETBALL[5])
+
+    booker = Booker(app, Config(court=BASKETBALL[5]))
+    booker.book("11:00 - 12:00", TARGET)
+
+    assert app.swipes == 0
+    assert booker.commands == 16
+
+
+def test_a_court_never_shown_fails_after_max_swipes():
+    app = basketball_app(BASKETBALL[6])
+    app.on_swipe = None  # the list does not move
+
+    with pytest.raises(ElementNotFoundError, match="not shown after 2 swipe"):
+        Booker(app, Config(court=BASKETBALL[6], max_swipes=2)).book("11:00 - 12:00", TARGET)
+
+    assert app.swipes == 2
+
+
 # A utility with a single court ------------------------------------------------
 
 PICKLEBALL = "S9 - Sân Pickleball"

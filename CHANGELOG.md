@@ -17,6 +17,8 @@ uses [Semantic Versioning](https://semver.org/).
 - Table tennis and pickleball, which have a single court: the app opens that court's booking
   details page right after the calendar, and the round goes on from there once the page
   names the configured court (another court fails the round).
+- A court list longer than the screen, such as the seven basketball courts, is swiped up
+  while the court is cut off by the bottom edge or not shown yet (up to `max_swipes`).
 
 ## [0.14.0] - 2026-10-26
 
