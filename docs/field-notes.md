@@ -110,23 +110,27 @@ Vip" and "Nướng BBQ", are out of scope). Only "Sân Tennis" has a capital T.
   today + 2, "Khung giờ khả dụng", 13 one-hour slots (06-12, 14-21), "| Hết chỗ", "Tiếp tục".
 - The quota counts per utility: with the tennis quota used, the quota notice showed after the
   calendar's "Tiếp tục" for tennis only; the other seven went on.
-- Only tennis showed the venues page ("Chọn phân khu").
-- After "Tiếp tục" the app shows either the court list ("Chọn vị trí/dịch vụ"), or, for a
-  utility with a single court, the booking details page of that court at once (its name,
-  "Số lượng cư dân", "Tiếp tục"); the same on two slots each. The details and confirmation
-  pages are the same as tennis.
+- A page with a single choice passes on to the next by itself, as the tennis venue does
+  (above): a venue page with one venue, a court list with one court. It shows for a moment,
+  so a read may catch it or not; it stays when the app is slow, and shows after Back. So after
+  "Tiếp tục" the first page read may be the venues ("Chọn phân khu"), the court list ("Chọn
+  vị trí/dịch vụ") or, for a utility with a single court, its booking details page (its
+  name, "Số lượng cư dân", "Tiếp tục"). Seen: table tennis and pickleball went to the details
+  page in the survey, and pickleball's list of one court was read in a dry run; the
+  multi-purpose courts' single venue ("Origami _ Sân đa năng") was read in a dry run only
+  (2026-10-26). The details and confirmation pages are the same as tennis.
 - A full court still shows on the list ("| Hết chỗ"), so the lists below are complete. Courts
   are shown as the app lists them for an Origami account, whatever their S prefix.
 
-| Tile | After "Tiếp tục" | Courts |
+| Tile | Court list | Courts |
 |---|---|---|
 | Sân Tennis | list | S10, S6, S8, S9 - Sân tennis |
 | Sân đa năng | list | S10, S7, S9 - Sân đa năng |
 | Sân bóng chuyền | list | S10 - Sân bóng chuyền hơi 01, S10 - Sân bóng chuyền hơi 02, S8 - Sân bóng chuyền hơi, S9 - Sân bóng chuyền hơi |
-| Sân bóng bàn | details | S5 - Sân tập bóng bàn 03 |
+| Sân bóng bàn | one court, passes by itself | S5 - Sân tập bóng bàn 03 |
 | Sân bóng rổ | list | S10 - Sân bóng rổ nửa sân 03, S10 - Sân tập bóng rổ 01, S6 - Sân bóng rổ tập ném 01, S6 - Sân bóng rổ tập ném 02, S8 - Sân bóng rổ nửa sân, S9 - Sân bóng rổ tập ném 01, S9 - Sân bóng rổ tập ném 02 |
 | Sân bóng đá | list | S5 - Sân bóng đá 5, S5 - Sân bóng đá 7 |
-| Sân Pickleball | details | S9 - Sân Pickleball |
+| Sân Pickleball | one court, passes by itself | S9 - Sân Pickleball |
 | Sân cầu lông | list | S10 - Sân cầu lông, S6 - Sân cầu lông, S8 - Sân Cầu lông |
 
 - Court names are not uniform: "S8 - Sân Cầu lông" has a capital C.
