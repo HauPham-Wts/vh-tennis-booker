@@ -29,7 +29,7 @@ const CASES: [Step["kind"], Step["data"], string, StepMessage["tone"]][] = [
   [
     "booking_started",
     { date: "2026-10-17", court: "S6 - Sân tennis", slots: [], dry_run: false },
-    "Bắt đầu đặt cho Thứ Bảy 17/10 · sân S6",
+    "Bắt đầu đặt cho Thứ Bảy 17/10 · sân Tennis S6",
     "moment",
   ],
   [
@@ -42,7 +42,7 @@ const CASES: [Step["kind"], Step["data"], string, StepMessage["tone"]][] = [
   ["calendar_opened", { attempt: 3 }, "Đã mở lịch đặt sân (lần 3)", "plain"],
   ["date_selected", { date: "2026-10-17" }, "Đã chọn ngày Thứ Bảy 17/10", "plain"],
   ["slot_selected", { slot: "15:00 - 16:00", swipes: 0 }, "Đã chọn khung 15:00–16:00", "plain"],
-  ["court_selected", { court: "S6 - Sân tennis" }, "Đã chọn sân S6", "plain"],
+  ["court_selected", { court: "S6 - Sân tennis" }, "Đã chọn sân Tennis S6", "plain"],
   ["terms_accepted", {}, "Đã tích đồng ý điều khoản", "plain"],
   [
     "slot_booked",

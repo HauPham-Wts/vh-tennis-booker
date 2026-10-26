@@ -87,7 +87,9 @@ describe("BookingTicket start", () => {
 
     const top = await ticket();
     // The badge before each slot gives its booking order.
-    await waitFor(() => expect(shown(top)).toEqual(["CN 18/10", "S6", "115:00–16:00216:00–17:00"]));
+    await waitFor(() =>
+      expect(shown(top)).toEqual(["CN 18/10", "Tennis S6", "115:00–16:00216:00–17:00"]),
+    );
     expect(within(top).getByText("Đặt lúc 06:00 sáng mai · máy thức 05:50")).toBeInTheDocument();
     const toggle = within(top).getByRole("switch", { name: "Tự đặt mỗi sáng" });
     expect(toggle).toHaveAttribute("aria-checked", "true");
@@ -173,6 +175,44 @@ describe("BookingTicket choices", () => {
     expect(await screen.findByText("✓ Đã lưu")).toBeInTheDocument();
   });
 
+  it("offers each sport, and the courts of the one chosen", async () => {
+    renderTicket({ saved: settings({ sport: "basketball", court: "S8 - Sân bóng rổ nửa sân" }) });
+
+    const sports = await screen.findByRole("group", { name: "Môn" });
+    expect(within(sports).getAllByRole("button")).toHaveLength(8);
+    expect(within(sports).getByRole("button", { name: "Bóng rổ" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    const courts = screen.getByRole("group", { name: "Sân" });
+    expect(within(courts).getAllByRole("button")).toHaveLength(7);
+    expect(within(courts).getByRole("button", { name: "S8 · nửa sân" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(shown(await ticket())[1]).toBe("Bóng rổ S8 · nửa sân");
+  });
+
+  it("saves another sport with its first court", async () => {
+    const saved = settings();
+    const { fetch, replies } = renderTicket({ saved });
+    const sports = await screen.findByRole("group", { name: "Môn" });
+    const badminton = { ...saved, sport: "badminton", court: "S6 - Sân cầu lông" };
+    replies["PUT /api/settings"] = reply(badminton);
+
+    fireEvent.click(within(sports).getByRole("button", { name: "Cầu lông" }));
+
+    const courts = screen.getByRole("group", { name: "Sân" });
+    await waitFor(() =>
+      expect(within(courts).getByRole("button", { name: "S6" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      ),
+    );
+    expect(within(courts).getAllByRole("button")).toHaveLength(3);
+    expect(await bodies(fetch, "PUT /api/settings")).toEqual([badminton]);
+  });
+
   it("offers no instance choice for one MuMu instance", async () => {
     renderTicket();
 
@@ -209,7 +249,7 @@ describe("BookingTicket choices", () => {
     );
     const slots = screen.getByRole("group", { name: /^Khung giờ/ });
     expect(within(slots).getByRole("button", { name: "20:00–21:00, lượt 1" })).toBeInTheDocument();
-    expect(shown(await ticket())).toEqual(["CN 18/10", "S9", "120:00–21:00"]);
+    expect(shown(await ticket())).toEqual(["CN 18/10", "Tennis S9", "120:00–21:00"]);
     const moved = { ...other, court: "S10 - Sân tennis" };
     replies["PUT /api/settings"] = reply({ ...saved, instances: [moved] });
 
@@ -240,7 +280,7 @@ describe("BookingTicket choices", () => {
 
     fireEvent.click(within(courts).getByRole("button", { name: "S8" }));
     expect(await screen.findByText("Đang lưu…")).toBeInTheDocument();
-    expect(shown(await ticket())[1]).toBe("S8"); // the top follows the press at once
+    expect(shown(await ticket())[1]).toBe("Tennis S8"); // the top follows the press at once
     expect(within(courts).getByRole("button", { name: "S8" })).toHaveAttribute(
       "aria-pressed",
       "true",

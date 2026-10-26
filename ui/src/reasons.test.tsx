@@ -15,7 +15,7 @@ describe("failureReason", () => {
   // The reasons as the engine writes them (flow.py, runner.py, cli.py), seen in real runs.
   it.each([
     ["Slot 18:00 - 19:00 is fully booked", "Hết chỗ"],
-    ["Court S6 - Sân tennis is fully booked", "Sân S6 đã kín"],
+    ["Court S6 - Sân tennis is fully booked", "Sân Tennis S6 đã kín"],
     [
       "The app refused the booking: Căn hộ đã hết hạn mức đăng ký tiện ích cho phép.",
       "App từ chối: Căn hộ đã hết hạn mức đăng ký tiện ích cho phép.",
@@ -49,7 +49,7 @@ describe("failureReason", () => {
   it("words the reasons in English", async () => {
     expect(await reasonOf("Slot 18:00 - 19:00 is fully booked", "en")).toBe("Fully booked");
     expect(await reasonOf("Court S6 - Sân tennis is fully booked", "en")).toBe(
-      "Court S6 fully booked",
+      "Court Tennis S6 fully booked",
     );
   });
 });

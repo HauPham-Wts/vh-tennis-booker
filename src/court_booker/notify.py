@@ -162,9 +162,23 @@ def send_telegram(token: str, chat_id: str, text: str, post: Post = http_post) -
 
 
 def court_name(court: str) -> str:
-    """Return the short name of a court, "S6" for "S6 - Sân tennis", as the app shows it."""
-    name = court.split(" - ", 1)[0].strip()
-    return name or court
+    """Return the short name of a court: "S6" for "S6 - Sân tennis", as the app shows it.
+
+    A court of another sport keeps the words that name it: "S6 cầu lông" for "S6 - Sân cầu
+    lông". A name without " - " stays whole.
+    """
+    name, _, rest = (part.strip() for part in court.partition(" - "))
+    if not name or not rest:
+        return court
+    if rest.lower() == _TENNIS_COURT:
+        return name
+    words = rest.split(" ", 1)
+    return f"{name} {words[-1] if words[0].lower() == _COURT_WORD else rest}"
+
+
+_COURT_WORD = "sân"
+_TENNIS_COURT = f"{_COURT_WORD} tennis"
+"""What follows the short name of each tennis court in its name."""
 
 
 def failure_reason(detail: str | None, language: str = DEFAULT_LANGUAGE) -> str:
