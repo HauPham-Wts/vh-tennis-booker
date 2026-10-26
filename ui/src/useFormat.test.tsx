@@ -16,7 +16,9 @@ describe("useFormat", () => {
     expect(format.seconds(7)).toBe("7,0 giây");
     expect(format.slot("18:00 - 19:00")).toBe("18:00–19:00");
     expect(format.slotStart("18:00 - 19:00")).toBe("18:00");
-    expect(format.court("S6 - Sân tennis")).toBe("S6");
+    expect(format.court("S6 - Sân tennis")).toBe("Tennis S6");
+    expect(format.court("S10 - Sân bóng rổ nửa sân 03")).toBe("Bóng rổ S10 · nửa sân 03");
+    expect(format.court("S1 - Sân tennis")).toBe("S1"); // on no list: its short name
   });
 
   it("follows a switch to English", async () => {

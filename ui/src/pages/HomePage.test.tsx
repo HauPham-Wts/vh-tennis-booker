@@ -159,7 +159,7 @@ describe("HomePage live run", () => {
     renderLive();
 
     const live = await screen.findByRole("region", {
-      name: "Đang đặt cho Thứ Bảy 17/10 · sân S6",
+      name: "Đang đặt cho Thứ Bảy 17/10 · sân Tennis S6",
     });
     expect(within(live).getByText("15:00–16:00")).toBeInTheDocument();
     expect(within(live).getByText("LƯỢT 1/2")).toBeInTheDocument();
@@ -224,7 +224,7 @@ describe("HomePage live run", () => {
     });
 
     const live = await screen.findByRole("region", {
-      name: "Đang đặt cho Thứ Bảy 17/10 · sân S6",
+      name: "Đang đặt cho Thứ Bảy 17/10 · sân Tennis S6",
     });
     expect(await within(live).findByText("Xong: 2/2 khung thành công")).toBeInTheDocument();
     expect(within(live).queryByRole("listitem", { current: "step" })).not.toBeInTheDocument();
@@ -264,10 +264,10 @@ describe("HomePage live run", () => {
     });
 
     const first = await screen.findByRole("region", {
-      name: "MuMu 0 · Đang đặt cho Thứ Bảy 17/10 · sân S6",
+      name: "MuMu 0 · Đang đặt cho Thứ Bảy 17/10 · sân Tennis S6",
     });
     const second = await screen.findByRole("region", {
-      name: "MuMu 1 · Đang đặt cho Thứ Bảy 17/10 · sân S6",
+      name: "MuMu 1 · Đang đặt cho Thứ Bảy 17/10 · sân Tennis S6",
     });
     expect(within(first).getByText("LƯỢT 1/2")).toBeInTheDocument();
     expect(within(second).getByText("LƯỢT 1/2")).toBeInTheDocument();
@@ -301,7 +301,7 @@ describe("HomePage live run", () => {
     });
 
     const live = await screen.findByRole("region", {
-      name: "Đang chạy thử cho Thứ Bảy 17/10 · sân S6",
+      name: "Đang chạy thử cho Thứ Bảy 17/10 · sân Tennis S6",
     });
     expect(within(live).getByText("0/2").parentElement).toHaveTextContent("0/2 khung đã qua");
   });

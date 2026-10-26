@@ -134,7 +134,7 @@ describe("History list", () => {
 
     expect(await rows()).toEqual([
       // The hidden words after the mark and a failed slot are for screen readers.
-      "T7 17/10 · S61/2ĐẶT ĐƯỢC 1/2✓ 15:00✕ 16:00 Hết chỗtheo hẹn giờ 15/10",
+      "T7 17/10 · Tennis S61/2ĐẶT ĐƯỢC 1/2✓ 15:00✕ 16:00 Hết chỗtheo hẹn giờ 15/10",
       "T2 12/10✕KHÔNG ĐẶT ĐƯỢC✕ Đang có lần chạy khácchạy tay 12/10 08:32",
     ]);
     const query = new URL(fetch.mock.calls.find(([r]) => r.url.includes("/api/runs"))![0].url);
@@ -149,7 +149,7 @@ describe("History list", () => {
 
     const shown = await rows();
     expect(shown).toHaveLength(3);
-    expect(shown[1]).toBe("T7 17/10 · S6THỬCHẠY THỬ ĐẠT○ 18:00chạy thử 14/10 19:43");
+    expect(shown[1]).toBe("T7 17/10 · Tennis S6THỬCHẠY THỬ ĐẠT○ 18:00chạy thử 14/10 19:43");
     expect(requestsTo(fetch, "GET /api/runs")).toBe(1);
   });
 
@@ -210,7 +210,7 @@ describe("History list", () => {
     const history = await screen.findByRole("tabpanel", { name: "History" });
     const list = await within(history).findByRole("list");
     expect(within(list).getAllByRole("link")[0]).toHaveTextContent(
-      "Sat 17 Oct · S61/2BOOKED 1/2✓ 15:00✕ 16:00 Fully bookedon schedule 15 Oct",
+      "Sat 17 Oct · Tennis S61/2BOOKED 1/2✓ 15:00✕ 16:00 Fully bookedon schedule 15 Oct",
     );
   });
 });
@@ -221,9 +221,9 @@ describe("History run", () => {
     await rows();
     fireEvent.click(screen.getByRole("checkbox", { name: "Gồm cả chạy thử" }));
 
-    fireEvent.click(screen.getByRole("link", { name: /^T7 17\/10 · S6\s*ĐẶT ĐƯỢC 1\/2/ }));
+    fireEvent.click(screen.getByRole("link", { name: /^T7 17\/10 · Tennis S6\s*ĐẶT ĐƯỢC 1\/2/ }));
 
-    const run = await screen.findByRole("article", { name: "Chơi Thứ Bảy 17/10 · S6" });
+    const run = await screen.findByRole("article", { name: "Chơi Thứ Bảy 17/10 · Tennis S6" });
     expect(router.state.location.search).toBe("?run=26");
     expect(within(run).getByText("ĐẶT ĐƯỢC 1/2")).toBeInTheDocument();
     expect(within(run).getByText("đặt sáng nay 15/10 · theo hẹn giờ")).toBeInTheDocument();
@@ -241,15 +241,17 @@ describe("History run", () => {
   it("shows every step of the run and the engine's reason", async () => {
     renderApp(`${paths.overview}?run=26`, REPLIES);
 
-    const run = await screen.findByRole("article", { name: "Chơi Thứ Bảy 17/10 · S6" });
+    const run = await screen.findByRole("article", { name: "Chơi Thứ Bảy 17/10 · Tennis S6" });
     const steps = within(run).getAllByRole("list")[1]!.querySelectorAll("li");
     expect([...steps].map((item) => item.textContent)).toEqual([
       "05:50:02Bắt đầu theo hẹn giờ",
-      "06:00:00Bắt đầu đặt cho Thứ Bảy 17/10 · sân S6",
+      "06:00:00Bắt đầu đặt cho Thứ Bảy 17/10 · sân Tennis S6",
       "06:00:06✓ Đặt được 15:00–16:00 (6,0 giây)",
       "06:00:11✕ Không đặt được 16:00–17:00 (4,3 giây)Slot 16:00 - 17:00 is fully booked",
     ]);
-    expect(within(run).getByText("Bắt đầu đặt cho Thứ Bảy 17/10 · sân S6").tagName).toBe("MARK");
+    expect(within(run).getByText("Bắt đầu đặt cho Thứ Bảy 17/10 · sân Tennis S6").tagName).toBe(
+      "MARK",
+    );
   });
 
   it("keeps the technical log closed until asked for", async () => {
@@ -267,7 +269,7 @@ describe("History run", () => {
       "GET /api/runs/25": reply({ ...DRY, steps: [], log_lines: [] }),
     });
 
-    const run = await screen.findByRole("article", { name: "Chơi Thứ Bảy 17/10 · S6" });
+    const run = await screen.findByRole("article", { name: "Chơi Thứ Bảy 17/10 · Tennis S6" });
     expect(within(run).getByText("CHẠY THỬ ĐẠT")).toBeInTheDocument();
     expect(within(run).getByText("chạy thử tối hôm qua 14/10")).toBeInTheDocument();
     expect(within(run).getAllByRole("listitem")[0]).toHaveTextContent(

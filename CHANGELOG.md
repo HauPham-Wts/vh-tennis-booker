@@ -20,6 +20,10 @@ uses [Semantic Versioning](https://semver.org/).
   the configured court (another court fails the round).
 - A court list longer than the screen, such as the seven basketball courts, is swiped up
   while the court is cut off by the bottom edge or not shown yet (up to `max_swipes`).
+- The ticket offers the sport above the courts, then the courts of that sport; choosing a
+  sport saves it with its first court. A court is named by its sport and label everywhere
+  ("Tennis S6", "Bóng rổ S8 · nửa sân"), and the Windows notification names a court of
+  another sport with its sport ("S6 cầu lông").
 
 ## [0.14.0] - 2026-10-26
 

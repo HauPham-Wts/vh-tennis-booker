@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { findCourt } from "./booking";
 import {
   courtName,
   dayPeriod,
@@ -60,8 +61,16 @@ export function useFormat() {
       slot: formatSlot,
       /** "18:00". */
       slotStart,
-      /** "S6". */
-      court: courtName,
+      /**
+       * "Tennis S6", "Bóng rổ S8 · nửa sân": the sport and label of a court on the lists of
+       * `booking.ts`; "S1" for "S1 - Sân tennis", a court on none.
+       */
+      court: (court: string) => {
+        const known = findCourt(court);
+        return known === undefined
+          ? courtName(court)
+          : t("format.court", { sport: t(`sports.${known.sport}`), court: known.label });
+      },
     }),
     [t, language],
   );

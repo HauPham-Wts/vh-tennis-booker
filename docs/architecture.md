@@ -164,7 +164,7 @@ After a route or model change: `python tools/export_openapi.py`, then `npm run a
 - One screen (`pages/HomePage.tsx`, parts in `pages/home/`): the ticket (`BookingTicket`:
   on top the daily switch and what is set, the play day, court and slots of the MuMu
   instance chosen below, following each press as its save goes out; under the perforation
-  that instance's court and up to two slots, saved on each press, and the dry run;
+  that instance's sport, court and up to two slots, saved on each press, and the dry run;
   or `LiveTicket` while a booking or a dry run goes on: one ticket per run of `running.runs`,
   named "MuMu N" when several instances book side by side) and `SidePanel` beside it, two tabs:
   `HistoryTab` (runs ten days at a time, real bookings unless dry runs are ticked, `?run=`
@@ -172,8 +172,10 @@ After a route or model change: `python tools/export_openapi.py`, then `npm run a
   notification switch, the guide). The header's status line (`components/StatusLine.tsx`)
   shows the run going on, else the one thing to do. `manualSteps.ts` keeps the user's ticks in
   `localStorage` (memory when storage fails); `setupState.ts` counts the setup tasks left and
-  picks the panel's first tab. `booking.ts` holds the slot and court choices the developer
-  maintains and the two-slot limit. The UI never calls `GET /api/setup` or
+  picks the panel's first tab. `booking.ts` holds the slot, sport and court choices the
+  developer maintains (each court with the label that tells it from the others of its sport)
+  and the two-slot limit; `useFormat`'s `court` names a court by its sport and label
+  ("Tennis S6"). The UI never calls `GET /api/setup` or
   `POST /api/notifications/test` (the routes stay for the command line and tools).
 
 ## Driver (`android/`)
