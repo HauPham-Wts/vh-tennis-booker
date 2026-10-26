@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-10-26
+
 ### Changed
 - The ticket is in two parts: above the perforation only what is set, the play day, court
   and slots in booking order, large ("T4 28/10 · S6 · ① 18:00–19:00 ② 19:00–20:00"), and one
