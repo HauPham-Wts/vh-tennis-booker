@@ -1382,6 +1382,68 @@ def test_a_notice_that_stays_fails_the_round_after_the_retry_window(monkeypatch)
     assert app.screen == "closed"
 
 
+# A utility with a single court ------------------------------------------------
+
+PICKLEBALL = "S9 - Sân Pickleball"
+
+
+def single_court_app(court=PICKLEBALL):
+    """Return an app whose utility opens the details page of ``court`` after the calendar."""
+    app = booking_app(shown=(details(court=court),))
+    app.screens["details"][0] = node(court, (116, 975, 274, 1004), False)
+    app.screens["details_loading"] = app.screens["details"][:2]  # "Tiếp tục" not enabled yet
+    app.taps_to[("calendar_selected", "Tiếp tục")] = ["details_loading", ("details", 2)]
+    app.backs_to["details"] = "calendar_selected"
+    return app
+
+
+def test_a_single_court_is_booked_from_the_details_page_the_calendar_opens(caplog):
+    caplog.set_level(logging.INFO, logger="court_booker")
+    app = single_court_app()
+    sink = MemorySink()
+    booker = Booker(app, Config(court=PICKLEBALL), Reporter(sink))
+
+    booker.book("11:00 - 12:00", TARGET)
+
+    assert app.taps == [tap for tap in FULL_ROUND if tap != "S10 - Sân tennis"]
+    assert app.screen == "ticket"
+    assert booker.commands == 15  # no court to tap; two reads of the page, one still loading
+    assert "Confirmation page: 2026-10-11 11:00 - 12:00 on S9 - Sân Pickleball" in caplog.text
+    assert f"The app opened its only court, {PICKLEBALL!r}" in caplog.text
+    assert EventKind.COURT_SELECTED in sink.kinds
+
+
+@pytest.mark.parametrize(
+    "first",
+    [
+        [COURT_LIST],  # the heading read before its one court, 2026-10-26
+        [COURT_LIST, node(PICKLEBALL, (35, 1024, 505, 1144))],
+        [VENUE_LIST, VENUE],  # one venue, then one court
+    ],
+    ids=["heading", "list", "venue"],
+)
+def test_a_page_with_one_choice_may_pass_on_to_the_details_by_itself(first):
+    app = single_court_app()
+    app.screens["first"] = first
+    app.taps_to[("calendar_selected", "Tiếp tục")] = ["first", ("details", 2)]
+
+    booker = Booker(app, Config(court=PICKLEBALL))
+    booker.book("11:00 - 12:00", TARGET)
+
+    assert app.screen == "ticket"
+    assert app.taps[-3:] == ["Tiếp tục", CHECKBOX, "Xác nhận"]
+
+
+def test_a_single_court_other_than_the_config_fails_the_round():
+    app = single_court_app(court="S5 - Sân tập bóng bàn 03")
+
+    with pytest.raises(ElementNotFoundError, match="its only court, which is not 'S9 - Sân Pick"):
+        Booker(app, Config(court=PICKLEBALL)).book("11:00 - 12:00", TARGET)
+
+    assert "Tôi đã hiểu và đồng ý với " not in [desc for desc, _, _ in app.screens[app.screen]]
+    assert app.taps[-1] == "Tiếp tục"  # the calendar's: nothing tapped on the details page
+
+
 # The app in English -----------------------------------------------------------
 
 
