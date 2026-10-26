@@ -14,9 +14,10 @@ uses [Semantic Versioning](https://semver.org/).
   `pickleball` or `badminton`. The run taps that sport's tile on the utilities list; a
   `[labels] utility` set by hand still wins. Only tennis has its English tile so far: a run
   of another sport stops with a clear message if the app is in English.
-- Table tennis and pickleball, which have a single court: the app opens that court's booking
-  details page right after the calendar, and the round goes on from there once the page
-  names the configured court (another court fails the round).
+- Table tennis and pickleball, which have a single court: their court list passes on to
+  that court's booking details page by itself, often before a read shows it, as a single
+  venue does. The round goes on from the details page wherever it shows, once the page names
+  the configured court (another court fails the round).
 - A court list longer than the screen, such as the seven basketball courts, is swiped up
   while the court is cut off by the bottom edge or not shown yet (up to `max_swipes`).
 - The ticket offers the sport above the courts, then the courts of that sport; choosing a

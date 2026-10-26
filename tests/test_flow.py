@@ -1498,6 +1498,27 @@ def test_a_single_court_is_booked_from_the_details_page_the_calendar_opens(caplo
     assert EventKind.COURT_SELECTED in sink.kinds
 
 
+@pytest.mark.parametrize(
+    "first",
+    [
+        [COURT_LIST],  # the heading read before its one court, 2026-10-26
+        [COURT_LIST, node(PICKLEBALL, (35, 1024, 505, 1144))],
+        [VENUE_LIST, VENUE],  # one venue, then one court
+    ],
+    ids=["heading", "list", "venue"],
+)
+def test_a_page_with_one_choice_may_pass_on_to_the_details_by_itself(first):
+    app = single_court_app()
+    app.screens["first"] = first
+    app.taps_to[("calendar_selected", "Tiếp tục")] = ["first", ("details", 2)]
+
+    booker = Booker(app, Config(court=PICKLEBALL))
+    booker.book("11:00 - 12:00", TARGET)
+
+    assert app.screen == "ticket"
+    assert app.taps[-3:] == ["Tiếp tục", CHECKBOX, "Xác nhận"]
+
+
 def test_a_single_court_other_than_the_config_fails_the_round():
     app = single_court_app(court="S5 - Sân tập bóng bàn 03")
 

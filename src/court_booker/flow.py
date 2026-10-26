@@ -260,18 +260,17 @@ class Booker:
         )
         if self.notice(shown):
             raise self._refusal(self.notice_text(screen) or "")
+        if not self.court_list(shown) and not self.residents(shown):
+            # Only the court list's heading counts after the venue: a read right after the
+            # tap may still show the venue (2026-10-23), which ended the round at once.
+            venue = Match(desc=shown.desc, clickable=True)
+            shown, screen = self.tap_and_advance(screen, venue, shown.desc, self._courts_or_details)
+        if not self.residents(shown):
+            shown, screen = self.find_court(screen)
         if self.residents(shown):
             screen = self.check_single_court(screen)
         else:
-            if not self.court_list(shown):
-                # Only the court list's heading counts after the venue: a read right after the
-                # tap may still show the venue (2026-10-23), which ended the round at once.
-                venue = Match(desc=shown.desc, clickable=True)
-                _, screen = self.tap_and_advance(
-                    screen, venue, shown.desc, self._finder(self.court_list)
-                )
-            court, screen = self.find_court(screen)
-            if labels.fully_booked in court.desc:
+            if labels.fully_booked in shown.desc:
                 raise SlotUnavailableError(f"Court {self.config.court} is fully booked")
             screen = self.select_court(screen)
         self.report(EventKind.COURT_SELECTED, court=self.config.court)
@@ -346,6 +345,9 @@ class Booker:
     def find_court(self, screen: Screen) -> tuple[Node, Screen]:
         """Return the court on the court list ``screen`` and the read that shows it whole.
 
+        A list of one court may pass on to its details page by itself: then the details
+        page's caption is returned with that read.
+
         The list can run below the screen: the last of seven basketball courts shows only its
         top few pixels at 540x1600 (field notes, "Other sports"), and the whole list shows
         232 px lower until the service info above it has loaded. Dump bounds are clipped to
@@ -362,7 +364,7 @@ class Booker:
             if found is None:
                 raise ElementNotFoundError(f"Court {name!r} is not on the court list")
             node, screen = found
-            if self.any_court(node) and not _cut_off(screen, node):
+            if self.residents(node) or (self.any_court(node) and not _cut_off(screen, node)):
                 if swipes:
                     logger.info("Court %r shown after %d swipe(s)", name, swipes)
                 return node, screen
@@ -424,9 +426,10 @@ class Booker:
     def check_single_court(self, screen: Screen) -> Screen:
         """Return the booking details page ``screen`` shows in place of the court list.
 
-        A utility with a single court, such as table tennis, opens that court's details page
-        right after the calendar (field notes, "Other sports"). The page is awaited until its
-        "Tiếp tục" is enabled, as after a court tap, and must name the configured court.
+        A court list with a single court, such as table tennis's, passes on to that court's
+        details page by itself, often before a read shows the list (field notes, "Other
+        sports"). The page is awaited until its "Tiếp tục" is enabled, as after a court tap,
+        and must name the configured court.
         """
         name = self.config.court
         found = self.wait_for(self._details_page, self.config.timeout, screen)
@@ -893,12 +896,17 @@ class Booker:
 
         return find
 
+    def _courts_or_details(self, screen: Screen) -> Node | None:
+        """Return the court list's heading, or the booking details page's caption."""
+        return screen.find(self.court_list) or screen.find(self.residents)
+
     def _court_or_cut_off(self, screen: Screen) -> Node | None:
         """Return the court on the court list, or else an element the bottom edge cuts off.
 
-        The court list's heading has shown already; a swipe may move it off the screen.
+        The court list's heading has shown already; a swipe may move it off the screen. A
+        list of one court may have passed on to the details page: its caption is returned.
         """
-        court = screen.find(self.any_court)
+        court = screen.find(self.any_court) or screen.find(self.residents)
         if court is not None:
             return court
         return next((node for node in screen.nodes if _cut_off(screen, node)), None)
