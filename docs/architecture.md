@@ -69,7 +69,8 @@ Details live in the docstrings; this page says where things are and what must st
   yet reloads the calendar) → `select_date` → `select_slot` (tapped once "Tiếp tục" shows
   enabled) → "Tiếp tục" → `_after_calendar` (court list, the venue page, the booking details
   page of a utility with a single court, or a notice, which fails the round at once) →
-  `select_court` (or `check_single_court`: the details page must name the configured court)
+  `select_court` (or `check_single_court` when a page with one choice passed on to the
+  details page by itself: it must name the configured court)
   → "Tiếp tục" → confirmation page → `accept_and_confirm`.
 - `find_court`: the court list can run below the screen (seven basketball courts); while the
   court is cut off by the bottom edge, or missing with the list cut off, the list is swiped up
