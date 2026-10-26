@@ -18,6 +18,8 @@ uses [Semantic Versioning](https://semver.org/).
   that court's booking details page by itself, often before a read shows it, as a single
   venue does. The round goes on from the details page wherever it shows, once the page names
   the configured court (another court fails the round).
+- A court list longer than the screen, such as the seven basketball courts, is swiped up
+  while the court is cut off by the bottom edge or not shown yet (up to `max_swipes`).
 
 ## [0.14.0] - 2026-10-26
 

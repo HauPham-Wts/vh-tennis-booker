@@ -9,7 +9,7 @@ sport = "tennis"                    # tennis, multi, volleyball, table-tennis, b
 court = "S10 - Sân tennis"          # as the app's court list names it
 venue_keyword = "Origami"           # picks the venue when the app lists several
 timeout = 30                        # longest wait for any screen, in seconds
-max_swipes = 6                      # scroll attempts when a slot is hidden (short screens)
+max_swipes = 6                      # scroll attempts when a slot or court is hidden
 
 # Emulator start. Leave mumu_manager empty if you start the emulator yourself.
 mumu_manager = "C:/Program Files/Netease/MuMuPlayer/nx_main/MuMuManager.exe"
