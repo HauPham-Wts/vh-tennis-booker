@@ -67,9 +67,10 @@ Details live in the docstrings; this page says where things are and what must st
 - Round: `open_slot` (utility → calendar; a notice in its place, such as the closed-hours one,
   is closed and the utility tapped again until `open_retry_seconds`; a date or slot not listed
   yet reloads the calendar) → `select_date` → `select_slot` (tapped once "Tiếp tục" shows
-  enabled) → "Tiếp tục" → `_after_calendar` (court list, the venue page, or a notice, which
-  fails the round at once) → `select_court` → "Tiếp tục" → confirmation page →
-  `accept_and_confirm`.
+  enabled) → "Tiếp tục" → `_after_calendar` (court list, the venue page, the booking details
+  page of a utility with a single court, or a notice, which fails the round at once) →
+  `select_court` (or `check_single_court`: the details page must name the configured court)
+  → "Tiếp tục" → confirmation page → `accept_and_confirm`.
 - `select_court`: the court list can move under the tap (field notes), so the booking details
   page must name the configured court; another court is left with Back and tapped again.
 - `accept_and_confirm`: tick, then "Xác nhận" at least 0.2 s later. Booked only once the
