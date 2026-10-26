@@ -184,6 +184,7 @@ describe("BookingTicket choices", () => {
     const other = {
       mumu_index: 1,
       slots: ["20:00 - 21:00"],
+      sport: "tennis",
       court: "S9 - Sân tennis",
       venue_keyword: "Origami",
     };

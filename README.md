@@ -139,7 +139,8 @@ Edit `config.toml`, or later use Settings in the web UI. The keys you usually ch
 | Key | Example | Meaning |
 |---|---|---|
 | `slots` | `["18:00 - 19:00", "19:00 - 20:00"]` | Slots to book, one round each, in this order: put the most wanted first |
-| `court` | `"S10 - Sân tennis"` | The court, as the app names it (S6, S8, S9 or S10) |
+| `sport` | `"tennis"` | What to book: `tennis`, `multi`, `volleyball`, `table-tennis`, `basketball`, `football`, `pickleball` or `badminton` |
+| `court` | `"S10 - Sân tennis"` | The court, as the app names it (S6, S8, S9 or S10 for tennis) |
 | `start_at` | `"06:00"` | When the app opens bookings |
 | `wake_at` | `"05:45"` | When the daily task wakes the PC and starts preparing |
 
@@ -148,7 +149,7 @@ explained in `config.example.toml`.
 
 To book with more accounts at once, clone the MuMu instance in MuMu's multi-instance manager,
 log the clone in to another account, and add an `[[instances]]` table for it (example in
-`config.example.toml`): its `mumu_index`, and any of `slots`, `court` and `venue_keyword`
+`config.example.toml`): its `mumu_index`, and any of `slots`, `sport`, `court` and `venue_keyword`
 that differ. The web UI then shows each instance's settings.
 
 ### 3. Set up the PC and the emulator

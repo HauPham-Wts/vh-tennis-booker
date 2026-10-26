@@ -987,6 +987,10 @@
             "type": "array",
             "title": "Slots"
           },
+          "sport": {
+            "type": "string",
+            "title": "Sport"
+          },
           "court": {
             "type": "string",
             "title": "Court"
@@ -1001,6 +1005,7 @@
         "required": [
           "mumu_index",
           "slots",
+          "sport",
           "court",
           "venue_keyword"
         ],
@@ -1624,6 +1629,10 @@
             "type": "array",
             "title": "Slots"
           },
+          "sport": {
+            "type": "string",
+            "title": "Sport"
+          },
           "court": {
             "type": "string",
             "title": "Court"
@@ -1735,6 +1744,7 @@
         "type": "object",
         "required": [
           "slots",
+          "sport",
           "court",
           "wake_at",
           "start_at",
@@ -1758,7 +1768,7 @@
           "labels"
         ],
         "title": "Settings",
-        "description": "Every booking setting; the UI changes the slots and court, and sends the rest back."
+        "description": "Every booking setting; the UI changes the slots, sport and court, and sends the rest\nback."
       },
       "SetupItem": {
         "properties": {

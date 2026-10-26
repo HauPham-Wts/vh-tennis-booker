@@ -26,12 +26,24 @@ WARM_UP_RANGE = (5, 600)
 """Allowed ``warm_up_seconds``: time to load the utilities list, at most ten minutes ahead."""
 NOTIFICATION_LANGUAGES = ("vi", "en")
 """Languages of the Windows notification: those of the app's own interface."""
-INSTANCE_KEYS = ("mumu_index", "slots", "court", "venue_keyword")
+SPORTS = {
+    "tennis": "Sân Tennis",
+    "multi": "Sân đa năng",
+    "volleyball": "Sân bóng chuyền",
+    "table-tennis": "Sân bóng bàn",
+    "basketball": "Sân bóng rổ",
+    "football": "Sân bóng đá",
+    "pickleball": "Sân Pickleball",
+    "badminton": "Sân cầu lông",
+}
+"""The sports the run books, each with its tile on the utilities list in Vietnamese (field
+notes, "Other sports"); the English tiles are in :mod:`court_booker.app_language`."""
+INSTANCE_KEYS = ("mumu_index", "slots", "sport", "court", "venue_keyword")
 """Keys of an ``[[instances]]`` table: the booking settings of another MuMu instance, which
 books with its own account; ``mumu_index`` is required, the others default to the file's."""
 _IGNORED_KEYS = ("days_ahead",)
 """Keys of older files, read and dropped: the play day was a setting until 0.13.1."""
-_WRITTEN_WHEN_CHANGED = ("windows_notification", "notification_language", "instances")
+_WRITTEN_WHEN_CHANGED = ("windows_notification", "notification_language", "instances", "sport")
 """Keys ``save_config`` writes only when they differ from the default (see there)."""
 _SLOT_PATTERN = re.compile(r"\d{2}:\d{2} - \d{2}:\d{2}")
 
@@ -45,7 +57,8 @@ class Labels:
     """
 
     home: str = "Tiện ích"
-    utility: str = "Sân Tennis"
+    utility: str = ""
+    """Tile of the utility to book on the utilities list; empty for the tile of ``sport``."""
     continue_: str = "Tiếp tục"
     confirm: str = "Xác nhận"
     confirm_page: str = "Xác nhận đăng ký"
@@ -88,6 +101,8 @@ class Config:
     """adb executable; empty searches PATH, then the emulator folder."""
     package: str = "com.vinhomes.resident"
     slots: list[str] = field(default_factory=lambda: ["11:00 - 12:00", "14:00 - 15:00"])
+    sport: str = "tennis"
+    """What to book, one of :data:`SPORTS`: the tile tapped on the utilities list."""
     court: str = "S10 - Sân tennis"
     venue_keyword: str = "Origami"
     """Picks the venue when the app lists several; a single one is tapped whatever its name."""
@@ -183,12 +198,17 @@ def save_config(config: Config, path: str | Path) -> None:
     an existing file are not kept. Only the labels that differ from the defaults are
     written: a runner of an older version refuses a label it does not know, and a later
     version's fix to a default label then reaches this file too. For the same reason the
-    keys of :data:`_WRITTEN_WHEN_CHANGED`, added after 0.9.1, are written only when changed.
+    keys of :data:`_WRITTEN_WHEN_CHANGED`, added after 0.9.1, are written only when changed,
+    and an instance's ``sport`` only when it differs from the file's.
     """
     problems = validate_config(config)
     if problems:
         raise ConfigError("; ".join(problems))
     data = config_to_dict(config)
+    data["instances"] = [
+        {key: value for key, value in table.items() if (key, value) != ("sport", config.sport)}
+        for table in config.instances
+    ]
     defaults = config_to_dict(Config())
     for key in _WRITTEN_WHEN_CHANGED:
         if data[key] == defaults[key]:
@@ -226,6 +246,8 @@ def validate_config(config: Config) -> list[str]:
             problems.append(f"slot {slot!r} must look like '18:00 - 19:00'")
     if len(set(config.slots)) != len(config.slots):
         problems.append("a slot is listed twice")
+    if config.sport not in SPORTS:
+        problems.append(f"sport must be one of {', '.join(SPORTS)}")
     if not config.court.strip():
         problems.append("court is empty")
     times = {}
