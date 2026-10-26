@@ -6,6 +6,7 @@ import pytest
 from court_booker.config import (
     Config,
     ConfigError,
+    config_to_dict,
     ensure_config,
     instance_config,
     load_config,
@@ -50,7 +51,6 @@ def test_defaults_are_valid():
         ({"slots": ["18:00-19:00"]}, "slot '18:00-19:00' must look like '18:00 - 19:00'"),
         ({"slots": ["18:00 - 19:00", "18:00 - 19:00"]}, "a slot is listed twice"),
         ({"court": " "}, "court is empty"),
-        ({"days_ahead": 3}, "days_ahead must be 0 to 2"),
         ({"wake_at": "6:00 AM"}, "Invalid wake_at '6:00 AM'; use HH:MM or HH:MM:SS"),
         ({"wake_at": "06:05"}, "wake_at must be before start_at"),
         ({"timeout": 0}, "timeout must be positive"),
@@ -70,7 +70,7 @@ def test_invalid_values_are_reported(changes, problem):
 
 
 def test_saved_config_loads_back_the_same(tmp_path):
-    config = Config(slots=["19:00 - 20:00", "18:00 - 19:00"], days_ahead=1, wake_at="05:50")
+    config = Config(slots=["19:00 - 20:00", "18:00 - 19:00"], wake_at="05:50")
     config.next_month_xy = (0.9, 0.12)
     config.labels.continue_ = "Tiếp tục nha"
     path = tmp_path / "CourtBooker" / "config.toml"
@@ -128,8 +128,23 @@ def test_another_instance_has_its_own_booking_settings(tmp_path):
 
     assert config.instances == [INSTANCE]
     assert (other.mumu_index, other.slots, other.court) == (1, ["20:00 - 21:00"], "S9 - Sân tennis")
-    assert (other.timeout, other.days_ahead, other.instances) == (20, 2, [])  # the rest is shared
+    assert (other.timeout, other.instances) == (20, [])  # the rest is shared
     assert config.slots == ["18:00 - 19:00"]
+
+
+def test_the_old_play_day_key_is_dropped(tmp_path):
+    # Files of 0.13.1 and before hold days_ahead; the run always books today + 2 now.
+    path = tmp_path / "config.toml"
+    path.write_text(
+        'days_ahead = 1\nslots = ["18:00 - 19:00"]\n\n[[instances]]\nmumu_index = 1\n'
+        "days_ahead = 0\n",
+        encoding="utf-8",
+    )
+
+    config = load_config(path)
+
+    assert config == Config(slots=["18:00 - 19:00"], instances=[{"mumu_index": 1}])
+    assert "days_ahead" not in config_to_dict(config)
 
 
 @pytest.mark.parametrize(

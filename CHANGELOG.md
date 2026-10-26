@@ -6,6 +6,28 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-10-26
+
+### Changed
+- The ticket is in two parts: above the perforation only what is set, the play day, court
+  and slots in booking order, large ("T4 28/10 · S6 · ① 18:00–19:00 ② 19:00–20:00"), and one
+  line on when the run starts and the PC wakes; below it the choices, each press showing on
+  top at once. The large start time is gone.
+- Each run in the History takes two lines: the play day and court with a count ("2/2",
+  "1/2", "0/2"; "THỬ" for a dry run) in place of the worded stamp, then the slots and when the
+  run started, after a clock (on schedule) or a person (by hand). Why a slot failed shows on
+  hover and in the run, which keeps its full stamp.
+
+### Removed
+- The play day is no longer a setting: a run always books two days ahead, the newest day the
+  app opens at 06:00. The ticket shows the play day above the perforation instead of three
+  buttons; `days_ahead` is dropped from the settings, `[[instances]]` and `config.example.toml`,
+  and `--days` from the command line. A `days_ahead` line in an existing `config.toml` is
+  read and ignored.
+
+### Fixed
+- The ticket's column no longer scrolls sideways: the perforation's notches reached past it.
+
 ## [0.13.1] - 2026-10-25
 
 ### Fixed

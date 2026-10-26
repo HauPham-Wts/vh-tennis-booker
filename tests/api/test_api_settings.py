@@ -47,7 +47,6 @@ def test_settings_leave_out_the_notification(client, saved):
 
 OTHER = {
     "mumu_index": 1,
-    "days_ahead": 2,
     "slots": ["20:00 - 21:00"],
     "court": "S6 - Sân tennis",  # from the top of the file
     "venue_keyword": "Origami",
@@ -93,7 +92,8 @@ def test_settings_without_a_config_file_are_the_defaults(client, context):
 
     settings = client.get("/api/settings").json()
 
-    assert settings["days_ahead"] == Config().days_ahead
+    assert settings["court"] == Config().court
+    assert "days_ahead" not in settings
     assert not context.config_path.exists()  # reading never writes
 
 

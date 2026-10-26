@@ -4,7 +4,7 @@ import pytest
 import uvicorn
 
 from court_booker.api import server
-from court_booker.config import load_config
+from court_booker.config import Config, load_config
 
 
 @pytest.fixture
@@ -31,5 +31,5 @@ def test_the_data_folder_config_is_created_when_none_is_given(served, data_home)
 
     ((app, _),) = served
     assert app.state.context.config_path == data_home / "config.toml"
-    assert load_config(data_home / "config.toml").days_ahead == 2
+    assert load_config(data_home / "config.toml") == Config()
     assert app.state.context.data.root == data_home

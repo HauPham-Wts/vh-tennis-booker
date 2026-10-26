@@ -21,11 +21,11 @@ def test_the_openapi_schema_is_served_under_api(client):
 def test_routes_get_the_context(app, client, context):
     @app.get("/api/test-context")
     def read(context: Context) -> dict:
-        return {"config": str(context.config_path), "days": context.config().days_ahead}
+        return {"config": str(context.config_path), "court": context.config().court}
 
     assert client.get("/api/test-context").json() == {
         "config": str(context.config_path),
-        "days": 2,
+        "court": "S10 - Sân tennis",
     }
 
 

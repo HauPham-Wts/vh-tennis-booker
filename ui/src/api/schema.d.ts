@@ -349,8 +349,6 @@ export interface components {
         InstanceSettings: {
             /** Mumu Index */
             mumu_index: number;
-            /** Days Ahead */
-            days_ahead: number;
             /** Slots */
             slots: string[];
             /** Court */
@@ -584,15 +582,13 @@ export interface components {
         };
         /**
          * Settings
-         * @description Every booking setting; the UI changes the slots, court and day, and sends the rest back.
+         * @description Every booking setting; the UI changes the slots and court, and sends the rest back.
          */
         Settings: {
             /** Slots */
             slots: string[];
             /** Court */
             court: string;
-            /** Days Ahead */
-            days_ahead: number;
             /** Wake At */
             wake_at: string;
             /** Start At */

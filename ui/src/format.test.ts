@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  addDays,
   addMinutes,
   courtName,
   formatClock,
   formatDay,
+  formatShortDay,
   formatDecimal,
   formatShortDate,
   formatSlot,
@@ -79,8 +79,19 @@ describe("dates", () => {
     expect(formatShortDate(text, language)).toBe(expected);
   });
 
+  it.each([
+    ["2026-10-14", "vi", "T4 14/10"],
+    ["2026-10-18", "vi", "CN 18/10"],
+    ["2026-10-19T06:00", "vi", "T2 19/10"],
+    ["2026-10-24", "vi", "T7 24/10"],
+    ["2026-10-14", "en", "Wed 14 Oct"],
+  ] as const)("formatShortDay(%j, %s) is %j", (text, language, expected) => {
+    expect(formatShortDay(text, language)).toBe(expected);
+  });
+
   it("shows a text it cannot read as it is", () => {
     expect(formatDay("soon", "vi")).toBe("soon");
+    expect(formatShortDay("soon", "vi")).toBe("soon");
     expect(formatShortDate("", "en")).toBe("");
   });
 });
@@ -113,18 +124,6 @@ describe("addMinutes", () => {
 
   it("leaves a text it cannot read as it is", () => {
     expect(addMinutes("6 am", 5)).toBe("6 am");
-  });
-});
-
-describe("addDays", () => {
-  it("counts days from a date or a date-time, across a month and a year", () => {
-    expect(addDays("2026-10-25T06:00", 0)).toBe("2026-10-25");
-    expect(addDays("2026-10-30", 2)).toBe("2026-11-01");
-    expect(addDays("2026-12-31T06:00", 1)).toBe("2027-01-01");
-  });
-
-  it("leaves a text it cannot read as it is", () => {
-    expect(addDays("soon", 1)).toBe("soon");
   });
 });
 

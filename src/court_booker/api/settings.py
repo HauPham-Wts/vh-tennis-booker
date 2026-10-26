@@ -60,20 +60,18 @@ class InstanceSettings(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     mumu_index: int
-    days_ahead: int
     slots: list[str]
     court: str
     venue_keyword: str
 
 
 class Settings(BaseModel):
-    """Every booking setting; the UI changes the slots, court and day, and sends the rest back."""
+    """Every booking setting; the UI changes the slots and court, and sends the rest back."""
 
     model_config = ConfigDict(extra="forbid")
 
     slots: list[str]
     court: str
-    days_ahead: int
     wake_at: str
     start_at: str
     venue_keyword: str

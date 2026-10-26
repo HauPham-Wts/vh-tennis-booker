@@ -194,7 +194,7 @@ def test_failed_preparation_logs_the_last_screen(monkeypatch, caplog):
 def test_events_follow_the_run(monkeypatch):
     monkeypatch.setattr(runner, "Booker", FakeBooker)
     sink = MemorySink()
-    config = Config(slots=["18:00 - 19:00", "19:00 - 20:00"], days_ahead=2)
+    config = Config(slots=["18:00 - 19:00", "19:00 - 20:00"])
 
     runner.run_booking(FakeDevice(), config, dry_run=True, report=Reporter(sink))
 

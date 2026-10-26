@@ -133,8 +133,9 @@ describe("History list", () => {
     const { fetch } = renderApp(paths.overview, REPLIES);
 
     expect(await rows()).toEqual([
-      "Chơi Thứ Bảy 17/10 · S6ĐẶT ĐƯỢC 1/2đặt sáng nay 15/10 · theo hẹn giờ✓ 15:00✕ 16:00 Hết chỗ",
-      "Lần chạy Thứ Hai 12/10KHÔNG ĐẶT ĐƯỢCđặt sáng Thứ Hai 12/10 · chạy tay✕ Đang có lần chạy khác",
+      // The hidden words after the mark and a failed slot are for screen readers.
+      "T7 17/10 · S61/2ĐẶT ĐƯỢC 1/2✓ 15:00✕ 16:00 Hết chỗtheo hẹn giờ 15/10",
+      "T2 12/10✕KHÔNG ĐẶT ĐƯỢC✕ Đang có lần chạy khácchạy tay 12/10 08:32",
     ]);
     const query = new URL(fetch.mock.calls.find(([r]) => r.url.includes("/api/runs"))![0].url);
     expect(Object.fromEntries(query.searchParams)).toEqual({ days: "10", limit: "500" });
@@ -148,7 +149,7 @@ describe("History list", () => {
 
     const shown = await rows();
     expect(shown).toHaveLength(3);
-    expect(shown[1]).toBe("Chơi Thứ Bảy 17/10 · S6CHẠY THỬ ĐẠTchạy thử tối hôm qua 14/10○ 18:00");
+    expect(shown[1]).toBe("T7 17/10 · S6THỬCHẠY THỬ ĐẠT○ 18:00chạy thử 14/10 19:43");
     expect(requestsTo(fetch, "GET /api/runs")).toBe(1);
   });
 
@@ -173,7 +174,7 @@ describe("History list", () => {
     fireEvent.click(within(history).getByRole("button", { name: "Xem thêm 10 ngày trước" }));
 
     await waitFor(async () => expect(await rows()).toHaveLength(12));
-    expect((await rows()).at(-1)).toContain("đặt sáng Thứ Sáu 02/10");
+    expect((await rows()).at(-1)).toMatch(/theo hẹn giờ 02\/10$/);
     const query = new URL(fetch.mock.calls.at(-1)![0].url).searchParams;
     expect(Object.fromEntries(query)).toEqual({ days: "10", limit: "500", before: "111" });
     expect(within(history).queryByRole("button")).not.toBeInTheDocument();
@@ -191,8 +192,8 @@ describe("History list", () => {
     renderApp(paths.overview, { "GET /api/runs": reply([other, { ...PARTIAL, device: 0 }]) });
 
     const [first, second] = await rows();
-    expect(first).toContain("đặt sáng nay 15/10 · theo hẹn giờ · MuMu 1");
-    expect(second).toContain("đặt sáng nay 15/10 · theo hẹn giờ✓"); // the first instance
+    expect(first).toMatch(/theo hẹn giờ 15\/10 · MuMu 1$/);
+    expect(second).toMatch(/theo hẹn giờ 15\/10$/); // the first instance
   });
 
   it("says when there are dry runs only", async () => {
@@ -209,7 +210,7 @@ describe("History list", () => {
     const history = await screen.findByRole("tabpanel", { name: "History" });
     const list = await within(history).findByRole("list");
     expect(within(list).getAllByRole("link")[0]).toHaveTextContent(
-      "Play Sat 17 Oct · S6BOOKED 1/2booked this morning 15 Oct · on schedule✓ 15:00✕ 16:00 Fully booked",
+      "Sat 17 Oct · S61/2BOOKED 1/2✓ 15:00✕ 16:00 Fully bookedon schedule 15 Oct",
     );
   });
 });
@@ -220,7 +221,7 @@ describe("History run", () => {
     await rows();
     fireEvent.click(screen.getByRole("checkbox", { name: "Gồm cả chạy thử" }));
 
-    fireEvent.click(screen.getByRole("link", { name: /^Chơi Thứ Bảy 17\/10 · S6ĐẶT ĐƯỢC/ }));
+    fireEvent.click(screen.getByRole("link", { name: /^T7 17\/10 · S6\s*ĐẶT ĐƯỢC 1\/2/ }));
 
     const run = await screen.findByRole("article", { name: "Chơi Thứ Bảy 17/10 · S6" });
     expect(router.state.location.search).toBe("?run=26");

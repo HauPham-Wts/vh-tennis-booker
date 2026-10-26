@@ -3,7 +3,6 @@
 device = "auto"                     # ADB serial, or "auto" to find the emulator
 adb_path = ""                       # adb.exe; empty searches PATH, then the MuMu folder
 package = "com.vinhomes.resident"
-days_ahead = 2                      # book this many days after today
 slots = ["18:00 - 19:00", "19:00 - 20:00"]  # one booking round per slot
 court = "S10 - Sân tennis"
 venue_keyword = "Origami"           # picks the venue when the app lists several
@@ -64,7 +63,7 @@ registered = "Đã đăng ký"            # ticket status once registered
 
 # Optional: more MuMu instances, each logged in to its own account, booking side by side
 # with this one in a process of its own. Each table sets that instance's mumu_index and,
-# if they differ from the settings above, its days_ahead, slots, court and venue_keyword.
+# if they differ from the settings above, its slots, court and venue_keyword.
 # [[instances]]
 # mumu_index = 1
 # slots = ["20:00 - 21:00", "21:00 - 22:00"]

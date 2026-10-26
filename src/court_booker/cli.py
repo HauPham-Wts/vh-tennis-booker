@@ -14,7 +14,7 @@ from typing import Any, NoReturn
 from court_booker import __version__, device_setup, schedule
 from court_booker.adb import AUTO
 from court_booker.clock import NtpClock, ntp_offset, resolve_start
-from court_booker.config import Config, instance_config, load_config
+from court_booker.config import DAYS_AHEAD, Config, instance_config, load_config
 from court_booker.device_setup import Check, Status, Tools, find_tools, run_checks
 from court_booker.emulator import MuMu
 from court_booker.errors import (
@@ -55,7 +55,6 @@ def build_parser() -> argparse.ArgumentParser:
         "--config", default="config.toml", help="config file (default: %(default)s)"
     )
     parser.add_argument("--dry-run", action="store_true", help="stop before the final confirmation")
-    parser.add_argument("--days", type=int, help="days ahead of today to book")
     parser.add_argument("--slots", nargs="+", metavar="SLOT", help='e.g. "18:00 - 19:00"')
     parser.add_argument("--device", help='ADB serial, e.g. 127.0.0.1:16384, or "auto"')
     parser.add_argument(
@@ -85,8 +84,6 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def apply_overrides(config: Config, args: argparse.Namespace) -> Config:
-    if args.days is not None:
-        config.days_ahead = args.days
     if args.slots:
         config.slots = args.slots
     if args.device:
@@ -105,8 +102,8 @@ def select_instance(config: Config, index: int) -> Config:
 def instance_argv(args: argparse.Namespace, index: int) -> list[str]:
     """Return the arguments of the process that books with MuMu instance ``index``.
 
-    That process books with the instance's own settings, so ``--days``, ``--slots`` and
-    ``--device`` stay with this one.
+    That process books with the instance's own settings, so ``--slots`` and ``--device``
+    stay with this one.
     """
     argv = ["--config", str(Path(args.config).resolve()), "--instance", str(index)]
     argv += ["--driver", args.driver]
@@ -453,7 +450,7 @@ def main(argv: list[str] | None = None) -> int:
         error,
         dry_run=args.dry_run,
         interrupted=code == EXIT_INTERRUPTED,
-        target=(start or datetime.now()).date() + timedelta(days=shown.days_ahead),
+        target=(start or datetime.now()).date() + timedelta(days=DAYS_AHEAD),
         instance=instance,
     )
     # A real run closes MuMu once its rounds ran; the next run starts it again. MuMu stays

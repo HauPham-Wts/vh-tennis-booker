@@ -41,18 +41,13 @@
       "auto": "Tự đặt mỗi sáng",
       "on": "BẬT",
       "off": "TẮT",
-      "when": "{{when}} · {{day}}",
-      "wake": "Máy tự thức dậy lúc {{wake}}",
+      "day": "Ngày",
+      "chosenSlots": "Khung giờ",
+      "plan": "Đặt lúc {{time}} {{when}} · máy thức {{wake}}",
       "offTitle": "Đang tắt",
       "offLine": "Máy sẽ không tự đặt sân {{when}}.",
       "instance": "Máy",
       "instanceName": "MuMu {{index}}",
-      "day": "Ngày chơi",
-      "dayHint": {
-        "0": "đặt cùng ngày",
-        "1": "đặt trước 1 ngày",
-        "2": "đặt trước 2 ngày"
-      },
       "court": "Sân",
       "slots": "Khung giờ · đặt theo thứ tự bấm, tối đa {{max}}",
       "slot": "{{slot}}, lượt {{order}}",
@@ -81,7 +76,7 @@
         "through": "khung đã qua",
         "running": "đang chạy",
         "waiting": "{{slot}} · chờ tới lượt",
-        "locked": "Ngày, sân, khung giờ và chạy thử mở lại khi lần này xong. Bạn có thể đóng cửa sổ này."
+        "locked": "Sân, khung giờ và chạy thử mở lại khi lần này xong. Bạn có thể đóng cửa sổ này."
       },
       "lockedTitle": "Chưa bật",
       "locked": "Chạy thử thành công một lần thì mới bật được."
@@ -95,6 +90,7 @@
       "emptyReal": "Chưa có lần đặt thật nào.",
       "emptyRealDays": "Không có lần đặt thật nào trong {{count}} ngày gần nhất.",
       "play": "Chơi {{day}} · {{court}}",
+      "short": "{{day}} · {{court}}",
       "runOn": "Lần chạy {{day}}",
       "booked": "đặt {{when}} · {{by}}",
       "dry": "chạy thử {{when}}",
@@ -121,7 +117,7 @@
         "title": "Court Booker đặt sân thay bạn lúc {{start}} mỗi sáng, kể cả khi bạn ngủ",
         "steps": {
           "1": "Làm các việc thiết lập bên dưới, một lần.",
-          "2": "Chọn ngày, sân và khung giờ trên vé bên trái.",
+          "2": "Chọn sân và khung giờ trên vé bên trái.",
           "3": "Bấm \"{{dryRun}}\", đạt thì bật \"{{daily}}\"."
         }
       },
@@ -325,6 +321,15 @@
       "dryPartial": "CHẠY THỬ ĐẠT {{booked}}/{{total}}",
       "dryFailed": "CHẠY THỬ LỖI",
       "interrupted": "ĐÃ DỪNG",
+      "running": "ĐANG CHẠY"
+    },
+    "mark": {
+      "count": "{{booked}}/{{total}}",
+      "failed": "✕",
+      "dry": "THỬ",
+      "dryCount": "THỬ {{booked}}/{{total}}",
+      "dryFailed": "THỬ ✕",
+      "interrupted": "DỪNG",
       "running": "ĐANG CHẠY"
     },
     "by": {
