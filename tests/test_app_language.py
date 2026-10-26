@@ -5,7 +5,7 @@ from datetime import date
 import pytest
 
 from court_booker.app_language import ENGLISH_LABELS, app_languages
-from court_booker.config import Labels
+from court_booker.config import ConfigError, Labels
 from court_booker.geometry import month_index
 
 VIETNAMESE, ENGLISH = app_languages(Labels())
@@ -53,9 +53,33 @@ def test_english_month_index_from_label():
 
 
 def test_vietnamese_uses_the_config_labels():
-    labels = Labels(utility="Sân tennis")
+    labels = Labels(home="Trang chủ", utility="Sân tennis")
 
-    assert app_languages(labels)[0].labels is labels
+    assert app_languages(labels)[0].labels == labels
+
+
+@pytest.mark.parametrize(
+    ("sport", "vietnamese", "english"),
+    [
+        ("tennis", "Sân Tennis", "Tennis"),
+        ("table-tennis", "Sân bóng bàn", ""),
+        ("pickleball", "Sân Pickleball", ""),
+        ("badminton", "Sân cầu lông", ""),
+    ],
+)
+def test_each_language_taps_the_tile_of_the_sport(sport, vietnamese, english):
+    languages = app_languages(Labels(), sport)
+
+    assert [language.labels.utility for language in languages] == [vietnamese, english]
+
+
+def test_a_utility_label_set_by_hand_wins_over_the_sport():
+    assert app_languages(Labels(utility="Sân mới"), "badminton")[0].labels.utility == "Sân mới"
+
+
+def test_an_unknown_sport_is_refused():
+    with pytest.raises(ConfigError, match="Unknown sport 'golf'"):
+        app_languages(Labels(), "golf")
 
 
 def test_day_pattern_matches_exact_day_only():

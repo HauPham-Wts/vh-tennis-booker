@@ -9,6 +9,11 @@ uses [Semantic Versioning](https://semver.org/).
 ### Added
 - Field notes on the seven other courts of the Origami subdivision (labels, courts, the
   utilities with a single court), and the plan for them in the roadmap.
+- A `sport` setting, also per `[[instances]]` table: `tennis` (the default, so an existing
+  config books as before), `multi`, `volleyball`, `table-tennis`, `basketball`, `football`,
+  `pickleball` or `badminton`. The run taps that sport's tile on the utilities list; a
+  `[labels] utility` set by hand still wins. Only tennis has its English tile so far: a run
+  of another sport stops with a clear message if the app is in English.
 
 ## [0.14.0] - 2026-10-26
 

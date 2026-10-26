@@ -61,16 +61,21 @@ class InstanceSettings(BaseModel):
 
     mumu_index: int
     slots: list[str]
+    sport: str
     court: str
     venue_keyword: str
 
 
 class Settings(BaseModel):
-    """Every booking setting; the UI changes the slots and court, and sends the rest back."""
+    """Every booking setting; the UI changes the slots, sport and court, and sends the rest
+    back."""
 
     model_config = ConfigDict(extra="forbid")
 
     slots: list[str]
+    sport: str
+    """What to book: ``tennis``, ``multi``, ``volleyball``, ``table-tennis``, ``basketball``,
+    ``football``, ``pickleball`` or ``badminton``."""
     court: str
     wake_at: str
     start_at: str

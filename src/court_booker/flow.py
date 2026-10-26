@@ -146,7 +146,7 @@ class Booker:
         self.any_court = Match(prefix=config.court, clickable=True)
         self.opened_court = Match(desc=config.court, clickable=False)
         """The court named on the booking details page."""
-        self.languages = app_languages(config.labels)
+        self.languages = app_languages(config.labels, config.sport)
         """The languages the app may show; the court names read the same in each."""
         self._use(self.languages[0])
 
@@ -213,10 +213,16 @@ class Booker:
                 repr(label)
                 for language in self.languages
                 for label in (language.labels.home, language.labels.utility)
+                if label
             ]
             raise AppNotReadyError(
                 f"The app did not show {', '.join(labels)} or {last} in "
                 f"{self.config.boot_timeout:.0f} s; check that it is logged in"
+            )
+        if not found[0].labels.utility:
+            raise AppNotReadyError(
+                f"The app is in {found[0].name}, whose label of {self.config.sport!r} is not "
+                "known yet; set the app to Vietnamese"
             )
         self._use(found[0])
         logger.info("App language: %s", found[0].name)
@@ -783,7 +789,7 @@ class Booker:
         for language in self.languages:
             labels = language.labels
             for label in (labels.home, labels.utility):
-                if screen.find(Match(desc=label, clickable=True)) is not None:
+                if label and screen.find(Match(desc=label, clickable=True)) is not None:
                     return language
         return None
 

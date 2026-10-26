@@ -4,6 +4,7 @@ import type { Settings } from "../api/types";
 export function settings(fields: Partial<Settings> = {}): Settings {
   return {
     slots: ["15:00 - 16:00", "16:00 - 17:00"],
+    sport: "tennis",
     court: "S6 - Sân tennis",
     wake_at: "05:50",
     start_at: "06:00",
@@ -26,7 +27,7 @@ export function settings(fields: Partial<Settings> = {}): Settings {
     instances: [],
     labels: {
       home: "Trang chủ",
-      utility: "Sân Tennis",
+      utility: "",
       continue: "Tiếp tục",
       confirm: "Xác nhận",
       confirm_page: "Xác nhận đăng ký",

@@ -17,7 +17,7 @@ Details live in the docstrings; this page says where things are and what must st
   Windows notification (`notify.py`; a failure only logs a warning). After a real run with at
   least one round, `close_emulator` shuts MuMu down.
 - Other MuMu instances (`[[instances]]` in the config, each with its own account and its own
-  `mumu_index`, `slots`, `court`, `venue_keyword`; `config.instance_config`):
+  `mumu_index`, `slots`, `sport`, `court`, `venue_keyword`; `config.instance_config`):
   the run's process, once it holds the lock and has cleared stale runs, starts one process per
   entry (`start_instances`: the same command with `--instance N`, without `--slots`,
   `--device`; console output dropped) and waits for them, holding its lock. Each such process
@@ -55,8 +55,11 @@ Details live in the docstrings; this page says where things are and what must st
   `press_back()` and `_scroll()`, each counted in `commands`. A full round costs 16 commands
   (tests hold it). A screen that differs from the last read is logged at debug level, so the
   log holds every screen of a run.
-- Labels come from `app_language.app_languages(config.labels)`: Vietnamese from `[labels]`,
-  English built in. `prepare()` finds the language on the first screen and uses it.
+- Labels come from `app_language.app_languages(config.labels, config.sport)`: Vietnamese from
+  `[labels]`, English built in; the utility tapped is the tile of `sport` (`config.SPORTS`,
+  `app_language.ENGLISH_SPORTS`) unless `[labels] utility` names one. `prepare()` finds the
+  language on the first screen and uses it; a language without a tile for the sport stops the
+  run there.
 - Every transition is `tap_and_advance(screen, target, name, find_next)`: tap, then read until
   `find_next` finds the next screen, up to `timeout` (30 s). The tap is repeated every 2 s
   while `target` still shows (a swallowed tap), never while the app loads (target gone).
@@ -100,7 +103,8 @@ Details live in the docstrings; this page says where things are and what must st
 - `config.py`: `load_config` refuses unknown keys but never validates, so an existing config
   never stops the 06:00 run. `validate_config` runs before every save. `save_config` writes
   atomically, without comments, with only the labels that differ from the defaults and the keys
-  of `_WRITTEN_WHEN_CHANGED` only when changed: an older runner refuses keys it does not know.
+  of `_WRITTEN_WHEN_CHANGED` (and an instance's `sport`) only when changed: an older runner
+  refuses keys it does not know.
   New fields go into the dataclass and `config.example.toml`.
 - `paths.data_folder()`: `%LOCALAPPDATA%\CourtBooker` (`COURT_BOOKER_HOME` overrides) with
   `booker.db`, `run.lock`, `logs/` and the app's `config.toml`. The CLI's config comes from

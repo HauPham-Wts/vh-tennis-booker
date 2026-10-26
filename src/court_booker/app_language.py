@@ -9,10 +9,10 @@ they are not part of a language. Kept free of device access for unit tests.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 
-from court_booker.config import Labels
+from court_booker.config import SPORTS, ConfigError, Labels
 from court_booker.geometry import month_index
 
 ENGLISH_LABELS = Labels(  # read from the app in English on 2026-10-20
@@ -37,6 +37,10 @@ ENGLISH_LABELS = Labels(  # read from the app in English on 2026-10-20
     registered="Registered",
 )
 """The English labels. The Vietnamese ones are the config's ``[labels]``."""
+
+ENGLISH_SPORTS = {"tennis": "Tennis"}
+"""The tiles of the sports on the utilities list in English, those read so far; a run of
+another sport stops when it finds the app in English."""
 
 ENGLISH_MONTHS = (
     "January",
@@ -91,16 +95,25 @@ class AppLanguage:
         return self.day_label.format(day=day, weekday=".*", month=month, year=year)
 
 
-def app_languages(labels: Labels) -> tuple[AppLanguage, ...]:
-    """Return the app's languages: Vietnamese with ``labels``, the config's, then English."""
+def app_languages(labels: Labels, sport: str = "tennis") -> tuple[AppLanguage, ...]:
+    """Return the app's languages: Vietnamese with ``labels``, the config's, then English.
+
+    Each taps the tile of ``sport`` on the utilities list, unless ``labels`` names another
+    tile. A language that has no tile for ``sport`` has an empty ``utility`` label.
+    """
+    if sport not in SPORTS:
+        raise ConfigError(f"Unknown sport {sport!r}: use one of {', '.join(SPORTS)}")
     return (
         AppLanguage(
             "Vietnamese",
-            labels,
+            replace(labels, utility=labels.utility or SPORTS[sport]),
             "{day}, {weekday}, {day} tháng {month}, {year}",
             tuple(str(month) for month in range(1, 13)),
         ),
         AppLanguage(
-            "English", ENGLISH_LABELS, "{day}, {weekday}, {month} {day}, {year}", ENGLISH_MONTHS
+            "English",
+            replace(ENGLISH_LABELS, utility=ENGLISH_SPORTS.get(sport, "")),
+            "{day}, {weekday}, {month} {day}, {year}",
+            ENGLISH_MONTHS,
         ),
     )

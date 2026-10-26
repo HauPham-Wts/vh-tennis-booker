@@ -1423,6 +1423,25 @@ def test_a_logged_out_app_names_the_labels_of_each_language():
         Booker(app, Config(boot_timeout=1)).prepare()
 
 
+def test_the_sport_picks_the_tile_to_tap():
+    app = booking_app()
+    app.screens["utilities"] = [node("Sân cầu lông", (35, 300, 505, 360))]
+    app.taps_to[("utilities", "Sân cầu lông")] = app.taps_to.pop(("utilities", "Sân Tennis"))
+    booker = prepared(app, Config(sport="badminton"))
+
+    booker.book("11:00 - 12:00", TARGET)
+
+    assert app.taps == ["Sân cầu lông", *FULL_ROUND[1:]]
+    assert booker.commands == 16
+
+
+def test_a_sport_without_an_english_tile_stops_on_an_app_in_english():
+    app = booking_app(screen="loading", english=True)
+
+    with pytest.raises(AppNotReadyError, match=r"English, whose label of 'badminton' is not"):
+        Booker(app, Config(sport="badminton")).prepare()
+
+
 def test_an_app_in_english_books_a_round_in_16_commands(caplog):
     caplog.set_level(logging.INFO, logger="court_booker")
     app = booking_app(english=True, ticket=[*TICKET, PROCESSING])
