@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-10-27
+
 ### Added
 - Field notes on the seven other courts of the Origami subdivision (labels, courts, the
   utilities with a single court), and the plan for them in the roadmap.
