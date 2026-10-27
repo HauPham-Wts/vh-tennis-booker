@@ -18,8 +18,8 @@ uses [Semantic Versioning](https://semver.org/).
   that court's booking details page by itself, often before a read shows it, as a single
   venue does. The round goes on from the details page wherever it shows, once the page names
   the configured court (another court fails the round).
-- A court list longer than the screen, such as the seven basketball courts, is swiped up
-  while the court is cut off by the bottom edge or not shown yet (up to `max_swipes`).
+- A court cut off by the bottom edge, such as the seventh basketball court, is tapped where
+  it is, without swiping the list: it is in the tree, and the driver clicks it by its label.
 - The ticket offers the sport above the courts, then the courts of that sport; choosing a
   sport saves it with its first court. A court is named by its sport and label everywhere
   ("Tennis S6", "Bóng rổ S8 · nửa sân"), and the Windows notification names a court of

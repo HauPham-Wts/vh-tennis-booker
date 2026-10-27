@@ -135,7 +135,9 @@ Vip" and "Nướng BBQ", are out of scope). Only "Sân Tennis" has a capital T.
 
 - Court names are not uniform: "S8 - Sân Cầu lông" has a capital C.
 - The basketball list has seven courts; the seventh sits at the bottom edge (y 1594-1600 at
-  540x1600) and needs a scroll before it can be tapped.
+  540x1600). It is in the tree, so the driver clicks it by its label without a swipe; until
+  the service info above has loaded, the list shows 232 px lower and the last two courts are
+  not in the tree yet.
 - Each volleyball court row has a child "Chỉ đường" button (x 53-178); a tap in the middle of
   the row still opens the court.
 
