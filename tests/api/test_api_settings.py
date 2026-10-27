@@ -48,9 +48,11 @@ def test_settings_leave_out_the_notification(client, saved):
 OTHER = {
     "mumu_index": 1,
     "slots": ["20:00 - 21:00"],
-    "court": "S6 - Sân tennis",  # from the top of the file
+    "sport": "tennis",  # from the top of the file, which the file does not repeat
+    "court": "S6 - Sân tennis",
     "venue_keyword": "Origami",
 }
+OTHER_IN_FILE = {key: value for key, value in OTHER.items() if key != "sport"}
 
 
 def test_settings_show_each_other_instance_in_full(client, saved):
@@ -67,9 +69,34 @@ def test_an_instance_keeps_its_own_settings(client, context, saved):
     assert response.status_code == 200
     written = load_config(context.config_path)
     assert written.court == "S9 - Sân tennis"
-    assert written.instances == [{**OTHER, "slots": ["19:00 - 20:00", "20:00 - 21:00"]}]
+    assert written.instances == [{**OTHER_IN_FILE, "slots": ["19:00 - 20:00", "20:00 - 21:00"]}]
     (step,) = steps(context)
     assert step["data"] == {"changed": ["court", "instances"]}
+
+
+def test_each_instance_books_its_own_sport(client, context, saved):
+    settings = client.get("/api/settings").json()
+    settings["sport"] = "badminton"
+    settings["court"] = "S6 - Sân cầu lông"
+    settings["instances"][0]["court"] = "S6 - Sân tennis"
+
+    response = client.put("/api/settings", json=settings)
+
+    assert response.status_code == 200
+    assert response.json()["instances"][0]["sport"] == "tennis"
+    written = load_config(context.config_path)
+    assert (written.sport, written.court) == ("badminton", "S6 - Sân cầu lông")
+    assert written.instances[0]["sport"] == "tennis"
+
+
+def test_an_unknown_sport_is_refused(client, context, saved):
+    settings = client.get("/api/settings").json()
+    settings["sport"] = "golf"
+
+    response = client.put("/api/settings", json=settings)
+
+    assert response.status_code == 422
+    assert response.json()["problems"][0].startswith("sport must be one of tennis, multi")
 
 
 @pytest.mark.parametrize("instances", [[], [OTHER, {**OTHER, "mumu_index": 2}]])
@@ -117,7 +144,7 @@ def test_saved_settings_reach_the_file_and_the_activity_log(client, context, sav
     assert (written.slots, written.court) == (["20:00 - 21:00"], "S9 - Sân tennis")
     assert written.telegram_token == "secret-token"
     assert written.notification_language == "en"
-    assert written.instances == [OTHER]  # now with all its settings
+    assert written.instances == [OTHER_IN_FILE]  # now with all its settings
     (step,) = steps(context)
     assert (step["kind"], step["data"]) == ("settings_saved", {"changed": ["court", "slots"]})
 

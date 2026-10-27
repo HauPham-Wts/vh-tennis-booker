@@ -4,7 +4,15 @@ import { errorMessage } from "../../api/errors";
 import { useSaveSettings, useStartDryRun, useSwitchSchedule } from "../../api/mutations";
 import { useRuns, useSettings } from "../../api/queries";
 import type { Overview, Running, RunSummary, ScheduleState, Settings } from "../../api/types";
-import { courtChoices, MAX_SLOTS, slotChoices, toggleSlot } from "../../booking";
+import {
+  courtChoices,
+  findCourt,
+  firstCourt,
+  MAX_SLOTS,
+  slotChoices,
+  SPORTS,
+  toggleSlot,
+} from "../../booking";
 import { Button } from "../../components/Button";
 import { Icon } from "../../components/Icon";
 import { Overline } from "../../components/Overline";
@@ -21,7 +29,7 @@ import { TicketFrame } from "./TicketFrame";
 const GRID_COLUMNS = 7;
 
 /** What one MuMu instance books: the top of the settings, or one of their instances. */
-type Booking = Pick<Settings, "slots" | "court">;
+type Booking = Pick<Settings, "slots" | "sport" | "court">;
 
 /** Return what instance `index` books (0: the top of the settings), the last if it is gone. */
 function bookingOf(settings: Settings, index: number): { index: number; booking: Booking } {
@@ -137,10 +145,10 @@ interface ChoicesProps {
 }
 
 /**
- * The court and slots to book, for each MuMu instance when several book side by side, each
- * with its own account. Each press saves at once: the whole settings go back as they came
- * with the one change, so the developer's values stay. Presses wait while a save is on its
- * way, so two saves never cross.
+ * The sport, court and slots to book, for each MuMu instance when several book side by side,
+ * each with its own account. Each press saves at once: the whole settings go back as they
+ * came with the one change, so the developer's values stay; another sport takes its first
+ * court. Presses wait while a save is on its way, so two saves never cross.
  */
 function Choices({ saved, save, instance, onInstance }: ChoicesProps) {
   const { t } = useTranslation();
@@ -186,6 +194,8 @@ function Choices({ saved, save, instance, onInstance }: ChoicesProps) {
     note = <span className={styles.note}>{t("pages.ticket.saved")}</span>;
   }
 
+  // A court set by hand stays a choice, but not under another sport on its way.
+  const courts = courtChoices(shown.sport, own.sport === shown.sport ? own.court : shown.court);
   const { morning, afternoon } = slotChoices(shown.slots);
   // The morning row keeps its empty places, so the afternoon starts a row of its own.
   const gaps = (GRID_COLUMNS - (morning.length % GRID_COLUMNS)) % GRID_COLUMNS;
@@ -216,12 +226,35 @@ function Choices({ saved, save, instance, onInstance }: ChoicesProps) {
           </div>
         </div>
       )}
+      <div role="group" aria-labelledby="sport-label" className={styles.group}>
+        <Overline as="span" id="sport-label">
+          {t("pages.ticket.sport")}
+        </Overline>
+        <div className={`${styles.buttons} ${styles.wrap}`}>
+          {SPORTS.map((sport) => {
+            const on = shown.sport === sport;
+            return (
+              <button
+                key={sport}
+                type="button"
+                aria-pressed={on}
+                aria-disabled={busy || undefined}
+                className={`${styles.choice} ${styles.sport}`}
+                onClick={() => !on && choose({ sport, court: firstCourt(sport) })}
+              >
+                {t(`sports.${sport}`)}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div role="group" aria-labelledby="court-label" className={styles.group}>
         <Overline as="span" id="court-label">
           {t("pages.ticket.court")}
         </Overline>
-        <div className={styles.buttons}>
-          {courtChoices(own.court).map((court) => {
+        <div className={`${styles.buttons} ${styles.wrap}`}>
+          {courts.map((court) => {
             const on = shown.court === court;
             return (
               <button
@@ -232,7 +265,7 @@ function Choices({ saved, save, instance, onInstance }: ChoicesProps) {
                 className={`${styles.choice} ${styles.court}`}
                 onClick={() => !on && choose({ court })}
               >
-                {f.court(court)}
+                {findCourt(court)?.label ?? f.court(court)}
               </button>
             );
           })}
@@ -350,7 +383,7 @@ function DryRunRow({ running, schedule }: DryRunRowProps) {
 
 /**
  * The next booking as a ticket in two parts: on top what is set (the daily switch, the play
- * day, court and slots, when it starts), under the perforation the court and slots to
+ * day, court and slots, when it starts), under the perforation the sport, court and slots to
  * choose, saved on each press, and the dry run at the foot. A press shows on top at once,
  * as the save goes out.
  */

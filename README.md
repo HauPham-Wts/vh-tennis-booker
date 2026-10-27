@@ -5,7 +5,9 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Code style: Ruff](https://img.shields.io/badge/code%20style-ruff-261230)
 
-Books a tennis court the moment bookings open. The Vinhomes Resident app opens each day's
+Books a court (tennis, or one of the seven other sports of the Origami subdivision: a
+multi-purpose court, volleyball, table tennis, basketball, football, pickleball,
+badminton) the moment bookings open. The Vinhomes Resident app opens each day's
 courts at 06:00, and the popular slots are gone within seconds. This project books them
 while its owner sleeps: a Windows scheduled task wakes the PC, starts the MuMu Player
 emulator and taps through the app's own booking screens with Python and an Android
@@ -55,11 +57,12 @@ through, and each step as it happens; the History is beside it](docs/img/running
 
 ```mermaid
 flowchart TD
-    A["Home: tap Tiện ích"] --> B["Utilities: tap Sân Tennis"]
+    A["Home: tap Tiện ích"] --> B["Utilities: tap the sport's tile, e.g. Sân Tennis"]
     B --> C["Calendar: pick the date and slot, tap Tiếp tục"]
     C --> V["Venues (Chọn phân khu), if shown: tap the venue"]
     V --> D["Courts: tap the court"]
     D --> E["Booking details: tap Tiếp tục"]
+    V -->|one court: the app opens it| E
     E --> F["Confirmation: tick the consent, tap Xác nhận"]
     F --> G["Ticket: booked"]
     G -->|Back, next slot| B
@@ -69,7 +72,9 @@ The app is built with Flutter, which publishes its widgets to Android's accessib
 with their text in `content-desc`. The booker reads each screen in one dump, finds the
 buttons by their labels, and the driver finds them again in the current tree before
 clicking. Coordinates distinguish duplicate labels and locate unlabelled controls; the
-uiautomator2 fallback taps the points from the dump. Each slot in `config.toml` is booked
+uiautomator2 fallback taps the points from the dump. A page with a single choice (one
+venue, one court) passes on to the next by itself, and the booker goes on from whichever
+page it reads. Each slot in `config.toml` is booked
 in its own round, and one Back from the ticket returns to the utilities list for the next
 one. The app may be set to Vietnamese or
 English: the booker tells which from the first screen and uses that language's labels. The
@@ -139,7 +144,8 @@ Edit `config.toml`, or later use Settings in the web UI. The keys you usually ch
 | Key | Example | Meaning |
 |---|---|---|
 | `slots` | `["18:00 - 19:00", "19:00 - 20:00"]` | Slots to book, one round each, in this order: put the most wanted first |
-| `court` | `"S10 - Sân tennis"` | The court, as the app names it (S6, S8, S9 or S10) |
+| `sport` | `"tennis"` | What to book: `tennis`, `multi`, `volleyball`, `table-tennis`, `basketball`, `football`, `pickleball` or `badminton` |
+| `court` | `"S10 - Sân tennis"` | The court, as the app names it (S6, S8, S9 or S10 for tennis) |
 | `start_at` | `"06:00"` | When the app opens bookings |
 | `wake_at` | `"05:45"` | When the daily task wakes the PC and starts preparing |
 
@@ -148,7 +154,7 @@ explained in `config.example.toml`.
 
 To book with more accounts at once, clone the MuMu instance in MuMu's multi-instance manager,
 log the clone in to another account, and add an `[[instances]]` table for it (example in
-`config.example.toml`): its `mumu_index`, and any of `slots`, `court` and `venue_keyword`
+`config.example.toml`): its `mumu_index`, and any of `slots`, `sport`, `court` and `venue_keyword`
 that differ. The web UI then shows each instance's settings.
 
 ### 3. Set up the PC and the emulator
@@ -206,8 +212,8 @@ The UI is one screen, without a menu:
 - **The line at the top** says whether the next start is ready, or the one thing to do first.
 - **The ticket** on the left is the next booking in two parts: on top the daily switch (it
   creates or removes the Windows task, once a dry run passed) and what is set, the play day,
-  court and slots; below, the court and up to two slots to choose, saved on each press, and
-  a dry run. During a run it shows the steps as they happen.
+  court and slots; below, the sport, the court and up to two slots to choose, saved on each
+  press, and a dry run. During a run it shows the steps as they happen.
 - **Lịch sử / History** on the right: each run in two lines, its play day, court and count
   ("2/2"), then every slot booked or not and when it started (real bookings, dry runs on
   request); one click opens the reasons, the steps and the technical log.

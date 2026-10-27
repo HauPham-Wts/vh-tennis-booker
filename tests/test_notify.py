@@ -14,6 +14,7 @@ import pytest
 
 from court_booker.notify import (
     REASONS,
+    court_name,
     failure_reason,
     format_notification,
     format_summary,
@@ -134,6 +135,21 @@ def test_a_stopped_run_lists_its_finished_rounds():
 
 def test_an_unknown_language_falls_back_to_vietnamese():
     assert notification(RESULTS, language="fr")[0] == "Đặt sân 26/10: 1/2 thành công"
+
+
+@pytest.mark.parametrize(
+    ("court", "name"),
+    [
+        ("S6 - Sân tennis", "S6"),
+        ("S10 - Sân tennis", "S10"),
+        ("S6 - Sân cầu lông", "S6 cầu lông"),
+        ("S9 - Sân Pickleball", "S9 Pickleball"),
+        ("S10 - Sân tập bóng rổ 01", "S10 tập bóng rổ 01"),
+        ("Sân tennis", "Sân tennis"),
+    ],
+)
+def test_a_court_is_named_short_with_its_sport_unless_tennis(court, name):
+    assert court_name(court) == name
 
 
 @pytest.mark.parametrize(

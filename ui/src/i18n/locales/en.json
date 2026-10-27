@@ -48,6 +48,7 @@
       "offLine": "No booking {{when}}.",
       "instance": "Instance",
       "instanceName": "MuMu {{index}}",
+      "sport": "Sport",
       "court": "Court",
       "slots": "Slots · booked in the order pressed, {{max}} at most",
       "slot": "{{slot}}, turn {{order}}",
@@ -117,7 +118,7 @@
         "title": "Court Booker books for you at {{start}} every morning, even while you sleep",
         "steps": {
           "1": "Do the setup tasks below, once.",
-          "2": "Choose the court and slots on the ticket on the left.",
+          "2": "Choose the sport, court and slots on the ticket on the left.",
           "3": "Press \"{{dryRun}}\"; once it passes, turn on \"{{daily}}\"."
         }
       },
@@ -196,7 +197,18 @@
       "reload": "Reopen the overview"
     }
   },
+  "sports": {
+    "tennis": "Tennis",
+    "multi": "Multi-sport",
+    "volleyball": "Volleyball",
+    "table-tennis": "Table tennis",
+    "basketball": "Basketball",
+    "football": "Football",
+    "pickleball": "Pickleball",
+    "badminton": "Badminton"
+  },
   "format": {
+    "court": "{{sport}} {{court}}",
     "seconds": "{{value}} s",
     "period": {
       "morning": "morning",

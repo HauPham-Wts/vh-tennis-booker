@@ -99,6 +99,48 @@ clickable "Đóng"; the page beneath leaves the dump.
 - **Slot taken** (someone booked it first): after "Xác nhận", "Tiện ích đã hết chỗ, vui lòng
   chọn vị trí/thời gian khác".
 
+## Other sports (Origami)
+
+Surveyed 2026-10-26 with an account of the Origami subdivision, app in Vietnamese. The
+utilities list ("Danh sách tiện ích", section "Tiện ích Vinhomes Grand Park") holds ten
+clickable tiles; eight are courts, booked the same way as tennis (the other two, "Nhà Tập Golf
+Vip" and "Nướng BBQ", are out of scope). Only "Sân Tennis" has a capital T.
+
+- The calendar is the same for all eight: "Đăng ký tiện ích", the utility's name, today to
+  today + 2, "Khung giờ khả dụng", 13 one-hour slots (06-12, 14-21), "| Hết chỗ", "Tiếp tục".
+- The quota counts per utility: with the tennis quota used, the quota notice showed after the
+  calendar's "Tiếp tục" for tennis only; the other seven went on.
+- A page with a single choice passes on to the next by itself, as the tennis venue does
+  (above): a venue page with one venue, a court list with one court. It shows for a moment,
+  so a read may catch it or not; it stays when the app is slow, and shows after Back. So after
+  "Tiếp tục" the first page read may be the venues ("Chọn phân khu"), the court list ("Chọn
+  vị trí/dịch vụ") or, for a utility with a single court, its booking details page (its
+  name, "Số lượng cư dân", "Tiếp tục"). Seen: table tennis and pickleball went to the details
+  page in the survey, and pickleball's list of one court was read in a dry run; the
+  multi-purpose courts' single venue ("Origami _ Sân đa năng") was read in a dry run only
+  (2026-10-26). The details and confirmation pages are the same as tennis.
+- A full court still shows on the list ("| Hết chỗ"), so the lists below are complete. Courts
+  are shown as the app lists them for an Origami account, whatever their S prefix.
+
+| Tile | Court list | Courts |
+|---|---|---|
+| Sân Tennis | list | S10, S6, S8, S9 - Sân tennis |
+| Sân đa năng | list | S10, S7, S9 - Sân đa năng |
+| Sân bóng chuyền | list | S10 - Sân bóng chuyền hơi 01, S10 - Sân bóng chuyền hơi 02, S8 - Sân bóng chuyền hơi, S9 - Sân bóng chuyền hơi |
+| Sân bóng bàn | one court, passes by itself | S5 - Sân tập bóng bàn 03 |
+| Sân bóng rổ | list | S10 - Sân bóng rổ nửa sân 03, S10 - Sân tập bóng rổ 01, S6 - Sân bóng rổ tập ném 01, S6 - Sân bóng rổ tập ném 02, S8 - Sân bóng rổ nửa sân, S9 - Sân bóng rổ tập ném 01, S9 - Sân bóng rổ tập ném 02 |
+| Sân bóng đá | list | S5 - Sân bóng đá 5, S5 - Sân bóng đá 7 |
+| Sân Pickleball | one court, passes by itself | S9 - Sân Pickleball |
+| Sân cầu lông | list | S10 - Sân cầu lông, S6 - Sân cầu lông, S8 - Sân Cầu lông |
+
+- Court names are not uniform: "S8 - Sân Cầu lông" has a capital C.
+- The basketball list has seven courts; the seventh sits at the bottom edge (y 1594-1600 at
+  540x1600). It is in the tree, so the driver clicks it by its label without a swipe; until
+  the service info above has loaded, the list shows 232 px lower and the last two courts are
+  not in the tree yet.
+- Each volleyball court row has a child "Chỉ đường" button (x 53-178); a tap in the middle of
+  the row still opens the court.
+
 ## App in English
 
 Set in the app; every screen keeps its layout and order, only the labels differ. Court names,

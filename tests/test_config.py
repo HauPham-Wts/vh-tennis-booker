@@ -112,6 +112,7 @@ def test_notification_keys_are_saved_only_when_changed(tmp_path):
     assert load_config(path) == Config(windows_notification=False, notification_language="en")
 
 
+SPORT_CODES = "tennis, multi, volleyball, table-tennis, basketball, football, pickleball, badminton"
 INSTANCE = {"mumu_index": 1, "slots": ["20:00 - 21:00"], "court": "S9 - Sân tennis"}
 
 
@@ -130,6 +131,23 @@ def test_another_instance_has_its_own_booking_settings(tmp_path):
     assert (other.mumu_index, other.slots, other.court) == (1, ["20:00 - 21:00"], "S9 - Sân tennis")
     assert (other.timeout, other.instances) == (20, [])  # the rest is shared
     assert config.slots == ["18:00 - 19:00"]
+
+
+def test_the_sport_is_saved_only_where_it_differs(tmp_path):
+    path = tmp_path / "config.toml"
+    tennis = {**INSTANCE, "sport": "tennis"}
+
+    # A runner of 0.14.0 refuses the key, so a config of tennis courts must not name it.
+    save_config(Config(instances=[tennis]), path)
+    assert "sport" not in path.read_text(encoding="utf-8")
+    assert load_config(path).instances == [INSTANCE]
+
+    badminton = {**INSTANCE, "sport": "badminton"}
+    save_config(Config(sport="pickleball", instances=[badminton, {"mumu_index": 2}]), path)
+    config = load_config(path)
+    assert config.sport == "pickleball"
+    assert config.instances == [badminton, {"mumu_index": 2}]
+    assert instance_config(config, config.instances[1]).sport == "pickleball"
 
 
 def test_the_old_play_day_key_is_dropped(tmp_path):
@@ -181,6 +199,11 @@ def test_instances_are_saved_only_when_set(tmp_path):
         ({"instances": [{"mumu_index": 0}]}, "MuMu instance 0 is listed twice"),
         ({"instances": [INSTANCE, INSTANCE]}, "MuMu instance 1 is listed twice"),
         ({"instances": [{"mumu_index": -1}]}, "instance mumu_index -1 must be 0 or more"),
+        ({"sport": "golf"}, f"sport must be one of {SPORT_CODES}"),
+        (
+            {"instances": [{**INSTANCE, "sport": "golf"}]},
+            f"MuMu instance 1: sport must be one of {SPORT_CODES}",
+        ),
         (
             {"instances": [{"mumu_index": 1, "slots": ["8:00"]}]},
             "MuMu instance 1: slot '8:00' must look like '18:00 - 19:00'",

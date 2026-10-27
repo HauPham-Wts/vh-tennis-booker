@@ -1382,6 +1382,126 @@ def test_a_notice_that_stays_fails_the_round_after_the_retry_window(monkeypatch)
     assert app.screen == "closed"
 
 
+# A court list longer than the screen ------------------------------------------
+
+BASKETBALL = [  # the order of the app's list, 2026-10-26
+    "S10 - Sân bóng rổ nửa sân 03",
+    "S10 - Sân tập bóng rổ 01",
+    "S6 - Sân bóng rổ tập ném 01",
+    "S6 - Sân bóng rổ tập ném 02",
+    "S8 - Sân bóng rổ nửa sân",
+    "S9 - Sân bóng rổ tập ném 01",
+    "S9 - Sân bóng rổ tập ném 02",
+]
+
+
+def court_rows(top):
+    """Return the basketball courts from ``top`` down, clipped to the screen as dumps are."""
+    rows = []
+    for index, name in enumerate(BASKETBALL):
+        y = top + 133 * index
+        if 0 <= y < HEIGHT:
+            rows.append(node(name, (35, y, 505, min(y + 120, HEIGHT))))
+    return rows
+
+
+def basketball_app(court, top=796):
+    """Return an app whose court list starts at ``top``: at 796 the seventh court shows only
+    its top 6 px (y 1594-1600), as on the device; 232 px lower the service info has not
+    loaded yet."""
+    app = booking_app(courts=court_rows(top), shown=(details(court=court),))
+    app.screens["details"][0] = node(court, (116, 975, 274, 1004), False)
+    app.taps_to[("courts", court)] = app.taps_to.pop(("courts", "S10 - Sân tennis"))
+    return app
+
+
+def test_a_court_cut_off_by_the_bottom_edge_is_tapped_without_a_swipe():
+    app = basketball_app(BASKETBALL[6])
+
+    booker = Booker(app, Config(court=BASKETBALL[6]))
+    booker.book("11:00 - 12:00", TARGET)
+
+    assert app.swipes == 0
+    assert app.labels[app.taps.index(BASKETBALL[6])] == BASKETBALL[6]  # the driver finds it
+    assert app.screen == "ticket"
+    assert booker.commands == 16
+
+
+def test_a_court_below_the_screen_is_awaited_until_the_list_moves_up():
+    app = basketball_app(BASKETBALL[6], top=796 + 232)  # before the service info loads
+    assert BASKETBALL[6] not in [desc for desc, _, _ in app.screens["courts"]]
+    app.screens["courts_loaded"] = [COURT_LIST, *court_rows(796)]
+    app.taps_to[("courts_loaded", BASKETBALL[6])] = "details"
+    app.taps_to[("calendar_selected", "Tiếp tục")] = ["courts", ("courts_loaded", 3)]
+
+    Booker(app, Config(court=BASKETBALL[6])).book("11:00 - 12:00", TARGET)
+
+    assert app.swipes == 0
+    assert app.screen == "ticket"
+
+
+# A utility with a single court ------------------------------------------------
+
+PICKLEBALL = "S9 - Sân Pickleball"
+
+
+def single_court_app(court=PICKLEBALL):
+    """Return an app whose utility opens the details page of ``court`` after the calendar."""
+    app = booking_app(shown=(details(court=court),))
+    app.screens["details"][0] = node(court, (116, 975, 274, 1004), False)
+    app.screens["details_loading"] = app.screens["details"][:2]  # "Tiếp tục" not enabled yet
+    app.taps_to[("calendar_selected", "Tiếp tục")] = ["details_loading", ("details", 2)]
+    app.backs_to["details"] = "calendar_selected"
+    return app
+
+
+def test_a_single_court_is_booked_from_the_details_page_the_calendar_opens(caplog):
+    caplog.set_level(logging.INFO, logger="court_booker")
+    app = single_court_app()
+    sink = MemorySink()
+    booker = Booker(app, Config(court=PICKLEBALL), Reporter(sink))
+
+    booker.book("11:00 - 12:00", TARGET)
+
+    assert app.taps == [tap for tap in FULL_ROUND if tap != "S10 - Sân tennis"]
+    assert app.screen == "ticket"
+    assert booker.commands == 15  # no court to tap; two reads of the page, one still loading
+    assert "Confirmation page: 2026-10-11 11:00 - 12:00 on S9 - Sân Pickleball" in caplog.text
+    assert f"The app opened its only court, {PICKLEBALL!r}" in caplog.text
+    assert EventKind.COURT_SELECTED in sink.kinds
+
+
+@pytest.mark.parametrize(
+    "first",
+    [
+        [COURT_LIST],  # the heading read before its one court, 2026-10-26
+        [COURT_LIST, node(PICKLEBALL, (35, 1024, 505, 1144))],
+        [VENUE_LIST, VENUE],  # one venue, then one court
+    ],
+    ids=["heading", "list", "venue"],
+)
+def test_a_page_with_one_choice_may_pass_on_to_the_details_by_itself(first):
+    app = single_court_app()
+    app.screens["first"] = first
+    app.taps_to[("calendar_selected", "Tiếp tục")] = ["first", ("details", 2)]
+
+    booker = Booker(app, Config(court=PICKLEBALL))
+    booker.book("11:00 - 12:00", TARGET)
+
+    assert app.screen == "ticket"
+    assert app.taps[-3:] == ["Tiếp tục", CHECKBOX, "Xác nhận"]
+
+
+def test_a_single_court_other_than_the_config_fails_the_round():
+    app = single_court_app(court="S5 - Sân tập bóng bàn 03")
+
+    with pytest.raises(ElementNotFoundError, match="its only court, which is not 'S9 - Sân Pick"):
+        Booker(app, Config(court=PICKLEBALL)).book("11:00 - 12:00", TARGET)
+
+    assert "Tôi đã hiểu và đồng ý với " not in [desc for desc, _, _ in app.screens[app.screen]]
+    assert app.taps[-1] == "Tiếp tục"  # the calendar's: nothing tapped on the details page
+
+
 # The app in English -----------------------------------------------------------
 
 
@@ -1421,6 +1541,25 @@ def test_a_logged_out_app_names_the_labels_of_each_language():
         match=r"did not show 'Tiện ích', 'Sân Tennis', 'Utilities' or 'Tennis' in 1 s; ",
     ):
         Booker(app, Config(boot_timeout=1)).prepare()
+
+
+def test_the_sport_picks_the_tile_to_tap():
+    app = booking_app()
+    app.screens["utilities"] = [node("Sân cầu lông", (35, 300, 505, 360))]
+    app.taps_to[("utilities", "Sân cầu lông")] = app.taps_to.pop(("utilities", "Sân Tennis"))
+    booker = prepared(app, Config(sport="badminton"))
+
+    booker.book("11:00 - 12:00", TARGET)
+
+    assert app.taps == ["Sân cầu lông", *FULL_ROUND[1:]]
+    assert booker.commands == 16
+
+
+def test_a_sport_without_an_english_tile_stops_on_an_app_in_english():
+    app = booking_app(screen="loading", english=True)
+
+    with pytest.raises(AppNotReadyError, match=r"English, whose label of 'badminton' is not"):
+        Booker(app, Config(sport="badminton")).prepare()
 
 
 def test_an_app_in_english_books_a_round_in_16_commands(caplog):

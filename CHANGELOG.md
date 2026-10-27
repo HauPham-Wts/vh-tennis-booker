@@ -6,6 +6,27 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-10-27
+
+### Added
+- Field notes on the seven other courts of the Origami subdivision (labels, courts, the
+  utilities with a single court), and the plan for them in the roadmap.
+- A `sport` setting, also per `[[instances]]` table: `tennis` (the default, so an existing
+  config books as before), `multi`, `volleyball`, `table-tennis`, `basketball`, `football`,
+  `pickleball` or `badminton`. The run taps that sport's tile on the utilities list; a
+  `[labels] utility` set by hand still wins. Only tennis has its English tile so far: a run
+  of another sport stops with a clear message if the app is in English.
+- Table tennis and pickleball, which have a single court: their court list passes on to
+  that court's booking details page by itself, often before a read shows it, as a single
+  venue does. The round goes on from the details page wherever it shows, once the page names
+  the configured court (another court fails the round).
+- A court cut off by the bottom edge, such as the seventh basketball court, is tapped where
+  it is, without swiping the list: it is in the tree, and the driver clicks it by its label.
+- The ticket offers the sport above the courts, then the courts of that sport; choosing a
+  sport saves it with its first court. A court is named by its sport and label everywhere
+  ("Tennis S6", "Bóng rổ S8 · nửa sân"), and the Windows notification names a court of
+  another sport with its sport ("S6 cầu lông").
+
 ## [0.14.0] - 2026-10-26
 
 ### Changed

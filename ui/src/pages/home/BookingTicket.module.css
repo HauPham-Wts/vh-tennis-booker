@@ -141,6 +141,17 @@
   font-weight: var(--weight-bold);
 }
 
+.wrap {
+  flex-wrap: wrap;
+}
+
+.sport {
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-control);
+  font-weight: var(--weight-semibold);
+}
+
 .slotsHead {
   display: flex;
   align-items: baseline;

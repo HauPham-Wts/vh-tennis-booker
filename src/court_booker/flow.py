@@ -146,7 +146,7 @@ class Booker:
         self.any_court = Match(prefix=config.court, clickable=True)
         self.opened_court = Match(desc=config.court, clickable=False)
         """The court named on the booking details page."""
-        self.languages = app_languages(config.labels)
+        self.languages = app_languages(config.labels, config.sport)
         """The languages the app may show; the court names read the same in each."""
         self._use(self.languages[0])
 
@@ -213,10 +213,16 @@ class Booker:
                 repr(label)
                 for language in self.languages
                 for label in (language.labels.home, language.labels.utility)
+                if label
             ]
             raise AppNotReadyError(
                 f"The app did not show {', '.join(labels)} or {last} in "
                 f"{self.config.boot_timeout:.0f} s; check that it is logged in"
+            )
+        if not found[0].labels.utility:
+            raise AppNotReadyError(
+                f"The app is in {found[0].name}, whose label of {self.config.sport!r} is not "
+                "known yet; set the app to Vietnamese"
             )
         self._use(found[0])
         logger.info("App language: %s", found[0].name)
@@ -254,20 +260,24 @@ class Booker:
         )
         if self.notice(shown):
             raise self._refusal(self.notice_text(screen) or "")
-        if not self.court_list(shown):
+        if not self.court_list(shown) and not self.residents(shown):
             # Only the court list's heading counts after the venue: a read right after the
             # tap may still show the venue (2026-10-23), which ended the round at once.
             venue = Match(desc=shown.desc, clickable=True)
-            _, screen = self.tap_and_advance(
-                screen, venue, shown.desc, self._finder(self.court_list)
-            )
-        found = self.wait_for(self._finder(self.any_court), self.config.timeout, screen)
-        if found is None:
-            raise ElementNotFoundError(f"Court {self.config.court!r} is not on the court list")
-        court, screen = found
-        if labels.fully_booked in court.desc:
-            raise SlotUnavailableError(f"Court {self.config.court} is fully booked")
-        screen = self.select_court(screen)
+            shown, screen = self.tap_and_advance(screen, venue, shown.desc, self._courts_or_details)
+        if not self.residents(shown):
+            # A court that the bottom edge cuts off is tapped as it is: it is in the tree, and
+            # the driver clicks it by its label (field notes, "Other sports").
+            found = self.wait_for(self._court_or_details, self.config.timeout, screen)
+            if found is None:
+                raise ElementNotFoundError(f"Court {self.config.court!r} is not on the court list")
+            shown, screen = found
+        if self.residents(shown):
+            screen = self.check_single_court(screen)
+        else:
+            if labels.fully_booked in shown.desc:
+                raise SlotUnavailableError(f"Court {self.config.court} is fully booked")
+            screen = self.select_court(screen)
         self.report(EventKind.COURT_SELECTED, court=self.config.court)
         point, screen = self.tap_and_advance(
             screen, self.continue_button, labels.continue_, self.locate_checkbox
@@ -385,6 +395,24 @@ class Booker:
         if wrong:
             raise NavigationError(f"The app opened another court than {name!r} {wrong} time(s)")
         raise NavigationError(f"Tapped {name!r} but the next screen did not appear")
+
+    def check_single_court(self, screen: Screen) -> Screen:
+        """Return the booking details page ``screen`` shows in place of the court list.
+
+        A court list with a single court, such as table tennis's, passes on to that court's
+        details page by itself, often before a read shows the list (field notes, "Other
+        sports"). The page is awaited until its "Tiếp tục" is enabled, as after a court tap,
+        and must name the configured court.
+        """
+        name = self.config.court
+        found = self.wait_for(self._details_page, self.config.timeout, screen)
+        if found is None:
+            raise ElementNotFoundError(f"{self.labels.continue_!r} stayed disabled")
+        screen = found[1]
+        if screen.find(self.opened_court) is None:
+            raise ElementNotFoundError(f"The app opened its only court, which is not {name!r}")
+        logger.info("The app opened its only court, %r", name)
+        return screen
 
     def return_to_utilities(self, screen: Screen | None = None) -> Screen:
         """Navigate to the utilities list from the home, ticket or any inner screen."""
@@ -783,7 +811,7 @@ class Booker:
         for language in self.languages:
             labels = language.labels
             for label in (labels.home, labels.utility):
-                if screen.find(Match(desc=label, clickable=True)) is not None:
+                if label and screen.find(Match(desc=label, clickable=True)) is not None:
                     return language
         return None
 
@@ -826,8 +854,8 @@ class Booker:
         since = time.monotonic()
 
         def find(screen: Screen) -> Node | None:
-            button = screen.find(self.continue_button)
-            if button is not None and screen.find(self.residents) is not None:
+            button = self._details_page(screen)
+            if button is not None:
                 return button
             court = screen.find(self.court)
             if (
@@ -841,13 +869,32 @@ class Booker:
 
         return find
 
-    def _after_calendar(self, screen: Screen) -> Node | None:
-        """Return the court list's heading, the venue to tap or a notice's title, once shown.
+    def _courts_or_details(self, screen: Screen) -> Node | None:
+        """Return the court list's heading, or the booking details page's caption."""
+        return screen.find(self.court_list) or screen.find(self.residents)
 
-        The quota notice shows in place of the next screen after "Tiếp tục" (field notes,
-        "Dialogs"); waiting for the courts alone cost the round ``timeout``.
+    def _court_or_details(self, screen: Screen) -> Node | None:
+        """Return the court on the list, or the caption of the details page it passed on to."""
+        return screen.find(self.any_court) or screen.find(self.residents)
+
+    def _details_page(self, screen: Screen) -> Node | None:
+        """Return the booking details page's continue button once it is enabled."""
+        button = screen.find(self.continue_button)
+        if button is not None and screen.find(self.residents) is not None:
+            return button
+        return None
+
+    def _after_calendar(self, screen: Screen) -> Node | None:
+        """Return what shows after the calendar's "Tiếp tục", once it shows.
+
+        That is the court list's heading, the venue to tap, the booking details page's
+        caption or a notice's title. A utility with a single court shows its details page in
+        place of the court list. The quota notice shows in place of the next screen (field
+        notes, "Dialogs"); waiting for the courts alone cost the round ``timeout``.
         """
-        found = screen.find(self.court_list) or self._venue_entry(screen)
+        found = (
+            screen.find(self.court_list) or self._venue_entry(screen) or screen.find(self.residents)
+        )
         if found is None and self.notice_text(screen) is not None:
             return screen.find(self.notice)
         return found

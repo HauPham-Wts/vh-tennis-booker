@@ -17,7 +17,7 @@ Details live in the docstrings; this page says where things are and what must st
   Windows notification (`notify.py`; a failure only logs a warning). After a real run with at
   least one round, `close_emulator` shuts MuMu down.
 - Other MuMu instances (`[[instances]]` in the config, each with its own account and its own
-  `mumu_index`, `slots`, `court`, `venue_keyword`; `config.instance_config`):
+  `mumu_index`, `slots`, `sport`, `court`, `venue_keyword`; `config.instance_config`):
   the run's process, once it holds the lock and has cleared stale runs, starts one process per
   entry (`start_instances`: the same command with `--instance N`, without `--slots`,
   `--device`; console output dropped) and waits for them, holding its lock. Each such process
@@ -55,8 +55,11 @@ Details live in the docstrings; this page says where things are and what must st
   `press_back()` and `_scroll()`, each counted in `commands`. A full round costs 16 commands
   (tests hold it). A screen that differs from the last read is logged at debug level, so the
   log holds every screen of a run.
-- Labels come from `app_language.app_languages(config.labels)`: Vietnamese from `[labels]`,
-  English built in. `prepare()` finds the language on the first screen and uses it.
+- Labels come from `app_language.app_languages(config.labels, config.sport)`: Vietnamese from
+  `[labels]`, English built in; the utility tapped is the tile of `sport` (`config.SPORTS`,
+  `app_language.ENGLISH_SPORTS`) unless `[labels] utility` names one. `prepare()` finds the
+  language on the first screen and uses it; a language without a tile for the sport stops the
+  run there.
 - Every transition is `tap_and_advance(screen, target, name, find_next)`: tap, then read until
   `find_next` finds the next screen, up to `timeout` (30 s). The tap is repeated every 2 s
   while `target` still shows (a swallowed tap), never while the app loads (target gone).
@@ -64,9 +67,13 @@ Details live in the docstrings; this page says where things are and what must st
 - Round: `open_slot` (utility → calendar; a notice in its place, such as the closed-hours one,
   is closed and the utility tapped again until `open_retry_seconds`; a date or slot not listed
   yet reloads the calendar) → `select_date` → `select_slot` (tapped once "Tiếp tục" shows
-  enabled) → "Tiếp tục" → `_after_calendar` (court list, the venue page, or a notice, which
-  fails the round at once) → `select_court` → "Tiếp tục" → confirmation page →
-  `accept_and_confirm`.
+  enabled) → "Tiếp tục" → `_after_calendar` (court list, the venue page, the booking details
+  page of a utility with a single court, or a notice, which fails the round at once) →
+  `select_court` (or `check_single_court` when a page with one choice passed on to the
+  details page by itself: it must name the configured court)
+  → "Tiếp tục" → confirmation page → `accept_and_confirm`.
+- A court cut off by the bottom edge is tapped without a swipe: it is in the tree, and the
+  driver clicks it by its label (seven basketball courts).
 - `select_court`: the court list can move under the tap (field notes), so the booking details
   page must name the configured court; another court is left with Back and tapped again.
 - `accept_and_confirm`: tick, then "Xác nhận" at least 0.2 s later. Booked only once the
@@ -100,7 +107,8 @@ Details live in the docstrings; this page says where things are and what must st
 - `config.py`: `load_config` refuses unknown keys but never validates, so an existing config
   never stops the 06:00 run. `validate_config` runs before every save. `save_config` writes
   atomically, without comments, with only the labels that differ from the defaults and the keys
-  of `_WRITTEN_WHEN_CHANGED` only when changed: an older runner refuses keys it does not know.
+  of `_WRITTEN_WHEN_CHANGED` (and an instance's `sport`) only when changed: an older runner
+  refuses keys it does not know.
   New fields go into the dataclass and `config.example.toml`.
 - `paths.data_folder()`: `%LOCALAPPDATA%\CourtBooker` (`COURT_BOOKER_HOME` overrides) with
   `booker.db`, `run.lock`, `logs/` and the app's `config.toml`. The CLI's config comes from
@@ -155,7 +163,7 @@ After a route or model change: `python tools/export_openapi.py`, then `npm run a
 - One screen (`pages/HomePage.tsx`, parts in `pages/home/`): the ticket (`BookingTicket`:
   on top the daily switch and what is set, the play day, court and slots of the MuMu
   instance chosen below, following each press as its save goes out; under the perforation
-  that instance's court and up to two slots, saved on each press, and the dry run;
+  that instance's sport, court and up to two slots, saved on each press, and the dry run;
   or `LiveTicket` while a booking or a dry run goes on: one ticket per run of `running.runs`,
   named "MuMu N" when several instances book side by side) and `SidePanel` beside it, two tabs:
   `HistoryTab` (runs ten days at a time, real bookings unless dry runs are ticked, `?run=`
@@ -163,8 +171,10 @@ After a route or model change: `python tools/export_openapi.py`, then `npm run a
   notification switch, the guide). The header's status line (`components/StatusLine.tsx`)
   shows the run going on, else the one thing to do. `manualSteps.ts` keeps the user's ticks in
   `localStorage` (memory when storage fails); `setupState.ts` counts the setup tasks left and
-  picks the panel's first tab. `booking.ts` holds the slot and court choices the developer
-  maintains and the two-slot limit. The UI never calls `GET /api/setup` or
+  picks the panel's first tab. `booking.ts` holds the slot, sport and court choices the
+  developer maintains (each court with the label that tells it from the others of its sport)
+  and the two-slot limit; `useFormat`'s `court` names a court by its sport and label
+  ("Tennis S6"). The UI never calls `GET /api/setup` or
   `POST /api/notifications/test` (the routes stay for the command line and tools).
 
 ## Driver (`android/`)
