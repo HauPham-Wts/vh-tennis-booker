@@ -38,9 +38,17 @@ ENGLISH_LABELS = Labels(  # read from the app in English on 2026-10-20
 )
 """The English labels. The Vietnamese ones are the config's ``[labels]``."""
 
-ENGLISH_SPORTS = {"tennis": "Tennis"}
-"""The tiles of the sports on the utilities list in English, those read so far; a run of
-another sport stops when it finds the app in English."""
+ENGLISH_SPORTS = {  # read on 2026-10-27
+    "tennis": "Tennis",
+    "multi": "Multi Purpose Yard",
+    "volleyball": "Volleyball",
+    "table-tennis": "Pingpong",
+    "basketball": "Basketball",
+    "football": "Football",
+    "pickleball": "Pickleball",
+    "badminton": "Badminton",
+}
+"""The tiles of the sports on the utilities list in English, the keys of :data:`SPORTS`."""
 
 ENGLISH_MONTHS = (
     "January",
@@ -99,7 +107,7 @@ def app_languages(labels: Labels, sport: str = "tennis") -> tuple[AppLanguage, .
     """Return the app's languages: Vietnamese with ``labels``, the config's, then English.
 
     Each taps the tile of ``sport`` on the utilities list, unless ``labels`` names another
-    tile. A language that has no tile for ``sport`` has an empty ``utility`` label.
+    tile.
     """
     if sport not in SPORTS:
         raise ConfigError(f"Unknown sport {sport!r}: use one of {', '.join(SPORTS)}")
@@ -112,7 +120,7 @@ def app_languages(labels: Labels, sport: str = "tennis") -> tuple[AppLanguage, .
         ),
         AppLanguage(
             "English",
-            replace(ENGLISH_LABELS, utility=ENGLISH_SPORTS.get(sport, "")),
+            replace(ENGLISH_LABELS, utility=ENGLISH_SPORTS[sport]),
             "{day}, {weekday}, {month} {day}, {year}",
             ENGLISH_MONTHS,
         ),

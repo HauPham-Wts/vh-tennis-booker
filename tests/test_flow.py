@@ -1555,11 +1555,16 @@ def test_the_sport_picks_the_tile_to_tap():
     assert booker.commands == 16
 
 
-def test_a_sport_without_an_english_tile_stops_on_an_app_in_english():
-    app = booking_app(screen="loading", english=True)
+def test_an_app_in_english_taps_the_english_tile_of_the_sport():
+    app = booking_app(english=True)
+    app.screens["utilities"] = [node("Badminton", (35, 300, 505, 360))]
+    app.taps_to[("utilities", "Badminton")] = app.taps_to.pop(("utilities", "Tennis"))
+    booker = prepared(app, Config(sport="badminton"))
 
-    with pytest.raises(AppNotReadyError, match=r"English, whose label of 'badminton' is not"):
-        Booker(app, Config(sport="badminton")).prepare()
+    booker.book("11:00 - 12:00", TARGET)
+
+    assert app.taps == ["Badminton", *english(FULL_ROUND[1:])]
+    assert booker.commands == 16
 
 
 def test_an_app_in_english_books_a_round_in_16_commands(caplog):

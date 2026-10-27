@@ -219,11 +219,6 @@ class Booker:
                 f"The app did not show {', '.join(labels)} or {last} in "
                 f"{self.config.boot_timeout:.0f} s; check that it is logged in"
             )
-        if not found[0].labels.utility:
-            raise AppNotReadyError(
-                f"The app is in {found[0].name}, whose label of {self.config.sport!r} is not "
-                "known yet; set the app to Vietnamese"
-            )
         self._use(found[0])
         logger.info("App language: %s", found[0].name)
         try:
