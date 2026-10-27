@@ -125,7 +125,7 @@ account's subdivision; it shows the utilities, venues and courts of that subdivi
 | Sân bóng đá | BQL Grand Park | Sân bóng đá | 2 courts | 13 x 1 h |
 | Sân Pickleball | Vinhomes Grand Park | Origami _ Sân Pickleball | one court, passed by itself | 13 x 1 h |
 | Sân cầu lông | BQL Grand Park | Origami _ Sân cầu lông | 3 courts | 13 x 1 h |
-| Nhà Tập Golf Vip | Vinhomes Grand Park | none (not after Back either) | Golf Số 01 to 07 | 6 x 2 h (07-13, 15-21) |
+| Nhà Tập Golf Vip | Vinhomes Grand Park | none (not after Back either) | Golf Số 01 to 10 | 6 x 2 h (07-13, 15-21) |
 | Nướng BBQ | BQL Grand Park | BBQ _ CV 36ha _ Zone 2 | BBQ CV Zone 2 - 01 to 07 | 4 x 2 h (10-14, 17-21) |
 
 - Order of pages after the calendar's "Tiếp tục": the page heading (the tile's name and the
@@ -180,6 +180,40 @@ account's subdivision; it shows the utilities, venues and courts of that subdivi
   not in the tree yet.
 - Each volleyball court row has a child "Chỉ đường" button (x 53-178); a tap in the middle of
   the row still opens the court.
+
+## Subdivision BS
+
+Surveyed 2026-10-27 with an account of the BS subdivision, app in Vietnamese, the same walk
+as Origami. Each subdivision shows its own utilities, venues and courts, so each needs its own
+survey.
+
+- The utilities list holds eight tiles, in this order: "Sân bóng chuyền", "Sân Tennis", "Sân
+  bóng rổ", "Sân bóng đá", "Sân Pickleball", "Sân cầu lông", "Nhà Tập Golf Vip", "Nướng BBQ".
+  No "Sân đa năng" and no "Sân bóng bàn". Tile names, captions, the calendar (13 one-hour
+  slots, today to today + 2) and the details page read as at Origami.
+- **Several venues.** Tennis, basketball and pickleball list two venues, "BE _ …" and "BS _
+  …"; this page stays until a venue is tapped. A venue whose courts are all taken at the slot
+  reads "| Hết chỗ" (seen for "BE _ Sân tennis" at 09:00 and 10:00).
+- After a single court passes by itself to its details page, one Back shows that court's list
+  (one entry), not the venues.
+
+| Tile | Venue | Courts |
+|---|---|---|
+| Sân bóng chuyền | BS _ Sân bóng chuyền hơi | BCX3 - Sân bóng chuyền hơi 01, BCX3 - Sân bóng chuyền hơi 02 |
+| Sân Tennis | BE _ Sân tennis | BE7 - Sân tennis (one, passes by itself) |
+| | BS _ Sân tennis | BCX3 - Sân tennis 01, BCX3 - Sân tennis 02, CX2 - Sân tennis 01, CX2 - Sân tennis 02 |
+| Sân bóng rổ | BE _ Sân bóng rổ | BE7 - Sân bóng rổ tập ném 01, BE7 - Sân bóng rổ tập ném 02 |
+| | BS _ Sân bóng rổ | BCX3 - Sân bóng rổ tập ném 01, BCX3 - Sân bóng rổ tập ném 02 |
+| Sân bóng đá | BS _ Sân bóng đá | BCX3 - Sân bóng đá (one, passes by itself) |
+| Sân Pickleball | BE _ Sân Pickleball | BE7 - Sân Pickleball (one, passes by itself) |
+| | BS _ Sân Pickleball | BCX3 - Sân đa năng (Cầu lông-Pickleball) (one, passes by itself) |
+| Sân cầu lông | BS _ Sân cầu lông | BCX3 - Sân cầu lông 01 (one, passes by itself) |
+| Nhà Tập Golf Vip | none | Golf Số 01 to 10, as at Origami |
+| Nướng BBQ | BBQ _ CV 36ha _ Zone 2 | BBQ CV Zone 2 - 01 to 07, as at Origami |
+
+- The court's venue is not in the court's name in a way the code can rely on (BCX3 and CX2
+  courts are both under "BS _"), so a court is booked through a venue named with it:
+  `venue_keyword` "BE" or "BS" picks the venue ("BS" is not part of "BE _ …").
 
 ## App in English
 
