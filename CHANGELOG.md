@@ -7,6 +7,8 @@ uses [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Field notes on the BS subdivision: its utilities, the venues BE and BS with their courts,
+  and how it differs from Origami.
 - Field notes on the structure of each utility at Origami (venue, court list, slots, the
   pages the app passes by itself), and the next-month button's label when it is enabled.
 - Every sport books with the app set to English: the English tiles of the seven other
