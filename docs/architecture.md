@@ -72,9 +72,8 @@ Details live in the docstrings; this page says where things are and what must st
   `select_court` (or `check_single_court` when a page with one choice passed on to the
   details page by itself: it must name the configured court)
   → "Tiếp tục" → confirmation page → `accept_and_confirm`.
-- `find_court`: the court list can run below the screen (seven basketball courts); while the
-  court is cut off by the bottom edge, or missing with the list cut off, the list is swiped up
-  (`max_swipes`).
+- A court cut off by the bottom edge is tapped without a swipe: it is in the tree, and the
+  driver clicks it by its label (seven basketball courts).
 - `select_court`: the court list can move under the tap (field notes), so the booking details
   page must name the configured court; another court is left with Back and tapped again.
 - `accept_and_confirm`: tick, then "Xác nhận" at least 0.2 s later. Booked only once the
