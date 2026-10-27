@@ -4,8 +4,8 @@ from datetime import date
 
 import pytest
 
-from court_booker.app_language import ENGLISH_LABELS, app_languages
-from court_booker.config import ConfigError, Labels
+from court_booker.app_language import ENGLISH_LABELS, ENGLISH_SPORTS, app_languages
+from court_booker.config import SPORTS, ConfigError, Labels
 from court_booker.geometry import month_index
 
 VIETNAMESE, ENGLISH = app_languages(Labels())
@@ -15,6 +15,11 @@ def test_every_english_label_is_set():
     for item in fields(Labels):
         english = getattr(ENGLISH_LABELS, item.name)
         assert english and english != getattr(Labels(), item.name), item.name
+
+
+def test_every_sport_has_an_english_tile():
+    assert ENGLISH_SPORTS.keys() == SPORTS.keys()
+    assert all(ENGLISH_SPORTS.values())
 
 
 def test_english_dates_match_the_exact_day_only():
@@ -62,9 +67,9 @@ def test_vietnamese_uses_the_config_labels():
     ("sport", "vietnamese", "english"),
     [
         ("tennis", "Sân Tennis", "Tennis"),
-        ("table-tennis", "Sân bóng bàn", ""),
-        ("pickleball", "Sân Pickleball", ""),
-        ("badminton", "Sân cầu lông", ""),
+        ("table-tennis", "Sân bóng bàn", "Pingpong"),
+        ("pickleball", "Sân Pickleball", "Pickleball"),
+        ("badminton", "Sân cầu lông", "Badminton"),
     ],
 )
 def test_each_language_taps_the_tile_of_the_sport(sport, vietnamese, english):

@@ -133,6 +133,11 @@ Vip" and "Nướng BBQ", are out of scope). Only "Sân Tennis" has a capital T.
 | Sân Pickleball | one court, passes by itself | S9 - Sân Pickleball |
 | Sân cầu lông | list | S10 - Sân cầu lông, S6 - Sân cầu lông, S8 - Sân Cầu lông |
 
+- In English (2026-10-27) the list is "Utilities list", section "Utilities Vinhomes Grand
+  Park", and the eight tiles read "Multi Purpose Yard", "Volleyball", "Pingpong", "Tennis",
+  "Basketball", "Football", "Pickleball" and "Badminton" ("Golf house Vip" and "BBQ" out of
+  scope). Venues ("Origami _ Sân bóng chuyền hơi") and court names stay in Vietnamese, as for
+  tennis; each sport went to "Confirm" in a dry run.
 - Court names are not uniform: "S8 - Sân Cầu lông" has a capital C.
 - The basketball list has seven courts; the seventh sits at the bottom edge (y 1594-1600 at
   540x1600). It is in the tree, so the driver clicks it by its label without a swipe; until
