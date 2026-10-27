@@ -7,6 +7,8 @@ uses [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Field notes on the structure of each utility at Origami (venue, court list, slots, the
+  pages the app passes by itself), and the next-month button's label when it is enabled.
 - Every sport books with the app set to English: the English tiles of the seven other
   courts are built in, so a run no longer stops on an app in English.
 
