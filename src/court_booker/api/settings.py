@@ -2,6 +2,7 @@
 
 # No `from __future__ import annotations`: FastAPI and Pydantic read the annotations at run
 # time.
+from dataclasses import replace
 from typing import Any
 
 from fastapi import APIRouter
@@ -19,6 +20,7 @@ from court_booker.config import (
     save_config,
     validate_config,
 )
+from court_booker.errors import RequestError
 from court_booker.events import EventKind
 
 router = APIRouter(prefix="/api", tags=["settings"])
@@ -99,8 +101,8 @@ class Settings(BaseModel):
     next_month_xy: tuple[float, float]
     prev_month_xy: tuple[float, float]
     instances: list[InstanceSettings]
-    """Other MuMu instances with all their settings; the app changes them, never which
-    instances there are (each needs its own MuMu instance and account set up first)."""
+    """Other MuMu instances with all their settings; ``PUT /api/instances/{mumu_index}``
+    adds or removes one, this route only changes them."""
     labels: LabelSettings
 
 
@@ -134,7 +136,7 @@ def save_settings(context: Context, settings: Settings) -> dict[str, Any]:
     config = config_from_dict({**config_to_dict(old), **settings.model_dump(by_alias=True)})
     problems = validate_config(config)
     if _indexes(config) != _indexes(old):
-        problems.append("MuMu instances are added or removed in config.toml, not here")
+        problems.append("MuMu instances are added or removed by PUT /api/instances, not here")
     if problems:
         raise InvalidSettingsError(problems)
     before, after = settings_of(old), settings_of(config)
@@ -143,6 +145,40 @@ def save_settings(context: Context, settings: Settings) -> dict[str, Any]:
         save_config(config, context.config_path)
         record(context, EventKind.SETTINGS_SAVED, changed=changed)
     return after
+
+
+class InstanceSwitch(BaseModel):
+    """Book with a MuMu instance, or not."""
+
+    enabled: bool
+
+
+@router.put("/instances/{mumu_index}", response_model=Settings)
+def switch_instance(context: Context, mumu_index: int, switch: InstanceSwitch) -> dict[str, Any]:
+    """Book with MuMu instance ``mumu_index`` beside the first, or stop.
+
+    On, it gets an ``[[instances]]`` table that takes every setting from the top of the
+    file until the app changes them; off, its table goes. No ``enabled`` key is written: a
+    runner of an older version refuses keys it does not know. Invalid settings (422)
+    leave the file as it was; the first machine's own instance is refused (400).
+    """
+    old = context.config()
+    if mumu_index == old.mumu_index:
+        raise RequestError(f"MuMu instance {mumu_index} is the first machine, always used")
+    others = [table for table in old.instances if table.get("mumu_index") != mumu_index]
+    if switch.enabled:
+        if len(others) < len(old.instances):  # on already
+            return settings_of(old)
+        others.append({"mumu_index": mumu_index})
+    elif len(others) == len(old.instances):  # off already
+        return settings_of(old)
+    config = replace(old, instances=others)
+    problems = validate_config(config)
+    if problems:
+        raise InvalidSettingsError(problems)
+    save_config(config, context.config_path)
+    record(context, EventKind.SETTINGS_SAVED, changed=["instances"])
+    return settings_of(config)
 
 
 def _indexes(config: Config) -> list[Any]:

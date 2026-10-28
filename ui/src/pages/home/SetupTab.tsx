@@ -2,7 +2,14 @@ import { useTranslation } from "react-i18next";
 import { useOverview } from "../../api/queries";
 import type { Overview } from "../../api/types";
 import { QueryView } from "../../components/QueryView";
-import { MANUAL_STEPS, setManualDone, useManualSteps } from "../../manualSteps";
+import { type Machine, machineAt, useMachines } from "../../machines";
+import {
+  MANUAL_STEPS,
+  SHARED_STEPS,
+  setManualDone,
+  useManualSteps,
+  useManualTicks,
+} from "../../manualSteps";
 import { setupDone } from "../../setupState";
 import styles from "./SetupTab.module.css";
 
@@ -19,15 +26,27 @@ function HowTo() {
   );
 }
 
-/** The steps only the user can do, ticked by the user; the app does not check them. */
-function ManualSteps() {
+/**
+ * The steps only the user can do, ticked by the user; the app does not check them. With
+ * several machines, the ticks are the shown machine's, MuMu's shared by all.
+ */
+function ManualSteps({ machine, several }: { machine: Machine; several: boolean }) {
   const { t } = useTranslation();
-  const done = useManualSteps();
+  const done = useManualSteps(machine.key);
   return (
     <section aria-labelledby="manual-title">
       <h3 id="manual-title" className={styles.heading}>
         {t("pages.setup.manual.title")}
       </h3>
+      {several && machine.mumuIndex !== null && (
+        <p className={styles.machine}>
+          {t("pages.setup.manual.machine", {
+            number: machine.place + 1,
+            index: machine.mumuIndex,
+          })}
+          {!machine.enabled && ` · ${t("pages.setup.manual.off")}`}
+        </p>
+      )}
       <ul className={styles.list}>
         {MANUAL_STEPS.map((step) => (
           <li key={step} className={styles.item}>
@@ -35,10 +54,13 @@ function ManualSteps() {
               <input
                 type="checkbox"
                 checked={done[step]}
-                onChange={(event) => setManualDone(step, event.target.checked)}
+                onChange={(event) => setManualDone(step, event.target.checked, machine.key)}
               />
               <span className={styles.text}>
-                <span className={styles.title}>{t(`pages.setup.manual.${step}.title`)}</span>
+                <span className={styles.title}>
+                  {t(`pages.setup.manual.${step}.title`)}
+                  {several && SHARED_STEPS.includes(step) && ` (${t("pages.setup.manual.shared")})`}
+                </span>
                 <span className={styles.hint}>{t(`pages.setup.manual.${step}.hint`)}</span>
               </span>
             </label>
@@ -97,17 +119,20 @@ function Guide({ overview, howto }: { overview: Overview; howto: boolean }) {
 /**
  * The Setup tab: how to start while anything is left, the steps the user ticks and the
  * guide; the notification switch is on the ticket. MuMu's place and screen and waking the
- * PC need no step: the runs and the daily switch see to them.
+ * PC need no step: the runs and the daily switch see to them. It shows the machine chosen
+ * on the ticket (`machine`, 0: the first).
  */
-export function SetupTab() {
+export function SetupTab({ machine }: { machine: number }) {
   const { t } = useTranslation();
   const overview = useOverview();
-  const manual = useManualSteps();
+  const ticks = useManualTicks();
+  const machines = useMachines();
+  const shown = machineAt(machines, machine);
   return (
     <div className={styles.tab}>
       <QueryView query={overview}>
         {(data) => {
-          const done = setupDone(data, manual);
+          const done = setupDone(data, ticks, machines);
           return (
             <>
               {!done && (
@@ -118,7 +143,7 @@ export function SetupTab() {
                   <HowTo />
                 </section>
               )}
-              <ManualSteps />
+              <ManualSteps machine={shown} several={machines.length > 1} />
               <Guide overview={data} howto={done} />
             </>
           );

@@ -135,6 +135,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/instances/{mumu_index}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Switch Instance
+         * @description Book with MuMu instance ``mumu_index`` beside the first, or stop.
+         *
+         *     On, it gets an ``[[instances]]`` table that takes every setting from the top of the
+         *     file until the app changes them; off, its table goes. No ``enabled`` key is written: a
+         *     runner of an older version refuses keys it does not know. Invalid settings (422)
+         *     leave the file as it was; the first machine's own instance is refused (400).
+         */
+        put: operations["switch_instance_api_instances__mumu_index__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/accounts": {
         parameters: {
             query?: never;
@@ -358,6 +383,14 @@ export interface components {
             court: string;
             /** Venue Keyword */
             venue_keyword: string;
+        };
+        /**
+         * InstanceSwitch
+         * @description Book with a MuMu instance, or not.
+         */
+        InstanceSwitch: {
+            /** Enabled */
+            enabled: boolean;
         };
         /**
          * LabelSettings
@@ -964,6 +997,50 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["Settings"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Settings"];
+                };
+            };
+            /** @description Invalid request values, one line per value */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description An error with a stable code */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    switch_instance_api_instances__mumu_index__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mumu_index: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstanceSwitch"];
             };
         };
         responses: {

@@ -158,6 +158,7 @@ values 422 `invalid_request`.
 | `GET /api/runs`, `/api/runs/{id}`, `/api/runs/months` | Runs newest first (filters, paging by id or by days), one run with steps and log lines, months of real bookings |
 | `GET /api/events` | Activity steps newest first |
 | `GET`/`PUT /api/settings` | Booking settings without the hidden keys (`HIDDEN`: Telegram, the notification), with each `[[instances]]` entry in full; `PUT` validates, refuses added or removed instances, saves only on a change |
+| `PUT /api/instances/{mumu_index}` | A machine beside the first on or off: adds its `[[instances]]` table (taking every setting from the top) or removes it; no `enabled` key, which an older runner would refuse |
 | `GET`/`PUT /api/notifications`, `POST .../test` | The Windows notification's switch and language; a sample notification |
 | `GET /api/setup` | Device checks; nothing is changed (auto setup is the command line's) |
 | `GET`/`PUT /api/schedule` | The task: state, times; switching on needs a passed dry run and allows wake timers. Never switch it on from a development backend: the task would run the development Python |
@@ -187,18 +188,24 @@ After a route, model or catalog change: `python tools/export_openapi.py` (writes
 - One screen (`pages/HomePage.tsx`, parts in `pages/home/`): the ticket (`BookingTicket`:
   on top the daily switch and what is set: the play day and court side by side, the slots
   on a row of their own (fixed rows, whatever the court's name), and a line only while the
-  switch is off, for the MuMu instance chosen below, following each press as its save goes
-  out; under the perforation that instance's subdivision, sport, court and up to two slots,
-  saved on each press, and the dry run;
+  switch is off, for the machine chosen on its tabs on top (`MachineBar`, "Máy 1", "Máy 2":
+  one per MuMu instance, always two at least: without `[[instances]]` the second is MuMu 1,
+  switched off and pale; a red mark on a machine that books with setup of its own left),
+  following each press as its save goes out; under the perforation, on a machine beside the
+  first, its "Dùng máy này" switch (`PUT /api/instances/{mumu_index}`), then, while it
+  books, that machine's subdivision, sport, court and up to two slots, saved on each press,
+  and the dry run;
   or `LiveTicket` while a booking or a dry run goes on: one ticket per run of `running.runs`,
   named "MuMu N" when several instances book side by side) and `SidePanel` beside it, two tabs:
   `HistoryTab` (runs ten days at a time, real bookings unless dry runs are ticked, `?run=`
-  opens one run's slots, steps and log) and `SetupTab` (the user's ticks and the guide).
+  opens one run's slots, steps and log) and `SetupTab` (the user's ticks and the guide,
+  those of the machine chosen on the ticket, which `HomePage` holds).
   The result notification's switch (`NotifySwitch`) sits on the ticket beside the daily one, both with a short word ("Tự đặt", "Thông báo") and their full name for screen
   readers. The header's status line (`components/StatusLine.tsx`)
-  shows the run going on, else the one thing to do. `manualSteps.ts` keeps the user's ticks in
-  `localStorage` (memory when storage fails); `setupState.ts` counts the setup tasks left and
-  picks the panel's first tab. `booking.ts` holds the slots and the two-slot limit, and reads
+  shows the run going on, else the one thing to do. `machines.ts` lists the machines from the
+  settings. `manualSteps.ts` keeps the user's ticks in `localStorage` (memory when storage
+  fails): MuMu's once, the app's and the login's for each machine; `setupState.ts` counts the
+  setup tasks left over the machines that book and picks the panel's first tab. `booking.ts` holds the slots and the two-slot limit, and reads
   the subdivisions, sports and courts from `catalog.json`, written from `catalog.py`.
   `useFormat`'s `courtLabel` tells a court from the others of its sport ("BE7 · tập ném 01",
   in English "BE7 · shooting 01": the app keeps court names in Vietnamese in both languages,

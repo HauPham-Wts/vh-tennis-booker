@@ -6,6 +6,13 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- Tabs on top of the ticket ("Máy 1", "Máy 2") choose the machine the ticket and the Setup tab
+  show; each machine has its own app and login ticks, and a red mark tells a machine with
+  setup of its own left. "Máy 2" (MuMu 1) is always there: its "Dùng máy này" switch adds its
+  `[[instances]]` table (`PUT /api/instances/{mumu_index}`, taking machine 1's choices until
+  changed) or removes it; switched off it is pale and counts no setup.
+
 ### Fixed
 - The ticket and the side panel keep their four rounded corners: the ticket's choices scroll
   inside it, its dry run row staying at the foot, instead of the column scrolling past its

@@ -128,3 +128,11 @@ details[open] > .summary::after {
   margin: 0;
   color: var(--color-muted);
 }
+
+/* Whose ticks these are, with several machines. */
+.machine {
+  margin-bottom: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+}

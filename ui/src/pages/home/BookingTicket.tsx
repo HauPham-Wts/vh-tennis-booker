@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { errorMessage } from "../../api/errors";
-import { useSaveSettings, useStartDryRun, useSwitchSchedule } from "../../api/mutations";
+import {
+  useSaveSettings,
+  useStartDryRun,
+  useSwitchInstance,
+  useSwitchSchedule,
+} from "../../api/mutations";
 import { useAccounts, useRuns, useSettings } from "../../api/queries";
 import type {
   AccountSubdivision,
@@ -29,10 +34,12 @@ import { Overline } from "../../components/Overline";
 import { QueryView } from "../../components/QueryView";
 import { Switch } from "../../components/Switch";
 import { localToday } from "../../format";
+import { type Machine, machineAt, useMachines } from "../../machines";
 import { quietEnd } from "../../quiet";
 import { failureReason } from "../../reasons";
 import { useFormat } from "../../useFormat";
 import styles from "./BookingTicket.module.css";
+import { MachineBar } from "./MachineBar";
 import { NotifySwitch } from "./NotifySwitch";
 import { TicketFrame } from "./TicketFrame";
 
@@ -152,9 +159,8 @@ interface ChoicesProps {
   save: SaveSettings;
   /** The subdivision each account told last, `undefined` until read. */
   accounts: readonly AccountSubdivision[] | undefined;
-  /** The MuMu instance whose choices show (0: the top of the settings). */
+  /** The machine whose choices show (0: the top of the settings). */
   instance: number;
-  onInstance: (index: number) => void;
 }
 
 /**
@@ -165,13 +171,12 @@ interface ChoicesProps {
  * is on its way, so two saves never cross. The subdivision follows the account until one is
  * pressed.
  */
-function Choices({ saved, save, accounts, instance, onInstance }: ChoicesProps) {
+function Choices({ saved, save, accounts, instance }: ChoicesProps) {
   const { t } = useTranslation();
   const f = useFormat();
   const [warning, setWarning] = useState<string | null>(null);
   const busy = save.isPending;
   const settings = shownSettings(saved, save);
-  const instances = [settings, ...settings.instances];
   const { index, booking: shown } = bookingOf(settings, instance);
   const { booking: own } = bookingOf(saved, index);
   const full = shown.slots.length >= MAX_SLOTS;
@@ -225,29 +230,6 @@ function Choices({ saved, save, accounts, instance, onInstance }: ChoicesProps) 
 
   return (
     <div aria-busy={busy} className={styles.choices}>
-      {instances.length > 1 && (
-        <div role="group" aria-labelledby="instance-label" className={styles.group}>
-          <Overline as="span" id="instance-label">
-            {t("pages.ticket.instance")}
-          </Overline>
-          <div className={styles.buttons}>
-            {instances.map((item, place) => (
-              <button
-                key={item.mumu_index}
-                type="button"
-                aria-pressed={place === index}
-                className={`${styles.choice} ${styles.court}`}
-                onClick={() => {
-                  setWarning(null);
-                  onInstance(place);
-                }}
-              >
-                {t("pages.ticket.instanceName", { index: item.mumu_index })}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
       <div role="group" aria-labelledby="subdivision-label" className={styles.group}>
         <div className={styles.slotsHead}>
           <Overline as="span" id="subdivision-label">
@@ -432,39 +414,85 @@ function DryRunRow({ running, schedule }: DryRunRowProps) {
 }
 
 /**
+ * The switch of a machine beside the first: on, the runs book with it too (it gets its
+ * `[[instances]]` table, taking the first machine's choices until changed); off, they leave
+ * its MuMu alone and its choices are hidden.
+ */
+function MachineUse({ machine, running }: { machine: Machine; running: boolean }) {
+  const { t } = useTranslation();
+  const use = useSwitchInstance();
+  const { mumuIndex } = machine;
+  const names = { number: machine.place + 1, index: mumuIndex };
+  return (
+    <div className={styles.group}>
+      <div className={styles.use}>
+        <span aria-hidden="true">{t("pages.ticket.use")}</span>
+        <Switch
+          label={t("pages.ticket.useLabel", names)}
+          checked={machine.enabled}
+          disabled={mumuIndex === null || running || use.isPending}
+          onChange={(enabled) => {
+            if (mumuIndex !== null) {
+              use.mutate({ mumuIndex, enabled });
+            }
+          }}
+          onText={t("pages.ticket.on")}
+          offText={t("pages.ticket.off")}
+        />
+      </div>
+      {!machine.enabled && <p className={styles.note}>{t("pages.ticket.useOff", names)}</p>}
+      {use.isError && <p className={styles.warning}>{errorMessage(t, use.error)}</p>}
+    </div>
+  );
+}
+
+interface BookingTicketProps {
+  overview: Overview;
+  /** The machine shown (0: the first), chosen on the machines' tabs on top. */
+  machine: number;
+  onMachine: (place: number) => void;
+}
+
+/**
  * The next booking as a ticket in two parts: on top what is set (the daily switch, the play
  * day, court and slots, when it starts), under the perforation the sport, court and slots to
  * choose, saved on each press, and the dry run at the foot. A press shows on top at once,
  * as the save goes out.
  */
-export function BookingTicket({ overview }: { overview: Overview }) {
+export function BookingTicket({ overview, machine, onMachine }: BookingTicketProps) {
   const settings = useSettings();
   const accounts = useAccounts();
   const save = useSaveSettings();
-  const [instance, setInstance] = useState(0);
+  const machines = useMachines();
+  const shown = machineAt(machines, machine);
   const { schedule, running } = overview;
   const booking =
-    settings.data === undefined
+    settings.data === undefined || !shown.enabled
       ? undefined
-      : bookingOf(shownSettings(settings.data, save), instance).booking;
+      : bookingOf(shownSettings(settings.data, save), machine).booking;
   return (
     <TicketFrame
       aria-labelledby="next-title"
+      tabs={<MachineBar machines={machines} machine={machine} onMachine={onMachine} />}
       top={<NextBooking schedule={schedule} booking={booking} />}
       contained
     >
       <div className={styles.scroll}>
-        <QueryView query={settings}>
-          {(saved) => (
-            <Choices
-              saved={saved}
-              save={save}
-              accounts={accounts.data}
-              instance={instance}
-              onInstance={setInstance}
-            />
-          )}
-        </QueryView>
+        {shown.place > 0 && <MachineUse machine={shown} running={running !== null} />}
+        {shown.enabled && (
+          <QueryView query={settings}>
+            {(saved) => (
+              // Keyed by the machine, so a warning of one is gone on another.
+              <Choices
+                key={machine}
+                saved={saved}
+                save={save}
+                accounts={accounts.data}
+                instance={machine}
+              />
+            )}
+          </QueryView>
+        )}
       </div>
       <DryRunRow running={running} schedule={schedule} />
     </TicketFrame>

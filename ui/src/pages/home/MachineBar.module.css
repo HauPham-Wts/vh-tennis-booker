@@ -1,0 +1,53 @@
+/* The machines as index cards on an ink rule, as the side panel's tabs. */
+.bar {
+  flex: none;
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4) 0;
+  border-bottom: var(--border) solid var(--color-ink);
+}
+
+.machine {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+  padding: 0 18px;
+  border: var(--border) solid transparent;
+  border-bottom: none;
+  border-radius: var(--radius-button) var(--radius-button) 0 0;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+
+/* The machine shown joins the ticket under it. */
+.machine[aria-pressed="true"] {
+  position: relative;
+  margin-bottom: calc(-1 * var(--border));
+  border-color: var(--color-ink);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-weight: var(--weight-bold);
+  cursor: default;
+}
+
+/* A machine the runs do not book with. */
+.off {
+  opacity: 0.55;
+}
+
+/* Something of this machine's own is left to set up: the red of the Setup tab's count. */
+.mark {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-pill);
+  background: var(--color-failed);
+  color: var(--color-on-ink);
+  font-size: var(--text-label);
+  font-weight: var(--weight-bold);
+}

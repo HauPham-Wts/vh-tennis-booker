@@ -51,7 +51,13 @@
       "offTitle": "Đang tắt",
       "offLine": "Máy sẽ không tự đặt sân {{when}}.",
       "instance": "Máy",
-      "instanceName": "MuMu {{index}}",
+      "instanceName": "Máy {{number}}",
+      "mumuName": "MuMu {{index}}",
+      "instanceLeft": "còn việc thiết lập",
+      "instanceOff": "đang tắt",
+      "use": "Dùng máy này",
+      "useLabel": "Đặt sân bằng máy {{number}} (MuMu {{index}})",
+      "useOff": "Máy {{number}} đang tắt: lượt chạy không dùng MuMu {{index}}. Bật khi MuMu {{index}} đã đăng nhập một tài khoản khác; máy này lấy lựa chọn của máy 1 cho tới khi bạn đổi.",
       "subdivision": "Phân khu",
       "byAccount": "Theo tài khoản",
       "sport": "Môn",
@@ -130,6 +136,8 @@
       },
       "manual": {
         "title": "Bạn tự làm, một lần · tích khi xong",
+        "machine": "Máy {{number}} · MuMu {{index}}",
+        "shared": "chung cho mọi máy",
         "mumu": {
           "title": "Đã cài MuMu Player",
           "hint": "Tải ở mumuplayer.com, cài như phần mềm thường."
@@ -141,7 +149,8 @@
         "login": {
           "title": "Đã đăng nhập app Vinhomes",
           "hint": "Tài khoản cư dân. Court Booker không đọc mật khẩu."
-        }
+        },
+        "off": "đang tắt, không tính vào việc thiết lập"
       },
       "guide": {
         "title": "Hướng dẫn",

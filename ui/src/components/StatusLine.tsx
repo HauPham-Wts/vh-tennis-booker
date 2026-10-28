@@ -1,7 +1,8 @@
 import { useTranslation } from "react-i18next";
 import type { Overview, Running } from "../api/types";
 import { localToday } from "../format";
-import { useManualSteps } from "../manualSteps";
+import { useMachines } from "../machines";
+import { useManualTicks } from "../manualSteps";
 import { setupLeft } from "../setupState";
 import { useFormat } from "../useFormat";
 import styles from "./StatusLine.module.css";
@@ -32,12 +33,13 @@ function RunningStatus({ running, startAt }: { running: Running; startAt: string
 export function StatusLine({ overview }: { overview: Overview }) {
   const { t } = useTranslation();
   const f = useFormat();
-  const manual = useManualSteps();
+  const ticks = useManualTicks();
+  const machines = useMachines();
   const { running, schedule } = overview;
   if (running !== null) {
     return <RunningStatus running={running} startAt={schedule.start_at} />;
   }
-  const left = setupLeft(manual);
+  const left = setupLeft(ticks, machines);
   let words: string;
   let ready = false;
   if (left > 0) {

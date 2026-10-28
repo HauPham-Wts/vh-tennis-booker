@@ -486,6 +486,69 @@
         }
       }
     },
+    "/api/instances/{mumu_index}": {
+      "put": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Switch Instance",
+        "description": "Book with MuMu instance ``mumu_index`` beside the first, or stop.\n\nOn, it gets an ``[[instances]]`` table that takes every setting from the top of the\nfile until the app changes them; off, its table goes. No ``enabled`` key is written: a\nrunner of an older version refuses keys it does not know. Invalid settings (422)\nleave the file as it was; the first machine's own instance is refused (400).",
+        "operationId": "switch_instance_api_instances__mumu_index__put",
+        "parameters": [
+          {
+            "name": "mumu_index",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Mumu Index"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstanceSwitch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Settings"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request values, one line per value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error with a stable code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/accounts": {
       "get": {
         "tags": [
@@ -1026,6 +1089,20 @@
         ],
         "title": "InstanceSettings",
         "description": "The booking settings of another MuMu instance, which books with its own account."
+      },
+      "InstanceSwitch": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled"
+        ],
+        "title": "InstanceSwitch",
+        "description": "Book with a MuMu instance, or not."
       },
       "LabelSettings": {
         "properties": {

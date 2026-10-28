@@ -23,6 +23,15 @@
   font-weight: var(--weight-semibold);
 }
 
+.use {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--text-control);
+  font-weight: var(--weight-bold);
+}
+
 .remind {
   background: var(--color-highlight);
 }

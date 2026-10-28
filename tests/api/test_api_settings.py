@@ -110,9 +110,52 @@ def test_instances_are_not_added_or_removed_here(client, context, saved, instanc
 
     assert response.status_code == 422
     assert response.json()["problems"] == [
-        "MuMu instances are added or removed in config.toml, not here"
+        "MuMu instances are added or removed by PUT /api/instances, not here"
     ]
     assert context.config_path.read_bytes() == before
+
+
+def test_an_instance_switched_off_leaves_the_file(client, context, saved):
+    response = client.put("/api/instances/1", json={"enabled": False})
+
+    assert response.status_code == 200
+    assert response.json()["instances"] == []
+    assert load_config(context.config_path).instances == []
+    assert steps(context)[0]["data"] == {"changed": ["instances"]}
+
+
+def test_an_instance_switched_on_takes_the_settings_on_top(client, context):
+    save_config(Config(slots=["18:00 - 19:00"]), context.config_path)
+
+    response = client.put("/api/instances/1", json={"enabled": True})
+
+    assert response.json()["instances"][0]["slots"] == ["18:00 - 19:00"]
+    assert load_config(context.config_path).instances == [{"mumu_index": 1}]
+    assert "enabled" not in context.config_path.read_text(encoding="utf-8")
+
+
+def test_switching_an_instance_to_its_state_writes_nothing(client, context, saved):
+    before = context.config_path.read_bytes()
+
+    assert client.put("/api/instances/1", json={"enabled": True}).status_code == 200
+    assert client.put("/api/instances/2", json={"enabled": False}).status_code == 200
+    assert context.config_path.read_bytes() == before
+    assert steps(context) == []
+
+
+def test_the_first_machine_cannot_be_switched_off(client, saved):
+    response = client.put("/api/instances/0", json={"enabled": False})
+
+    assert response.status_code == 400
+
+
+def test_an_instance_needs_mumu_started_by_the_run(client, context):
+    save_config(Config(mumu_manager=""), context.config_path)
+
+    response = client.put("/api/instances/1", json={"enabled": True})
+
+    assert response.status_code == 422
+    assert load_config(context.config_path).instances == []
 
 
 def test_settings_without_a_config_file_are_the_defaults(client, context):

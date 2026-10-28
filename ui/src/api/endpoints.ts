@@ -56,6 +56,16 @@ export function saveSettings(settings: Settings): Promise<Settings> {
   return call(client.PUT("/api/settings", { body: settings })) as Promise<Settings>;
 }
 
+/** Book with MuMu instance `mumuIndex` beside the first, or stop; answers the settings. */
+export function switchInstance(mumuIndex: number, enabled: boolean): Promise<Settings> {
+  return call(
+    client.PUT("/api/instances/{mumu_index}", {
+      params: { path: { mumu_index: mumuIndex } },
+      body: { enabled },
+    }),
+  ) as Promise<Settings>;
+}
+
 /** Read the subdivision each MuMu instance's account told last, newest first. */
 export function getAccounts(): Promise<AccountSubdivision[]> {
   return call(client.GET("/api/accounts"));
