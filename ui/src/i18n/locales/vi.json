@@ -39,6 +39,8 @@
     "ticket": {
       "title": "Lần đặt tiếp theo",
       "auto": "Tự đặt mỗi sáng",
+      "autoShort": "Tự đặt",
+      "notifyShort": "Thông báo",
       "notify": "Thông báo kết quả",
       "notifyHint": "Góc màn hình Windows, sau mỗi lượt",
       "on": "BẬT",

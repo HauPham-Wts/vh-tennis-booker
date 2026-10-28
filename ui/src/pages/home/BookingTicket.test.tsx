@@ -97,9 +97,9 @@ describe("BookingTicket start", () => {
     renderTicket();
 
     const top = await ticket();
-    // The badge before each slot gives its booking order.
+    // The slots in booking order, without numbers: the choices below number them.
     await waitFor(() =>
-      expect(shown(top)).toEqual(["CN 18/10", "Tennis S6", "115:00–16:00216:00–17:00"]),
+      expect(shown(top)).toEqual(["CN 18/10", "Tennis S6", "15:00–16:0016:00–17:00"]),
     );
     expect(within(top).queryByText(/máy thức/)).toBeNull();
     const toggle = within(top).getByRole("switch", { name: "Tự đặt mỗi sáng" });
@@ -327,7 +327,7 @@ describe("BookingTicket choices", () => {
     );
     const slots = screen.getByRole("group", { name: /^Khung giờ/ });
     expect(within(slots).getByRole("button", { name: "20:00–21:00, lượt 1" })).toBeInTheDocument();
-    expect(shown(await ticket())).toEqual(["CN 18/10", "Tennis S9", "120:00–21:00"]);
+    expect(shown(await ticket())).toEqual(["CN 18/10", "Tennis S9", "20:00–21:00"]);
     const moved = { ...other, court: "S10 - Sân tennis" };
     replies["PUT /api/settings"] = reply({ ...saved, instances: [moved] });
 

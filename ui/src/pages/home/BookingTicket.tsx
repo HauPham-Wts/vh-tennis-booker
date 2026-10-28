@@ -80,8 +80,8 @@ interface NextBookingProps {
 
 /**
  * The top of the ticket shows what is set, and only that: the daily switch and the result
- * notification's beneath it, then the play day (always two days after the start) and the court side by side, and the slots in booking
- * order on a row of their own, as the choices below hold them; the rows stay put whatever
+ * notification's beside it, then the play day (always two days after the start) and the court side by side, and the slots in booking
+ * order (the choices below number them) on a row of their own, as the choices below hold them; the rows stay put whatever
  * the court's name. While the switch is off a line says that nothing is booked. The switch
  * stays locked until a dry run has passed; once one has, a switch still off is set off.
  */
@@ -100,7 +100,7 @@ function NextBooking({ schedule, booking }: NextBookingProps) {
         </Overline>
         <div className={styles.switches}>
           <div className={remind ? `${styles.auto} ${styles.remind}` : styles.auto}>
-            <span aria-hidden="true">{t("pages.ticket.auto")}</span>
+            <span aria-hidden="true">{t("pages.ticket.autoShort")}</span>
             <Switch
               label={t("pages.ticket.auto")}
               checked={schedule.enabled}
@@ -127,11 +127,8 @@ function NextBooking({ schedule, booking }: NextBookingProps) {
           <dd className={styles.chosen}>
             {booking === undefined
               ? "–"
-              : booking.slots.map((slot, place) => (
+              : booking.slots.map((slot) => (
                   <span key={slot} className={styles.chosenSlot}>
-                    <span aria-hidden="true" className={styles.badge}>
-                      {place + 1}
-                    </span>
                     {f.slot(slot)}
                   </span>
                 ))}

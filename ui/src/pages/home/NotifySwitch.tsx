@@ -23,7 +23,7 @@ export function NotifySwitch() {
   return (
     <>
       <div className={styles.auto} title={t("pages.ticket.notifyHint")}>
-        <span aria-hidden="true">{label}</span>
+        <span aria-hidden="true">{t("pages.ticket.notifyShort")}</span>
         <Switch
           label={label}
           checked={notifications.data.enabled}

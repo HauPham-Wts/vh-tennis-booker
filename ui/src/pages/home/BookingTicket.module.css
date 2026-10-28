@@ -1,16 +1,15 @@
 .head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
 }
 
-/* The daily switch, and the result notification's beneath it, right-aligned. */
+/* The daily switch and the result notification's, side by side on one row. */
 .switches {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--space-1);
+  align-items: center;
+  gap: var(--space-4);
 }
 
 /* The switch with its words; sand yellow once a dry run passed and it is still off. */
@@ -72,21 +71,6 @@
   align-items: center;
   gap: var(--space-2);
   white-space: nowrap;
-}
-
-/* The booking order, the same sand-yellow badge as on the chosen slots below. */
-.badge {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--color-highlight);
-  color: var(--color-ink);
-  font-family: var(--font-mono);
-  font-size: var(--text-label);
-  font-weight: var(--weight-semibold);
-  letter-spacing: 0;
 }
 
 /* When the run starts and the PC wakes, or that the switch is off. */
