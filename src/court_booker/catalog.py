@@ -8,6 +8,7 @@ settings. Kept free of device access for unit tests; the backend serves it to th
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass
 
@@ -251,3 +252,25 @@ def court_outside(subdivision_id: str, court: str) -> bool:
 def subdivision_of_apartment(code: str) -> str | None:
     """Return the id of the subdivision of the apartment ``code``, or ``None`` if unknown."""
     return next((item for prefix, item in _APARTMENT_PREFIXES if code.startswith(prefix)), None)
+
+
+def catalog_json() -> str:
+    """Return the catalog as the UI reads it (``ui/src/catalog.json``): what the settings offer.
+
+    Venues are left out: the UI offers subdivisions, sports and courts only.
+    """
+    data = [
+        {
+            "id": item.id,
+            "name": item.name,
+            "sports": [
+                {
+                    "id": sport.id,
+                    "courts": [{"name": c.name, "label": c.label} for c in sport.courts],
+                }
+                for sport in item.sports
+            ],
+        }
+        for item in SUBDIVISIONS
+    ]
+    return json.dumps(data, ensure_ascii=False, indent=2) + "\n"

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from court_booker import catalog
@@ -66,3 +68,11 @@ def test_a_court_outside_the_subdivision_is_told():
     assert catalog.court_outside("bs", "S6 - Sân tennis")
     assert not catalog.court_outside("bs", "BE7 - Sân tennis")
     assert not catalog.court_outside("bs", "Khu B - Sân tennis")  # not in the catalog
+
+
+def test_the_ui_catalog_matches_the_backend():
+    snapshot = Path(__file__).resolve().parents[1] / "ui" / "src" / "catalog.json"
+
+    assert snapshot.read_text(encoding="utf-8") == catalog.catalog_json(), (
+        "ui/src/catalog.json is out of date: run `python tools/export_openapi.py`"
+    )

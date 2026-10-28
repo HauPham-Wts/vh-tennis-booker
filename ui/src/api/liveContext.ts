@@ -47,8 +47,9 @@ export function staleKeysFor(step: Step): QueryKey[] {
     }
     const keys: QueryKey[] = [queryKeys.overview, ["runs"]];
     if (step.kind === "run_finished") {
-      // Its final status and technical log; the overview says whether a dry run has passed.
-      keys.push(queryKeys.run(step.run_id));
+      // Its final status and technical log; the overview says whether a dry run has passed;
+      // the run may have told its account's subdivision.
+      keys.push(queryKeys.run(step.run_id), queryKeys.accounts);
     }
     return keys;
   }

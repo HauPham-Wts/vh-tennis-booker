@@ -122,11 +122,12 @@ describe("staleKeysFor", () => {
   });
 
   it("also refreshes the run itself and the schedule when it ends", () => {
-    // The final log, and dry_run_passed for the schedule switch.
+    // The final log, dry_run_passed for the schedule switch, the account it told.
     expect(staleKeysFor(step(1, { run_id: 3, kind: "run_finished" }))).toEqual([
       queryKeys.overview,
       ["runs"],
       queryKeys.run(3),
+      queryKeys.accounts,
     ]);
   });
 

@@ -48,6 +48,8 @@
       "offLine": "No booking {{when}}.",
       "instance": "Instance",
       "instanceName": "MuMu {{index}}",
+      "subdivision": "Subdivision",
+      "byAccount": "From the account",
       "sport": "Sport",
       "court": "Court",
       "slots": "Slots · booked in the order pressed, {{max}} at most",

@@ -48,6 +48,8 @@
       "offLine": "Máy sẽ không tự đặt sân {{when}}.",
       "instance": "Máy",
       "instanceName": "MuMu {{index}}",
+      "subdivision": "Phân khu",
+      "byAccount": "Theo tài khoản",
       "sport": "Môn",
       "court": "Sân",
       "slots": "Khung giờ · đặt theo thứ tự bấm, tối đa {{max}}",

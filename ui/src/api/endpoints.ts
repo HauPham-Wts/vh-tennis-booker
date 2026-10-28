@@ -1,5 +1,6 @@
 import { call, client } from "./client";
 import type {
+  AccountSubdivision,
   AutoSetupRequest,
   DryRunStarted,
   Health,
@@ -55,6 +56,11 @@ export function getSettings(): Promise<Settings> {
 /** Save the booking settings; invalid values fail with `invalid_settings` and `problems`. */
 export function saveSettings(settings: Settings): Promise<Settings> {
   return call(client.PUT("/api/settings", { body: settings })) as Promise<Settings>;
+}
+
+/** Read the subdivision each MuMu instance's account told last, newest first. */
+export function getAccounts(): Promise<AccountSubdivision[]> {
+  return call(client.GET("/api/accounts"));
 }
 
 /** Read whether every run ends with a Windows notification, and its language. */

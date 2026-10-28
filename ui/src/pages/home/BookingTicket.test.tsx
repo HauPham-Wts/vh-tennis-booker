@@ -1,6 +1,12 @@
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Overview, RunSummary, ScheduleState, Settings } from "../../api/types";
+import type {
+  AccountSubdivision,
+  Overview,
+  RunSummary,
+  ScheduleState,
+  Settings,
+} from "../../api/types";
 import { paths } from "../../paths";
 import { renderApp } from "../../test/app";
 import { type Reply, reply, requestsTo } from "../../test/backend";
@@ -23,6 +29,8 @@ interface Backend {
   status?: Overview;
   saved?: Settings;
   runs?: RunSummary[];
+  /** The subdivision each account told last, as GET /api/accounts gives it. */
+  accounts?: AccountSubdivision[];
   extra?: Record<string, Reply>;
 }
 
@@ -31,6 +39,7 @@ function renderTicket({
   status = overview(),
   saved = settings(),
   runs = [],
+  accounts = [],
   extra = {},
 }: Backend = {}) {
   const replies: Record<string, Reply> = {
@@ -38,6 +47,7 @@ function renderTicket({
     "GET /api/settings": reply(saved),
     "PUT /api/settings": reply(saved),
     "GET /api/runs": reply(runs),
+    "GET /api/accounts": reply(accounts),
     ...extra,
   };
   return { replies, ...renderApp(paths.overview, replies) };
@@ -88,7 +98,7 @@ describe("BookingTicket start", () => {
     const top = await ticket();
     // The badge before each slot gives its booking order.
     await waitFor(() =>
-      expect(shown(top)).toEqual(["CN 18/10", "Tennis S6", "115:00–16:00216:00–17:00"]),
+      expect(shown(top)).toEqual(["CN 18/10", "Origami · Tennis S6", "115:00–16:00216:00–17:00"]),
     );
     expect(within(top).getByText("Đặt lúc 06:00 sáng mai · máy thức 05:50")).toBeInTheDocument();
     const toggle = within(top).getByRole("switch", { name: "Tự đặt mỗi sáng" });
@@ -190,7 +200,57 @@ describe("BookingTicket choices", () => {
       "aria-pressed",
       "true",
     );
-    expect(shown(await ticket())[1]).toBe("Bóng rổ S8 · nửa sân");
+    expect(shown(await ticket())[1]).toBe("Origami · Bóng rổ S8 · nửa sân");
+  });
+
+  it("shows the subdivision of the account until one is pressed", async () => {
+    renderTicket({
+      saved: settings({ court: "BE7 - Sân tennis" }),
+      accounts: [{ device: 0, subdivision: "bs", seen_at: "2026-10-15T05:50:10.000" }],
+    });
+
+    const subdivisions = await screen.findByRole("group", { name: /Phân khu/ });
+    await waitFor(() =>
+      expect(within(subdivisions).getByRole("button", { name: "BS" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      ),
+    );
+    expect(within(subdivisions).getByText("Theo tài khoản")).toBeInTheDocument();
+    const sports = screen.getByRole("group", { name: "Môn" });
+    expect(within(sports).getAllByRole("button")).toHaveLength(6);
+    const courts = screen.getByRole("group", { name: "Sân" });
+    expect(
+      within(courts)
+        .getAllByRole("button")
+        .map((button) => button.textContent),
+    ).toEqual(["BE7", "BCX3 · 01", "BCX3 · 02", "CX2 · 01", "CX2 · 02"]);
+    expect(shown(await ticket())[1]).toBe("BS · Tennis BE7");
+  });
+
+  it("saves another subdivision, keeping the sport it has, with its first court", async () => {
+    const saved = settings({ sport: "multi", court: "S7 - Sân đa năng" });
+    const { fetch, replies } = renderTicket({ saved });
+    const subdivisions = await screen.findByRole("group", { name: /Phân khu/ });
+    expect(within(subdivisions).queryByText("Theo tài khoản")).toBeNull();
+    const bs = {
+      ...saved,
+      subdivision: "bs",
+      sport: "volleyball",
+      court: "BCX3 - Sân bóng chuyền hơi 01",
+    };
+    replies["PUT /api/settings"] = reply(bs);
+
+    fireEvent.click(within(subdivisions).getByRole("button", { name: "BS" }));
+
+    const sports = screen.getByRole("group", { name: "Môn" });
+    await waitFor(() =>
+      expect(within(sports).getByRole("button", { name: "Bóng chuyền" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      ),
+    );
+    expect(await bodies(fetch, "PUT /api/settings")).toEqual([bs]);
   });
 
   it("saves another sport with its first court", async () => {
@@ -250,7 +310,7 @@ describe("BookingTicket choices", () => {
     );
     const slots = screen.getByRole("group", { name: /^Khung giờ/ });
     expect(within(slots).getByRole("button", { name: "20:00–21:00, lượt 1" })).toBeInTheDocument();
-    expect(shown(await ticket())).toEqual(["CN 18/10", "Tennis S9", "120:00–21:00"]);
+    expect(shown(await ticket())).toEqual(["CN 18/10", "Origami · Tennis S9", "120:00–21:00"]);
     const moved = { ...other, court: "S10 - Sân tennis" };
     replies["PUT /api/settings"] = reply({ ...saved, instances: [moved] });
 
@@ -281,7 +341,7 @@ describe("BookingTicket choices", () => {
 
     fireEvent.click(within(courts).getByRole("button", { name: "S8" }));
     expect(await screen.findByText("Đang lưu…")).toBeInTheDocument();
-    expect(shown(await ticket())[1]).toBe("Tennis S8"); // the top follows the press at once
+    expect(shown(await ticket())[1]).toBe("Origami · Tennis S8"); // the top follows the press at once
     expect(within(courts).getByRole("button", { name: "S8" })).toHaveAttribute(
       "aria-pressed",
       "true",
