@@ -36,11 +36,29 @@ def test_origami_keeps_every_sport_and_its_courts():
         assert [court.name for court in origami.sport(sport).courts] == names
 
 
-def test_each_court_is_listed_once_with_a_label():
+def test_each_court_is_listed_once_with_a_code_and_a_known_kind():
     names = [court.name for court in courts()]
 
     assert len(names) == len(set(names))
-    assert all(court.label for court in courts())
+    assert all(court.code and court.code in court.name for court in courts())
+    assert {court.kind for court in courts()} <= {"", *catalog.COURT_KINDS}
+
+
+def test_the_courts_of_a_sport_are_told_apart_by_their_label():
+    for subdivision in catalog.SUBDIVISIONS:
+        for sport in subdivision.sports:
+            labels = [(court.code, court.kind, court.number) for court in sport.courts]
+            assert len(labels) == len(set(labels)), (subdivision.id, sport.id)
+
+
+def test_the_kinds_split_from_the_names():
+    basketball = catalog.subdivision("origami").sport("basketball").courts
+
+    assert [(c.code, c.kind, c.number) for c in basketball[:3]] == [
+        ("S6", "shooting", "01"),
+        ("S6", "shooting", "02"),
+        ("S8", "half", ""),
+    ]
 
 
 def test_each_court_names_its_venue():

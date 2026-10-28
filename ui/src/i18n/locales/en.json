@@ -199,6 +199,14 @@
       "reload": "Reopen the overview"
     }
   },
+  "courtKinds": {
+    "shooting": "shooting",
+    "half": "half court",
+    "practice": "practice",
+    "five": "5-a-side",
+    "seven": "7-a-side",
+    "multi": "multi-use"
+  },
   "sports": {
     "tennis": "Tennis",
     "multi": "Multi-sport",

@@ -1,6 +1,7 @@
+import type { TFunction } from "i18next";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { findCourt } from "./booking";
+import { type Court, findCourt, isCourtKind } from "./booking";
 import {
   courtName,
   dayPeriod,
@@ -15,6 +16,13 @@ import {
   slotStart,
 } from "./format";
 import { DEFAULT_LANGUAGE, LANGUAGES, type Language } from "./i18n";
+
+/** Return "BE7 · tập ném 01": the block, then the kind in the current language and number. */
+function formatCourtLabel(t: TFunction, court: Court): string {
+  const kind = isCourtKind(court.kind) ? t(`courtKinds.${court.kind}`) : court.kind;
+  const rest = [kind, court.number].filter((part) => part !== "").join(" ");
+  return rest === "" ? court.code : `${court.code} · ${rest}`;
+}
 
 function asLanguage(language: string | undefined): Language {
   return LANGUAGES.find((known) => known === language) ?? DEFAULT_LANGUAGE;
@@ -62,14 +70,25 @@ export function useFormat() {
       /** "18:00". */
       slotStart,
       /**
-       * "Tennis S6", "Bóng rổ S8 · nửa sân": the sport and label of a court on the lists of
-       * `booking.ts`; "S1" for "S1 - Sân tennis", a court on none.
+       * "S8 · nửa sân", "S8 · half court": what tells a court in the catalog from the others
+       * of its sport, its kind in the current language; "S1" for "S1 - Sân tennis", a court
+       * not in it.
+       */
+      courtLabel: (court: string) => {
+        const known = findCourt(court)?.court;
+        return known === undefined ? courtName(court) : formatCourtLabel(t, known);
+      },
+      /**
+       * "Tennis S6", "Bóng rổ S8 · nửa sân": the sport and label of a court in the catalog;
+       * "S1" for "S1 - Sân tennis", a court not in it.
        */
       court: (court: string) => {
         const known = findCourt(court);
-        return known === undefined
-          ? courtName(court)
-          : t("format.court", { sport: t(`sports.${known.sport}`), court: known.label });
+        if (known === undefined) {
+          return courtName(court);
+        }
+        const label = formatCourtLabel(t, known.court);
+        return t("format.court", { sport: t(`sports.${known.sport}`), court: label });
       },
     }),
     [t, language],

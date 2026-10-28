@@ -123,9 +123,10 @@ npm run api:types                                    # src/api/schema.d.ts from 
   code on the home screen (`read_account`, no extra command; only the subdivision is logged
   or stored). `screen.py` (one dump parsed into nodes, matched locally),
   `app_language.py` (labels and calendar day labels per language: Vietnamese from the
-  config, English built in), `catalog.py` (subdivisions → sports → venues → courts with
-  short labels, the only copy; the UI gets it as `ui/src/catalog.json`), `geometry.py` and
-  most of `clock.py` are pure.
+  config, English built in), `catalog.py` (subdivisions → sports → venues → courts, each
+  with its block, kind and number for the UI's label, the only copy; the UI gets it as
+  `ui/src/catalog.json` and words the kind per language), `geometry.py` and most of
+  `clock.py` are pure.
 - `lock.py` + `processes.py`: the run lock and the quiet time (no dry run or auto setup
   from `wake_at` to start + 5 min).
 - `events.py` (event kinds are stable strings), `history.py` (`booker.db` writer, an event
