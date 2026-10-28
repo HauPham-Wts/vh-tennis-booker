@@ -3,7 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 It is also the shared project guidance for Codex, whose entry point is `AGENTS.md`.
 
-Last updated: 2026-10-25.
+Last updated: 2026-10-28.
 
 ## Project
 
@@ -66,8 +66,13 @@ npm run api:types                                    # src/api/schema.d.ts from 
   `--dry-run` to the task arguments by hand (`schedule install` overwrites it).
 - Never switch the schedule on from a development backend (`PUT /api/schedule`): the task
   would run the development Python instead of the runner folder.
-- After a backend route or model change: `python tools/export_openapi.py`, then
-  `npm run api:types` (a backend test and CI fail until both match).
+- After a backend route, model or `catalog.py` change: `python tools/export_openapi.py`
+  (writes `ui/openapi.json` and `ui/src/catalog.json`), then `npm run api:types` (backend
+  tests and CI fail until they match).
+- Every change (a feature, a rule, a constraint, anything) updates everything related in the
+  same branch, so all stays in sync: this file, the docs (architecture, field notes, roadmap,
+  specs, README, CONTRIBUTING), `config.example.toml`, CHANGELOG, generated files, tests, the
+  UI texts in both languages and the session notes. Grep for the names touched first.
 - To try the UI against a real backend, use a scratch folder:
   `COURT_BOOKER_HOME=<scratch>/data python -m court_booker serve --config <scratch>/config.toml`,
   then `npm run dev` (Vite forwards `/api` to 127.0.0.1:8765). Headless Edge `--dump-dom`
@@ -114,21 +119,26 @@ npm run api:types                                    # src/api/schema.d.ts from 
   protocol has a 10 s response timeout inside the watchdog's 60 s limit.
 - `flow.py` `Booker`: the booking flow; device use only through `snapshot()`, `tap()`,
   `tap_point()`, `press_back()`, `_scroll()`, each counted in `commands`. `prepare()` finds
-  the app's language on its first screen. `screen.py` (one dump parsed into nodes, matched locally),
+  the app's language on its first screen and the account's subdivision from the apartment
+  code on the home screen (`read_account`, no extra command; only the subdivision is logged
+  or stored). `screen.py` (one dump parsed into nodes, matched locally),
   `app_language.py` (labels and calendar day labels per language: Vietnamese from the
-  config, English built in), `geometry.py` and most of `clock.py` are pure.
+  config, English built in), `catalog.py` (subdivisions → sports → venues → courts with
+  short labels, the only copy; the UI gets it as `ui/src/catalog.json`), `geometry.py` and
+  most of `clock.py` are pure.
 - `lock.py` + `processes.py`: the run lock and the quiet time (no dry run or auto setup
   from `wake_at` to start + 5 min).
 - `events.py` (event kinds are stable strings), `history.py` (`booker.db` writer, an event
-  sink), `history_read.py` (read-only queries for the app).
+  sink), `history_read.py` (read-only queries for the app, e.g. each instance's last
+  account subdivision).
 - `config.py`, `paths.py` (data folder `%LOCALAPPDATA%\CourtBooker`, `COURT_BOOKER_HOME`),
   `device_setup.py`, `schedule.py` (Task Scheduler), `power.py`, `notify.py`.
 - `api/`: FastAPI backend (`court-booker serve`, 127.0.0.1:8765); errors become `Problem`
-  JSON with an `error` code.
+  JSON with an `error` code. `GET /api/accounts`: the subdivision each account told last.
 
 `ui/src` (React 19, strict TypeScript, Vite): `pages/`, `components/`, `styles/` (tokens),
 `i18n/` (Vietnamese default, English), `api/` (generated types, client, React Query hooks,
-live feed).
+live feed), `booking.ts` (slots, and the choices read from the generated `catalog.json`).
 
 Invariants that tests and reviews rely on:
 
@@ -147,13 +157,18 @@ Invariants that tests and reviews rely on:
 ## App facts that shape the code
 
 Flow: Home ("Tiện ích") → Utilities list ("Sân Tennis") → Calendar (date, slot,
-"Tiếp tục") → optional venue ("Origami…") → Court list → Booking details ("Tiếp tục") →
-Confirmation (consent checkbox, "Xác nhận") → Ticket; one Back returns to the Utilities
-list. Details in `docs/field-notes.md`.
+"Tiếp tục") → optional venue ("Chọn phân khu") → Court list → Booking details
+("Tiếp tục") → Confirmation (consent checkbox, "Xác nhận") → Ticket; one Back returns to the
+Utilities list. Details in `docs/field-notes.md`.
 
 - The app may be set to Vietnamese or English: the same screens with other labels
   ("Utilities", "Tennis", "Next", "Confirm", "Booking details"; days as `21, Wednesday,
   October 21, 2026`). Court names and the booked date and time read the same in both.
+- Each subdivision's account sees its own utilities, venues and courts (Origami and BS
+  surveyed). The home screen's apartment code tells the subdivision ("BS…" BS, "S…" Origami).
+  A single venue or court is passed by itself; BS lists two venues ("BE _ …", "BS _ …"), so
+  the run taps the court's venue from `catalog.py`; a full venue reads "Hết chỗ". Venue and
+  court names stay Vietnamese with the app in English.
 - Flutter exposes text via `content-desc`, not `text`, and builds lazily (off-screen
   elements are absent from the dump).
 - MuMu runs at 540x1600, 220 DPI. Locate elements from the current dump (the consent

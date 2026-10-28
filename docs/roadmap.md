@@ -27,7 +27,7 @@ as the 06:00 logs show them. What is left:
 
 | Phase | Next | Scope |
 |---|---|---|
-| 1 Runs | Other sports, Origami subdivision: choosing the subdivision | The seven other courts of the utilities list (multi-purpose, volleyball, table tennis, basketball, football, pickleball, badminton), one sport per run and per instance, quota and flow as tennis ([field notes](field-notes.md), "Other sports"): done in Vietnamese (0.15.0, each sport booked for real, 2026-10-27) and English (each sport dry run to "Confirm", 2026-10-27); left: choosing the subdivision |
+| 1 Runs | Other subdivisions | Origami and BS are in `catalog.py` with every sport (Origami 0.15.0, each sport booked for real 2026-10-27; BS dry runs of tennis BE7, BCX3 01 and basketball BE7 01 in Vietnamese and English, 2026-10-28), the subdivision chosen on the ticket or told by the account; left: survey each other subdivision with `dev-tools/survey/walk.py` and add it to the catalog |
 | 3 Fast | Two instances booking for real at once | Each instance booked for real alone and both together in a dry run (2026-10-25); a real booking with both is due in November, when both accounts have slots left |
 | 4 UI | Desktop app, last before 1.0.0 | Tauri shell with a PyInstaller sidecar, installer, release automation; version number set when it starts ([spec](specs/0.5.0-desktop-app.md), "Packaging") |
 

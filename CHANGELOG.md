@@ -30,6 +30,11 @@ uses [Semantic Versioning](https://semver.org/).
 - Every sport books with the app set to English: the English tiles of the seven other
   courts are built in, so a run no longer stops on an app in English.
 
+### Changed
+- CLAUDE.md, the README, the roadmap and the field notes describe the subdivisions, the
+  catalog and its export; CLAUDE.md asks every change to update everything related.
+  `venue_keyword` now only picks the venue of a court not in the catalog.
+
 ## [0.15.0] - 2026-10-27
 
 ### Added
