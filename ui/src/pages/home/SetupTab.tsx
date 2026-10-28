@@ -1,12 +1,10 @@
 import { useTranslation } from "react-i18next";
 import { errorMessage } from "../../api/errors";
-import { useAutoSetup, useSaveNotifications } from "../../api/mutations";
-import { useNotifications, useOverview } from "../../api/queries";
+import { useAutoSetup } from "../../api/mutations";
+import { useOverview } from "../../api/queries";
 import type { Overview } from "../../api/types";
 import { Button } from "../../components/Button";
 import { QueryView } from "../../components/QueryView";
-import { Switch } from "../../components/Switch";
-import { DEFAULT_LANGUAGE, LANGUAGES } from "../../i18n";
 import { MANUAL_STEPS, setManualDone, useManualSteps } from "../../manualSteps";
 import { autoLeft, setupDone } from "../../setupState";
 import { useFormat } from "../../useFormat";
@@ -122,39 +120,6 @@ function AutoSetup({ overview }: { overview: Overview }) {
   );
 }
 
-/** The Windows notification after every run, as one switch saved at once. */
-function Options() {
-  const { t, i18n } = useTranslation();
-  const notifications = useNotifications();
-  const save = useSaveNotifications();
-  // The notification speaks the UI's language; the switch saves it along.
-  const language = LANGUAGES.find((known) => known === i18n.resolvedLanguage) ?? DEFAULT_LANGUAGE;
-  return (
-    <section aria-labelledby="options-title">
-      <h3 id="options-title" className={styles.heading}>
-        {t("pages.setup.options.title")}
-      </h3>
-      <div className={styles.row}>
-        <span className={styles.text}>
-          <span className={styles.title}>{t("pages.setup.options.notify")}</span>
-          <span className={styles.hint}>{t("pages.setup.options.notifyHint")}</span>
-        </span>
-        <QueryView query={notifications}>
-          {(settings) => (
-            <Switch
-              label={t("pages.setup.options.notify")}
-              checked={settings.enabled}
-              disabled={save.isPending}
-              onChange={(enabled) => save.mutate({ enabled, language })}
-            />
-          )}
-        </QueryView>
-      </div>
-      {save.isError && <p className={styles.problem}>{errorMessage(t, save.error)}</p>}
-    </section>
-  );
-}
-
 const TROUBLES = ["notRunning", "slotFull", "quota", "loggedOut"] as const;
 
 /** The guide in rows that open one at a time: how to use it, the mornings, the problems. */
@@ -202,7 +167,7 @@ function Guide({ overview, howto }: { overview: Overview; howto: boolean }) {
 
 /**
  * The Setup tab: how to start while anything is left, the steps the user ticks, what Court
- * Booker sets up itself, the notification switch and the guide.
+ * Booker sets up itself and the guide; the notification switch is on the ticket.
  */
 export function SetupTab() {
   const { t } = useTranslation();
@@ -225,7 +190,6 @@ export function SetupTab() {
               )}
               <ManualSteps />
               <AutoSetup overview={data} />
-              <Options />
               <Guide overview={data} howto={done} />
             </>
           );

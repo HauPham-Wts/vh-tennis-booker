@@ -189,7 +189,8 @@ After a route, model or catalog change: `python tools/export_openapi.py` (writes
   named "MuMu N" when several instances book side by side) and `SidePanel` beside it, two tabs:
   `HistoryTab` (runs ten days at a time, real bookings unless dry runs are ticked, `?run=`
   opens one run's slots, steps and log) and `SetupTab` (the user's ticks, auto setup, the
-  notification switch, the guide). The header's status line (`components/StatusLine.tsx`)
+  guide). The result notification's switch (`NotifySwitch`) sits on the ticket under the daily
+  one. The header's status line (`components/StatusLine.tsx`)
   shows the run going on, else the one thing to do. `manualSteps.ts` keeps the user's ticks in
   `localStorage` (memory when storage fails); `setupState.ts` counts the setup tasks left and
   picks the panel's first tab. `booking.ts` holds the slots and the two-slot limit, and reads
