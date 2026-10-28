@@ -7,6 +7,13 @@ uses [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- A catalog of the subdivisions Origami and BS with their sports, venues and courts
+  (`catalog.py`). Of several venues the run taps the one the catalog lists the court under,
+  so a BS account books a BE or BS court without `venue_keyword`; a court not in the catalog
+  still picks its venue by `venue_keyword`. A full venue fails the round at once instead of
+  after `timeout`.
+- A `subdivision` setting, also per `[[instances]]` table: empty (the default, the
+  account's), `origami` or `bs`; a set subdivision must have the chosen sport.
 - Field notes on the BS subdivision: its utilities, the venues BE and BS with their courts,
   and how it differs from Origami.
 - Field notes on the structure of each utility at Origami (venue, court list, slots, the

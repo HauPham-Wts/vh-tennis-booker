@@ -674,6 +674,67 @@ def test_of_several_venues_the_one_naming_the_keyword_is_tapped():
     assert app.screen == "ticket"
 
 
+BS_VENUES = [  # read on 2026-10-27 at 09:00, BE full
+    VENUE_LIST,
+    node("BE _ Sân tennis\nHết chỗ", (35, 1024, 505, 1134)),
+    node("BS _ Sân tennis", (35, 1148, 505, 1258)),
+]
+
+
+def court_app(court, venues=BS_VENUES):
+    """Return the booking app of ``court``, listed under one of ``venues``."""
+    app = booking_app(
+        via_venue=True, courts=[node(court, COURTS[0][1])], shown=(details(court=court),)
+    )
+    app.screens["venue"] = venues
+    app.screens["details"][0] = node(court, (116, 975, 274, 1004), False)
+    app.taps_to[("courts", court)] = "details"
+    return app
+
+
+@pytest.mark.parametrize(
+    ("venues", "court", "venue"),
+    [
+        (BS_VENUES, "CX2 - Sân tennis 01", "BS _ Sân tennis"),
+        (
+            [VENUE_LIST, node("BE _ Sân tennis", BS_VENUES[1][1]), BS_VENUES[2]],
+            "BE7 - Sân tennis",
+            "BE _ Sân tennis",
+        ),
+    ],
+    ids=["BS", "BE"],
+)
+def test_of_several_venues_the_one_of_the_court_is_tapped(venues, court, venue):
+    app = court_app(court, venues)
+    app.taps_to[("venue", venue)] = "courts"
+
+    booker = Booker(app, Config(court=court))
+    booker.book("11:00 - 12:00", TARGET)
+
+    assert app.taps[4:6] == [venue, court]
+    assert booker.commands == 16 + 2  # the venue tapped, the court list read
+    assert app.screen == "ticket"
+
+
+def test_a_full_venue_fails_the_round_at_once():
+    app = court_app("BE7 - Sân tennis")
+
+    with pytest.raises(SlotUnavailableError, match="Venue BE _ Sân tennis is fully booked"):
+        Booker(app, Config(court="BE7 - Sân tennis")).book("11:00 - 12:00", TARGET)
+
+    assert app.taps[-1] == "Tiếp tục"  # the venue is not tapped
+
+
+def test_a_court_typed_by_hand_takes_the_venue_naming_the_keyword():
+    app = court_app("BCX4 - Sân tennis")
+    app.taps_to[("venue", "BS _ Sân tennis")] = "courts"
+
+    config = Config(court="BCX4 - Sân tennis", venue_keyword="BS")
+    Booker(app, config).book("11:00 - 12:00", TARGET)
+
+    assert app.taps[4] == "BS _ Sân tennis"
+
+
 def test_a_court_list_heading_without_the_court_yet_is_read_again():
     app = booking_app()
     app.screens["courts_heading"] = [COURT_LIST, COURTS[1]]  # S6 missing in one read, 2026-10-18

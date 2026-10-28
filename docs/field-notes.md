@@ -212,8 +212,8 @@ survey.
 | Nướng BBQ | BBQ _ CV 36ha _ Zone 2 | BBQ CV Zone 2 - 01 to 07, as at Origami |
 
 - The court's venue is not in the court's name in a way the code can rely on (BCX3 and CX2
-  courts are both under "BS _"), so a court is booked through a venue named with it:
-  `venue_keyword` "BE" or "BS" picks the venue ("BS" is not part of "BE _ …").
+  courts are both under "BS _"), so `catalog.py` lists each court under its venue, and the
+  run taps that venue.
 
 ## App in English
 

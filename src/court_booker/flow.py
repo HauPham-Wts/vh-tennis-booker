@@ -20,6 +20,7 @@ from dataclasses import asdict, dataclass
 from datetime import date
 from typing import Any, Callable, Optional, TypeVar
 
+from court_booker import catalog
 from court_booker.app_language import AppLanguage, app_languages
 from court_booker.config import Config
 from court_booker.errors import (
@@ -256,6 +257,9 @@ class Booker:
         if self.notice(shown):
             raise self._refusal(self.notice_text(screen) or "")
         if not self.court_list(shown) and not self.residents(shown):
+            if labels.fully_booked in shown.desc:
+                venue_name = shown.desc.split("\n")[0]
+                raise SlotUnavailableError(f"Venue {venue_name} is fully booked")
             # Only the court list's heading counts after the venue: a read right after the
             # tap may still show the venue (2026-10-23), which ended the round at once.
             venue = Match(desc=shown.desc, clickable=True)
@@ -905,8 +909,9 @@ class Booker:
         """Return the venue to tap below the venues' heading, once it is listed.
 
         The heading shows a read or more before the venues in some reads (8 of 30 by
-        2026-10-23). A single venue is tapped whatever its name; of several, the one that
-        names ``venue_keyword``.
+        2026-10-23). A single venue is tapped whatever its name; of several, the one the
+        catalog lists ``court`` under, else the one that names ``venue_keyword`` (a court
+        typed by hand, or a venue the app renamed).
         """
         heading = screen.find(self.venue_list)
         if heading is None:
@@ -918,6 +923,11 @@ class Booker:
         ]
         if len(venues) == 1:
             return venues[0]
+        name = catalog.venue_of(self.config.court)
+        # A full venue reads "BE _ Sân tennis\nHết chỗ" (2026-10-27).
+        found = next((node for node in venues if node.desc.split("\n")[0] == name), None)
+        if found is not None:
+            return found
         keyword = self.config.venue_keyword
         return next((node for node in venues if keyword and keyword in node.desc), None)
 

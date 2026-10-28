@@ -351,6 +351,8 @@ export interface components {
             mumu_index: number;
             /** Slots */
             slots: string[];
+            /** Subdivision */
+            subdivision: string;
             /** Sport */
             sport: string;
             /** Court */
@@ -584,12 +586,14 @@ export interface components {
         };
         /**
          * Settings
-         * @description Every booking setting; the UI changes the slots, sport and court, and sends the rest
-         *     back.
+         * @description Every booking setting; the UI changes the slots, subdivision, sport and court, and sends
+         *     the rest back.
          */
         Settings: {
             /** Slots */
             slots: string[];
+            /** Subdivision */
+            subdivision: string;
             /** Sport */
             sport: string;
             /** Court */
