@@ -13,7 +13,6 @@ import type {
 } from "../../api/types";
 import {
   courtChoices,
-  findCourt,
   firstCourt,
   inSubdivision,
   isSport,
@@ -334,7 +333,7 @@ function Choices({ saved, save, accounts, instance, onInstance }: ChoicesProps) 
                 className={`${styles.choice} ${styles.court}`}
                 onClick={() => !on && choose({ court })}
               >
-                {findCourt(court)?.label ?? f.court(court)}
+                {f.courtLabel(court)}
               </button>
             );
           })}

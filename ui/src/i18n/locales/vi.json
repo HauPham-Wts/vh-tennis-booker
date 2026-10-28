@@ -199,6 +199,14 @@
       "reload": "Mở lại Tổng quan"
     }
   },
+  "courtKinds": {
+    "shooting": "tập ném",
+    "half": "nửa sân",
+    "practice": "tập",
+    "five": "sân 5",
+    "seven": "sân 7",
+    "multi": "đa năng"
+  },
   "sports": {
     "tennis": "Tennis",
     "multi": "Đa năng",

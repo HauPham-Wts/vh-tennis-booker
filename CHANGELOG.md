@@ -6,6 +6,11 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- In English the UI words the kind of a court ("BE7 · shooting 01", "S10 · half court 03")
+  instead of showing the app's Vietnamese ("tập ném 01"); the catalog keeps each court's
+  block, kind and number, and the app's names stay as they are for booking.
+
 ## [0.16.0] - 2026-10-28
 
 ### Added
