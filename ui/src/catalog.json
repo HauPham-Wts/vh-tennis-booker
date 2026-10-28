@@ -1,0 +1,244 @@
+[
+  {
+    "id": "origami",
+    "name": "Origami",
+    "sports": [
+      {
+        "id": "tennis",
+        "courts": [
+          {
+            "name": "S6 - Sân tennis",
+            "label": "S6"
+          },
+          {
+            "name": "S8 - Sân tennis",
+            "label": "S8"
+          },
+          {
+            "name": "S9 - Sân tennis",
+            "label": "S9"
+          },
+          {
+            "name": "S10 - Sân tennis",
+            "label": "S10"
+          }
+        ]
+      },
+      {
+        "id": "multi",
+        "courts": [
+          {
+            "name": "S7 - Sân đa năng",
+            "label": "S7"
+          },
+          {
+            "name": "S9 - Sân đa năng",
+            "label": "S9"
+          },
+          {
+            "name": "S10 - Sân đa năng",
+            "label": "S10"
+          }
+        ]
+      },
+      {
+        "id": "volleyball",
+        "courts": [
+          {
+            "name": "S8 - Sân bóng chuyền hơi",
+            "label": "S8"
+          },
+          {
+            "name": "S9 - Sân bóng chuyền hơi",
+            "label": "S9"
+          },
+          {
+            "name": "S10 - Sân bóng chuyền hơi 01",
+            "label": "S10 · 01"
+          },
+          {
+            "name": "S10 - Sân bóng chuyền hơi 02",
+            "label": "S10 · 02"
+          }
+        ]
+      },
+      {
+        "id": "table-tennis",
+        "courts": [
+          {
+            "name": "S5 - Sân tập bóng bàn 03",
+            "label": "S5"
+          }
+        ]
+      },
+      {
+        "id": "basketball",
+        "courts": [
+          {
+            "name": "S6 - Sân bóng rổ tập ném 01",
+            "label": "S6 · tập ném 01"
+          },
+          {
+            "name": "S6 - Sân bóng rổ tập ném 02",
+            "label": "S6 · tập ném 02"
+          },
+          {
+            "name": "S8 - Sân bóng rổ nửa sân",
+            "label": "S8 · nửa sân"
+          },
+          {
+            "name": "S9 - Sân bóng rổ tập ném 01",
+            "label": "S9 · tập ném 01"
+          },
+          {
+            "name": "S9 - Sân bóng rổ tập ném 02",
+            "label": "S9 · tập ném 02"
+          },
+          {
+            "name": "S10 - Sân bóng rổ nửa sân 03",
+            "label": "S10 · nửa sân 03"
+          },
+          {
+            "name": "S10 - Sân tập bóng rổ 01",
+            "label": "S10 · tập 01"
+          }
+        ]
+      },
+      {
+        "id": "football",
+        "courts": [
+          {
+            "name": "S5 - Sân bóng đá 5",
+            "label": "S5 · sân 5"
+          },
+          {
+            "name": "S5 - Sân bóng đá 7",
+            "label": "S5 · sân 7"
+          }
+        ]
+      },
+      {
+        "id": "pickleball",
+        "courts": [
+          {
+            "name": "S9 - Sân Pickleball",
+            "label": "S9"
+          }
+        ]
+      },
+      {
+        "id": "badminton",
+        "courts": [
+          {
+            "name": "S6 - Sân cầu lông",
+            "label": "S6"
+          },
+          {
+            "name": "S8 - Sân Cầu lông",
+            "label": "S8"
+          },
+          {
+            "name": "S10 - Sân cầu lông",
+            "label": "S10"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bs",
+    "name": "BS",
+    "sports": [
+      {
+        "id": "volleyball",
+        "courts": [
+          {
+            "name": "BCX3 - Sân bóng chuyền hơi 01",
+            "label": "BCX3 · 01"
+          },
+          {
+            "name": "BCX3 - Sân bóng chuyền hơi 02",
+            "label": "BCX3 · 02"
+          }
+        ]
+      },
+      {
+        "id": "tennis",
+        "courts": [
+          {
+            "name": "BE7 - Sân tennis",
+            "label": "BE7"
+          },
+          {
+            "name": "BCX3 - Sân tennis 01",
+            "label": "BCX3 · 01"
+          },
+          {
+            "name": "BCX3 - Sân tennis 02",
+            "label": "BCX3 · 02"
+          },
+          {
+            "name": "CX2 - Sân tennis 01",
+            "label": "CX2 · 01"
+          },
+          {
+            "name": "CX2 - Sân tennis 02",
+            "label": "CX2 · 02"
+          }
+        ]
+      },
+      {
+        "id": "basketball",
+        "courts": [
+          {
+            "name": "BE7 - Sân bóng rổ tập ném 01",
+            "label": "BE7 · tập ném 01"
+          },
+          {
+            "name": "BE7 - Sân bóng rổ tập ném 02",
+            "label": "BE7 · tập ném 02"
+          },
+          {
+            "name": "BCX3 - Sân bóng rổ tập ném 01",
+            "label": "BCX3 · tập ném 01"
+          },
+          {
+            "name": "BCX3 - Sân bóng rổ tập ném 02",
+            "label": "BCX3 · tập ném 02"
+          }
+        ]
+      },
+      {
+        "id": "football",
+        "courts": [
+          {
+            "name": "BCX3 - Sân bóng đá",
+            "label": "BCX3"
+          }
+        ]
+      },
+      {
+        "id": "pickleball",
+        "courts": [
+          {
+            "name": "BE7 - Sân Pickleball",
+            "label": "BE7"
+          },
+          {
+            "name": "BCX3 - Sân đa năng (Cầu lông-Pickleball)",
+            "label": "BCX3 · đa năng"
+          }
+        ]
+      },
+      {
+        "id": "badminton",
+        "courts": [
+          {
+            "name": "BCX3 - Sân cầu lông 01",
+            "label": "BCX3"
+          }
+        ]
+      }
+    ]
+  }
+]

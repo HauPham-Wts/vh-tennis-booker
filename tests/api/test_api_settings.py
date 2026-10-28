@@ -48,11 +48,12 @@ def test_settings_leave_out_the_notification(client, saved):
 OTHER = {
     "mumu_index": 1,
     "slots": ["20:00 - 21:00"],
+    "subdivision": "",  # from the top of the file too
     "sport": "tennis",  # from the top of the file, which the file does not repeat
     "court": "S6 - Sân tennis",
     "venue_keyword": "Origami",
 }
-OTHER_IN_FILE = {key: value for key, value in OTHER.items() if key != "sport"}
+OTHER_IN_FILE = {key: value for key, value in OTHER.items() if key not in ("sport", "subdivision")}
 
 
 def test_settings_show_each_other_instance_in_full(client, saved):

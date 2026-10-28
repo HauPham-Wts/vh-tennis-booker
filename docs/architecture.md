@@ -17,7 +17,8 @@ Details live in the docstrings; this page says where things are and what must st
   Windows notification (`notify.py`; a failure only logs a warning). After a real run with at
   least one round, `close_emulator` shuts MuMu down.
 - Other MuMu instances (`[[instances]]` in the config, each with its own account and its own
-  `mumu_index`, `slots`, `sport`, `court`, `venue_keyword`; `config.instance_config`):
+  `mumu_index`, `slots`, `subdivision`, `sport`, `court`, `venue_keyword`;
+  `config.instance_config`):
   the run's process, once it holds the lock and has cleared stale runs, starts one process per
   entry (`start_instances`: the same command with `--instance N`, without `--slots`,
   `--device`; console output dropped) and waits for them, holding its lock. Each such process
@@ -60,6 +61,12 @@ Details live in the docstrings; this page says where things are and what must st
   `app_language.ENGLISH_SPORTS`) unless `[labels] utility` names one. `prepare()` finds the
   language on the first screen and uses it; a language without a tile for the sport stops the
   run there.
+- `prepare()` then tells the account's subdivision (`read_account`) from the apartment code
+  on the home screen it read anyway ("BS…" → `bs`, "S…" → `origami`; 0 commands). Only the
+  subdivision is logged and reported (`account_subdivision`), never the code (personal data).
+  A court the catalog lists in another subdivision is a warning in the log and the Windows
+  notification (`cli.AccountSink`), not an error: the guess may be wrong. Any failure there
+  only logs.
 - Every transition is `tap_and_advance(screen, target, name, find_next)`: tap, then read until
   `find_next` finds the next screen, up to `timeout` (30 s). The tap is repeated every 2 s
   while `target` still shows (a swallowed tap), never while the app loads (target gone).
@@ -72,6 +79,13 @@ Details live in the docstrings; this page says where things are and what must st
   `select_court` (or `check_single_court` when a page with one choice passed on to the
   details page by itself: it must name the configured court)
   → "Tiếp tục" → confirmation page → `accept_and_confirm`.
+- Venue page (`_venue_entry`): a single venue is tapped whatever its name; of several, the one
+  `catalog.py` lists the court under (its name before the line break), else the one naming
+  `venue_keyword` (a court typed by hand). A full venue ("Hết chỗ") fails the round at once.
+- `catalog.py`: the subdivisions (`origami`, `bs`), their sports in the app's order, venues and
+  courts (app name and short label), from the field notes. The run needs no subdivision: the
+  court names its venue. The `subdivision` setting (empty: the account's) only checks the
+  settings (`validate_config`: a known subdivision that has the sport).
 - A court cut off by the bottom edge is tapped without a swipe: it is in the tree, and the
   driver clicks it by its label (seven basketball courts).
 - `select_court`: the court list can move under the tap (field notes), so the booking details
@@ -86,6 +100,7 @@ Details live in the docstrings; this page says where things are and what must st
 - `book()` returns `Booked`: date, slot and court read on the confirmation page (a difference is
   a warning only) and the ticket's status, from reads the round makes anyway.
 - Pure modules (testable without a device): `geometry.py`, `screen.py`, `app_language.py`,
+  `catalog.py`,
   most of `clock.py`.
 
 ## Events and history
@@ -100,7 +115,8 @@ Details live in the docstrings; this page says where things are and what must st
   `events`, and the run's log lines. The first database error turns history off for the process.
   Schema changes only add columns, so an older runner still writes to a newer database.
 - `history_read.py`: read-only queries for the backend (runs, one run, events, the live feed's
-  `events_after`, `dry_run_passed`, `last_setup`); it migrates an older database first.
+  `events_after`, `dry_run_passed`, `last_setup`, `account_subdivisions`: the subdivision each
+  MuMu instance last told); it migrates an older database first.
 
 ## Configuration and data folder
 
@@ -140,10 +156,12 @@ values 422 `invalid_request`.
 | `GET /api/setup`, `POST /api/setup/auto` | Device checks; auto setup (quiet time and lock respected) |
 | `GET`/`PUT /api/schedule` | The task: state, times; switching on needs a passed dry run. Never switch it on from a development backend: the task would run the development Python |
 | `POST /api/runs/dry-run` | Starts a dry run in its own process (refused in the quiet time or while a run holds the lock) |
+| `GET /api/accounts` | The subdivision each MuMu instance's account told last (`history_read.account_subdivisions`); one the catalog no longer lists is left out |
 | `WS /api/live` | Pushes each new step |
 
-After a route or model change: `python tools/export_openapi.py`, then `npm run api:types`
-(`tests/api/test_api_schema.py` and CI fail until both match).
+After a route, model or catalog change: `python tools/export_openapi.py` (writes
+`ui/openapi.json` and `ui/src/catalog.json`), then `npm run api:types`
+(`tests/api/test_api_schema.py`, `tests/test_catalog.py` and CI fail until they match).
 
 ## UI (`ui/`)
 
@@ -171,10 +189,13 @@ After a route or model change: `python tools/export_openapi.py`, then `npm run a
   notification switch, the guide). The header's status line (`components/StatusLine.tsx`)
   shows the run going on, else the one thing to do. `manualSteps.ts` keeps the user's ticks in
   `localStorage` (memory when storage fails); `setupState.ts` counts the setup tasks left and
-  picks the panel's first tab. `booking.ts` holds the slot, sport and court choices the
-  developer maintains (each court with the label that tells it from the others of its sport)
-  and the two-slot limit; `useFormat`'s `court` names a court by its sport and label
-  ("Tennis S6"). The UI never calls `GET /api/setup` or
+  picks the panel's first tab. `booking.ts` holds the slots and the two-slot limit, and reads
+  the subdivisions, sports and courts (each court with the label that tells it from the others
+  of its sport) from `catalog.json`, written from `catalog.py`; `useFormat`'s `court` names a
+  court by its sport and label ("Tennis S6"). The ticket's subdivision is the one the settings
+  name, else the one the account told last (`GET /api/accounts`, refreshed when a run ends,
+  "Theo tài khoản"), else Origami; pressing one saves it, keeps the sport if the subdivision
+  has it (else its first sport) and takes the first court. The UI never calls `GET /api/setup` or
   `POST /api/notifications/test` (the routes stay for the command line and tools).
 
 ## Driver (`android/`)

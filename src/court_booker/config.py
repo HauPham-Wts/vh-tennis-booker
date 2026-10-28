@@ -11,6 +11,7 @@ from typing import Any
 
 import tomli_w
 
+from court_booker import catalog
 from court_booker.clock import parse_time
 from court_booker.errors import RequestError
 
@@ -38,13 +39,21 @@ SPORTS = {
 }
 """The sports the run books, each with its tile on the utilities list in Vietnamese (field
 notes, "Other sports"); the English tiles are in :mod:`court_booker.app_language`."""
-INSTANCE_KEYS = ("mumu_index", "slots", "sport", "court", "venue_keyword")
+INSTANCE_KEYS = ("mumu_index", "slots", "subdivision", "sport", "court", "venue_keyword")
 """Keys of an ``[[instances]]`` table: the booking settings of another MuMu instance, which
 books with its own account; ``mumu_index`` is required, the others default to the file's."""
 _IGNORED_KEYS = ("days_ahead",)
 """Keys of older files, read and dropped: the play day was a setting until 0.13.1."""
-_WRITTEN_WHEN_CHANGED = ("windows_notification", "notification_language", "instances", "sport")
+_WRITTEN_WHEN_CHANGED = (
+    "windows_notification",
+    "notification_language",
+    "instances",
+    "sport",
+    "subdivision",
+)
 """Keys ``save_config`` writes only when they differ from the default (see there)."""
+_INHERITED_KEYS = ("sport", "subdivision")
+"""Keys of :data:`_WRITTEN_WHEN_CHANGED` an instance table drops when they equal the file's."""
 _SLOT_PATTERN = re.compile(r"\d{2}:\d{2} - \d{2}:\d{2}")
 
 
@@ -101,11 +110,16 @@ class Config:
     """adb executable; empty searches PATH, then the emulator folder."""
     package: str = "com.vinhomes.resident"
     slots: list[str] = field(default_factory=lambda: ["11:00 - 12:00", "14:00 - 15:00"])
+    subdivision: str = ""
+    """The account's subdivision, one of :data:`court_booker.catalog.SUBDIVISIONS`; empty
+    leaves it to the account. Filters the choices of the app; the run books by ``court``."""
     sport: str = "tennis"
     """What to book, one of :data:`SPORTS`: the tile tapped on the utilities list."""
     court: str = "S10 - Sân tennis"
     venue_keyword: str = "Origami"
-    """Picks the venue when the app lists several; a single one is tapped whatever its name."""
+    """Picks the venue of a court not in :mod:`court_booker.catalog` when the app lists
+    several; a court in the catalog takes its own venue, a single venue is tapped whatever its
+    name."""
     timeout: float = 30.0
     """Longest wait for any screen, in seconds; one that shows sooner is acted on at once.
 
@@ -200,14 +214,18 @@ def save_config(config: Config, path: str | Path) -> None:
     written: a runner of an older version refuses a label it does not know, and a later
     version's fix to a default label then reaches this file too. For the same reason the
     keys of :data:`_WRITTEN_WHEN_CHANGED`, added after 0.9.1, are written only when changed,
-    and an instance's ``sport`` only when it differs from the file's.
+    and an instance's ``sport`` and ``subdivision`` only when they differ from the file's.
     """
     problems = validate_config(config)
     if problems:
         raise ConfigError("; ".join(problems))
     data = config_to_dict(config)
     data["instances"] = [
-        {key: value for key, value in table.items() if (key, value) != ("sport", config.sport)}
+        {
+            key: value
+            for key, value in table.items()
+            if key not in _INHERITED_KEYS or value != getattr(config, key)
+        }
         for table in config.instances
     ]
     defaults = config_to_dict(Config())
@@ -249,6 +267,13 @@ def validate_config(config: Config) -> list[str]:
         problems.append("a slot is listed twice")
     if config.sport not in SPORTS:
         problems.append(f"sport must be one of {', '.join(SPORTS)}")
+    if config.subdivision:
+        chosen = catalog.subdivision(config.subdivision)
+        if chosen is None:
+            names = ", ".join(item.id for item in catalog.SUBDIVISIONS)
+            problems.append(f"subdivision must be empty or one of {names}")
+        elif config.sport in SPORTS and chosen.sport(config.sport) is None:
+            problems.append(f"{chosen.name} has no {config.sport} courts")
     if not config.court.strip():
         problems.append("court is empty")
     times = {}

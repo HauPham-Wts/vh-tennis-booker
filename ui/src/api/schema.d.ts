@@ -135,6 +135,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Accounts
+         * @description Read the subdivision each MuMu instance's account told last, newest first.
+         */
+        get: operations["read_accounts_api_accounts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/notifications": {
         parameters: {
             query?: never;
@@ -306,6 +326,18 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * AccountSubdivision
+         * @description The subdivision a MuMu instance's account last told, read from its home screen.
+         */
+        AccountSubdivision: {
+            /** Device */
+            device: number | null;
+            /** Subdivision */
+            subdivision: string;
+            /** Seen At */
+            seen_at: string;
+        };
+        /**
          * AutoSetupRequest
          * @description ``restart_mumu`` allows restarting a running MuMu to apply its new screen.
          */
@@ -331,7 +363,7 @@ export interface components {
          * @description What happened. The value is stable: it becomes a database value and a message key.
          * @enum {string}
          */
-        EventKind: "run_started" | "device_ready" | "app_ready" | "waiting" | "booking_started" | "run_finished" | "slot_started" | "calendar_opened" | "date_selected" | "slot_selected" | "court_selected" | "terms_accepted" | "slot_booked" | "slot_failed" | "lock_cleared" | "lock_waiting" | "lock_taken_over" | "setup_started" | "setup_item" | "setup_finished" | "settings_saved" | "schedule_enabled" | "schedule_disabled";
+        EventKind: "run_started" | "device_ready" | "app_ready" | "account_subdivision" | "waiting" | "booking_started" | "run_finished" | "slot_started" | "calendar_opened" | "date_selected" | "slot_selected" | "court_selected" | "terms_accepted" | "slot_booked" | "slot_failed" | "lock_cleared" | "lock_waiting" | "lock_taken_over" | "setup_started" | "setup_item" | "setup_finished" | "settings_saved" | "schedule_enabled" | "schedule_disabled";
         /**
          * Health
          * @description The backend answers and runs this version.
@@ -351,6 +383,8 @@ export interface components {
             mumu_index: number;
             /** Slots */
             slots: string[];
+            /** Subdivision */
+            subdivision: string;
             /** Sport */
             sport: string;
             /** Court */
@@ -584,12 +618,14 @@ export interface components {
         };
         /**
          * Settings
-         * @description Every booking setting; the UI changes the slots, sport and court, and sends the rest
-         *     back.
+         * @description Every booking setting; the UI changes the slots, subdivision, sport and court, and sends
+         *     the rest back.
          */
         Settings: {
             /** Slots */
             slots: string[];
+            /** Subdivision */
+            subdivision: string;
             /** Sport */
             sport: string;
             /** Court */
@@ -980,6 +1016,44 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Settings"];
+                };
+            };
+            /** @description Invalid request values, one line per value */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description An error with a stable code */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    read_accounts_api_accounts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountSubdivision"][];
                 };
             };
             /** @description Invalid request values, one line per value */

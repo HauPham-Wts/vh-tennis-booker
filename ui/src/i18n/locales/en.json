@@ -48,6 +48,8 @@
       "offLine": "No booking {{when}}.",
       "instance": "Instance",
       "instanceName": "MuMu {{index}}",
+      "subdivision": "Subdivision",
+      "byAccount": "From the account",
       "sport": "Sport",
       "court": "Court",
       "slots": "Slots · booked in the order pressed, {{max}} at most",
@@ -253,6 +255,10 @@
     },
     "device_ready": "MuMu is ready",
     "app_ready": "Vinhomes app is open",
+    "account_subdivision": {
+      "full": "The account is in the {{name}} subdivision",
+      "plain": "Read the account's subdivision"
+    },
     "waiting": {
       "full": "Waiting until {{time}}",
       "plain": "Waiting for the start time"

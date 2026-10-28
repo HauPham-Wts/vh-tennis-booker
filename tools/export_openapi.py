@@ -1,10 +1,12 @@
-"""Write the backend's OpenAPI schema to ui/openapi.json, where the UI's types come from.
+"""Write what the UI takes from the backend: ui/openapi.json and ui/src/catalog.json.
 
-Run it after changing a route or a model, then regenerate the types in ui/:
+The OpenAPI schema is where the UI's types come from; the catalog holds the subdivisions,
+sports and courts the settings offer (court_booker.catalog). Run it after changing a
+route, a model or the catalog, then regenerate the types in ui/:
     python tools/export_openapi.py
     npm run api:types        (in ui/)
 
-The backend tests fail while ui/openapi.json differs from the backend.
+The backend tests fail while either file differs from the backend.
 """
 
 from __future__ import annotations
@@ -14,20 +16,29 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 SNAPSHOT = REPO / "ui" / "openapi.json"
+CATALOG = REPO / "ui" / "src" / "catalog.json"
+
+
+def write(path: Path, text: str) -> bool:
+    """Write ``text`` to ``path`` unless it holds it already; return whether it changed."""
+    name = path.relative_to(REPO).as_posix()
+    if path.exists() and path.read_text(encoding="utf-8") == text:
+        print(f"{name} is up to date")
+        return False
+    path.write_text(text, encoding="utf-8", newline="\n")
+    print(f"Wrote {name}")
+    return True
 
 
 def main() -> int:
-    """Write the schema and say whether it changed."""
+    """Write both files and say what changed."""
     sys.path.insert(0, str(REPO / "src"))
     from court_booker.api.schema import openapi_json
+    from court_booker.catalog import catalog_json
 
-    text = openapi_json()
-    old = SNAPSHOT.read_text(encoding="utf-8") if SNAPSHOT.exists() else None
-    if text == old:
-        print(f"{SNAPSHOT.relative_to(REPO).as_posix()} is up to date")
-        return 0
-    SNAPSHOT.write_text(text, encoding="utf-8", newline="\n")
-    print(f"Wrote {SNAPSHOT.relative_to(REPO).as_posix()}; now run `npm run api:types` in ui/")
+    if write(SNAPSHOT, openapi_json()):
+        print("Now run `npm run api:types` in ui/")
+    write(CATALOG, catalog_json())
     return 0
 
 

@@ -150,6 +150,21 @@ def test_the_sport_is_saved_only_where_it_differs(tmp_path):
     assert instance_config(config, config.instances[1]).sport == "pickleball"
 
 
+def test_the_subdivision_is_saved_only_where_it_differs(tmp_path):
+    path = tmp_path / "config.toml"
+
+    # A runner of 0.15.0 refuses the key, so a config left to the account must not name it.
+    save_config(Config(instances=[{**INSTANCE, "subdivision": ""}]), path)
+    assert "subdivision" not in path.read_text(encoding="utf-8")
+
+    bs = {**INSTANCE, "subdivision": "bs", "court": "BE7 - Sân tennis"}
+    save_config(Config(subdivision="origami", instances=[bs, {"mumu_index": 2}]), path)
+    config = load_config(path)
+    assert config.subdivision == "origami"
+    assert config.instances == [bs, {"mumu_index": 2}]
+    assert instance_config(config, config.instances[1]).subdivision == "origami"
+
+
 def test_the_old_play_day_key_is_dropped(tmp_path):
     # Files of 0.13.1 and before hold days_ahead; the run always books today + 2 now.
     path = tmp_path / "config.toml"
@@ -203,6 +218,12 @@ def test_instances_are_saved_only_when_set(tmp_path):
         (
             {"instances": [{**INSTANCE, "sport": "golf"}]},
             f"MuMu instance 1: sport must be one of {SPORT_CODES}",
+        ),
+        ({"subdivision": "khu-b"}, "subdivision must be empty or one of origami, bs"),
+        ({"subdivision": "bs", "sport": "multi"}, "BS has no multi courts"),
+        (
+            {"instances": [{**INSTANCE, "subdivision": "bs", "sport": "table-tennis"}]},
+            "MuMu instance 1: BS has no table-tennis courts",
         ),
         (
             {"instances": [{"mumu_index": 1, "slots": ["8:00"]}]},

@@ -38,7 +38,9 @@ One Back from the ticket returns to the Utilities list, where the next round sta
   the next month needs the next-month button. The calendar opens on the current month.
 - The month buttons, `‹` and `›` right of "Tháng 10 ▾ 2026 ▾", are unlabelled `Button`
   nodes at 540x1600: `‹` [403,162][469,228], `›` [469,162][535,228] (2026-10-25). Both are
-  greyed out and not clickable while that month has no bookable day. `next_month_xy` and
+  greyed out and not clickable while that month has no bookable day. Enabled, `›` is a
+  clickable node labelled "Tháng sau" at the same bounds: seen on the golf calendar, which
+  books further ahead (2026-10-27); the flow finds it by that label first. `next_month_xy` and
   `prev_month_xy` tap their middles; the driver clicks the smallest clickable element at the
   point, so a point right of x 469 is the next-month button. Switching to a month with
   bookable days is unverified: first possible on 30/10 for 1/11.
@@ -104,7 +106,40 @@ clickable "Đóng"; the page beneath leaves the dump.
 Surveyed 2026-10-26 with an account of the Origami subdivision, app in Vietnamese. The
 utilities list ("Danh sách tiện ích", section "Tiện ích Vinhomes Grand Park") holds ten
 clickable tiles; eight are courts, booked the same way as tennis (the other two, "Nhà Tập Golf
-Vip" and "Nướng BBQ", are out of scope). Only "Sân Tennis" has a capital T.
+Vip" and "Nướng BBQ", are out of scope). Only "Sân Tennis" has a capital T. Below the
+section, "Tiện ích VinWonders" lists links to the VinWonders parks (out of scope).
+
+### Structure of each utility (2026-10-27)
+
+Every tile walked to its booking details page with a read about every 0.3 s, then Back one
+page at a time (a page passed by itself shows again after Back). The app gives no name of the
+account's subdivision; it shows the utilities, venues and courts of that subdivision.
+
+| Tile | Supplier caption | Venue page (passed by itself) | Court list | Slots |
+|---|---|---|---|---|
+| Sân Tennis | BQL Grand Park | Origami_ Sân tennis | 4 courts | 13 x 1 h |
+| Sân đa năng | Vinhomes Grand Park | Origami _ Sân đa năng | 3 courts | 13 x 1 h |
+| Sân bóng chuyền | BQL Grand Park | Origami _ Sân bóng chuyền hơi | 4 courts | 13 x 1 h |
+| Sân bóng bàn | BQL Grand Park | Sân bóng bàn | one court, passed by itself | 13 x 1 h |
+| Sân bóng rổ | BQL Grand Park | Origami _ Sân bóng rổ | 7 courts | 13 x 1 h |
+| Sân bóng đá | BQL Grand Park | Sân bóng đá | 2 courts | 13 x 1 h |
+| Sân Pickleball | Vinhomes Grand Park | Origami _ Sân Pickleball | one court, passed by itself | 13 x 1 h |
+| Sân cầu lông | BQL Grand Park | Origami _ Sân cầu lông | 3 courts | 13 x 1 h |
+| Nhà Tập Golf Vip | Vinhomes Grand Park | none (not after Back either) | Golf Số 01 to 10 | 6 x 2 h (07-13, 15-21) |
+| Nướng BBQ | BQL Grand Park | BBQ _ CV 36ha _ Zone 2 | BBQ CV Zone 2 - 01 to 07 | 4 x 2 h (10-14, 17-21) |
+
+- Order of pages after the calendar's "Tiếp tục": the page heading (the tile's name and the
+  supplier caption, "Thông tin dịch vụ") shows first, then the venue page, then the court
+  list or, with one court, the details page. The venue page was never caught on the way in;
+  every walk showed it after one Back from the court list or details page.
+- Venue names differ in form: "Origami_ " or "Origami _ " before most, none for table tennis
+  and football (whose courts carry S5). A single venue is tapped whatever its name; several
+  venues are not seen at Origami (BS lists two, below).
+- The details page shows the opened court's name, "Phí đặt chỗ 0 VND | Số lượng cư dân | 4"
+  and "Tiếp tục" for all eight sports; its service text varies (the multi-purpose page lists
+  "Sân sử dụng các tiện ích: Bóng rổ"; football reads "phục vụ" without "riêng").
+- Golf and BBQ book further ahead than today + 2: on 27/10 their calendars showed 27-31/10
+  and an enabled "Tháng sau" button.
 
 - The calendar is the same for all eight: "Đăng ký tiện ích", the utility's name, today to
   today + 2, "Khung giờ khả dụng", 13 one-hour slots (06-12, 14-21), "| Hết chỗ", "Tiếp tục".
@@ -133,6 +168,11 @@ Vip" and "Nướng BBQ", are out of scope). Only "Sân Tennis" has a capital T.
 | Sân Pickleball | one court, passes by itself | S9 - Sân Pickleball |
 | Sân cầu lông | list | S10 - Sân cầu lông, S6 - Sân cầu lông, S8 - Sân Cầu lông |
 
+- In English (2026-10-27) the list is "Utilities list", section "Utilities Vinhomes Grand
+  Park", and the eight tiles read "Multi Purpose Yard", "Volleyball", "Pingpong", "Tennis",
+  "Basketball", "Football", "Pickleball" and "Badminton" ("Golf house Vip" and "BBQ" out of
+  scope). Venues ("Origami _ Sân bóng chuyền hơi") and court names stay in Vietnamese, as for
+  tennis; each sport went to "Confirm" in a dry run.
 - Court names are not uniform: "S8 - Sân Cầu lông" has a capital C.
 - The basketball list has seven courts; the seventh sits at the bottom edge (y 1594-1600 at
   540x1600). It is in the tree, so the driver clicks it by its label without a swipe; until
@@ -140,6 +180,40 @@ Vip" and "Nướng BBQ", are out of scope). Only "Sân Tennis" has a capital T.
   not in the tree yet.
 - Each volleyball court row has a child "Chỉ đường" button (x 53-178); a tap in the middle of
   the row still opens the court.
+
+## Subdivision BS
+
+Surveyed 2026-10-27 with an account of the BS subdivision, app in Vietnamese, the same walk
+as Origami. Each subdivision shows its own utilities, venues and courts, so each needs its own
+survey.
+
+- The utilities list holds eight tiles, in this order: "Sân bóng chuyền", "Sân Tennis", "Sân
+  bóng rổ", "Sân bóng đá", "Sân Pickleball", "Sân cầu lông", "Nhà Tập Golf Vip", "Nướng BBQ".
+  No "Sân đa năng" and no "Sân bóng bàn". Tile names, captions, the calendar (13 one-hour
+  slots, today to today + 2) and the details page read as at Origami.
+- **Several venues.** Tennis, basketball and pickleball list two venues, "BE _ …" and "BS _
+  …"; this page stays until a venue is tapped. A venue whose courts are all taken at the slot
+  reads "| Hết chỗ" (seen for "BE _ Sân tennis" at 09:00 and 10:00).
+- After a single court passes by itself to its details page, one Back shows that court's list
+  (one entry), not the venues.
+
+| Tile | Venue | Courts |
+|---|---|---|
+| Sân bóng chuyền | BS _ Sân bóng chuyền hơi | BCX3 - Sân bóng chuyền hơi 01, BCX3 - Sân bóng chuyền hơi 02 |
+| Sân Tennis | BE _ Sân tennis | BE7 - Sân tennis (one, passes by itself) |
+| | BS _ Sân tennis | BCX3 - Sân tennis 01, BCX3 - Sân tennis 02, CX2 - Sân tennis 01, CX2 - Sân tennis 02 |
+| Sân bóng rổ | BE _ Sân bóng rổ | BE7 - Sân bóng rổ tập ném 01, BE7 - Sân bóng rổ tập ném 02 |
+| | BS _ Sân bóng rổ | BCX3 - Sân bóng rổ tập ném 01, BCX3 - Sân bóng rổ tập ném 02 |
+| Sân bóng đá | BS _ Sân bóng đá | BCX3 - Sân bóng đá (one, passes by itself) |
+| Sân Pickleball | BE _ Sân Pickleball | BE7 - Sân Pickleball (one, passes by itself) |
+| | BS _ Sân Pickleball | BCX3 - Sân đa năng (Cầu lông-Pickleball) (one, passes by itself) |
+| Sân cầu lông | BS _ Sân cầu lông | BCX3 - Sân cầu lông 01 (one, passes by itself) |
+| Nhà Tập Golf Vip | none | Golf Số 01 to 10, as at Origami |
+| Nướng BBQ | BBQ _ CV 36ha _ Zone 2 | BBQ CV Zone 2 - 01 to 07, as at Origami |
+
+- The court's venue is not in the court's name in a way the code can rely on (BCX3 and CX2
+  courts are both under "BS _"), so `catalog.py` lists each court under its venue, and the
+  run taps that venue.
 
 ## App in English
 

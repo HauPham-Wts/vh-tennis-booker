@@ -61,18 +61,21 @@ class InstanceSettings(BaseModel):
 
     mumu_index: int
     slots: list[str]
+    subdivision: str
     sport: str
     court: str
     venue_keyword: str
 
 
 class Settings(BaseModel):
-    """Every booking setting; the UI changes the slots, sport and court, and sends the rest
-    back."""
+    """Every booking setting; the UI changes the slots, subdivision, sport and court, and sends
+    the rest back."""
 
     model_config = ConfigDict(extra="forbid")
 
     slots: list[str]
+    subdivision: str
+    """The account's subdivision, ``origami`` or ``bs``; empty leaves it to the account."""
     sport: str
     """What to book: ``tennis``, ``multi``, ``volleyball``, ``table-tennis``, ``basketball``,
     ``football``, ``pickleball`` or ``badminton``."""

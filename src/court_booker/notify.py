@@ -15,6 +15,7 @@ from datetime import date
 from typing import Callable
 from xml.sax.saxutils import escape
 
+from court_booker import catalog
 from court_booker.runner import RoundResult
 
 logger = logging.getLogger(__name__)
@@ -60,6 +61,7 @@ TEXTS = {
         "not_booked": "không đặt được",
         "stopped": "đã dừng",
         "dry_run": " (chạy thử)",
+        "otherSubdivision": "⚠️ Tài khoản thuộc {subdivision}, sân {court} không thuộc phân khu này",
         "test_title": "Thông báo thử",
         "test_body": "Court Booker sẽ báo kết quả ở đây sau mỗi lượt đặt sân.",
     },
@@ -69,6 +71,7 @@ TEXTS = {
         "not_booked": "not booked",
         "stopped": "stopped",
         "dry_run": " (dry run)",
+        "otherSubdivision": "⚠️ The account is in {subdivision}; court {court} is not",
         "test_title": "Test notification",
         "test_body": "Court Booker will report here after every booking run.",
     },
@@ -204,13 +207,15 @@ def format_notification(
     court: str,
     language: str = DEFAULT_LANGUAGE,
     instance: int | None = None,
+    account: str | None = None,
 ) -> tuple[str, str]:
     """Return the title and the text of the notification for a finished run.
 
     The text has one line per round: the slot and the court the app booked (``court``
     if the round did not read it), or why it failed. A run that failed before its rounds
     has one line for its error instead. The title names the MuMu ``instance`` if given, as
-    each instance of a run with several reports on its own.
+    each instance of a run with several reports on its own. A last line warns when the
+    catalog lists ``court`` outside ``account``, the subdivision the home screen told.
     """
     if language not in TEXTS:  # the config is not validated when loaded
         language = DEFAULT_LANGUAGE
@@ -240,6 +245,10 @@ def format_notification(
     ]
     if not results and not interrupted:
         lines.append(failure_reason(error, language))
+    chosen = None if account is None else catalog.subdivision(account)
+    if chosen is not None and catalog.court_outside(account, court):
+        warning = texts["otherSubdivision"].format(subdivision=chosen.name, court=court_name(court))
+        lines.append(warning)
     return title, "\n".join(lines)
 
 

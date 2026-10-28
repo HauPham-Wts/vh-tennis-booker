@@ -1,9 +1,11 @@
 /**
- * The choices of the booking settings. The developer keeps them in step with the Vinhomes
- * app: its slots, sports and courts change only when the app does, and then this file does
- * too.
+ * The choices of the booking settings. The subdivisions, sports and courts come from
+ * `catalog.json`, which `tools/export_openapi.py` writes from the backend's catalog.py; the
+ * slots change only when the app does, and then this file does too.
  */
+import catalog from "./catalog.json";
 import { slotStart } from "./format";
+import texts from "./i18n/locales/vi.json";
 
 /** The slots the app offers each day (06-12 and 14-21), as config.toml writes them. */
 export const SLOTS = [
@@ -22,19 +24,8 @@ export const SLOTS = [
   "20:00 - 21:00",
 ] as const;
 
-/** The sports to book, as config.toml names them, in the order of the app's utilities list. */
-export const SPORTS = [
-  "tennis",
-  "multi",
-  "volleyball",
-  "table-tennis",
-  "basketball",
-  "football",
-  "pickleball",
-  "badminton",
-] as const;
-
-export type Sport = (typeof SPORTS)[number];
+/** A sport the language files name, as config.toml keys it. */
+export type Sport = keyof typeof texts.sports;
 
 /** A court as the app names it on its court list, and the label that tells it apart. */
 export interface Court {
@@ -42,46 +33,67 @@ export interface Court {
   label: string;
 }
 
-/** The courts of each sport at Origami (field notes, "Other sports"). */
-export const COURTS: Record<Sport, readonly Court[]> = {
-  tennis: [
-    { name: "S6 - Sân tennis", label: "S6" },
-    { name: "S8 - Sân tennis", label: "S8" },
-    { name: "S9 - Sân tennis", label: "S9" },
-    { name: "S10 - Sân tennis", label: "S10" },
-  ],
-  multi: [
-    { name: "S7 - Sân đa năng", label: "S7" },
-    { name: "S9 - Sân đa năng", label: "S9" },
-    { name: "S10 - Sân đa năng", label: "S10" },
-  ],
-  volleyball: [
-    { name: "S8 - Sân bóng chuyền hơi", label: "S8" },
-    { name: "S9 - Sân bóng chuyền hơi", label: "S9" },
-    { name: "S10 - Sân bóng chuyền hơi 01", label: "S10 · 01" },
-    { name: "S10 - Sân bóng chuyền hơi 02", label: "S10 · 02" },
-  ],
-  "table-tennis": [{ name: "S5 - Sân tập bóng bàn 03", label: "S5" }],
-  basketball: [
-    { name: "S6 - Sân bóng rổ tập ném 01", label: "S6 · tập ném 01" },
-    { name: "S6 - Sân bóng rổ tập ném 02", label: "S6 · tập ném 02" },
-    { name: "S8 - Sân bóng rổ nửa sân", label: "S8 · nửa sân" },
-    { name: "S9 - Sân bóng rổ tập ném 01", label: "S9 · tập ném 01" },
-    { name: "S9 - Sân bóng rổ tập ném 02", label: "S9 · tập ném 02" },
-    { name: "S10 - Sân bóng rổ nửa sân 03", label: "S10 · nửa sân 03" },
-    { name: "S10 - Sân tập bóng rổ 01", label: "S10 · tập 01" },
-  ],
-  football: [
-    { name: "S5 - Sân bóng đá 5", label: "S5 · sân 5" },
-    { name: "S5 - Sân bóng đá 7", label: "S5 · sân 7" },
-  ],
-  pickleball: [{ name: "S9 - Sân Pickleball", label: "S9" }],
-  badminton: [
-    { name: "S6 - Sân cầu lông", label: "S6" },
-    { name: "S8 - Sân Cầu lông", label: "S8" },
-    { name: "S10 - Sân cầu lông", label: "S10" },
-  ],
-};
+/** A sport of a subdivision, with its courts in the order to offer them. */
+export interface CatalogSport {
+  id: string;
+  courts: Court[];
+}
+
+/** A subdivision, with the sports its accounts see in the order of the app's list. */
+export interface Subdivision {
+  id: string;
+  name: string;
+  sports: CatalogSport[];
+}
+
+/** Every subdivision, Origami first: the one shown when nothing tells another. */
+export const SUBDIVISIONS: readonly Subdivision[] = catalog;
+
+const ORIGAMI = SUBDIVISIONS[0] as Subdivision;
+
+/** Return the subdivision keyed `id`, or undefined for one not in the catalog. */
+export function subdivisionOf(id: string | undefined): Subdivision | undefined {
+  return SUBDIVISIONS.find((item) => item.id === id);
+}
+
+/**
+ * Return the subdivision to show: the one the settings name, else the one the account told
+ * last, else Origami.
+ */
+export function shownSubdivision(chosen: string, told: string | undefined): Subdivision {
+  return subdivisionOf(chosen) ?? subdivisionOf(told) ?? ORIGAMI;
+}
+
+/** Return the sports to offer in `subdivision`, and the one the settings hold if not one. */
+export function sportChoices(subdivision: Subdivision, current: string): string[] {
+  const sports = subdivision.sports.map((sport) => sport.id);
+  return sports.includes(current) ? sports : [...sports, current];
+}
+
+/** Return the courts of `sport` in `subdivision`, and the one the settings hold if not one. */
+export function courtChoices(subdivision: Subdivision, sport: string, current: string): string[] {
+  const found = subdivision.sports.find((item) => item.id === sport);
+  const courts = found === undefined ? [] : found.courts.map((court) => court.name);
+  return courts.includes(current) ? courts : [...courts, current];
+}
+
+/** Return the court to book when `sport` is chosen in `subdivision`: the first of its list. */
+export function firstCourt(subdivision: Subdivision, sport: string): string {
+  return subdivision.sports.find((item) => item.id === sport)?.courts[0]?.name ?? "";
+}
+
+/**
+ * Return the settings that `target` takes when it is chosen: the sport the settings hold if
+ * `target` has it, else its first sport, with that sport's first court.
+ */
+export function inSubdivision(
+  target: Subdivision,
+  sport: string,
+): { subdivision: string; sport: string; court: string } {
+  const kept = target.sports.some((item) => item.id === sport);
+  const chosen = kept ? sport : (target.sports[0]?.id ?? sport);
+  return { subdivision: target.id, sport: chosen, court: firstCourt(target, chosen) };
+}
 
 /** The most slots to book: the app gives a flat two slots a day. */
 export const MAX_SLOTS = 2;
@@ -118,28 +130,21 @@ export function toggleSlot(chosen: readonly string[], slot: string): string[] {
   return chosen.length >= MAX_SLOTS ? [...chosen] : [...chosen, slot];
 }
 
-/** Return whether `value` is a sport the run books. */
+/** Return whether `value` is a sport the language files name. */
 export function isSport(value: string): value is Sport {
-  return (SPORTS as readonly string[]).includes(value);
+  return Object.hasOwn(texts.sports, value);
 }
 
-/** Return the courts of `sport` to offer, and the one the settings hold if it is not one. */
-export function courtChoices(sport: string, current: string): string[] {
-  const courts = isSport(sport) ? COURTS[sport].map((court) => court.name) : [];
-  return courts.includes(current) ? courts : [...courts, current];
-}
-
-/** Return the court to book when `sport` is chosen: the first of its list. */
-export function firstCourt(sport: Sport): string {
-  return COURTS[sport][0]?.name ?? "";
-}
-
-/** Return the sport and label of the court the app names `name`, if it is on a list. */
-export function findCourt(name: string): { sport: Sport; label: string } | undefined {
-  for (const sport of SPORTS) {
-    const court = COURTS[sport].find((item) => item.name === name);
-    if (court !== undefined) {
-      return { sport, label: court.label };
+/** Return the subdivision, sport and label of the court the app names `name`, if listed. */
+export function findCourt(
+  name: string,
+): { subdivision: Subdivision; sport: Sport; label: string } | undefined {
+  for (const subdivision of SUBDIVISIONS) {
+    for (const sport of subdivision.sports) {
+      const court = sport.courts.find((item) => item.name === name);
+      if (court !== undefined && isSport(sport.id)) {
+        return { subdivision, sport: sport.id, label: court.label };
+      }
     }
   }
   return undefined;

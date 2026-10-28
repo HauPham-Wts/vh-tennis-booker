@@ -65,11 +65,12 @@ npm test
 npm run build
 ```
 
-After changing a backend route or model, regenerate the UI's copy of the API (the backend
-tests and CI fail until both files match the backend):
+After changing a backend route, a model or the catalog (`catalog.py`), regenerate the UI's
+copy of the API and the catalog (the backend tests and CI fail until the files match the
+backend):
 
 ```bash
-python tools/export_openapi.py   # writes ui/openapi.json
+python tools/export_openapi.py   # writes ui/openapi.json and ui/src/catalog.json
 cd ui && npm run api:types       # writes ui/src/api/schema.d.ts
 ```
 

@@ -100,6 +100,43 @@ def test_notification_names_the_court_the_app_booked():
     assert notification(booked)[1] == "✅ 18:00 - 19:00 · S9"
 
 
+@pytest.mark.parametrize(
+    ("language", "warning"),
+    [
+        ("vi", "⚠️ Tài khoản thuộc BS, sân S6 không thuộc phân khu này"),
+        ("en", "⚠️ The account is in BS; court S6 is not"),
+    ],
+)
+def test_notification_warns_of_a_court_outside_the_account(language, warning):
+    body = format_notification(
+        RESULTS,
+        None,
+        dry_run=False,
+        interrupted=False,
+        target=TARGET,
+        court=COURT,
+        language=language,
+        account="bs",
+    )[1]
+
+    assert body.splitlines()[-1] == warning
+
+
+@pytest.mark.parametrize("account", ["origami", None, "khu-b"])
+def test_notification_says_nothing_of_a_matching_or_unknown_account(account):
+    body = format_notification(
+        RESULTS,
+        None,
+        dry_run=False,
+        interrupted=False,
+        target=TARGET,
+        court=COURT,
+        account=account,
+    )[1]
+
+    assert len(body.splitlines()) == len(RESULTS)
+
+
 def test_notification_of_a_dry_run_says_so():
     passed = [RoundResult("18:00 - 19:00", True, "dry run passed", 3.0)]
 

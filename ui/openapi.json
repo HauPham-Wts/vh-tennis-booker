@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Court Booker",
-    "version": "0.15.0"
+    "version": "0.16.0"
   },
   "paths": {
     "/api/health": {
@@ -486,6 +486,52 @@
         }
       }
     },
+    "/api/accounts": {
+      "get": {
+        "tags": [
+          "accounts"
+        ],
+        "summary": "Read Accounts",
+        "description": "Read the subdivision each MuMu instance's account told last, newest first.",
+        "operationId": "read_accounts_api_accounts_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AccountSubdivision"
+                  },
+                  "type": "array",
+                  "title": "Response Read Accounts Api Accounts Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request values, one line per value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error with a stable code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/notifications": {
       "get": {
         "tags": [
@@ -894,6 +940,37 @@
   },
   "components": {
     "schemas": {
+      "AccountSubdivision": {
+        "properties": {
+          "device": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device"
+          },
+          "subdivision": {
+            "type": "string",
+            "title": "Subdivision"
+          },
+          "seen_at": {
+            "type": "string",
+            "title": "Seen At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "device",
+          "subdivision",
+          "seen_at"
+        ],
+        "title": "AccountSubdivision",
+        "description": "The subdivision a MuMu instance's account last told, read from its home screen."
+      },
       "AutoSetupRequest": {
         "properties": {
           "restart_mumu": {
@@ -931,6 +1008,7 @@
           "run_started",
           "device_ready",
           "app_ready",
+          "account_subdivision",
           "waiting",
           "booking_started",
           "run_finished",
@@ -987,6 +1065,10 @@
             "type": "array",
             "title": "Slots"
           },
+          "subdivision": {
+            "type": "string",
+            "title": "Subdivision"
+          },
           "sport": {
             "type": "string",
             "title": "Sport"
@@ -1005,6 +1087,7 @@
         "required": [
           "mumu_index",
           "slots",
+          "subdivision",
           "sport",
           "court",
           "venue_keyword"
@@ -1629,6 +1712,10 @@
             "type": "array",
             "title": "Slots"
           },
+          "subdivision": {
+            "type": "string",
+            "title": "Subdivision"
+          },
           "sport": {
             "type": "string",
             "title": "Sport"
@@ -1744,6 +1831,7 @@
         "type": "object",
         "required": [
           "slots",
+          "subdivision",
           "sport",
           "court",
           "wake_at",
@@ -1768,7 +1856,7 @@
           "labels"
         ],
         "title": "Settings",
-        "description": "Every booking setting; the UI changes the slots, sport and court, and sends the rest\nback."
+        "description": "Every booking setting; the UI changes the slots, subdivision, sport and court, and sends\nthe rest back."
       },
       "SetupItem": {
         "properties": {

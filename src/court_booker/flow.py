@@ -20,6 +20,7 @@ from dataclasses import asdict, dataclass
 from datetime import date
 from typing import Any, Callable, Optional, TypeVar
 
+from court_booker import catalog
 from court_booker.app_language import AppLanguage, app_languages
 from court_booker.config import Config
 from court_booker.errors import (
@@ -140,6 +141,8 @@ class Booker:
         """Device commands sent so far; each is a round trip to the emulator."""
         self.last_screen = Screen([])
         self._entry: Screen | None = None
+        self.account_subdivision: str | None = None
+        """The subdivision the home screen's apartment code tells, once ``prepare`` read it."""
 
         self.any_slot = Match(pattern=ANY_SLOT_PATTERN)
         self.court = Match(desc=config.court, clickable=True)
@@ -219,18 +222,39 @@ class Booker:
                 f"The app did not show {', '.join(labels)} or {last} in "
                 f"{self.config.boot_timeout:.0f} s; check that it is logged in"
             )
-        if not found[0].labels.utility:
-            raise AppNotReadyError(
-                f"The app is in {found[0].name}, whose label of {self.config.sport!r} is not "
-                "known yet; set the app to Vietnamese"
-            )
         self._use(found[0])
         logger.info("App language: %s", found[0].name)
         try:
-            self.return_to_home(found[1])
+            home = self.return_to_home(found[1])
         except NavigationError as exc:
             raise AppNotReadyError(str(exc)) from exc
+        self.read_account(home)
         logger.info("Ready on the home screen")
+
+    def read_account(self, home: Screen) -> None:
+        """Tell the account's subdivision from the apartment code on the home screen.
+
+        Costs no command: ``home`` is read anyway. The code itself is personal data, so only
+        the subdivision is logged and reported. A court of another subdivision is a warning
+        only, since the guess may be wrong. Never fails the run.
+        """
+        try:
+            codes = (node.desc.split("\n")[0] for node in home.nodes if node.clickable)
+            code = next((code for code in codes if catalog.APARTMENT.fullmatch(code)), None)
+            found = None if code is None else catalog.subdivision_of_apartment(code)
+            if found is None:
+                logger.debug("No subdivision told by the home screen")
+                return
+            self.account_subdivision = found
+            name = catalog.subdivision(found).name
+            logger.info("Account subdivision: %s", name)
+            self.report(EventKind.ACCOUNT_SUBDIVISION, subdivision=found)
+            if catalog.court_outside(found, self.config.court):
+                logger.warning(
+                    "Court %s is not in %s, the subdivision of the account", self.config.court, name
+                )
+        except Exception:  # a guess never costs a booking
+            logger.warning("Could not tell the account's subdivision", exc_info=True)
 
     def locate_entry(self) -> None:
         """Open the utilities list from the home screen, or read it again if it is shown.
@@ -261,6 +285,9 @@ class Booker:
         if self.notice(shown):
             raise self._refusal(self.notice_text(screen) or "")
         if not self.court_list(shown) and not self.residents(shown):
+            if labels.fully_booked in shown.desc:
+                venue_name = shown.desc.split("\n")[0]
+                raise SlotUnavailableError(f"Venue {venue_name} is fully booked")
             # Only the court list's heading counts after the venue: a read right after the
             # tap may still show the venue (2026-10-23), which ended the round at once.
             venue = Match(desc=shown.desc, clickable=True)
@@ -910,8 +937,9 @@ class Booker:
         """Return the venue to tap below the venues' heading, once it is listed.
 
         The heading shows a read or more before the venues in some reads (8 of 30 by
-        2026-10-23). A single venue is tapped whatever its name; of several, the one that
-        names ``venue_keyword``.
+        2026-10-23). A single venue is tapped whatever its name; of several, the one the
+        catalog lists ``court`` under, else the one that names ``venue_keyword`` (a court
+        typed by hand, or a venue the app renamed).
         """
         heading = screen.find(self.venue_list)
         if heading is None:
@@ -923,6 +951,11 @@ class Booker:
         ]
         if len(venues) == 1:
             return venues[0]
+        name = catalog.venue_of(self.config.court)
+        # A full venue reads "BE _ Sân tennis\nHết chỗ" (2026-10-27).
+        found = next((node for node in venues if node.desc.split("\n")[0] == name), None)
+        if found is not None:
+            return found
         keyword = self.config.venue_keyword
         return next((node for node in venues if keyword and keyword in node.desc), None)
 

@@ -674,6 +674,67 @@ def test_of_several_venues_the_one_naming_the_keyword_is_tapped():
     assert app.screen == "ticket"
 
 
+BS_VENUES = [  # read on 2026-10-27 at 09:00, BE full
+    VENUE_LIST,
+    node("BE _ Sân tennis\nHết chỗ", (35, 1024, 505, 1134)),
+    node("BS _ Sân tennis", (35, 1148, 505, 1258)),
+]
+
+
+def court_app(court, venues=BS_VENUES):
+    """Return the booking app of ``court``, listed under one of ``venues``."""
+    app = booking_app(
+        via_venue=True, courts=[node(court, COURTS[0][1])], shown=(details(court=court),)
+    )
+    app.screens["venue"] = venues
+    app.screens["details"][0] = node(court, (116, 975, 274, 1004), False)
+    app.taps_to[("courts", court)] = "details"
+    return app
+
+
+@pytest.mark.parametrize(
+    ("venues", "court", "venue"),
+    [
+        (BS_VENUES, "CX2 - Sân tennis 01", "BS _ Sân tennis"),
+        (
+            [VENUE_LIST, node("BE _ Sân tennis", BS_VENUES[1][1]), BS_VENUES[2]],
+            "BE7 - Sân tennis",
+            "BE _ Sân tennis",
+        ),
+    ],
+    ids=["BS", "BE"],
+)
+def test_of_several_venues_the_one_of_the_court_is_tapped(venues, court, venue):
+    app = court_app(court, venues)
+    app.taps_to[("venue", venue)] = "courts"
+
+    booker = Booker(app, Config(court=court))
+    booker.book("11:00 - 12:00", TARGET)
+
+    assert app.taps[4:6] == [venue, court]
+    assert booker.commands == 16 + 2  # the venue tapped, the court list read
+    assert app.screen == "ticket"
+
+
+def test_a_full_venue_fails_the_round_at_once():
+    app = court_app("BE7 - Sân tennis")
+
+    with pytest.raises(SlotUnavailableError, match="Venue BE _ Sân tennis is fully booked"):
+        Booker(app, Config(court="BE7 - Sân tennis")).book("11:00 - 12:00", TARGET)
+
+    assert app.taps[-1] == "Tiếp tục"  # the venue is not tapped
+
+
+def test_a_court_typed_by_hand_takes_the_venue_naming_the_keyword():
+    app = court_app("BCX4 - Sân tennis")
+    app.taps_to[("venue", "BS _ Sân tennis")] = "courts"
+
+    config = Config(court="BCX4 - Sân tennis", venue_keyword="BS")
+    Booker(app, config).book("11:00 - 12:00", TARGET)
+
+    assert app.taps[4] == "BS _ Sân tennis"
+
+
 def test_a_court_list_heading_without_the_court_yet_is_read_again():
     app = booking_app()
     app.screens["courts_heading"] = [COURT_LIST, COURTS[1]]  # S6 missing in one read, 2026-10-18
@@ -1555,11 +1616,16 @@ def test_the_sport_picks_the_tile_to_tap():
     assert booker.commands == 16
 
 
-def test_a_sport_without_an_english_tile_stops_on_an_app_in_english():
-    app = booking_app(screen="loading", english=True)
+def test_an_app_in_english_taps_the_english_tile_of_the_sport():
+    app = booking_app(english=True)
+    app.screens["utilities"] = [node("Badminton", (35, 300, 505, 360))]
+    app.taps_to[("utilities", "Badminton")] = app.taps_to.pop(("utilities", "Tennis"))
+    booker = prepared(app, Config(sport="badminton"))
 
-    with pytest.raises(AppNotReadyError, match=r"English, whose label of 'badminton' is not"):
-        Booker(app, Config(sport="badminton")).prepare()
+    booker.book("11:00 - 12:00", TARGET)
+
+    assert app.taps == ["Badminton", *english(FULL_ROUND[1:])]
+    assert booker.commands == 16
 
 
 def test_an_app_in_english_books_a_round_in_16_commands(caplog):
@@ -1660,3 +1726,63 @@ def test_an_english_calendar_switches_month_by_the_day_it_shows():
 
     # Back a month, as the day shown is in November; at the button's fallback position.
     assert app.taps == [prev_arrow, day_31]
+
+
+def home_with(apartment):
+    """Return a booking app whose home screen shows ``apartment``, as read on 2026-10-28."""
+    app = booking_app(screen="loading")
+    app.screens["home"] = [
+        *app.screens["home"],
+        node(f"{apartment}\nVinhomes Grand Park", (0, 443, 540, 556)),
+        node("Thay đổi", (383, 466, 494, 532)),
+    ]
+    return app
+
+
+@pytest.mark.parametrize(
+    ("apartment", "subdivision"),
+    [("BS0101.01", "bs"), ("S1.0101.01", "origami"), ("A1.0101", None)],
+)
+def test_prepare_tells_the_subdivision_by_the_apartment_code(apartment, subdivision):
+    sink = MemorySink()
+    plain = Booker(booking_app(screen="loading"), Config())
+    plain.prepare()
+    booker = Booker(home_with(apartment), Config(), Reporter(sink))
+
+    booker.prepare()
+
+    assert booker.account_subdivision == subdivision
+    events = [e.data for e in sink.events if e.kind is EventKind.ACCOUNT_SUBDIVISION]
+    assert events == ([] if subdivision is None else [{"subdivision": subdivision}])
+    assert booker.commands == plain.commands  # read from the home screen read anyway
+
+
+def test_the_apartment_code_is_not_logged(caplog):
+    caplog.set_level(logging.INFO, logger="court_booker")
+
+    Booker(home_with("BS0101.01"), Config()).prepare()
+
+    assert "Account subdivision: BS" in caplog.text
+    assert "BS0101" not in caplog.text
+
+
+def test_a_court_of_another_subdivision_is_a_warning_only(caplog):
+    booker = Booker(home_with("BS0101.01"), Config(court="S6 - Sân tennis"))
+
+    booker.prepare()
+
+    assert "Court S6 - Sân tennis is not in BS, the subdivision of the account" in caplog.text
+    assert booker.account_subdivision == "bs"
+
+
+def test_a_failed_guess_never_stops_the_run(caplog, monkeypatch):
+    def broken(code):
+        raise RuntimeError("broken")
+
+    monkeypatch.setattr("court_booker.catalog.subdivision_of_apartment", broken)
+    booker = Booker(home_with("BS0101.01"), Config())
+
+    booker.prepare()
+
+    assert booker.account_subdivision is None
+    assert "Could not tell the account's subdivision" in caplog.text

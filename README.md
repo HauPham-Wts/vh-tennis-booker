@@ -5,9 +5,9 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Code style: Ruff](https://img.shields.io/badge/code%20style-ruff-261230)
 
-Books a court (tennis, or one of the seven other sports of the Origami subdivision: a
-multi-purpose court, volleyball, table tennis, basketball, football, pickleball,
-badminton) the moment bookings open. The Vinhomes Resident app opens each day's
+Books a court (tennis, or another sport: a multi-purpose court, volleyball, table tennis,
+basketball, football, pickleball, badminton, as the subdivision offers them; Origami and BS
+so far) the moment bookings open. The Vinhomes Resident app opens each day's
 courts at 06:00, and the popular slots are gone within seconds. This project books them
 while its owner sleeps: a Windows scheduled task wakes the PC, starts the MuMu Player
 emulator and taps through the app's own booking screens with Python and an Android
@@ -145,7 +145,8 @@ Edit `config.toml`, or later use Settings in the web UI. The keys you usually ch
 |---|---|---|
 | `slots` | `["18:00 - 19:00", "19:00 - 20:00"]` | Slots to book, one round each, in this order: put the most wanted first |
 | `sport` | `"tennis"` | What to book: `tennis`, `multi`, `volleyball`, `table-tennis`, `basketball`, `football`, `pickleball` or `badminton` |
-| `court` | `"S10 - Sân tennis"` | The court, as the app names it (S6, S8, S9 or S10 for tennis) |
+| `court` | `"S10 - Sân tennis"` | The court, as the app names it (S6, S8, S9 or S10 for tennis at Origami; BE7 or BCX3/CX2 01-02 at BS) |
+| `subdivision` | `""` | The account's subdivision, `origami` or `bs`; empty follows the account. The run books by `court` either way |
 | `start_at` | `"06:00"` | When the app opens bookings |
 | `wake_at` | `"05:45"` | When the daily task wakes the PC and starts preparing |
 
@@ -154,8 +155,8 @@ explained in `config.example.toml`.
 
 To book with more accounts at once, clone the MuMu instance in MuMu's multi-instance manager,
 log the clone in to another account, and add an `[[instances]]` table for it (example in
-`config.example.toml`): its `mumu_index`, and any of `slots`, `sport`, `court` and `venue_keyword`
-that differ. The web UI then shows each instance's settings.
+`config.example.toml`): its `mumu_index`, and any of `slots`, `subdivision`, `sport`, `court` and
+`venue_keyword` that differ. The web UI then shows each instance's settings.
 
 ### 3. Set up the PC and the emulator
 
@@ -212,8 +213,8 @@ The UI is one screen, without a menu:
 - **The line at the top** says whether the next start is ready, or the one thing to do first.
 - **The ticket** on the left is the next booking in two parts: on top the daily switch (it
   creates or removes the Windows task, once a dry run passed) and what is set, the play day,
-  court and slots; below, the sport, the court and up to two slots to choose, saved on each
-  press, and a dry run. During a run it shows the steps as they happen.
+  court and slots; below, the subdivision, the sport, the court and up to two slots to choose,
+  saved on each press, and a dry run. During a run it shows the steps as they happen.
 - **Lịch sử / History** on the right: each run in two lines, its play day, court and count
   ("2/2"), then every slot booked or not and when it started (real bookings, dry runs on
   request); one click opens the reasons, the steps and the technical log.

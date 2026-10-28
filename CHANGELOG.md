@@ -6,6 +6,37 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-10-28
+
+### Added
+- The ticket's choices start with the subdivision, Origami or BS, and offer only its sports
+  and courts; it follows the account's subdivision ("Theo tài khoản") until one is pressed,
+  and the court on top reads "BS · Tennis BE7". The UI's sports and courts come from
+  `catalog.py`, as `ui/src/catalog.json`; `GET /api/accounts` gives the subdivision each
+  account told last.
+- The run tells the account's subdivision from the apartment code on the home screen, at no
+  extra command, and records it as an `account_subdivision` step (the code itself is not
+  kept). A court of another subdivision is a warning in the log and the Windows notification;
+  the run goes on. The history reads the subdivision each MuMu instance told last.
+- A catalog of the subdivisions Origami and BS with their sports, venues and courts
+  (`catalog.py`). Of several venues the run taps the one the catalog lists the court under,
+  so a BS account books a BE or BS court without `venue_keyword`; a court not in the catalog
+  still picks its venue by `venue_keyword`. A full venue fails the round at once instead of
+  after `timeout`.
+- A `subdivision` setting, also per `[[instances]]` table: empty (the default, the
+  account's), `origami` or `bs`; a set subdivision must have the chosen sport.
+- Field notes on the BS subdivision: its utilities, the venues BE and BS with their courts,
+  and how it differs from Origami.
+- Field notes on the structure of each utility at Origami (venue, court list, slots, the
+  pages the app passes by itself), and the next-month button's label when it is enabled.
+- Every sport books with the app set to English: the English tiles of the seven other
+  courts are built in, so a run no longer stops on an app in English.
+
+### Changed
+- CLAUDE.md, the README, the roadmap and the field notes describe the subdivisions, the
+  catalog and its export; CLAUDE.md asks every change to update everything related.
+  `venue_keyword` now only picks the venue of a court not in the catalog.
+
 ## [0.15.0] - 2026-10-27
 
 ### Added

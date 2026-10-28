@@ -1,12 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
-  COURTS,
   courtChoices,
   findCourt,
   firstCourt,
+  inSubdivision,
+  isSport,
   SLOTS,
+  type Subdivision,
+  SUBDIVISIONS,
+  shownSubdivision,
   slotChoices,
-  SPORTS,
+  sportChoices,
+  subdivisionOf,
   toggleSlot,
 } from "./booking";
 
@@ -51,47 +56,116 @@ describe("toggleSlot", () => {
 });
 
 const TENNIS = ["S6 - Sân tennis", "S8 - Sân tennis", "S9 - Sân tennis", "S10 - Sân tennis"];
+const ORIGAMI = subdivisionOf("origami") as Subdivision;
+const BS = subdivisionOf("bs") as Subdivision;
 
-describe("courtChoices", () => {
-  it("offers the courts of the sport", () => {
-    expect(courtChoices("tennis", "S6 - Sân tennis")).toEqual(TENNIS);
-    expect(courtChoices("pickleball", "S9 - Sân Pickleball")).toEqual(["S9 - Sân Pickleball"]);
+describe("shownSubdivision", () => {
+  it("shows the subdivision the settings name first", () => {
+    expect(shownSubdivision("bs", "origami").id).toBe("bs");
   });
 
-  it("keeps a court set by hand as the last choice", () => {
-    expect(courtChoices("tennis", "S1 - Sân tennis")).toEqual([...TENNIS, "S1 - Sân tennis"]);
+  it("follows the account while the settings name none", () => {
+    expect(shownSubdivision("", "bs").id).toBe("bs");
   });
 
-  it("offers only the court set by hand for a sport it does not know", () => {
-    expect(courtChoices("golf", "S1 - Sân golf")).toEqual(["S1 - Sân golf"]);
+  it("falls back to Origami", () => {
+    expect(shownSubdivision("", undefined).id).toBe("origami");
+    expect(shownSubdivision("khu-b", "khu-c").id).toBe("origami");
   });
 });
 
-describe("the sports", () => {
-  it("each have a court to start from, named once", () => {
-    const names = SPORTS.flatMap((sport) => COURTS[sport].map((court) => court.name));
-    expect(new Set(names).size).toBe(names.length);
-    expect(SPORTS.map(firstCourt).every((court) => court !== "")).toBe(true);
+describe("sportChoices", () => {
+  it("offers the sports of the subdivision in the app's order", () => {
+    expect(sportChoices(BS, "tennis")).toEqual([
+      "volleyball",
+      "tennis",
+      "basketball",
+      "football",
+      "pickleball",
+      "badminton",
+    ]);
   });
 
-  it("tell their courts apart by label", () => {
-    for (const sport of SPORTS) {
-      const labels = COURTS[sport].map((court) => court.label);
-      expect(new Set(labels).size, sport).toBe(labels.length);
+  it("keeps a sport the subdivision lacks as the last choice", () => {
+    expect(sportChoices(BS, "multi").at(-1)).toBe("multi");
+  });
+});
+
+describe("courtChoices", () => {
+  it("offers the courts of the sport in the subdivision", () => {
+    expect(courtChoices(ORIGAMI, "tennis", "S6 - Sân tennis")).toEqual(TENNIS);
+    expect(courtChoices(BS, "tennis", "BE7 - Sân tennis")).toEqual([
+      "BE7 - Sân tennis",
+      "BCX3 - Sân tennis 01",
+      "BCX3 - Sân tennis 02",
+      "CX2 - Sân tennis 01",
+      "CX2 - Sân tennis 02",
+    ]);
+  });
+
+  it("keeps a court set by hand as the last choice", () => {
+    expect(courtChoices(ORIGAMI, "tennis", "S1 - Sân tennis")).toEqual([
+      ...TENNIS,
+      "S1 - Sân tennis",
+    ]);
+  });
+
+  it("offers only the court set by hand for a sport it does not know", () => {
+    expect(courtChoices(ORIGAMI, "golf", "S1 - Sân golf")).toEqual(["S1 - Sân golf"]);
+  });
+});
+
+describe("inSubdivision", () => {
+  it("keeps the sport the new subdivision has, with its first court", () => {
+    expect(inSubdivision(BS, "tennis")).toEqual({
+      subdivision: "bs",
+      sport: "tennis",
+      court: "BE7 - Sân tennis",
+    });
+  });
+
+  it("takes the first sport of the new subdivision otherwise", () => {
+    expect(inSubdivision(BS, "table-tennis")).toEqual({
+      subdivision: "bs",
+      sport: "volleyball",
+      court: "BCX3 - Sân bóng chuyền hơi 01",
+    });
+  });
+});
+
+describe("the catalog", () => {
+  it("names each sport in the language files, with a court to start from", () => {
+    for (const subdivision of SUBDIVISIONS) {
+      for (const sport of subdivision.sports) {
+        expect(isSport(sport.id), sport.id).toBe(true);
+        expect(firstCourt(subdivision, sport.id), sport.id).not.toBe("");
+      }
+    }
+  });
+
+  it("tells the courts of a sport apart by label", () => {
+    for (const subdivision of SUBDIVISIONS) {
+      for (const sport of subdivision.sports) {
+        const labels = sport.courts.map((court) => court.label);
+        expect(new Set(labels).size, `${subdivision.id} ${sport.id}`).toBe(labels.length);
+      }
     }
   });
 });
 
 describe("findCourt", () => {
-  it("finds the sport and label of a court on a list", () => {
-    expect(findCourt("S8 - Sân Cầu lông")).toEqual({ sport: "badminton", label: "S8" });
-    expect(findCourt("S10 - Sân tập bóng rổ 01")).toEqual({
-      sport: "basketball",
-      label: "S10 · tập 01",
-    });
+  it("finds the subdivision, sport and label of a court in the catalog", () => {
+    const badminton = findCourt("S8 - Sân Cầu lông");
+    expect([badminton?.subdivision.id, badminton?.sport, badminton?.label]).toEqual([
+      "origami",
+      "badminton",
+      "S8",
+    ]);
+    const basketball = findCourt("BE7 - Sân bóng rổ tập ném 01");
+    expect([basketball?.subdivision.id, basketball?.label]).toEqual(["bs", "BE7 · tập ném 01"]);
   });
 
-  it("finds no court on no list", () => {
+  it("finds no court the catalog lacks", () => {
     expect(findCourt("S1 - Sân tennis")).toBeUndefined();
   });
 });
