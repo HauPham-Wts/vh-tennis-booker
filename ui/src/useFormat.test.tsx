@@ -19,6 +19,8 @@ describe("useFormat", () => {
     expect(format.court("S6 - Sân tennis")).toBe("Tennis S6");
     expect(format.court("S10 - Sân bóng rổ nửa sân 03")).toBe("Bóng rổ S10 · nửa sân 03");
     expect(format.court("S1 - Sân tennis")).toBe("S1"); // on no list: its short name
+    expect(format.courtLabel("S6 - Sân tennis")).toBe("S6");
+    expect(format.courtLabel("BCX3 - Sân đa năng (Cầu lông-Pickleball)")).toBe("BCX3 · đa năng");
   });
 
   it("follows a switch to English", async () => {
@@ -30,6 +32,10 @@ describe("useFormat", () => {
     expect(format.language).toBe("en");
     expect(format.day("2026-10-14")).toBe("Wed 14 Oct");
     expect(format.seconds(4.3)).toBe("4.3 s");
+    // The app keeps court names in Vietnamese; the UI words their kind itself.
+    expect(format.court("BE7 - Sân bóng rổ tập ném 01")).toBe("Basketball BE7 · shooting 01");
+    expect(format.courtLabel("S10 - Sân bóng rổ nửa sân 03")).toBe("S10 · half court 03");
+    expect(format.courtLabel("S5 - Sân bóng đá 7")).toBe("S5 · 7-a-side");
   });
 
   it("says when a time falls, near today or not", async () => {

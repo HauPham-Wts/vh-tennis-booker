@@ -8,19 +8,27 @@
         "courts": [
           {
             "name": "S6 - Sân tennis",
-            "label": "S6"
+            "code": "S6",
+            "kind": "",
+            "number": ""
           },
           {
             "name": "S8 - Sân tennis",
-            "label": "S8"
+            "code": "S8",
+            "kind": "",
+            "number": ""
           },
           {
             "name": "S9 - Sân tennis",
-            "label": "S9"
+            "code": "S9",
+            "kind": "",
+            "number": ""
           },
           {
             "name": "S10 - Sân tennis",
-            "label": "S10"
+            "code": "S10",
+            "kind": "",
+            "number": ""
           }
         ]
       },
@@ -29,15 +37,21 @@
         "courts": [
           {
             "name": "S7 - Sân đa năng",
-            "label": "S7"
+            "code": "S7",
+            "kind": "",
+            "number": ""
           },
           {
             "name": "S9 - Sân đa năng",
-            "label": "S9"
+            "code": "S9",
+            "kind": "",
+            "number": ""
           },
           {
             "name": "S10 - Sân đa năng",
-            "label": "S10"
+            "code": "S10",
+            "kind": "",
+            "number": ""
           }
         ]
       },
@@ -46,19 +60,27 @@
         "courts": [
           {
             "name": "S8 - Sân bóng chuyền hơi",
-            "label": "S8"
+            "code": "S8",
+            "kind": "",
+            "number": ""
           },
           {
             "name": "S9 - Sân bóng chuyền hơi",
-            "label": "S9"
+            "code": "S9",
+            "kind": "",
+            "number": ""
           },
           {
             "name": "S10 - Sân bóng chuyền hơi 01",
-            "label": "S10 · 01"
+            "code": "S10",
+            "kind": "",
+            "number": "01"
           },
           {
             "name": "S10 - Sân bóng chuyền hơi 02",
-            "label": "S10 · 02"
+            "code": "S10",
+            "kind": "",
+            "number": "02"
           }
         ]
       },
@@ -67,7 +89,9 @@
         "courts": [
           {
             "name": "S5 - Sân tập bóng bàn 03",
-            "label": "S5"
+            "code": "S5",
+            "kind": "",
+            "number": ""
           }
         ]
       },
@@ -76,31 +100,45 @@
         "courts": [
           {
             "name": "S6 - Sân bóng rổ tập ném 01",
-            "label": "S6 · tập ném 01"
+            "code": "S6",
+            "kind": "shooting",
+            "number": "01"
           },
           {
             "name": "S6 - Sân bóng rổ tập ném 02",
-            "label": "S6 · tập ném 02"
+            "code": "S6",
+            "kind": "shooting",
+            "number": "02"
           },
           {
             "name": "S8 - Sân bóng rổ nửa sân",
-            "label": "S8 · nửa sân"
+            "code": "S8",
+            "kind": "half",
+            "number": ""
           },
           {
             "name": "S9 - Sân bóng rổ tập ném 01",
-            "label": "S9 · tập ném 01"
+            "code": "S9",
+            "kind": "shooting",
+            "number": "01"
           },
           {
             "name": "S9 - Sân bóng rổ tập ném 02",
-            "label": "S9 · tập ném 02"
+            "code": "S9",
+            "kind": "shooting",
+            "number": "02"
           },
           {
             "name": "S10 - Sân bóng rổ nửa sân 03",
-            "label": "S10 · nửa sân 03"
+            "code": "S10",
+            "kind": "half",
+            "number": "03"
           },
           {
             "name": "S10 - Sân tập bóng rổ 01",
-            "label": "S10 · tập 01"
+            "code": "S10",
+            "kind": "practice",
+            "number": "01"
           }
         ]
       },
@@ -109,11 +147,15 @@
         "courts": [
           {
             "name": "S5 - Sân bóng đá 5",
-            "label": "S5 · sân 5"
+            "code": "S5",
+            "kind": "five",
+            "number": ""
           },
           {
             "name": "S5 - Sân bóng đá 7",
-            "label": "S5 · sân 7"
+            "code": "S5",
+            "kind": "seven",
+            "number": ""
           }
         ]
       },
@@ -122,7 +164,9 @@
         "courts": [
           {
             "name": "S9 - Sân Pickleball",
-            "label": "S9"
+            "code": "S9",
+            "kind": "",
+            "number": ""
           }
         ]
       },
@@ -131,15 +175,21 @@
         "courts": [
           {
             "name": "S6 - Sân cầu lông",
-            "label": "S6"
+            "code": "S6",
+            "kind": "",
+            "number": ""
           },
           {
             "name": "S8 - Sân Cầu lông",
-            "label": "S8"
+            "code": "S8",
+            "kind": "",
+            "number": ""
           },
           {
             "name": "S10 - Sân cầu lông",
-            "label": "S10"
+            "code": "S10",
+            "kind": "",
+            "number": ""
           }
         ]
       }
@@ -154,11 +204,15 @@
         "courts": [
           {
             "name": "BCX3 - Sân bóng chuyền hơi 01",
-            "label": "BCX3 · 01"
+            "code": "BCX3",
+            "kind": "",
+            "number": "01"
           },
           {
             "name": "BCX3 - Sân bóng chuyền hơi 02",
-            "label": "BCX3 · 02"
+            "code": "BCX3",
+            "kind": "",
+            "number": "02"
           }
         ]
       },
@@ -167,23 +221,33 @@
         "courts": [
           {
             "name": "BE7 - Sân tennis",
-            "label": "BE7"
+            "code": "BE7",
+            "kind": "",
+            "number": ""
           },
           {
             "name": "BCX3 - Sân tennis 01",
-            "label": "BCX3 · 01"
+            "code": "BCX3",
+            "kind": "",
+            "number": "01"
           },
           {
             "name": "BCX3 - Sân tennis 02",
-            "label": "BCX3 · 02"
+            "code": "BCX3",
+            "kind": "",
+            "number": "02"
           },
           {
             "name": "CX2 - Sân tennis 01",
-            "label": "CX2 · 01"
+            "code": "CX2",
+            "kind": "",
+            "number": "01"
           },
           {
             "name": "CX2 - Sân tennis 02",
-            "label": "CX2 · 02"
+            "code": "CX2",
+            "kind": "",
+            "number": "02"
           }
         ]
       },
@@ -192,19 +256,27 @@
         "courts": [
           {
             "name": "BE7 - Sân bóng rổ tập ném 01",
-            "label": "BE7 · tập ném 01"
+            "code": "BE7",
+            "kind": "shooting",
+            "number": "01"
           },
           {
             "name": "BE7 - Sân bóng rổ tập ném 02",
-            "label": "BE7 · tập ném 02"
+            "code": "BE7",
+            "kind": "shooting",
+            "number": "02"
           },
           {
             "name": "BCX3 - Sân bóng rổ tập ném 01",
-            "label": "BCX3 · tập ném 01"
+            "code": "BCX3",
+            "kind": "shooting",
+            "number": "01"
           },
           {
             "name": "BCX3 - Sân bóng rổ tập ném 02",
-            "label": "BCX3 · tập ném 02"
+            "code": "BCX3",
+            "kind": "shooting",
+            "number": "02"
           }
         ]
       },
@@ -213,7 +285,9 @@
         "courts": [
           {
             "name": "BCX3 - Sân bóng đá",
-            "label": "BCX3"
+            "code": "BCX3",
+            "kind": "",
+            "number": ""
           }
         ]
       },
@@ -222,11 +296,15 @@
         "courts": [
           {
             "name": "BE7 - Sân Pickleball",
-            "label": "BE7"
+            "code": "BE7",
+            "kind": "",
+            "number": ""
           },
           {
             "name": "BCX3 - Sân đa năng (Cầu lông-Pickleball)",
-            "label": "BCX3 · đa năng"
+            "code": "BCX3",
+            "kind": "multi",
+            "number": ""
           }
         ]
       },
@@ -235,7 +313,9 @@
         "courts": [
           {
             "name": "BCX3 - Sân cầu lông 01",
-            "label": "BCX3"
+            "code": "BCX3",
+            "kind": "",
+            "number": ""
           }
         ]
       }

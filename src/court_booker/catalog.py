@@ -20,10 +20,19 @@ _APARTMENT_PREFIXES = (("BS", "bs"), ("S", "origami"))
 
 @dataclass(frozen=True)
 class Court:
-    """A court as the app names it on its court list, and a short label that tells it apart."""
+    """A court as the app names it on its court list, and the parts of the label that tell it
+    apart from the other courts of its sport: "BE7 · tập ném 01" in Vietnamese, "BE7 ·
+    shooting 01" in English. The app keeps court names in Vietnamese in both languages, so
+    the UI words the kind itself.
+    """
 
     name: str
-    label: str
+    code: str
+    """The block or area the app puts first, such as ``S6`` or ``BCX3``."""
+    kind: str = ""
+    """What kind of court it is, one of :data:`COURT_KINDS`, or empty for a plain court."""
+    number: str = ""
+    """The court's number among those of its kind, such as ``01``; empty when it has none."""
 
 
 @dataclass(frozen=True)
@@ -60,8 +69,14 @@ class Subdivision:
         return next((sport for sport in self.sports if sport.id == sport_id), None)
 
 
-def _venue(name: str, *courts: tuple[str, str]) -> Venue:
-    return Venue(name, tuple(Court(court, label) for court, label in courts))
+COURT_KINDS = ("shooting", "half", "practice", "five", "seven", "multi")
+"""Kinds of court the names tell: "tập ném" (shooting practice), "nửa sân" (half court),
+"tập" (practice), "sân 5" and "sân 7" (5- and 7-a-side football), "đa năng" (multi-use). The
+UI's language files word each one (``courtKinds``)."""
+
+
+def _venue(name: str, *courts: tuple[str, ...]) -> Venue:
+    return Venue(name, tuple(Court(*court) for court in courts))
 
 
 SUBDIVISIONS = (
@@ -99,8 +114,8 @@ SUBDIVISIONS = (
                         "Origami _ Sân bóng chuyền hơi",
                         ("S8 - Sân bóng chuyền hơi", "S8"),
                         ("S9 - Sân bóng chuyền hơi", "S9"),
-                        ("S10 - Sân bóng chuyền hơi 01", "S10 · 01"),
-                        ("S10 - Sân bóng chuyền hơi 02", "S10 · 02"),
+                        ("S10 - Sân bóng chuyền hơi 01", "S10", "", "01"),
+                        ("S10 - Sân bóng chuyền hơi 02", "S10", "", "02"),
                     ),
                 ),
             ),
@@ -113,13 +128,13 @@ SUBDIVISIONS = (
                 (
                     _venue(
                         "Origami _ Sân bóng rổ",
-                        ("S6 - Sân bóng rổ tập ném 01", "S6 · tập ném 01"),
-                        ("S6 - Sân bóng rổ tập ném 02", "S6 · tập ném 02"),
-                        ("S8 - Sân bóng rổ nửa sân", "S8 · nửa sân"),
-                        ("S9 - Sân bóng rổ tập ném 01", "S9 · tập ném 01"),
-                        ("S9 - Sân bóng rổ tập ném 02", "S9 · tập ném 02"),
-                        ("S10 - Sân bóng rổ nửa sân 03", "S10 · nửa sân 03"),
-                        ("S10 - Sân tập bóng rổ 01", "S10 · tập 01"),
+                        ("S6 - Sân bóng rổ tập ném 01", "S6", "shooting", "01"),
+                        ("S6 - Sân bóng rổ tập ném 02", "S6", "shooting", "02"),
+                        ("S8 - Sân bóng rổ nửa sân", "S8", "half"),
+                        ("S9 - Sân bóng rổ tập ném 01", "S9", "shooting", "01"),
+                        ("S9 - Sân bóng rổ tập ném 02", "S9", "shooting", "02"),
+                        ("S10 - Sân bóng rổ nửa sân 03", "S10", "half", "03"),
+                        ("S10 - Sân tập bóng rổ 01", "S10", "practice", "01"),
                     ),
                 ),
             ),
@@ -128,8 +143,8 @@ SUBDIVISIONS = (
                 (
                     _venue(
                         "Sân bóng đá",
-                        ("S5 - Sân bóng đá 5", "S5 · sân 5"),
-                        ("S5 - Sân bóng đá 7", "S5 · sân 7"),
+                        ("S5 - Sân bóng đá 5", "S5", "five"),
+                        ("S5 - Sân bóng đá 7", "S5", "seven"),
                     ),
                 ),
             ),
@@ -159,8 +174,8 @@ SUBDIVISIONS = (
                 (
                     _venue(
                         "BS _ Sân bóng chuyền hơi",
-                        ("BCX3 - Sân bóng chuyền hơi 01", "BCX3 · 01"),
-                        ("BCX3 - Sân bóng chuyền hơi 02", "BCX3 · 02"),
+                        ("BCX3 - Sân bóng chuyền hơi 01", "BCX3", "", "01"),
+                        ("BCX3 - Sân bóng chuyền hơi 02", "BCX3", "", "02"),
                     ),
                 ),
             ),
@@ -170,10 +185,10 @@ SUBDIVISIONS = (
                     _venue("BE _ Sân tennis", ("BE7 - Sân tennis", "BE7")),
                     _venue(
                         "BS _ Sân tennis",
-                        ("BCX3 - Sân tennis 01", "BCX3 · 01"),
-                        ("BCX3 - Sân tennis 02", "BCX3 · 02"),
-                        ("CX2 - Sân tennis 01", "CX2 · 01"),
-                        ("CX2 - Sân tennis 02", "CX2 · 02"),
+                        ("BCX3 - Sân tennis 01", "BCX3", "", "01"),
+                        ("BCX3 - Sân tennis 02", "BCX3", "", "02"),
+                        ("CX2 - Sân tennis 01", "CX2", "", "01"),
+                        ("CX2 - Sân tennis 02", "CX2", "", "02"),
                     ),
                 ),
             ),
@@ -182,13 +197,13 @@ SUBDIVISIONS = (
                 (
                     _venue(
                         "BE _ Sân bóng rổ",
-                        ("BE7 - Sân bóng rổ tập ném 01", "BE7 · tập ném 01"),
-                        ("BE7 - Sân bóng rổ tập ném 02", "BE7 · tập ném 02"),
+                        ("BE7 - Sân bóng rổ tập ném 01", "BE7", "shooting", "01"),
+                        ("BE7 - Sân bóng rổ tập ném 02", "BE7", "shooting", "02"),
                     ),
                     _venue(
                         "BS _ Sân bóng rổ",
-                        ("BCX3 - Sân bóng rổ tập ném 01", "BCX3 · tập ném 01"),
-                        ("BCX3 - Sân bóng rổ tập ném 02", "BCX3 · tập ném 02"),
+                        ("BCX3 - Sân bóng rổ tập ném 01", "BCX3", "shooting", "01"),
+                        ("BCX3 - Sân bóng rổ tập ném 02", "BCX3", "shooting", "02"),
                     ),
                 ),
             ),
@@ -202,7 +217,7 @@ SUBDIVISIONS = (
                     _venue("BE _ Sân Pickleball", ("BE7 - Sân Pickleball", "BE7")),
                     _venue(
                         "BS _ Sân Pickleball",
-                        ("BCX3 - Sân đa năng (Cầu lông-Pickleball)", "BCX3 · đa năng"),
+                        ("BCX3 - Sân đa năng (Cầu lông-Pickleball)", "BCX3", "multi"),
                     ),
                 ),
             ),
@@ -266,7 +281,10 @@ def catalog_json() -> str:
             "sports": [
                 {
                     "id": sport.id,
-                    "courts": [{"name": c.name, "label": c.label} for c in sport.courts],
+                    "courts": [
+                        {"name": c.name, "code": c.code, "kind": c.kind, "number": c.number}
+                        for c in sport.courts
+                    ],
                 }
                 for sport in item.sports
             ],

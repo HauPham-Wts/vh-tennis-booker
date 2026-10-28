@@ -83,7 +83,8 @@ Details live in the docstrings; this page says where things are and what must st
   `catalog.py` lists the court under (its name before the line break), else the one naming
   `venue_keyword` (a court typed by hand). A full venue ("Hết chỗ") fails the round at once.
 - `catalog.py`: the subdivisions (`origami`, `bs`), their sports in the app's order, venues and
-  courts (app name and short label), from the field notes. The run needs no subdivision: the
+  courts (app name; block, kind and number for the UI's label, the kind one of
+  `COURT_KINDS`), from the field notes. The run needs no subdivision: the
   court names its venue. The `subdivision` setting (empty: the account's) only checks the
   settings (`validate_config`: a known subdivision that has the sport).
 - A court cut off by the bottom edge is tapped without a swipe: it is in the tree, and the
@@ -179,9 +180,11 @@ After a route, model or catalog change: `python tools/export_openapi.py` (writes
   engine's English reasons into a few words (`notify.REASONS` holds the same words; a test
   compares them).
 - One screen (`pages/HomePage.tsx`, parts in `pages/home/`): the ticket (`BookingTicket`:
-  on top the daily switch and what is set, the play day, court and slots of the MuMu
-  instance chosen below, following each press as its save goes out; under the perforation
-  that instance's sport, court and up to two slots, saved on each press, and the dry run;
+  on top the daily switch and what is set: the play day and court side by side, the slots
+  on a row of their own (fixed rows, whatever the court's name), and a line only while the
+  switch is off, for the MuMu instance chosen below, following each press as its save goes
+  out; under the perforation that instance's subdivision, sport, court and up to two slots,
+  saved on each press, and the dry run;
   or `LiveTicket` while a booking or a dry run goes on: one ticket per run of `running.runs`,
   named "MuMu N" when several instances book side by side) and `SidePanel` beside it, two tabs:
   `HistoryTab` (runs ten days at a time, real bookings unless dry runs are ticked, `?run=`
@@ -190,9 +193,11 @@ After a route, model or catalog change: `python tools/export_openapi.py` (writes
   shows the run going on, else the one thing to do. `manualSteps.ts` keeps the user's ticks in
   `localStorage` (memory when storage fails); `setupState.ts` counts the setup tasks left and
   picks the panel's first tab. `booking.ts` holds the slots and the two-slot limit, and reads
-  the subdivisions, sports and courts (each court with the label that tells it from the others
-  of its sport) from `catalog.json`, written from `catalog.py`; `useFormat`'s `court` names a
-  court by its sport and label ("Tennis S6"). The ticket's subdivision is the one the settings
+  the subdivisions, sports and courts from `catalog.json`, written from `catalog.py`.
+  `useFormat`'s `courtLabel` tells a court from the others of its sport ("BE7 · tập ném 01",
+  in English "BE7 · shooting 01": the app keeps court names in Vietnamese in both languages,
+  so the kind's words are in `courtKinds` of the language files) and `court` adds the sport
+  ("Tennis S6"). The ticket's subdivision is the one the settings
   name, else the one the account told last (`GET /api/accounts`, refreshed when a run ends,
   "Theo tài khoản"), else Origami; pressing one saves it, keeps the sport if the subdivision
   has it (else its first sport) and takes the first court. The UI never calls `GET /api/setup` or

@@ -27,10 +27,19 @@ export const SLOTS = [
 /** A sport the language files name, as config.toml keys it. */
 export type Sport = keyof typeof texts.sports;
 
-/** A court as the app names it on its court list, and the label that tells it apart. */
+/** A kind of court the language files word ("tập ném", "shooting"), as catalog.py keys it. */
+export type CourtKind = keyof typeof texts.courtKinds;
+
+/**
+ * A court as the app names it on its court list, and the parts of the label that tell it
+ * apart: its block (`S6`, `BE7`), its kind and its number. The app keeps court names in
+ * Vietnamese in both languages, so the UI words the kind itself (`useFormat`'s `courtLabel`).
+ */
 export interface Court {
   name: string;
-  label: string;
+  code: string;
+  kind: string;
+  number: string;
 }
 
 /** A sport of a subdivision, with its courts in the order to offer them. */
@@ -135,15 +144,20 @@ export function isSport(value: string): value is Sport {
   return Object.hasOwn(texts.sports, value);
 }
 
-/** Return the subdivision, sport and label of the court the app names `name`, if listed. */
+/** Return whether `value` is a kind of court the language files word. */
+export function isCourtKind(value: string): value is CourtKind {
+  return Object.hasOwn(texts.courtKinds, value);
+}
+
+/** Return the subdivision, sport and court the app names `name`, if listed. */
 export function findCourt(
   name: string,
-): { subdivision: Subdivision; sport: Sport; label: string } | undefined {
+): { subdivision: Subdivision; sport: Sport; court: Court } | undefined {
   for (const subdivision of SUBDIVISIONS) {
     for (const sport of subdivision.sports) {
       const court = sport.courts.find((item) => item.name === name);
       if (court !== undefined && isSport(sport.id)) {
-        return { subdivision, sport: sport.id, label: court.label };
+        return { subdivision, sport: sport.id, court };
       }
     }
   }

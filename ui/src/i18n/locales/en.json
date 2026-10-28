@@ -43,7 +43,6 @@
       "off": "OFF",
       "day": "Day",
       "chosenSlots": "Slots",
-      "plan": "Books at {{time}} {{when}} · the PC wakes at {{wake}}",
       "offTitle": "Off",
       "offLine": "No booking {{when}}.",
       "instance": "Instance",
@@ -198,6 +197,14 @@
       "title": "Something went wrong",
       "reload": "Reopen the overview"
     }
+  },
+  "courtKinds": {
+    "shooting": "shooting",
+    "half": "half court",
+    "practice": "practice",
+    "five": "5-a-side",
+    "seven": "7-a-side",
+    "multi": "multi-use"
   },
   "sports": {
     "tennis": "Tennis",

@@ -4,6 +4,7 @@ import {
   findCourt,
   firstCourt,
   inSubdivision,
+  isCourtKind,
   isSport,
   SLOTS,
   type Subdivision,
@@ -143,10 +144,20 @@ describe("the catalog", () => {
     }
   });
 
+  it("words every kind of court in the language files", () => {
+    for (const subdivision of SUBDIVISIONS) {
+      for (const sport of subdivision.sports) {
+        for (const court of sport.courts) {
+          expect(court.kind === "" || isCourtKind(court.kind), court.name).toBe(true);
+        }
+      }
+    }
+  });
+
   it("tells the courts of a sport apart by label", () => {
     for (const subdivision of SUBDIVISIONS) {
       for (const sport of subdivision.sports) {
-        const labels = sport.courts.map((court) => court.label);
+        const labels = sport.courts.map((court) => `${court.code} ${court.kind} ${court.number}`);
         expect(new Set(labels).size, `${subdivision.id} ${sport.id}`).toBe(labels.length);
       }
     }
@@ -154,15 +165,21 @@ describe("the catalog", () => {
 });
 
 describe("findCourt", () => {
-  it("finds the subdivision, sport and label of a court in the catalog", () => {
+  it("finds the subdivision, sport and court of a name in the catalog", () => {
     const badminton = findCourt("S8 - Sân Cầu lông");
-    expect([badminton?.subdivision.id, badminton?.sport, badminton?.label]).toEqual([
+    expect([badminton?.subdivision.id, badminton?.sport, badminton?.court.code]).toEqual([
       "origami",
       "badminton",
       "S8",
     ]);
     const basketball = findCourt("BE7 - Sân bóng rổ tập ném 01");
-    expect([basketball?.subdivision.id, basketball?.label]).toEqual(["bs", "BE7 · tập ném 01"]);
+    expect(basketball?.subdivision.id).toBe("bs");
+    expect(basketball?.court).toEqual({
+      name: "BE7 - Sân bóng rổ tập ném 01",
+      code: "BE7",
+      kind: "shooting",
+      number: "01",
+    });
   });
 
   it("finds no court the catalog lacks", () => {

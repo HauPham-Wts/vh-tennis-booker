@@ -1,9 +1,9 @@
 .overline {
   margin: 0;
   color: var(--color-muted);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--text-label);
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-semibold);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
 }
