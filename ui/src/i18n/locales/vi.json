@@ -22,7 +22,7 @@
       "status": {
         "setupLeft": "Còn {{count}} việc thiết lập, xem khung bên phải",
         "noDryRun": "Chưa chạy thử đạt · bấm Chạy thử ngay",
-        "scheduleOff": "Chạy thử đạt · bật Tự đặt mỗi sáng",
+        "scheduleOff": "Chạy thử đạt · bật Tự đặt",
         "ready": "Sẵn sàng cho {{time}} {{when}}"
       },
       "live": {

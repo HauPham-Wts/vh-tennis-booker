@@ -82,7 +82,7 @@ describe("HomePage status line", () => {
     const status = overview();
     renderOverview({ ...status, schedule: { ...status.schedule, enabled: false } });
 
-    expect(await statusLine()).toHaveTextContent("Chạy thử đạt · bật Tự đặt mỗi sáng");
+    expect(await statusLine()).toHaveTextContent("Chạy thử đạt · bật Tự đặt");
   });
 });
 

@@ -192,7 +192,7 @@ court-booker schedule install   # daily task at wake_at; it books for real at st
 court-booker schedule status    # the task, its last and next run
 ```
 
-The Schedule screen of the web UI does the same with a switch, once a dry run has passed.
+The ticket's "Auto-book" switch in the web UI does the same, once a dry run has passed.
 `court-booker schedule remove` deletes the task. A real run closes MuMu once its rounds are
 done; the next run starts it again. A dry run leaves it open.
 

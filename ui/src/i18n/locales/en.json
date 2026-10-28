@@ -22,7 +22,7 @@
       "status": {
         "setupLeft": "Setup: {{count}} left, see the panel on the right",
         "noDryRun": "No dry run passed yet · press Dry run now",
-        "scheduleOff": "Dry run passed · turn on Book every morning",
+        "scheduleOff": "Dry run passed · turn on Auto-book",
         "ready": "Ready for {{time}} {{when}}"
       },
       "live": {
