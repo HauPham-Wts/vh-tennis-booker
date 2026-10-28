@@ -13,7 +13,7 @@ import styles from "./SetupTab.module.css";
 /** The three steps of a first use; shown first until everything is set up. */
 function HowTo() {
   const { t } = useTranslation();
-  const names = { dryRun: t("pages.ticket.dryRun.button"), daily: t("pages.ticket.auto") };
+  const names = { dryRun: t("pages.ticket.dryRun.button"), daily: t("pages.ticket.autoShort") };
   return (
     <ol className={styles.howto}>
       {(["1", "2", "3"] as const).map((step) => (

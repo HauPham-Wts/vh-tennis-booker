@@ -6,10 +6,18 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- The ticket and the side panel keep their four rounded corners: the ticket's choices scroll
+  inside it, its dry run row staying at the foot, instead of the column scrolling past its
+  lower corners; the scroll bars are thin, rounded and arrowless, inside each card.
+
 ### Changed
-- The result notification's switch moves from the Setup tab to the ticket, under the daily
-  switch. The switches are smaller (36 px, a 24 px knob) and the buttons as tall as the
-  choices (44 px).
+- The result notification's switch moves from the Setup tab to the ticket, beside the daily
+  switch on one row, both with a short word ("Tự đặt", "Thông báo"). The switches are smaller
+  (36 px, a 24 px knob) and the buttons as tall as the choices (44 px).
+- The slots on top of the ticket drop their order badges; the choices below number them.
+- The setup guide and the status line name the daily switch by its new word ("bật Tự đặt",
+  "turn on Auto-book"); README screenshots retaken.
 
 ## [0.17.0] - 2026-10-28
 

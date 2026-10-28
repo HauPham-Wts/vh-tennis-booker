@@ -23,12 +23,14 @@ export function NotifySwitch() {
   return (
     <>
       <div className={styles.auto} title={t("pages.ticket.notifyHint")}>
-        <span aria-hidden="true">{label}</span>
+        <span aria-hidden="true">{t("pages.ticket.notifyShort")}</span>
         <Switch
           label={label}
           checked={notifications.data.enabled}
           disabled={save.isPending}
           onChange={(enabled) => save.mutate({ enabled, language })}
+          onText={t("pages.ticket.on")}
+          offText={t("pages.ticket.off")}
         />
       </div>
       {save.isError && <p className={styles.problem}>{errorMessage(t, save.error)}</p>}

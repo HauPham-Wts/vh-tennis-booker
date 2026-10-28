@@ -63,7 +63,7 @@ describe("SetupTab first use", () => {
     ).toEqual([
       "Làm các việc thiết lập bên dưới, một lần.",
       "Chọn môn, sân và khung giờ trên vé bên trái.",
-      'Bấm "Chạy thử ngay", đạt thì bật "Tự đặt mỗi sáng".',
+      'Bấm "Chạy thử ngay", đạt thì bật "Tự đặt".',
     ]);
   });
 

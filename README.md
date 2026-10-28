@@ -192,7 +192,7 @@ court-booker schedule install   # daily task at wake_at; it books for real at st
 court-booker schedule status    # the task, its last and next run
 ```
 
-The Schedule screen of the web UI does the same with a switch, once a dry run has passed.
+The ticket's "Auto-book" switch in the web UI does the same, once a dry run has passed.
 `court-booker schedule remove` deletes the task. A real run closes MuMu once its rounds are
 done; the next run starts it again. A dry run leaves it open.
 
@@ -219,14 +219,15 @@ The UI is one screen, without a menu:
   ("2/2"), then every slot booked or not and when it started (real bookings, dry runs on
   request); one click opens the reasons, the steps and the technical log.
 - **Thiết lập / Setup** beside it: the steps only you can do (install MuMu and the Vinhomes
-  app, log in), ticked by you; an auto setup for what the app can fix; a short guide. The
-  Windows notification switch sits on the ticket, under the daily switch. It opens first, with a count, while anything is left.
+  app, log in), ticked by you; an auto setup for what the app can fix; a short guide. It
+  opens first, with a count, while anything is left. The Windows notification switch sits on
+  the ticket, beside the daily switch.
 
 Saving settings rewrites `config.toml` (its comments are dropped); the next run reads it.
 
 <p>
   <img src="docs/img/home.png" width="49%" alt="Ready for 06:00: the ticket with the daily
-  switch on, the play day, the court and two slots numbered in booking order, and the
+  switch on, the play day, the court and two slots in booking order, and the
   subdivision, sport and court to choose; the History lists each booking with its count and
   slots">
   <img src="docs/img/setup.png" width="49%" alt="First use: the Setup tab opens with a count
