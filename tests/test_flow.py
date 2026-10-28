@@ -1726,3 +1726,63 @@ def test_an_english_calendar_switches_month_by_the_day_it_shows():
 
     # Back a month, as the day shown is in November; at the button's fallback position.
     assert app.taps == [prev_arrow, day_31]
+
+
+def home_with(apartment):
+    """Return a booking app whose home screen shows ``apartment``, as read on 2026-10-28."""
+    app = booking_app(screen="loading")
+    app.screens["home"] = [
+        *app.screens["home"],
+        node(f"{apartment}\nVinhomes Grand Park", (0, 443, 540, 556)),
+        node("Thay đổi", (383, 466, 494, 532)),
+    ]
+    return app
+
+
+@pytest.mark.parametrize(
+    ("apartment", "subdivision"),
+    [("BS0101.01", "bs"), ("S1.0101.01", "origami"), ("A1.0101", None)],
+)
+def test_prepare_tells_the_subdivision_by_the_apartment_code(apartment, subdivision):
+    sink = MemorySink()
+    plain = Booker(booking_app(screen="loading"), Config())
+    plain.prepare()
+    booker = Booker(home_with(apartment), Config(), Reporter(sink))
+
+    booker.prepare()
+
+    assert booker.account_subdivision == subdivision
+    events = [e.data for e in sink.events if e.kind is EventKind.ACCOUNT_SUBDIVISION]
+    assert events == ([] if subdivision is None else [{"subdivision": subdivision}])
+    assert booker.commands == plain.commands  # read from the home screen read anyway
+
+
+def test_the_apartment_code_is_not_logged(caplog):
+    caplog.set_level(logging.INFO, logger="court_booker")
+
+    Booker(home_with("BS0101.01"), Config()).prepare()
+
+    assert "Account subdivision: BS" in caplog.text
+    assert "BS0101" not in caplog.text
+
+
+def test_a_court_of_another_subdivision_is_a_warning_only(caplog):
+    booker = Booker(home_with("BS0101.01"), Config(court="S6 - Sân tennis"))
+
+    booker.prepare()
+
+    assert "Court S6 - Sân tennis is not in BS, the subdivision of the account" in caplog.text
+    assert booker.account_subdivision == "bs"
+
+
+def test_a_failed_guess_never_stops_the_run(caplog, monkeypatch):
+    def broken(code):
+        raise RuntimeError("broken")
+
+    monkeypatch.setattr("court_booker.catalog.subdivision_of_apartment", broken)
+    booker = Booker(home_with("BS0101.01"), Config())
+
+    booker.prepare()
+
+    assert booker.account_subdivision is None
+    assert "Could not tell the account's subdivision" in caplog.text

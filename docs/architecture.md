@@ -61,6 +61,12 @@ Details live in the docstrings; this page says where things are and what must st
   `app_language.ENGLISH_SPORTS`) unless `[labels] utility` names one. `prepare()` finds the
   language on the first screen and uses it; a language without a tile for the sport stops the
   run there.
+- `prepare()` then tells the account's subdivision (`read_account`) from the apartment code
+  on the home screen it read anyway ("BS…" → `bs`, "S…" → `origami`; 0 commands). Only the
+  subdivision is logged and reported (`account_subdivision`), never the code (personal data).
+  A court the catalog lists in another subdivision is a warning in the log and the Windows
+  notification (`cli.AccountSink`), not an error: the guess may be wrong. Any failure there
+  only logs.
 - Every transition is `tap_and_advance(screen, target, name, find_next)`: tap, then read until
   `find_next` finds the next screen, up to `timeout` (30 s). The tap is repeated every 2 s
   while `target` still shows (a swallowed tap), never while the app loads (target gone).
@@ -109,7 +115,8 @@ Details live in the docstrings; this page says where things are and what must st
   `events`, and the run's log lines. The first database error turns history off for the process.
   Schema changes only add columns, so an older runner still writes to a newer database.
 - `history_read.py`: read-only queries for the backend (runs, one run, events, the live feed's
-  `events_after`, `dry_run_passed`, `last_setup`); it migrates an older database first.
+  `events_after`, `dry_run_passed`, `last_setup`, `account_subdivisions`: the subdivision each
+  MuMu instance last told); it migrates an older database first.
 
 ## Configuration and data folder
 

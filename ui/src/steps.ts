@@ -43,6 +43,9 @@ const TRIGGERS = ["scheduled", "dry_run", "manual", "setup"] as const;
 const SETUP_ITEMS = ["mumu_installed", "mumu_screen", "wake_timers", "app_installed"] as const;
 const SETUP_STATUSES = ["ok", "fixed", "fixable", "user", "unknown"] as const;
 
+/** The names of the subdivisions, the same in every language (catalog.py). */
+const SUBDIVISION_NAMES: Record<string, string> = { origami: "Origami", bs: "BS" };
+
 function known<T extends string>(values: readonly T[], value: string | undefined): T | undefined {
   return values.find((candidate) => candidate === value);
 }
@@ -73,6 +76,16 @@ const MESSAGES: Record<StepKind, Describe> = {
   },
   device_ready: ({ t }) => ({ text: t("steps.device_ready"), tone: "plain" }),
   app_ready: ({ t }) => ({ text: t("steps.app_ready"), tone: "plain" }),
+  account_subdivision: ({ t }, data) => {
+    const subdivision = known(Object.keys(SUBDIVISION_NAMES), text(data, "subdivision"));
+    return {
+      text:
+        subdivision === undefined
+          ? t("steps.account_subdivision.plain")
+          : t("steps.account_subdivision.full", { name: SUBDIVISION_NAMES[subdivision] }),
+      tone: "plain",
+    };
+  },
   waiting: ({ t, f }, data) => {
     const until = text(data, "until");
     return {

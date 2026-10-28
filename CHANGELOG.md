@@ -7,6 +7,10 @@ uses [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- The run tells the account's subdivision from the apartment code on the home screen, at no
+  extra command, and records it as an `account_subdivision` step (the code itself is not
+  kept). A court of another subdivision is a warning in the log and the Windows notification;
+  the run goes on. The history reads the subdivision each MuMu instance told last.
 - A catalog of the subdivisions Origami and BS with their sports, venues and courts
   (`catalog.py`). Of several venues the run taps the one the catalog lists the court under,
   so a BS account books a BE or BS court without `venue_keyword`; a court not in the catalog

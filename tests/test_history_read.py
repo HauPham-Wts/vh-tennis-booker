@@ -229,3 +229,19 @@ def test_steps_after_a_step_come_oldest_first(path, read, record_run):
     assert later[-1]["kind"] == "run_finished"
     assert [step["id"] for step in later] == sorted(step["id"] for step in later)
     assert history_read.events_after(read(), newest, limit=2)[1]["id"] == newest + 2
+
+
+def test_each_instance_comes_with_the_subdivision_it_told_last(path, read):
+    for device, subdivision in [(0, "origami"), (1, "bs"), (0, "bs")]:
+        store = history.History(history.connect(path))
+        report = Reporter(store)
+        report(
+            EventKind.RUN_STARTED, trigger="dry_run", dry_run=True, version="0.16.0", device=device
+        )
+        report(EventKind.ACCOUNT_SUBDIVISION, subdivision=subdivision)
+        store.close()
+
+    found = history_read.account_subdivisions(read())
+
+    assert [(item["device"], item["subdivision"]) for item in found] == [(0, "bs"), (1, "bs")]
+    assert all(item["seen_at"].startswith("20") for item in found)

@@ -331,7 +331,7 @@ export interface components {
          * @description What happened. The value is stable: it becomes a database value and a message key.
          * @enum {string}
          */
-        EventKind: "run_started" | "device_ready" | "app_ready" | "waiting" | "booking_started" | "run_finished" | "slot_started" | "calendar_opened" | "date_selected" | "slot_selected" | "court_selected" | "terms_accepted" | "slot_booked" | "slot_failed" | "lock_cleared" | "lock_waiting" | "lock_taken_over" | "setup_started" | "setup_item" | "setup_finished" | "settings_saved" | "schedule_enabled" | "schedule_disabled";
+        EventKind: "run_started" | "device_ready" | "app_ready" | "account_subdivision" | "waiting" | "booking_started" | "run_finished" | "slot_started" | "calendar_opened" | "date_selected" | "slot_selected" | "court_selected" | "terms_accepted" | "slot_booked" | "slot_failed" | "lock_cleared" | "lock_waiting" | "lock_taken_over" | "setup_started" | "setup_item" | "setup_finished" | "settings_saved" | "schedule_enabled" | "schedule_disabled";
         /**
          * Health
          * @description The backend answers and runs this version.

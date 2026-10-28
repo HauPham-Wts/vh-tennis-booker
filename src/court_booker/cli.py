@@ -26,7 +26,7 @@ from court_booker.errors import (
     LockHeldError,
     RequestError,
 )
-from court_booker.events import EventKind, LogSink, MultiSink, Reporter
+from court_booker.events import Event, EventKind, LogSink, MultiSink, Reporter
 from court_booker.history import History, close_history, open_history
 from court_booker.lock import TAKE_OVER_AHEAD, RunLock, check_quiet_time
 from court_booker.logging_setup import LOGGER_NAME, add_file_handler, configure_logging
@@ -236,6 +236,17 @@ def run_status(results: list[RoundResult], error: str | None, interrupted: bool)
     return "partial" if booked else "failed"
 
 
+class AccountSink:
+    """Keep the account's subdivision the run read on the home screen, for the notification."""
+
+    def __init__(self) -> None:
+        self.subdivision: str | None = None
+
+    def emit(self, event: Event) -> None:
+        if event.kind is EventKind.ACCOUNT_SUBDIVISION:
+            self.subdivision = event.data.get("subdivision")
+
+
 def notify_windows(
     config: Config,
     results: list[RoundResult],
@@ -245,6 +256,7 @@ def notify_windows(
     interrupted: bool,
     target: date,
     instance: int | None = None,
+    account: str | None = None,
 ) -> None:
     """Show the outcome as a Windows notification if it is on; a failure only logs."""
     if not config.windows_notification:
@@ -259,6 +271,7 @@ def notify_windows(
             court=config.court,
             language=config.notification_language,
             instance=instance,
+            account=account,
         )
         send_windows(title, body)
     except Exception:  # reporting never costs a booking
@@ -343,7 +356,8 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     configure_logging(verbose=args.verbose)
     trigger = run_trigger(args)
-    report = Reporter(LogSink())
+    account = AccountSink()
+    report = Reporter(MultiSink(LogSink(), account))
     history: History | None = None
     lock: RunLock | None = None
     started = False
@@ -366,7 +380,7 @@ def main(argv: list[str] | None = None) -> int:
         # Opened after the log file, so a database that cannot be opened is in the log.
         history = open_history(data_folder().database)
         if history is not None:
-            report = Reporter(MultiSink(LogSink(), history))
+            report = Reporter(MultiSink(LogSink(), account, history))
         logger.info("court-booker %s", __version__)
         # Shows whether the scheduled task ran the runner folder or a development checkout.
         logger.debug("Python %s, code in %s", sys.executable, Path(__file__).resolve().parent)
@@ -452,6 +466,7 @@ def main(argv: list[str] | None = None) -> int:
         interrupted=code == EXIT_INTERRUPTED,
         target=(start or datetime.now()).date() + timedelta(days=DAYS_AHEAD),
         instance=instance,
+        account=account.subdivision,
     )
     # A real run closes MuMu once its rounds ran; the next run starts it again. MuMu stays
     # open after a dry run, Ctrl+C or an error before the rounds, for whoever is at the PC,
