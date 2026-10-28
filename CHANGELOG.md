@@ -10,6 +10,8 @@ uses [Semantic Versioning](https://semver.org/).
 - The ticket and the side panel keep their four rounded corners: the ticket's choices scroll
   inside it, its dry run row staying at the foot, instead of the column scrolling past its
   lower corners; the scroll bars are thin, rounded and arrowless, inside each card.
+- Opening the History no longer makes the whole page scroll over a large blank space: the
+  list's hidden screen reader text grew the page; every scroll area now holds its own.
 
 ### Changed
 - The result notification's switch moves from the Setup tab to the ticket, beside the daily

@@ -34,6 +34,7 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  position: relative; /* holds its hidden screen reader text, which would grow the page */
   display: flex;
   flex-direction: column;
 }
