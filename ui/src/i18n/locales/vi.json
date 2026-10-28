@@ -43,7 +43,6 @@
       "off": "TẮT",
       "day": "Ngày",
       "chosenSlots": "Khung giờ",
-      "plan": "Đặt lúc {{time}} {{when}} · máy thức {{wake}}",
       "offTitle": "Đang tắt",
       "offLine": "Máy sẽ không tự đặt sân {{when}}.",
       "instance": "Máy",

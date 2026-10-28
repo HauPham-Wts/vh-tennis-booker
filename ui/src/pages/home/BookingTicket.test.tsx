@@ -92,15 +92,15 @@ afterEach(() => {
 });
 
 describe("BookingTicket start", () => {
-  it("shows what is set: the play day, court and slots, and when it starts", async () => {
+  it("shows what is set: the play day, court and slots, with no line while it is on", async () => {
     renderTicket();
 
     const top = await ticket();
     // The badge before each slot gives its booking order.
     await waitFor(() =>
-      expect(shown(top)).toEqual(["CN 18/10", "Origami · Tennis S6", "115:00–16:00216:00–17:00"]),
+      expect(shown(top)).toEqual(["CN 18/10", "Tennis S6", "115:00–16:00216:00–17:00"]),
     );
-    expect(within(top).getByText("Đặt lúc 06:00 sáng mai · máy thức 05:50")).toBeInTheDocument();
+    expect(within(top).queryByText(/máy thức/)).toBeNull();
     const toggle = within(top).getByRole("switch", { name: "Tự đặt mỗi sáng" });
     expect(toggle).toHaveAttribute("aria-checked", "true");
     expect(toggle).toHaveTextContent("BẬT");
@@ -200,7 +200,7 @@ describe("BookingTicket choices", () => {
       "aria-pressed",
       "true",
     );
-    expect(shown(await ticket())[1]).toBe("Origami · Bóng rổ S8 · nửa sân");
+    expect(shown(await ticket())[1]).toBe("Bóng rổ S8 · nửa sân");
   });
 
   it("shows the subdivision of the account until one is pressed", async () => {
@@ -225,7 +225,7 @@ describe("BookingTicket choices", () => {
         .getAllByRole("button")
         .map((button) => button.textContent),
     ).toEqual(["BE7", "BCX3 · 01", "BCX3 · 02", "CX2 · 01", "CX2 · 02"]);
-    expect(shown(await ticket())[1]).toBe("BS · Tennis BE7");
+    expect(shown(await ticket())[1]).toBe("Tennis BE7");
   });
 
   it("saves another subdivision, keeping the sport it has, with its first court", async () => {
@@ -310,7 +310,7 @@ describe("BookingTicket choices", () => {
     );
     const slots = screen.getByRole("group", { name: /^Khung giờ/ });
     expect(within(slots).getByRole("button", { name: "20:00–21:00, lượt 1" })).toBeInTheDocument();
-    expect(shown(await ticket())).toEqual(["CN 18/10", "Origami · Tennis S9", "120:00–21:00"]);
+    expect(shown(await ticket())).toEqual(["CN 18/10", "Tennis S9", "120:00–21:00"]);
     const moved = { ...other, court: "S10 - Sân tennis" };
     replies["PUT /api/settings"] = reply({ ...saved, instances: [moved] });
 
@@ -341,7 +341,7 @@ describe("BookingTicket choices", () => {
 
     fireEvent.click(within(courts).getByRole("button", { name: "S8" }));
     expect(await screen.findByText("Đang lưu…")).toBeInTheDocument();
-    expect(shown(await ticket())[1]).toBe("Origami · Tennis S8"); // the top follows the press at once
+    expect(shown(await ticket())[1]).toBe("Tennis S8"); // the top follows the press at once
     expect(within(courts).getByRole("button", { name: "S8" })).toHaveAttribute(
       "aria-pressed",
       "true",

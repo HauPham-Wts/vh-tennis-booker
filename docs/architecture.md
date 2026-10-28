@@ -180,9 +180,11 @@ After a route, model or catalog change: `python tools/export_openapi.py` (writes
   engine's English reasons into a few words (`notify.REASONS` holds the same words; a test
   compares them).
 - One screen (`pages/HomePage.tsx`, parts in `pages/home/`): the ticket (`BookingTicket`:
-  on top the daily switch and what is set, the play day, court and slots of the MuMu
-  instance chosen below, following each press as its save goes out; under the perforation
-  that instance's sport, court and up to two slots, saved on each press, and the dry run;
+  on top the daily switch and what is set: the play day and court side by side, the slots
+  on a row of their own (fixed rows, whatever the court's name), and a line only while the
+  switch is off, for the MuMu instance chosen below, following each press as its save goes
+  out; under the perforation that instance's subdivision, sport, court and up to two slots,
+  saved on each press, and the dry run;
   or `LiveTicket` while a booking or a dry run goes on: one ticket per run of `running.runs`,
   named "MuMu N" when several instances book side by side) and `SidePanel` beside it, two tabs:
   `HistoryTab` (runs ten days at a time, real bookings unless dry runs are ticked, `?run=`

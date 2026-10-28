@@ -43,7 +43,6 @@
       "off": "OFF",
       "day": "Day",
       "chosenSlots": "Slots",
-      "plan": "Books at {{time}} {{when}} · the PC wakes at {{wake}}",
       "offTitle": "Off",
       "offLine": "No booking {{when}}.",
       "instance": "Instance",
