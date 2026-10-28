@@ -14,6 +14,8 @@
   --color-faint: #8f8a7f; /* markers of pending steps, never text */
   --color-rule: #a9a59a; /* dotted rows of lists and tables */
   --color-perforation: #b9b5aa; /* dashed ticket stub, steps not reached */
+  --color-line: #d6d2c8; /* the edge of a choice not chosen */
+  --color-tint: #ecebe4; /* the fill of a chosen choice */
   --color-shadow: #c9c6bc; /* edge under a card */
 
   /* Text on ink fills (running banner, technical details) */
@@ -25,7 +27,8 @@
   --color-stamp: #2b48a6; /* booked, links */
   --color-stamp-strong: #1c3380; /* link hover */
   --color-failed: #b53c0b; /* the mockups' #c2410c, darkened to reach 4.5:1 on the ground */
-  --color-highlight: #e6f24f; /* ball yellow: the 06:00 moment, the current step */
+  --color-highlight: #ecd78f; /* sand yellow: the 06:00 moment, the current step, the order */
+  --color-highlight-soft: #f4ebcc; /* a large area in the same yellow: the setup guide */
 
   /* Type: --font-sans and --font-mono come from fonts.css */
   --text-label: 12px; /* mono capitals above values */
@@ -37,7 +40,7 @@
   --text-heading-xs: 18px;
   --text-heading-sm: 22px;
   --text-display-lg: 60px;
-  --text-summary: 30px; /* the day, court and slots the next booking is for */
+  --text-summary: 26px; /* the day, court and slots the next booking is for */
   --text-ticket-slot: 84px; /* the slot being booked */
 
   --weight-regular: 400;
@@ -53,7 +56,7 @@
   --tracking-hero: -0.05em;
   --tracking-heading: -0.03em;
   --tracking-stamp: 0.08em;
-  --tracking-label: 0.1em;
+  --tracking-label: 0.06em;
 
   /* Space on a 4 px grid */
   --space-1: 4px;

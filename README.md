@@ -226,8 +226,9 @@ Saving settings rewrites `config.toml` (its comments are dropped); the next run 
 
 <p>
   <img src="docs/img/home.png" width="49%" alt="Ready for 06:00: the ticket with the daily
-  switch on and the play day, the court and two slots numbered in booking order, the last dry
-  run; the History lists each booking with its count and slots">
+  switch on, the play day, the court and two slots numbered in booking order, and the
+  subdivision, sport and court to choose; the History lists each booking with its count and
+  slots">
   <img src="docs/img/setup.png" width="49%" alt="First use: the Setup tab opens with a count
   of three tasks, three lines on how to start and the steps to tick">
 </p>
