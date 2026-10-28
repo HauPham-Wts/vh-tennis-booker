@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-10-28
+
 ### Changed
 - A calmer UI: the highlight is a soft sand yellow instead of ball yellow (a paler one for the
   setup guide); every choice has one size and a light edge, and the chosen one an ink edge, a
