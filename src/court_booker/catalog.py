@@ -8,7 +8,13 @@ settings. Kept free of device access for unit tests; the backend serves it to th
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
+
+APARTMENT = re.compile(r"[A-Z]{1,4}\d+(?:\.\d+)+")
+"""An apartment code as the home screen shows it, such as ``S1.0101.01`` or ``BS0101.01``."""
+_APARTMENT_PREFIXES = (("BS", "bs"), ("S", "origami"))
+"""The subdivision of an apartment by the start of its code; BS before S."""
 
 
 @dataclass(frozen=True)
@@ -225,3 +231,23 @@ def subdivision(subdivision_id: str) -> Subdivision | None:
 def venue_of(court: str) -> str | None:
     """Return the name of the venue that lists ``court``, or ``None`` for a court not here."""
     return _VENUES.get(court)
+
+
+def subdivisions_of(court: str) -> list[str]:
+    """Return the ids of the subdivisions that list ``court``; empty for a court not here."""
+    return [
+        item.id
+        for item in SUBDIVISIONS
+        if any(court in (c.name for c in sport.courts) for sport in item.sports)
+    ]
+
+
+def court_outside(subdivision_id: str, court: str) -> bool:
+    """Return whether the catalog lists ``court`` in other subdivisions only."""
+    found = subdivisions_of(court)
+    return bool(found) and subdivision_id not in found
+
+
+def subdivision_of_apartment(code: str) -> str | None:
+    """Return the id of the subdivision of the apartment ``code``, or ``None`` if unknown."""
+    return next((item for prefix, item in _APARTMENT_PREFIXES if code.startswith(prefix)), None)

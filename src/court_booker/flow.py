@@ -141,6 +141,8 @@ class Booker:
         """Device commands sent so far; each is a round trip to the emulator."""
         self.last_screen = Screen([])
         self._entry: Screen | None = None
+        self.account_subdivision: str | None = None
+        """The subdivision the home screen's apartment code tells, once ``prepare`` read it."""
 
         self.any_slot = Match(pattern=ANY_SLOT_PATTERN)
         self.court = Match(desc=config.court, clickable=True)
@@ -223,10 +225,36 @@ class Booker:
         self._use(found[0])
         logger.info("App language: %s", found[0].name)
         try:
-            self.return_to_home(found[1])
+            home = self.return_to_home(found[1])
         except NavigationError as exc:
             raise AppNotReadyError(str(exc)) from exc
+        self.read_account(home)
         logger.info("Ready on the home screen")
+
+    def read_account(self, home: Screen) -> None:
+        """Tell the account's subdivision from the apartment code on the home screen.
+
+        Costs no command: ``home`` is read anyway. The code itself is personal data, so only
+        the subdivision is logged and reported. A court of another subdivision is a warning
+        only, since the guess may be wrong. Never fails the run.
+        """
+        try:
+            codes = (node.desc.split("\n")[0] for node in home.nodes if node.clickable)
+            code = next((code for code in codes if catalog.APARTMENT.fullmatch(code)), None)
+            found = None if code is None else catalog.subdivision_of_apartment(code)
+            if found is None:
+                logger.debug("No subdivision told by the home screen")
+                return
+            self.account_subdivision = found
+            name = catalog.subdivision(found).name
+            logger.info("Account subdivision: %s", name)
+            self.report(EventKind.ACCOUNT_SUBDIVISION, subdivision=found)
+            if catalog.court_outside(found, self.config.court):
+                logger.warning(
+                    "Court %s is not in %s, the subdivision of the account", self.config.court, name
+                )
+        except Exception:  # a guess never costs a booking
+            logger.warning("Could not tell the account's subdivision", exc_info=True)
 
     def locate_entry(self) -> None:
         """Open the utilities list from the home screen, or read it again if it is shown.

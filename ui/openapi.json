@@ -931,6 +931,7 @@
           "run_started",
           "device_ready",
           "app_ready",
+          "account_subdivision",
           "waiting",
           "booking_started",
           "run_finished",

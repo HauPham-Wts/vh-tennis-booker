@@ -253,6 +253,10 @@
     },
     "device_ready": "MuMu is ready",
     "app_ready": "Vinhomes app is open",
+    "account_subdivision": {
+      "full": "The account is in the {{name}} subdivision",
+      "plain": "Read the account's subdivision"
+    },
     "waiting": {
       "full": "Waiting until {{time}}",
       "plain": "Waiting for the start time"

@@ -253,6 +253,10 @@
     },
     "device_ready": "Đã mở MuMu",
     "app_ready": "Đã mở app Vinhomes",
+    "account_subdivision": {
+      "full": "Tài khoản thuộc phân khu {{name}}",
+      "plain": "Đã đọc phân khu của tài khoản"
+    },
     "waiting": {
       "full": "Chờ đến {{time}}",
       "plain": "Chờ đến giờ đặt"

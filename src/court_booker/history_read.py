@@ -189,6 +189,29 @@ def last_setup(db: sqlite3.Connection) -> dict[str, Any] | None:
     return {"checked_at": row["time"], "left": json.loads(row["data"])["left"]}
 
 
+def account_subdivisions(db: sqlite3.Connection) -> list[dict[str, Any]]:
+    """Return the subdivision each MuMu instance's account last told, and when.
+
+    One entry per instance (``device``, its ``mumu_index``), newest first; a run tells it
+    from the apartment code on the home screen.
+    """
+    rows = db.execute(
+        """SELECT runs.device, events.time, events.data FROM events
+        JOIN runs ON runs.id = events.run_id
+        WHERE events.kind = 'account_subdivision' ORDER BY events.id DESC"""
+    ).fetchall()
+    found: dict[Any, dict[str, Any]] = {}
+    for row in rows:
+        if row["device"] not in found:
+            subdivision = json.loads(row["data"]).get("subdivision")
+            found[row["device"]] = {
+                "device": row["device"],
+                "subdivision": subdivision,
+                "seen_at": row["time"],
+            }
+    return list(found.values())
+
+
 def dry_run_passed(db: sqlite3.Connection) -> bool:
     """Return whether any dry run went through every slot; scheduling requires one."""
     row = db.execute("SELECT 1 FROM runs WHERE trigger = 'dry_run' AND status = 'ok' LIMIT 1")

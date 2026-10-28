@@ -1,3 +1,5 @@
+import pytest
+
 from court_booker import catalog
 from court_booker.config import SPORTS, Config
 
@@ -49,3 +51,18 @@ def test_each_court_names_its_venue():
 def test_the_default_court_is_in_the_catalog():
     assert catalog.venue_of(Config().court) is not None
     assert catalog.subdivision("khu-b") is None
+
+
+@pytest.mark.parametrize(
+    ("code", "subdivision"),
+    [("BS0101.01", "bs"), ("S1.0101.01", "origami"), ("BE7.0101", None)],
+)
+def test_the_apartment_code_tells_the_subdivision(code, subdivision):
+    assert catalog.APARTMENT.fullmatch(code)
+    assert catalog.subdivision_of_apartment(code) == subdivision
+
+
+def test_a_court_outside_the_subdivision_is_told():
+    assert catalog.court_outside("bs", "S6 - Sân tennis")
+    assert not catalog.court_outside("bs", "BE7 - Sân tennis")
+    assert not catalog.court_outside("bs", "Khu B - Sân tennis")  # not in the catalog
