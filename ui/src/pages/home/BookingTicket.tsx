@@ -17,7 +17,6 @@ import {
   inSubdivision,
   isSport,
   MAX_SLOTS,
-  type Subdivision,
   SUBDIVISIONS,
   shownSubdivision,
   slotChoices,
@@ -76,25 +75,22 @@ interface NextBookingProps {
   schedule: ScheduleState;
   /** What the choices below hold, `undefined` until the settings have loaded. */
   booking: Booking | undefined;
-  /** The subdivision the choices below show. */
-  subdivision: Subdivision | undefined;
 }
 
 /**
  * The top of the ticket shows what is set, and only that: the daily switch, then the play
- * day (always two days after the start), the court and the slots in booking order as the
- * choices below hold them, and a line on when the run starts and the PC wakes, or that
- * nothing is booked while the switch is off. The switch stays locked until a dry run has
- * passed; once one has, a switch still off is set off in yellow.
+ * day (always two days after the start) and the court side by side, and the slots in booking
+ * order on a row of their own, as the choices below hold them; the rows stay put whatever
+ * the court's name. While the switch is off a line says that nothing is booked. The switch
+ * stays locked until a dry run has passed; once one has, a switch still off is set off.
  */
-function NextBooking({ schedule, booking, subdivision }: NextBookingProps) {
+function NextBooking({ schedule, booking }: NextBookingProps) {
   const { t } = useTranslation();
   const f = useFormat();
   const toggle = useSwitchSchedule();
   const locked = !schedule.enabled && !schedule.dry_run_passed;
   const remind = !schedule.enabled && schedule.dry_run_passed;
-  const start = schedule.next_start;
-  const when = f.when(start, localToday());
+  const when = f.when(schedule.next_start, localToday());
   return (
     <>
       <div className={styles.head}>
@@ -120,20 +116,9 @@ function NextBooking({ schedule, booking, subdivision }: NextBookingProps) {
         </div>
         <div className={styles.field}>
           <Overline as="dt">{t("pages.ticket.court")}</Overline>
-          <dd>
-            {booking === undefined ? (
-              "–"
-            ) : (
-              <>
-                {subdivision !== undefined && (
-                  <span className={styles.subdivision}>{subdivision.name} · </span>
-                )}
-                {f.court(booking.court)}
-              </>
-            )}
-          </dd>
+          <dd>{booking === undefined ? "–" : f.court(booking.court)}</dd>
         </div>
-        <div className={styles.field}>
+        <div className={`${styles.field} ${styles.slotsField}`}>
           <Overline as="dt">{t("pages.ticket.chosenSlots")}</Overline>
           <dd className={styles.chosen}>
             {booking === undefined
@@ -149,17 +134,13 @@ function NextBooking({ schedule, booking, subdivision }: NextBookingProps) {
           </dd>
         </div>
       </dl>
-      <p className={styles.plan}>
-        <Icon name="clock" />
-        {schedule.enabled ? (
-          t("pages.ticket.plan", { time: f.time(start), when, wake: schedule.wake_at })
-        ) : (
-          <>
-            <strong>{t(locked ? "pages.ticket.lockedTitle" : "pages.ticket.offTitle")}</strong>{" "}
-            {locked ? t("pages.ticket.locked") : t("pages.ticket.offLine", { when })}
-          </>
-        )}
-      </p>
+      {!schedule.enabled && (
+        <p className={styles.plan}>
+          <Icon name="clock" />
+          <strong>{t(locked ? "pages.ticket.lockedTitle" : "pages.ticket.offTitle")}</strong>{" "}
+          {locked ? t("pages.ticket.locked") : t("pages.ticket.offLine", { when })}
+        </p>
+      )}
       {toggle.isError && <p className={styles.problem}>{errorMessage(t, toggle.error)}</p>}
     </>
   );
@@ -465,14 +446,10 @@ export function BookingTicket({ overview }: { overview: Overview }) {
     settings.data === undefined
       ? undefined
       : bookingOf(shownSettings(settings.data, save), instance).booking;
-  const subdivision =
-    booking === undefined
-      ? undefined
-      : shownSubdivision(booking.subdivision, toldBy(accounts.data, booking.mumu_index));
   return (
     <TicketFrame
       aria-labelledby="next-title"
-      top={<NextBooking schedule={schedule} booking={booking} subdivision={subdivision} />}
+      top={<NextBooking schedule={schedule} booking={booking} />}
     >
       <QueryView query={settings}>
         {(saved) => (

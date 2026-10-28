@@ -7,6 +7,10 @@ uses [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Changed
+- The top of the ticket keeps fixed rows: the play day and the court, then the slots on a row
+  of their own, so a long court name no longer moves them. The subdivision before the court
+  and the line on when the run starts and the PC wakes are gone; a line shows only while the
+  daily switch is off.
 - In English the UI words the kind of a court ("BE7 · shooting 01", "S10 · half court 03")
   instead of showing the app's Vietnamese ("tập ném 01"); the catalog keeps each court's
   block, kind and number, and the app's names stay as they are for booking.

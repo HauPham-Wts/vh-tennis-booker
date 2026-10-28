@@ -20,13 +20,17 @@
   background: var(--color-highlight);
 }
 
-/* What the run books, as the choices below hold it: three values side by side, wrapping in
-   a narrow window. */
+/* What the run books, as the choices below hold it: the day and the court side by side,
+   the slots on a row of their own, so no value moves when the court's name is long. */
 .summary {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: var(--space-4) var(--space-9);
   margin: var(--space-3) 0 0;
+}
+
+.slotsField {
+  grid-column: 1 / -1;
 }
 
 .field {
@@ -47,12 +51,6 @@
 
 .off dd {
   color: var(--color-muted);
-}
-
-/* The account's subdivision before the court: it rarely changes, so it reads quieter. */
-.subdivision {
-  color: var(--color-muted);
-  font-weight: var(--weight-regular);
 }
 
 .chosen {
