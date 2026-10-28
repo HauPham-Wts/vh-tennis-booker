@@ -108,7 +108,9 @@ svg {
   }
 }
 
-/* Text for screen readers only, such as a label of an icon-only control. */
+/* Text for screen readers only, such as a label of an icon-only control. Every scroll area
+   is `position: relative`: else this text, placed against the page, would grow the page to
+   where it sits in a long list. */
 .visually-hidden {
   position: absolute;
   width: 1px;
