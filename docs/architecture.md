@@ -156,10 +156,12 @@ values 422 `invalid_request`.
 | `GET /api/setup`, `POST /api/setup/auto` | Device checks; auto setup (quiet time and lock respected) |
 | `GET`/`PUT /api/schedule` | The task: state, times; switching on needs a passed dry run. Never switch it on from a development backend: the task would run the development Python |
 | `POST /api/runs/dry-run` | Starts a dry run in its own process (refused in the quiet time or while a run holds the lock) |
+| `GET /api/accounts` | The subdivision each MuMu instance's account told last (`history_read.account_subdivisions`); one the catalog no longer lists is left out |
 | `WS /api/live` | Pushes each new step |
 
-After a route or model change: `python tools/export_openapi.py`, then `npm run api:types`
-(`tests/api/test_api_schema.py` and CI fail until both match).
+After a route, model or catalog change: `python tools/export_openapi.py` (writes
+`ui/openapi.json` and `ui/src/catalog.json`), then `npm run api:types`
+(`tests/api/test_api_schema.py`, `tests/test_catalog.py` and CI fail until they match).
 
 ## UI (`ui/`)
 
@@ -187,10 +189,13 @@ After a route or model change: `python tools/export_openapi.py`, then `npm run a
   notification switch, the guide). The header's status line (`components/StatusLine.tsx`)
   shows the run going on, else the one thing to do. `manualSteps.ts` keeps the user's ticks in
   `localStorage` (memory when storage fails); `setupState.ts` counts the setup tasks left and
-  picks the panel's first tab. `booking.ts` holds the slot, sport and court choices the
-  developer maintains (each court with the label that tells it from the others of its sport)
-  and the two-slot limit; `useFormat`'s `court` names a court by its sport and label
-  ("Tennis S6"). The UI never calls `GET /api/setup` or
+  picks the panel's first tab. `booking.ts` holds the slots and the two-slot limit, and reads
+  the subdivisions, sports and courts (each court with the label that tells it from the others
+  of its sport) from `catalog.json`, written from `catalog.py`; `useFormat`'s `court` names a
+  court by its sport and label ("Tennis S6"). The ticket's subdivision is the one the settings
+  name, else the one the account told last (`GET /api/accounts`, refreshed when a run ends,
+  "Theo tài khoản"), else Origami; pressing one saves it, keeps the sport if the subdivision
+  has it (else its first sport) and takes the first court. The UI never calls `GET /api/setup` or
   `POST /api/notifications/test` (the routes stay for the command line and tools).
 
 ## Driver (`android/`)

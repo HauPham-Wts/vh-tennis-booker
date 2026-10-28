@@ -2,15 +2,27 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { errorMessage } from "../../api/errors";
 import { useSaveSettings, useStartDryRun, useSwitchSchedule } from "../../api/mutations";
-import { useRuns, useSettings } from "../../api/queries";
-import type { Overview, Running, RunSummary, ScheduleState, Settings } from "../../api/types";
+import { useAccounts, useRuns, useSettings } from "../../api/queries";
+import type {
+  AccountSubdivision,
+  Overview,
+  Running,
+  RunSummary,
+  ScheduleState,
+  Settings,
+} from "../../api/types";
 import {
   courtChoices,
   findCourt,
   firstCourt,
+  inSubdivision,
+  isSport,
   MAX_SLOTS,
+  type Subdivision,
+  SUBDIVISIONS,
+  shownSubdivision,
   slotChoices,
-  SPORTS,
+  sportChoices,
   toggleSlot,
 } from "../../booking";
 import { Button } from "../../components/Button";
@@ -29,7 +41,12 @@ import { TicketFrame } from "./TicketFrame";
 const GRID_COLUMNS = 7;
 
 /** What one MuMu instance books: the top of the settings, or one of their instances. */
-type Booking = Pick<Settings, "slots" | "sport" | "court">;
+type Booking = Pick<Settings, "mumu_index" | "slots" | "subdivision" | "sport" | "court">;
+
+/** Return the subdivision the account of MuMu instance `index` told last, if any. */
+function toldBy(accounts: readonly AccountSubdivision[] | undefined, index: number) {
+  return accounts?.find((account) => account.device === index)?.subdivision;
+}
 
 /** Return what instance `index` books (0: the top of the settings), the last if it is gone. */
 function bookingOf(settings: Settings, index: number): { index: number; booking: Booking } {
@@ -60,6 +77,8 @@ interface NextBookingProps {
   schedule: ScheduleState;
   /** What the choices below hold, `undefined` until the settings have loaded. */
   booking: Booking | undefined;
+  /** The subdivision the choices below show. */
+  subdivision: Subdivision | undefined;
 }
 
 /**
@@ -69,7 +88,7 @@ interface NextBookingProps {
  * nothing is booked while the switch is off. The switch stays locked until a dry run has
  * passed; once one has, a switch still off is set off in yellow.
  */
-function NextBooking({ schedule, booking }: NextBookingProps) {
+function NextBooking({ schedule, booking, subdivision }: NextBookingProps) {
   const { t } = useTranslation();
   const f = useFormat();
   const toggle = useSwitchSchedule();
@@ -102,7 +121,18 @@ function NextBooking({ schedule, booking }: NextBookingProps) {
         </div>
         <div className={styles.field}>
           <Overline as="dt">{t("pages.ticket.court")}</Overline>
-          <dd>{booking === undefined ? "–" : f.court(booking.court)}</dd>
+          <dd>
+            {booking === undefined ? (
+              "–"
+            ) : (
+              <>
+                {subdivision !== undefined && (
+                  <span className={styles.subdivision}>{subdivision.name} · </span>
+                )}
+                {f.court(booking.court)}
+              </>
+            )}
+          </dd>
         </div>
         <div className={styles.field}>
           <Overline as="dt">{t("pages.ticket.chosenSlots")}</Overline>
@@ -139,18 +169,22 @@ function NextBooking({ schedule, booking }: NextBookingProps) {
 interface ChoicesProps {
   saved: Settings;
   save: SaveSettings;
+  /** The subdivision each account told last, `undefined` until read. */
+  accounts: readonly AccountSubdivision[] | undefined;
   /** The MuMu instance whose choices show (0: the top of the settings). */
   instance: number;
   onInstance: (index: number) => void;
 }
 
 /**
- * The sport, court and slots to book, for each MuMu instance when several book side by side,
- * each with its own account. Each press saves at once: the whole settings go back as they
- * came with the one change, so the developer's values stay; another sport takes its first
- * court. Presses wait while a save is on its way, so two saves never cross.
+ * The subdivision, sport, court and slots to book, for each MuMu instance when several book
+ * side by side, each with its own account. Each press saves at once: the whole settings go
+ * back as they came with the one change, so the developer's values stay; another sport takes
+ * its first court, another subdivision keeps the sport if it has it. Presses wait while a save
+ * is on its way, so two saves never cross. The subdivision follows the account until one is
+ * pressed.
  */
-function Choices({ saved, save, instance, onInstance }: ChoicesProps) {
+function Choices({ saved, save, accounts, instance, onInstance }: ChoicesProps) {
   const { t } = useTranslation();
   const f = useFormat();
   const [warning, setWarning] = useState<string | null>(null);
@@ -160,6 +194,9 @@ function Choices({ saved, save, instance, onInstance }: ChoicesProps) {
   const { index, booking: shown } = bookingOf(settings, instance);
   const { booking: own } = bookingOf(saved, index);
   const full = shown.slots.length >= MAX_SLOTS;
+  const told = toldBy(accounts, shown.mumu_index);
+  const subdivision = shownSubdivision(shown.subdivision, told);
+  const byAccount = shown.subdivision === "" && told !== undefined;
 
   function choose(change: Partial<Booking>) {
     if (busy) {
@@ -195,7 +232,11 @@ function Choices({ saved, save, instance, onInstance }: ChoicesProps) {
   }
 
   // A court set by hand stays a choice, but not under another sport on its way.
-  const courts = courtChoices(shown.sport, own.sport === shown.sport ? own.court : shown.court);
+  const courts = courtChoices(
+    subdivision,
+    shown.sport,
+    own.sport === shown.sport ? own.court : shown.court,
+  );
   const { morning, afternoon } = slotChoices(shown.slots);
   // The morning row keeps its empty places, so the afternoon starts a row of its own.
   const gaps = (GRID_COLUMNS - (morning.length % GRID_COLUMNS)) % GRID_COLUMNS;
@@ -226,12 +267,40 @@ function Choices({ saved, save, instance, onInstance }: ChoicesProps) {
           </div>
         </div>
       )}
+      <div role="group" aria-labelledby="subdivision-label" className={styles.group}>
+        <div className={styles.slotsHead}>
+          <Overline as="span" id="subdivision-label">
+            {t("pages.ticket.subdivision")}
+          </Overline>
+          {byAccount && <span className={styles.note}>{t("pages.ticket.byAccount")}</span>}
+        </div>
+        <div className={styles.buttons}>
+          {SUBDIVISIONS.map((item) => {
+            const on = subdivision.id === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                aria-pressed={on}
+                aria-disabled={busy || undefined}
+                className={`${styles.choice} ${styles.court}`}
+                onClick={() =>
+                  shown.subdivision !== item.id && choose(inSubdivision(item, shown.sport))
+                }
+              >
+                {item.name}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div role="group" aria-labelledby="sport-label" className={styles.group}>
         <Overline as="span" id="sport-label">
           {t("pages.ticket.sport")}
         </Overline>
         <div className={`${styles.buttons} ${styles.wrap}`}>
-          {SPORTS.map((sport) => {
+          {sportChoices(subdivision, shown.sport).map((sport) => {
             const on = shown.sport === sport;
             return (
               <button
@@ -240,9 +309,9 @@ function Choices({ saved, save, instance, onInstance }: ChoicesProps) {
                 aria-pressed={on}
                 aria-disabled={busy || undefined}
                 className={`${styles.choice} ${styles.sport}`}
-                onClick={() => !on && choose({ sport, court: firstCourt(sport) })}
+                onClick={() => !on && choose({ sport, court: firstCourt(subdivision, sport) })}
               >
-                {t(`sports.${sport}`)}
+                {isSport(sport) ? t(`sports.${sport}`) : sport}
               </button>
             );
           })}
@@ -389,6 +458,7 @@ function DryRunRow({ running, schedule }: DryRunRowProps) {
  */
 export function BookingTicket({ overview }: { overview: Overview }) {
   const settings = useSettings();
+  const accounts = useAccounts();
   const save = useSaveSettings();
   const [instance, setInstance] = useState(0);
   const { schedule, running } = overview;
@@ -396,14 +466,24 @@ export function BookingTicket({ overview }: { overview: Overview }) {
     settings.data === undefined
       ? undefined
       : bookingOf(shownSettings(settings.data, save), instance).booking;
+  const subdivision =
+    booking === undefined
+      ? undefined
+      : shownSubdivision(booking.subdivision, toldBy(accounts.data, booking.mumu_index));
   return (
     <TicketFrame
       aria-labelledby="next-title"
-      top={<NextBooking schedule={schedule} booking={booking} />}
+      top={<NextBooking schedule={schedule} booking={booking} subdivision={subdivision} />}
     >
       <QueryView query={settings}>
         {(saved) => (
-          <Choices saved={saved} save={save} instance={instance} onInstance={setInstance} />
+          <Choices
+            saved={saved}
+            save={save}
+            accounts={accounts.data}
+            instance={instance}
+            onInstance={setInstance}
+          />
         )}
       </QueryView>
       <DryRunRow running={running} schedule={schedule} />

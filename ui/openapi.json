@@ -486,6 +486,52 @@
         }
       }
     },
+    "/api/accounts": {
+      "get": {
+        "tags": [
+          "accounts"
+        ],
+        "summary": "Read Accounts",
+        "description": "Read the subdivision each MuMu instance's account told last, newest first.",
+        "operationId": "read_accounts_api_accounts_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AccountSubdivision"
+                  },
+                  "type": "array",
+                  "title": "Response Read Accounts Api Accounts Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request values, one line per value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An error with a stable code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/notifications": {
       "get": {
         "tags": [
@@ -894,6 +940,37 @@
   },
   "components": {
     "schemas": {
+      "AccountSubdivision": {
+        "properties": {
+          "device": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device"
+          },
+          "subdivision": {
+            "type": "string",
+            "title": "Subdivision"
+          },
+          "seen_at": {
+            "type": "string",
+            "title": "Seen At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "device",
+          "subdivision",
+          "seen_at"
+        ],
+        "title": "AccountSubdivision",
+        "description": "The subdivision a MuMu instance's account last told, read from its home screen."
+      },
       "AutoSetupRequest": {
         "properties": {
           "restart_mumu": {

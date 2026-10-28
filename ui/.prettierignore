@@ -2,3 +2,4 @@ dist
 package-lock.json
 openapi.json
 src/api/schema.d.ts
+src/catalog.json

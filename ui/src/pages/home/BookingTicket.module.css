@@ -49,6 +49,12 @@
   color: var(--color-muted);
 }
 
+/* The account's subdivision before the court: it rarely changes, so it reads quieter. */
+.subdivision {
+  color: var(--color-muted);
+  font-weight: var(--weight-regular);
+}
+
 .chosen {
   display: flex;
   flex-wrap: wrap;

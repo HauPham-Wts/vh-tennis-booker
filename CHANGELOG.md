@@ -7,6 +7,11 @@ uses [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- The ticket's choices start with the subdivision, Origami or BS, and offer only its sports
+  and courts; it follows the account's subdivision ("Theo tài khoản") until one is pressed,
+  and the court on top reads "BS · Tennis BE7". The UI's sports and courts come from
+  `catalog.py`, as `ui/src/catalog.json`; `GET /api/accounts` gives the subdivision each
+  account told last.
 - The run tells the account's subdivision from the apartment code on the home screen, at no
   extra command, and records it as an `account_subdivision` step (the code itself is not
   kept). A court of another subdivision is a warning in the log and the Windows notification;

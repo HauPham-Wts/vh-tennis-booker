@@ -3,6 +3,7 @@ import { DAYS_SHOWN, runDay } from "../days";
 import type { Overview, RunSummary } from "./types";
 import {
   type EventsQuery,
+  getAccounts,
   getOverview,
   getRun,
   getNotifications,
@@ -24,6 +25,7 @@ export const queryKeys = {
   events: (query: EventsQuery = {}) => ["events", query] as const,
   settings: ["settings"] as const,
   notifications: ["notifications"] as const,
+  accounts: ["accounts"] as const,
 };
 
 /** How often the Overview is read while a run is starting or letting go of the emulator. */
@@ -104,4 +106,9 @@ export function useSettings() {
 /** Read the notification settings. */
 export function useNotifications() {
   return useQuery({ queryKey: queryKeys.notifications, queryFn: getNotifications });
+}
+
+/** Read the subdivision each MuMu instance's account told last. */
+export function useAccounts() {
+  return useQuery({ queryKey: queryKeys.accounts, queryFn: getAccounts });
 }

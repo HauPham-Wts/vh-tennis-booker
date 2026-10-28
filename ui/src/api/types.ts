@@ -28,6 +28,9 @@ export type StepKind = Schemas["EventKind"];
 export type StepCategory = Step["category"];
 export type LogLine = Schemas["LogLine"];
 
+/** The subdivision a MuMu instance's account last told (`GET /api/accounts`). */
+export type AccountSubdivision = Schemas["AccountSubdivision"];
+
 export type Settings = Schemas["Settings"];
 export type LabelSettings = Schemas["LabelSettings"];
 /** Whether every run ends with a Windows notification, and its language. */
