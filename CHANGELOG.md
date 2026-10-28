@@ -7,6 +7,11 @@ uses [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Changed
+- A calmer UI: the highlight is a soft sand yellow instead of ball yellow (a paler one for the
+  setup guide); every choice has one size and a light edge, and the chosen one an ink edge, a
+  tint and a tick instead of a block of ink; slots no longer turn dashed once two are chosen;
+  labels and notes use the text font; the top of the ticket is lighter. README screenshots
+  retaken.
 - The top of the ticket keeps fixed rows: the play day and the court, then the slots on a row
   of their own, so a long court name no longer moves them. The subdivision before the court
   and the line on when the run starts and the PC wakes are gone; a line shows only while the

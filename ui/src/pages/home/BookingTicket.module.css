@@ -5,7 +5,7 @@
   gap: var(--space-4);
 }
 
-/* The switch with its words; ball yellow once a dry run passed and it is still off. */
+/* The switch with its words; sand yellow once a dry run passed and it is still off. */
 .auto {
   display: flex;
   align-items: center;
@@ -43,10 +43,10 @@
 .field dd {
   margin: 0;
   font-size: var(--text-summary);
-  font-weight: var(--weight-heavy);
+  font-weight: var(--weight-bold);
   font-variant-numeric: tabular-nums;
-  letter-spacing: var(--tracking-heading);
-  line-height: 1.15;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
 }
 
 .off dd {
@@ -66,7 +66,7 @@
   white-space: nowrap;
 }
 
-/* The booking order, the same ball-yellow badge as on the chosen slots below. */
+/* The booking order, the same sand-yellow badge as on the chosen slots below. */
 .badge {
   display: grid;
   place-items: center;
@@ -117,10 +117,11 @@
   gap: 6px;
 }
 
-/* A choice is paper with a rule; the chosen one is filled with ink. */
+/* Every choice looks alike: paper with a light edge; the chosen one takes an ink edge, a
+   tint and a tick, so the ticket holds no blocks of ink but the one action. */
 .choice,
 .slot {
-  border: var(--border) solid var(--color-rule);
+  border: var(--border-hairline) solid var(--color-line);
   background: var(--color-field);
   color: var(--color-ink);
   cursor: pointer;
@@ -129,20 +130,29 @@
 .choice[aria-pressed="true"],
 .slot[aria-pressed="true"] {
   border-color: var(--color-ink);
-  background: var(--color-ink);
-  color: var(--color-on-ink);
+  background: var(--color-tint);
+  box-shadow: inset 0 0 0 1px var(--color-ink);
 }
 
 .choice {
-  min-height: 56px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--touch-target);
   border-radius: var(--radius-button);
+}
+
+.choice[aria-pressed="true"]::before {
+  content: "✓" / "";
+  font-weight: var(--weight-bold);
 }
 
 .court {
   min-width: 60px;
-  padding: 0 var(--space-3);
-  font-size: var(--text-lead);
-  font-weight: var(--weight-bold);
+  justify-content: center;
+  padding: 0 var(--space-4);
+  font-size: var(--text-control);
+  font-weight: var(--weight-semibold);
 }
 
 .wrap {
@@ -150,8 +160,7 @@
 }
 
 .sport {
-  min-height: 44px;
-  padding: 0 var(--space-3);
+  padding: 0 var(--space-4);
   font-size: var(--text-control);
   font-weight: var(--weight-semibold);
 }
@@ -165,7 +174,6 @@
 
 .note,
 .warning {
-  font-family: var(--font-mono);
   font-size: var(--text-label);
 }
 
@@ -187,23 +195,20 @@
   position: relative;
   min-height: var(--touch-target);
   padding: 0 var(--space-1);
-  border-radius: var(--radius-stamp);
-  font-family: var(--font-mono);
-  font-size: var(--text-small);
+  border-radius: var(--radius-button);
+  font-size: var(--text-data);
   font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
 }
 
-/* With two slots chosen the others take no more: a dashed edge, as a step not reached. */
+/* With two slots chosen the others take no more: they fade, with no dashed edge. */
 .blocked {
-  border-style: dashed;
-  border-color: var(--color-perforation);
   background: transparent;
-  color: var(--color-muted);
-  font-weight: var(--weight-regular);
+  color: var(--color-faint);
   cursor: not-allowed;
 }
 
-/* The booking order, a ball-yellow badge on the corner. */
+/* The booking order, a sand-yellow badge on the corner. */
 .order {
   position: absolute;
   top: -10px;
@@ -252,6 +257,5 @@
 }
 
 .quiet {
-  font-family: var(--font-mono);
-  font-size: var(--text-label);
+  font-size: var(--text-small);
 }
