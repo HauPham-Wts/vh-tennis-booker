@@ -17,7 +17,8 @@ Details live in the docstrings; this page says where things are and what must st
   Windows notification (`notify.py`; a failure only logs a warning). After a real run with at
   least one round, `close_emulator` shuts MuMu down.
 - Other MuMu instances (`[[instances]]` in the config, each with its own account and its own
-  `mumu_index`, `slots`, `sport`, `court`, `venue_keyword`; `config.instance_config`):
+  `mumu_index`, `slots`, `subdivision`, `sport`, `court`, `venue_keyword`;
+  `config.instance_config`):
   the run's process, once it holds the lock and has cleared stale runs, starts one process per
   entry (`start_instances`: the same command with `--instance N`, without `--slots`,
   `--device`; console output dropped) and waits for them, holding its lock. Each such process
@@ -72,6 +73,13 @@ Details live in the docstrings; this page says where things are and what must st
   `select_court` (or `check_single_court` when a page with one choice passed on to the
   details page by itself: it must name the configured court)
   → "Tiếp tục" → confirmation page → `accept_and_confirm`.
+- Venue page (`_venue_entry`): a single venue is tapped whatever its name; of several, the one
+  `catalog.py` lists the court under (its name before the line break), else the one naming
+  `venue_keyword` (a court typed by hand). A full venue ("Hết chỗ") fails the round at once.
+- `catalog.py`: the subdivisions (`origami`, `bs`), their sports in the app's order, venues and
+  courts (app name and short label), from the field notes. The run needs no subdivision: the
+  court names its venue. The `subdivision` setting (empty: the account's) only checks the
+  settings (`validate_config`: a known subdivision that has the sport).
 - A court cut off by the bottom edge is tapped without a swipe: it is in the tree, and the
   driver clicks it by its label (seven basketball courts).
 - `select_court`: the court list can move under the tap (field notes), so the booking details
@@ -86,6 +94,7 @@ Details live in the docstrings; this page says where things are and what must st
 - `book()` returns `Booked`: date, slot and court read on the confirmation page (a difference is
   a warning only) and the ticket's status, from reads the round makes anyway.
 - Pure modules (testable without a device): `geometry.py`, `screen.py`, `app_language.py`,
+  `catalog.py`,
   most of `clock.py`.
 
 ## Events and history

@@ -4,6 +4,7 @@ import type { Settings } from "../api/types";
 export function settings(fields: Partial<Settings> = {}): Settings {
   return {
     slots: ["15:00 - 16:00", "16:00 - 17:00"],
+    subdivision: "",
     sport: "tennis",
     court: "S6 - Sân tennis",
     wake_at: "05:50",
