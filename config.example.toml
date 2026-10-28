@@ -8,7 +8,7 @@ subdivision = ""                    # "origami" or "bs"; "" = the account's
 sport = "tennis"                    # tennis, multi, volleyball, table-tennis, basketball,
                                     # football, pickleball or badminton
 court = "S10 - Sân tennis"          # as the app's court list names it
-venue_keyword = "Origami"           # picks the venue when the app lists several
+venue_keyword = "Origami"           # venue of a court not in the catalog, among several
 timeout = 30                        # longest wait for any screen, in seconds
 max_swipes = 6                      # scroll attempts when a slot is hidden (short screens)
 

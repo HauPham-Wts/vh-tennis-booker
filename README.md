@@ -5,9 +5,9 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Code style: Ruff](https://img.shields.io/badge/code%20style-ruff-261230)
 
-Books a court (tennis, or one of the seven other sports of the Origami subdivision: a
-multi-purpose court, volleyball, table tennis, basketball, football, pickleball,
-badminton) the moment bookings open. The Vinhomes Resident app opens each day's
+Books a court (tennis, or another sport: a multi-purpose court, volleyball, table tennis,
+basketball, football, pickleball, badminton, as the subdivision offers them; Origami and BS
+so far) the moment bookings open. The Vinhomes Resident app opens each day's
 courts at 06:00, and the popular slots are gone within seconds. This project books them
 while its owner sleeps: a Windows scheduled task wakes the PC, starts the MuMu Player
 emulator and taps through the app's own booking screens with Python and an Android

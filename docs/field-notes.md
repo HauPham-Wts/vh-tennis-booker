@@ -133,8 +133,8 @@ account's subdivision; it shows the utilities, venues and courts of that subdivi
   list or, with one court, the details page. The venue page was never caught on the way in;
   every walk showed it after one Back from the court list or details page.
 - Venue names differ in form: "Origami_ " or "Origami _ " before most, none for table tennis
-  and football (whose courts carry S5). A single venue is tapped whatever its name, so
-  `venue_keyword` matters only on a page with several venues, not seen at Origami.
+  and football (whose courts carry S5). A single venue is tapped whatever its name; several
+  venues are not seen at Origami (BS lists two, below).
 - The details page shows the opened court's name, "Phí đặt chỗ 0 VND | Số lượng cư dân | 4"
   and "Tiếp tục" for all eight sports; its service text varies (the multi-purpose page lists
   "Sân sử dụng các tiện ích: Bóng rổ"; football reads "phục vụ" without "riêng").

@@ -117,7 +117,9 @@ class Config:
     """What to book, one of :data:`SPORTS`: the tile tapped on the utilities list."""
     court: str = "S10 - Sân tennis"
     venue_keyword: str = "Origami"
-    """Picks the venue when the app lists several; a single one is tapped whatever its name."""
+    """Picks the venue of a court not in :mod:`court_booker.catalog` when the app lists
+    several; a court in the catalog takes its own venue, a single venue is tapped whatever its
+    name."""
     timeout: float = 30.0
     """Longest wait for any screen, in seconds; one that shows sooner is acted on at once.
 
