@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-10-28
+
 ### Added
 - The ticket's choices start with the subdivision, Origami or BS, and offer only its sports
   and courts; it follows the account's subdivision ("Theo tài khoản") until one is pressed,
