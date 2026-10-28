@@ -6,12 +6,15 @@
   border-radius: var(--radius-card);
   background: var(--color-paper);
   box-shadow: var(--shadow-card);
+  /* Clips what scrolls inside to the rounded corners; the notches stay, cut into the paper. */
+  overflow: hidden;
 }
 
 .contained {
   flex-shrink: 1;
   min-height: 0;
 }
+
 
 .top {
   flex: none;

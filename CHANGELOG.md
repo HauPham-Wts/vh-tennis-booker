@@ -6,6 +6,11 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- The ticket and the side panel keep their four rounded corners: the ticket's choices scroll
+  inside it, its dry run row staying at the foot, instead of the column scrolling past its
+  lower corners; the scroll bars are thin, rounded and arrowless, inside each card.
+
 ### Changed
 - The result notification's switch moves from the Setup tab to the ticket, under the daily
   switch. The switches are smaller (36 px, a 24 px knob) and the buttons as tall as the

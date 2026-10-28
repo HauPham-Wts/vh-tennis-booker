@@ -7,8 +7,9 @@ interface TicketFrameProps extends HTMLAttributes<HTMLElement> {
   /** Below it: the choices, or the steps of the run. */
   children: ReactNode;
   /**
-   * Keep the ticket within its column, its lower part scrolling inside (the steps of a
-   * run); else the ticket grows to its content and the column scrolls.
+   * Keep the ticket within its column, a part of its lower half scrolling inside (the
+   * choices, the steps of a run), so it keeps its four rounded corners; else the ticket
+   * grows to its content and the column scrolls.
    */
   contained?: boolean;
 }

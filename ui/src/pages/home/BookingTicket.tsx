@@ -454,18 +454,21 @@ export function BookingTicket({ overview }: { overview: Overview }) {
     <TicketFrame
       aria-labelledby="next-title"
       top={<NextBooking schedule={schedule} booking={booking} />}
+      contained
     >
-      <QueryView query={settings}>
-        {(saved) => (
-          <Choices
-            saved={saved}
-            save={save}
-            accounts={accounts.data}
-            instance={instance}
-            onInstance={setInstance}
-          />
-        )}
-      </QueryView>
+      <div className={styles.scroll}>
+        <QueryView query={settings}>
+          {(saved) => (
+            <Choices
+              saved={saved}
+              save={save}
+              accounts={accounts.data}
+              instance={instance}
+              onInstance={setInstance}
+            />
+          )}
+        </QueryView>
+      </div>
       <DryRunRow running={running} schedule={schedule} />
     </TicketFrame>
   );

@@ -108,6 +108,16 @@
   font-size: var(--text-data);
 }
 
+/* The choices scroll inside the ticket in a low window, their bar near the ticket's edge;
+   the dry run row stays at the foot. */
+.scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  margin: calc(-1 * var(--space-5)) calc(6px - var(--space-7)) 0 0;
+  padding: var(--space-5) calc(var(--space-7) - 6px) var(--space-2) 0;
+}
+
 .choices {
   display: flex;
   flex-direction: column;
