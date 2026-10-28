@@ -6,6 +6,11 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- The result notification's switch moves from the Setup tab to the ticket, under the daily
+  switch. The switches are smaller (36 px, a 24 px knob) and the buttons as tall as the
+  choices (44 px).
+
 ## [0.17.0] - 2026-10-28
 
 ### Changed

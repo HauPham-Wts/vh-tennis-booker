@@ -1,18 +1,26 @@
 .head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-4);
+}
+
+/* The daily switch, and the result notification's beneath it, right-aligned. */
+.switches {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
 }
 
 /* The switch with its words; sand yellow once a dry run passed and it is still off. */
 .auto {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-1) var(--space-1) var(--space-1) var(--space-3);
+  gap: var(--space-2);
+  padding: 2px 2px 2px var(--space-3);
   border-radius: var(--radius-pill);
-  font-size: var(--text-control);
+  font-size: var(--text-small);
   font-weight: var(--weight-semibold);
 }
 

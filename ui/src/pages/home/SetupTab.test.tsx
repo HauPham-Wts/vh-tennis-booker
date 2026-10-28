@@ -188,22 +188,12 @@ describe("SetupTab auto setup", () => {
   });
 });
 
-describe("SetupTab options and guide", () => {
-  it("switches the notification at once, in the UI's language", async () => {
-    const { fetch, replies } = renderSetup();
+describe("SetupTab guide", () => {
+  it("holds no notification switch: it is on the ticket", async () => {
+    renderSetup();
     const tab = await setupTab();
-    replies["PUT /api/notifications"] = reply({ enabled: false, language: "vi" });
-    const toggle = await within(tab).findByRole("switch", { name: "Thông báo kết quả" });
-    expect(toggle).toHaveAttribute("aria-checked", "true");
 
-    fireEvent.click(toggle);
-
-    await waitFor(async () =>
-      expect(await bodies(fetch, "PUT /api/notifications")).toEqual([
-        { enabled: false, language: "vi" },
-      ]),
-    );
-    expect(within(tab).queryByRole("button", { name: "Gửi thử" })).not.toBeInTheDocument();
+    expect(within(tab).queryByRole("switch")).not.toBeInTheDocument();
   });
 
   it("opens a guide row on a press", async () => {

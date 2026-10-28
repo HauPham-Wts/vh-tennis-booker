@@ -48,6 +48,7 @@ function renderTicket({
     "PUT /api/settings": reply(saved),
     "GET /api/runs": reply(runs),
     "GET /api/accounts": reply(accounts),
+    "GET /api/notifications": reply({ enabled: true, language: "vi" }),
     ...extra,
   };
   return { replies, ...renderApp(paths.overview, replies) };
@@ -105,6 +106,22 @@ describe("BookingTicket start", () => {
     expect(toggle).toHaveAttribute("aria-checked", "true");
     expect(toggle).toHaveTextContent("BẬT");
     expect(toggle).toBeEnabled();
+  });
+
+  it("switches the result notification at once, in the UI's language", async () => {
+    const { fetch, replies } = renderTicket();
+    const top = await ticket();
+    replies["PUT /api/notifications"] = reply({ enabled: false, language: "vi" });
+    const toggle = await within(top).findByRole("switch", { name: "Thông báo kết quả" });
+    expect(toggle).toHaveAttribute("aria-checked", "true");
+
+    fireEvent.click(toggle);
+
+    await waitFor(async () =>
+      expect(await bodies(fetch, "PUT /api/notifications")).toEqual([
+        { enabled: false, language: "vi" },
+      ]),
+    );
   });
 
   it("keeps the switch locked until a dry run has passed", async () => {

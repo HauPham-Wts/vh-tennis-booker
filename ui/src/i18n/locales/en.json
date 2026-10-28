@@ -39,6 +39,8 @@
     "ticket": {
       "title": "Next booking",
       "auto": "Book every morning",
+      "notify": "Result notifications",
+      "notifyHint": "In the corner of the Windows screen, after every run",
       "on": "ON",
       "off": "OFF",
       "day": "Day",
@@ -153,11 +155,6 @@
         "running": "Setting up…",
         "restart": "MuMu is open, so its screen could not change yet. MuMu needs a restart.",
         "restartButton": "Restart MuMu"
-      },
-      "options": {
-        "title": "Options",
-        "notify": "Result notifications",
-        "notifyHint": "In the corner of the Windows screen, after every run"
       },
       "guide": {
         "title": "Guide",

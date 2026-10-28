@@ -219,8 +219,8 @@ The UI is one screen, without a menu:
   ("2/2"), then every slot booked or not and when it started (real bookings, dry runs on
   request); one click opens the reasons, the steps and the technical log.
 - **Thiết lập / Setup** beside it: the steps only you can do (install MuMu and the Vinhomes
-  app, log in), ticked by you; an auto setup for what the app can fix; the Windows
-  notification switch; a short guide. It opens first, with a count, while anything is left.
+  app, log in), ticked by you; an auto setup for what the app can fix; a short guide. The
+  Windows notification switch sits on the ticket, under the daily switch. It opens first, with a count, while anything is left.
 
 Saving settings rewrites `config.toml` (its comments are dropped); the next run reads it.
 

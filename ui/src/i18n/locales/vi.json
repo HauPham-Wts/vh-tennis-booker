@@ -39,6 +39,8 @@
     "ticket": {
       "title": "Lần đặt tiếp theo",
       "auto": "Tự đặt mỗi sáng",
+      "notify": "Thông báo kết quả",
+      "notifyHint": "Góc màn hình Windows, sau mỗi lượt",
       "on": "BẬT",
       "off": "TẮT",
       "day": "Ngày",
@@ -153,11 +155,6 @@
         "running": "Đang thiết lập…",
         "restart": "MuMu đang mở nên chưa đổi được màn hình. Cần khởi động lại MuMu.",
         "restartButton": "Khởi động lại MuMu"
-      },
-      "options": {
-        "title": "Tùy chọn",
-        "notify": "Thông báo kết quả",
-        "notifyHint": "Góc màn hình Windows, sau mỗi lượt"
       },
       "guide": {
         "title": "Hướng dẫn",
