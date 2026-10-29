@@ -705,62 +705,6 @@
         }
       }
     },
-    "/api/setup/auto": {
-      "post": {
-        "tags": [
-          "setup"
-        ],
-        "summary": "Run Auto Setup",
-        "description": "Fix every item auto setup can fix, holding the run lock, and record each item.\n\nRefused (400 ``bad_request``) from the wake time to 5 minutes after the start time,\nand (409 ``lock_held``) while a run holds the lock.",
-        "operationId": "run_auto_setup_api_setup_auto_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AutoSetupRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/SetupItem"
-                  },
-                  "type": "array",
-                  "title": "Response Run Auto Setup Api Setup Auto Post"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Invalid request values, one line per value",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "An error with a stable code",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/schedule": {
       "get": {
         "tags": [
@@ -807,7 +751,7 @@
           "schedule"
         ],
         "summary": "Switch Schedule",
-        "description": "Switch the daily booking on or off.\n\nSwitching on needs a passed dry run (409 ``dry_run_required``) and a wake time before\nthe start time (400 ``bad_request``). It installs the task again each time, so a new\nwake time applies. The task runs the Python of this backend; in development, the\nrunner folder keeps its task through ``tools/setup_runner.py`` instead.",
+        "description": "Switch the daily booking on or off.\n\nSwitching on needs a passed dry run (409 ``dry_run_required``) and a wake time before\nthe start time (400 ``bad_request``). It installs the task again each time, so a new\nwake time applies, and allows wake timers; ``wake_blocked`` in the Overview tells when\nWindows still keeps them off. The task runs the Python of this backend; in development, the\nrunner folder keeps its task through ``tools/setup_runner.py`` instead.",
         "operationId": "switch_schedule_api_schedule_put",
         "requestBody": {
           "content": {
@@ -901,7 +845,7 @@
           "status"
         ],
         "summary": "Read Status",
-        "description": "Show what runs now, the schedule and next booking, the last run and the last setup.",
+        "description": "Show what runs now, the schedule and next booking, the last run and the wake timers.",
         "operationId": "read_status_api_status_get",
         "responses": {
           "200": {
@@ -970,18 +914,6 @@
         ],
         "title": "AccountSubdivision",
         "description": "The subdivision a MuMu instance's account last told, read from its home screen."
-      },
-      "AutoSetupRequest": {
-        "properties": {
-          "restart_mumu": {
-            "type": "boolean",
-            "title": "Restart Mumu",
-            "default": false
-          }
-        },
-        "type": "object",
-        "title": "AutoSetupRequest",
-        "description": "``restart_mumu`` allows restarting a running MuMu to apply its new screen."
       },
       "DryRunStarted": {
         "properties": {
@@ -1306,15 +1238,9 @@
               }
             ]
           },
-          "setup": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/SetupSummary"
-              },
-              {
-                "type": "null"
-              }
-            ]
+          "wake_blocked": {
+            "type": "boolean",
+            "title": "Wake Blocked"
           }
         },
         "type": "object",
@@ -1323,7 +1249,7 @@
           "running",
           "schedule",
           "last_run",
-          "setup"
+          "wake_blocked"
         ],
         "title": "Overview",
         "description": "Everything the Overview shows, in one call."
@@ -1880,28 +1806,6 @@
         ],
         "title": "SetupItem",
         "description": "One setup item; ``item`` and ``status`` are message keys of the UI."
-      },
-      "SetupSummary": {
-        "properties": {
-          "checked_at": {
-            "type": "string",
-            "title": "Checked At"
-          },
-          "left": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Left"
-          }
-        },
-        "type": "object",
-        "required": [
-          "checked_at",
-          "left"
-        ],
-        "title": "SetupSummary",
-        "description": "When auto setup last ran, and the items it left for the user."
       },
       "SlotResult": {
         "properties": {

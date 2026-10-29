@@ -1,13 +1,9 @@
 import { useTranslation } from "react-i18next";
-import { errorMessage } from "../../api/errors";
-import { useAutoSetup } from "../../api/mutations";
 import { useOverview } from "../../api/queries";
 import type { Overview } from "../../api/types";
-import { Button } from "../../components/Button";
 import { QueryView } from "../../components/QueryView";
 import { MANUAL_STEPS, setManualDone, useManualSteps } from "../../manualSteps";
-import { autoLeft, setupDone } from "../../setupState";
-import { useFormat } from "../../useFormat";
+import { setupDone } from "../../setupState";
 import styles from "./SetupTab.module.css";
 
 /** The three steps of a first use; shown first until everything is set up. */
@@ -49,73 +45,6 @@ function ManualSteps() {
           </li>
         ))}
       </ul>
-    </section>
-  );
-}
-
-/**
- * What Court Booker sets up itself, in one line from its last run, and the button that does
- * it again. A running MuMu applies a new screen only after a restart, so auto setup first
- * runs without one; if the screen is still left to fix, the user is asked before MuMu
- * restarts. Nothing here asks MuMu until the button is pressed.
- */
-function AutoSetup({ overview }: { overview: Overview }) {
-  const { t } = useTranslation();
-  const f = useFormat();
-  const auto = useAutoSetup();
-  const busy = overview.running !== null || auto.isPending;
-  const summary = overview.setup;
-  let state: { text: string; tone: "ok" | "todo" | "plain" };
-  if (summary === null) {
-    state = { text: t("pages.setup.auto.never"), tone: "plain" };
-  } else {
-    const left = autoLeft(summary);
-    state =
-      left.length > 0
-        ? {
-            text: t("pages.setup.auto.fix", {
-              items: left.map((item) => t(`pages.setup.auto.items.${item}`)).join(", "),
-            }),
-            tone: "todo",
-          }
-        : {
-            text: t("pages.setup.auto.ok", {
-              date: f.shortDate(summary.checked_at),
-              time: f.time(summary.checked_at),
-            }),
-            tone: "ok",
-          };
-  }
-  const restart =
-    auto.isSuccess &&
-    !auto.variables.restart_mumu &&
-    auto.data.some(({ item, status }) => item === "mumu_screen" && status === "fixable");
-  return (
-    <section aria-labelledby="auto-title">
-      <h3 id="auto-title" className={styles.heading}>
-        {t("pages.setup.auto.title")}
-      </h3>
-      <div className={styles.row}>
-        <span className={styles.text}>
-          <span className={styles.title}>{t("pages.setup.auto.what")}</span>
-          <span className={styles[state.tone]}>{state.text}</span>
-        </span>
-        <Button disabled={busy} onClick={() => auto.mutate({ restart_mumu: false })}>
-          {t(auto.isPending ? "pages.setup.auto.running" : "pages.setup.auto.run")}
-        </Button>
-      </div>
-      {restart && (
-        <div className={styles.restart}>
-          <p>{t("pages.setup.auto.restart")}</p>
-          <Button disabled={busy} onClick={() => auto.mutate({ restart_mumu: true })}>
-            {t("pages.setup.auto.restartButton")}
-          </Button>
-        </div>
-      )}
-      {auto.isError && <p className={styles.problem}>{errorMessage(t, auto.error)}</p>}
-      {overview.running !== null && !auto.isPending && (
-        <p className={styles.note}>{t("pages.overview.live.locked")}</p>
-      )}
     </section>
   );
 }
@@ -166,8 +95,9 @@ function Guide({ overview, howto }: { overview: Overview; howto: boolean }) {
 }
 
 /**
- * The Setup tab: how to start while anything is left, the steps the user ticks, what Court
- * Booker sets up itself and the guide; the notification switch is on the ticket.
+ * The Setup tab: how to start while anything is left, the steps the user ticks and the
+ * guide; the notification switch is on the ticket. MuMu's place and screen and waking the
+ * PC need no step: the runs and the daily switch see to them.
  */
 export function SetupTab() {
   const { t } = useTranslation();
@@ -189,7 +119,6 @@ export function SetupTab() {
                 </section>
               )}
               <ManualSteps />
-              <AutoSetup overview={data} />
               <Guide overview={data} howto={done} />
             </>
           );

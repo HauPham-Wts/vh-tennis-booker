@@ -8,9 +8,8 @@ import pytest
 from court_booker import __version__, processes, schedule
 from court_booker.api import schedule as schedule_routes
 from court_booker.api import status
-from court_booker.api.activity import record
 from court_booker.config import Config, save_config
-from court_booker.events import EventKind
+from court_booker.device_setup import Status
 from court_booker.lock import Holder
 
 
@@ -104,18 +103,31 @@ def test_status_on_a_new_install(client, evening):
     assert body["version"] == __version__
     assert body["running"] is None
     assert body["last_run"] is None
-    assert body["setup"] is None
+    assert body["wake_blocked"] is False
     assert body["schedule"]["next_start"] == "2026-10-14T06:00"
 
 
-def test_status_shows_the_last_run_and_setup(client, context, evening, record_run):
+def test_status_shows_the_last_run(client, context, evening, record_run):
     record_run(context.data.database, slots=[("18:00 - 19:00", True)])
-    record(context, EventKind.SETUP_FINISHED, left=["app_installed"], error=None)
 
     body = client.get("/api/status").json()
 
     assert (body["last_run"]["status"], body["last_run"]["booked"]) == ("ok", 1)
-    assert body["setup"]["left"] == ["app_installed"]
+
+
+def test_status_tells_when_windows_blocks_waking_the_pc(client, evening, wake_timers):
+    wake_timers["status"] = Status.FIXABLE
+
+    assert client.get("/api/status").json()["wake_blocked"] is True
+
+
+def test_wake_timers_matter_only_with_the_schedule_on(wake_timers):
+    wake_timers["status"] = Status.FIXABLE
+
+    assert status.wake_blocked(False, None) is False
+    running = status.Running(trigger="scheduled", pid=1, since=None)
+    assert status.wake_blocked(True, running) is False  # no powercfg while a run goes on
+    assert status.wake_blocked(True, None) is True
 
 
 def test_status_shows_the_run_going_on(client, context, evening):

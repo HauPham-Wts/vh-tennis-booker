@@ -23,7 +23,7 @@ export function SidePanel({ initialTab }: { initialTab: PanelTab }) {
   // Kept here, so it survives opening a run, going back and changing tabs.
   const [withDry, setWithDry] = useState(false);
   const buttons = useRef<Partial<Record<PanelTab, HTMLButtonElement | null>>>({});
-  const left = overview.data === undefined ? 0 : setupLeft(overview.data, manual);
+  const left = overview.data === undefined ? 0 : setupLeft(manual);
 
   function onKeyDown(event: KeyboardEvent) {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {

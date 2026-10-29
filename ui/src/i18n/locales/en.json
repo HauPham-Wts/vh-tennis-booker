@@ -23,6 +23,7 @@
         "setupLeft": "Setup: {{count}} left, see the panel on the right",
         "noDryRun": "No dry run passed yet · press Dry run now",
         "scheduleOff": "Dry run passed · turn on Auto-book",
+        "wakeBlocked": "Windows does not let the PC wake at {{wake}} · turn Auto-book off and on",
         "ready": "Ready for {{time}} {{when}}"
       },
       "live": {
@@ -33,7 +34,7 @@
           "setup": "Auto setup in progress",
           "other": "A run is in progress"
         },
-        "locked": "Dry run and auto setup are locked until it ends"
+        "locked": "Dry run is locked until it ends"
       }
     },
     "ticket": {
@@ -141,22 +142,6 @@
           "title": "The Vinhomes app is logged in",
           "hint": "The resident account. Court Booker never reads the password."
         }
-      },
-      "auto": {
-        "title": "Court Booker does the rest",
-        "what": "MuMu, its screen, waking the PC",
-        "never": "Not run yet",
-        "fix": "To fix: {{items}}",
-        "ok": "✓ All 3 right · checked {{date}} at {{time}}",
-        "items": {
-          "mumu_installed": "where MuMu is",
-          "mumu_screen": "MuMu's screen",
-          "wake_timers": "waking the PC"
-        },
-        "run": "Auto setup",
-        "running": "Setting up…",
-        "restart": "MuMu is open, so its screen could not change yet. MuMu needs a restart.",
-        "restartButton": "Restart MuMu"
       },
       "guide": {
         "title": "Guide",

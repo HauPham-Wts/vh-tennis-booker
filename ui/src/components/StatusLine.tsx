@@ -26,7 +26,8 @@ function RunningStatus({ running, startAt }: { running: Running; startAt: string
 /**
  * One line in the header on whether the next booking can happen, in this order: the run
  * going on; the setup tasks left (the Setup tab lists them); no dry run passed yet; the
- * daily switch off; else ready for the next start. The ticket holds what fixes the last two.
+ * daily switch off; Windows keeping the PC from waking; else ready for the next start. The
+ * ticket holds what fixes the last three (switching the schedule on allows waking).
  */
 export function StatusLine({ overview }: { overview: Overview }) {
   const { t } = useTranslation();
@@ -36,7 +37,7 @@ export function StatusLine({ overview }: { overview: Overview }) {
   if (running !== null) {
     return <RunningStatus running={running} startAt={schedule.start_at} />;
   }
-  const left = setupLeft(overview, manual);
+  const left = setupLeft(manual);
   let words: string;
   let ready = false;
   if (left > 0) {
@@ -45,6 +46,8 @@ export function StatusLine({ overview }: { overview: Overview }) {
     words = t("pages.overview.status.noDryRun");
   } else if (!schedule.enabled) {
     words = t("pages.overview.status.scheduleOff");
+  } else if (overview.wake_blocked) {
+    words = t("pages.overview.status.wakeBlocked", { wake: schedule.wake_at });
   } else {
     ready = true;
     words = t("pages.overview.status.ready", {

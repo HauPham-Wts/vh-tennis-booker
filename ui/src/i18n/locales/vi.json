@@ -23,6 +23,7 @@
         "setupLeft": "Còn {{count}} việc thiết lập, xem khung bên phải",
         "noDryRun": "Chưa chạy thử đạt · bấm Chạy thử ngay",
         "scheduleOff": "Chạy thử đạt · bật Tự đặt",
+        "wakeBlocked": "Windows chưa cho máy tự thức dậy lúc {{wake}} · tắt rồi bật lại Tự đặt",
         "ready": "Sẵn sàng cho {{time}} {{when}}"
       },
       "live": {
@@ -33,7 +34,7 @@
           "setup": "Đang thiết lập tự động",
           "other": "Đang có một lần chạy"
         },
-        "locked": "Chạy thử và Thiết lập tự động tạm khóa cho tới khi xong"
+        "locked": "Chạy thử tạm khóa cho tới khi xong"
       }
     },
     "ticket": {
@@ -141,22 +142,6 @@
           "title": "Đã đăng nhập app Vinhomes",
           "hint": "Tài khoản cư dân. Court Booker không đọc mật khẩu."
         }
-      },
-      "auto": {
-        "title": "Court Booker làm thay bạn",
-        "what": "MuMu, màn hình, máy tự thức dậy",
-        "never": "Chưa chạy lần nào",
-        "fix": "Cần sửa: {{items}}",
-        "ok": "✓ Cả 3 đã đúng · kiểm tra {{date}} lúc {{time}}",
-        "items": {
-          "mumu_installed": "nơi cài MuMu",
-          "mumu_screen": "màn hình MuMu",
-          "wake_timers": "máy tự thức dậy"
-        },
-        "run": "Thiết lập tự động",
-        "running": "Đang thiết lập…",
-        "restart": "MuMu đang mở nên chưa đổi được màn hình. Cần khởi động lại MuMu.",
-        "restartButton": "Khởi động lại MuMu"
       },
       "guide": {
         "title": "Hướng dẫn",

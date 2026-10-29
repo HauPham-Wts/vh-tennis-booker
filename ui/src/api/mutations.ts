@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Language } from "../i18n";
 import {
   getNotifications,
-  runAutoSetup,
   saveNotifications,
   saveSettings,
   startDryRun,
@@ -54,20 +53,6 @@ export function useSaveNotificationLanguage() {
     onSuccess: async (settings) => {
       cache.setQueryData(queryKeys.notifications, settings);
       await cache.invalidateQueries({ queryKey: ["events"] });
-    },
-  });
-}
-
-/** Run auto setup; it answers with its checks, and the overview shows what is left. */
-export function useAutoSetup() {
-  const cache = useQueryClient();
-  return useMutation({
-    mutationFn: runAutoSetup,
-    onSuccess: async () => {
-      await Promise.all([
-        cache.invalidateQueries({ queryKey: queryKeys.overview }),
-        cache.invalidateQueries({ queryKey: ["events"] }),
-      ]);
     },
   });
 }

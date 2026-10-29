@@ -3,6 +3,7 @@
 import logging
 import threading
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import pytest
 
@@ -10,6 +11,7 @@ import court_booker.runner as runner
 from court_booker.clock import NtpClock
 from court_booker.config import Config
 from court_booker.errors import (
+    AdbNotFoundError,
     AppNotReadyError,
     DeviceNotRespondingError,
     DriverError,
@@ -441,3 +443,44 @@ def test_closing_uiautomator2_leaves_its_server_running():
     runner.QuickTap(device).close()  # TouchDevice has no close(): nothing reaches it
 
     assert device.events == []
+
+
+def test_a_wrong_mumu_path_is_found_again(tmp_path, monkeypatch, caplog):
+    found = tmp_path / "nx_main" / "MuMuManager.exe"
+    monkeypatch.setattr(runner, "find_mumu_manager", lambda configured: found)
+    caplog.set_level(logging.INFO)
+
+    assert runner.find_manager("C:/old/MuMuManager.exe") == found
+    assert "MuMu found at" in caplog.text
+
+
+def test_a_missing_mumu_keeps_the_configured_path(monkeypatch):
+    monkeypatch.setattr(runner, "find_mumu_manager", lambda configured: None)
+
+    assert str(runner.find_manager("C:/old/MuMuManager.exe")) == str(Path("C:/old/MuMuManager.exe"))
+
+
+def test_the_screen_is_set_before_mumu_starts(tmp_path, monkeypatch):
+    calls = []
+
+    class FakeMuMu:
+        def __init__(self, manager, index):
+            self.manager = manager
+
+        def ensure_started(self, timeout):
+            calls.append("start")
+
+        def adb_serial(self):
+            return "127.0.0.1:16384"
+
+    def no_adb(path, folders):
+        raise AdbNotFoundError("stop here")
+
+    monkeypatch.setattr(runner, "find_mumu_manager", lambda configured: tmp_path / "m.exe")
+    monkeypatch.setattr(runner, "MuMu", FakeMuMu)
+    monkeypatch.setattr(runner, "prepare_screen", lambda mumu: calls.append("screen"))
+    monkeypatch.setattr(runner, "find_adb", no_adb)
+
+    with pytest.raises(AdbNotFoundError):
+        runner.connect_device(Config(mumu_manager="C:/old/MuMuManager.exe"))
+    assert calls == ["screen", "start"]

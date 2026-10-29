@@ -14,12 +14,21 @@ uses [Semantic Versioning](https://semver.org/).
   list's hidden screen reader text grew the page; every scroll area now holds its own.
 
 ### Changed
+- Setup needs no button: each run finds MuMu when `mumu_manager` points elsewhere (without
+  rewriting `config.toml`) and sets the screen of a stopped MuMu (every instance) to
+  540x1600 at 220 DPI before starting it; a running MuMu with another screen is only logged.
+  Switching the schedule on (the daily switch, `schedule install`) allows wake timers, and
+  the status line says when Windows still blocks them. The Setup tab drops "Court Booker làm
+  thay bạn" and its "Thiết lập tự động" button; `court-booker setup [--auto]` stays.
 - The result notification's switch moves from the Setup tab to the ticket, beside the daily
   switch on one row, both with a short word ("Tự đặt", "Thông báo"). The switches are smaller
   (36 px, a 24 px knob) and the buttons as tall as the choices (44 px).
 - The slots on top of the ticket drop their order badges; the choices below number them.
 - The setup guide and the status line name the daily switch by its new word ("bật Tự đặt",
   "turn on Auto-book"); README screenshots retaken.
+
+### Removed
+- `POST /api/setup/auto` and the Overview's `setup` field (replaced by `wake_blocked`).
 
 ## [0.17.0] - 2026-10-28
 
