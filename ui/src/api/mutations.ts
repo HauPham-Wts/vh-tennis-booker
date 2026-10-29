@@ -5,6 +5,7 @@ import {
   saveNotifications,
   saveSettings,
   startDryRun,
+  switchInstance,
   switchSchedule,
 } from "./endpoints";
 import { queryKeys } from "./queries";
@@ -20,6 +21,19 @@ export function useSaveSettings() {
         cache.invalidateQueries({ queryKey: queryKeys.overview }),
         cache.invalidateQueries({ queryKey: ["events"] }),
       ]);
+    },
+  });
+}
+
+/** Switch a machine on or off: its `[[instances]]` table is added or removed. */
+export function useSwitchInstance() {
+  const cache = useQueryClient();
+  return useMutation({
+    mutationFn: ({ mumuIndex, enabled }: { mumuIndex: number; enabled: boolean }) =>
+      switchInstance(mumuIndex, enabled),
+    onSuccess: async (settings) => {
+      cache.setQueryData(queryKeys.settings, settings);
+      await cache.invalidateQueries({ queryKey: ["events"] });
     },
   });
 }

@@ -51,7 +51,13 @@
       "offTitle": "Off",
       "offLine": "No booking {{when}}.",
       "instance": "Instance",
-      "instanceName": "MuMu {{index}}",
+      "instanceName": "Machine {{number}}",
+      "mumuName": "MuMu {{index}}",
+      "instanceLeft": "setup left",
+      "instanceOff": "off",
+      "use": "Use this machine",
+      "useLabel": "Book with machine {{number}} (MuMu {{index}})",
+      "useOff": "Machine {{number}} is off: runs leave MuMu {{index}} alone. Turn it on once MuMu {{index}} is logged in to another account; it takes machine 1's choices until you change them.",
       "subdivision": "Subdivision",
       "byAccount": "From the account",
       "sport": "Sport",
@@ -130,6 +136,8 @@
       },
       "manual": {
         "title": "Yours to do, once · tick when done",
+        "machine": "Machine {{number}} · MuMu {{index}}",
+        "shared": "for every machine",
         "mumu": {
           "title": "MuMu Player is installed",
           "hint": "Download it from mumuplayer.com and install it like any program."
@@ -141,7 +149,8 @@
         "login": {
           "title": "The Vinhomes app is logged in",
           "hint": "The resident account. Court Booker never reads the password."
-        }
+        },
+        "off": "off, not counted in the setup"
       },
       "guide": {
         "title": "Guide",

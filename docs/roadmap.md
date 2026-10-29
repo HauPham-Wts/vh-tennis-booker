@@ -12,8 +12,9 @@ to be awake. Unattended, scheduled, as fast as possible.
   `warm_up_seconds` before the start, so only the booking taps happen after 06:00. A real run
   that ran its rounds closes MuMu at the end.
 - More accounts book side by side: each other MuMu instance (`[[instances]]`) runs the same
-  run in its own process, with its own account, court and slots. Each books only its own
-  slots, so 4 hours take 2 slots on each of 2 instances.
+  run in its own process, with its own account, court and slots, switched on in the UI ("Máy 2",
+  "Dùng máy này"). Each books only its own slots, so 4 hours take 2 slots on each of 2
+  instances.
 - Out of scope: getting around any check of the app, and accessibility services, which the app
   refuses (field notes, "Accessibility agent"). In scope: the project's own instrumentation
   driver (UiAutomation, as uiautomator2 uses); the app books with it running.

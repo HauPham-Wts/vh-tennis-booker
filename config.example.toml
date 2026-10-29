@@ -67,7 +67,7 @@ registered = "Đã đăng ký"            # ticket status once registered
 # Optional: more MuMu instances, each logged in to its own account, booking side by side
 # with this one in a process of its own. Each table sets that instance's mumu_index and,
 # if they differ from the settings above, its slots, subdivision, sport, court and
-# venue_keyword.
+# venue_keyword. The UI's "Dùng máy này" switch adds a table (mumu_index alone) or removes it.
 # [[instances]]
 # mumu_index = 1
 # slots = ["20:00 - 21:00", "21:00 - 22:00"]
