@@ -6,6 +6,8 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-10-29
+
 ### Added
 - Tabs on top of the ticket ("Máy 1", "Máy 2") choose the machine the ticket and the Setup tab
   show; each machine has its own app and login ticks, and a red mark tells a machine with
