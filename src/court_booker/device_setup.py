@@ -1,10 +1,11 @@
 """Device setup: check the PC and the emulator, and fix what the code can fix.
 
-This is the "Thiết lập máy" (device setup) tab of the app (spec part 6). The user installs
-MuMu Player and the Vinhomes app and logs in; the checks find them and the app shows a guide
-for anything missing. Auto setup does the rest: remember where MuMu is, set its screen to
-540x1600 at 220 DPI and allow wake timers. Whether the app is logged in shows in the dry run
-(exit code 4), which the schedule requires anyway, so it is not checked here.
+The user installs MuMu Player and the Vinhomes app and logs in; the rest needs no button.
+Each run finds MuMu when the configured path is wrong and sets the screen of a stopped MuMu
+to 540x1600 at 220 DPI (:func:`prepare_screen`), and switching the schedule on allows wake
+timers (:func:`ensure_wake_timers`). ``court-booker setup`` checks every item, and
+``--auto`` fixes them by hand (also saving the MuMu path). Whether the app is logged in shows
+in the dry run (exit code 4), which the schedule requires anyway, so it is not checked here.
 """
 
 from __future__ import annotations
@@ -313,7 +314,7 @@ def run_auto_setup(
     now: datetime | None = None,
     run: Run = run_command,
 ) -> list[Check]:
-    """Run auto setup as one task, as the command line and the app both do.
+    """Run auto setup as one task, as ``court-booker setup --auto`` does.
 
     It is refused from the wake time to 5 minutes after the start time, holds the run lock
     while it works (so no run uses MuMu meanwhile) and reports each item to ``report``.
@@ -374,6 +375,38 @@ def _set_screen(mumu: MuMu | None, restart_mumu: bool) -> Check:
         return Check(MUMU_SCREEN, Status.USER, f"MuMu kept its screen settings: {written}")
     when = "MuMu restarted" if running else "applies when MuMu starts"
     return Check(MUMU_SCREEN, Status.FIXED, f"Screen set to 540x1600 at 220 DPI; {when}")
+
+
+def prepare_screen(mumu: MuMu) -> Check:
+    """Set the screen of ``mumu`` before a run starts it; a running MuMu is only checked.
+
+    A restart in the run would cost the boot time just before the start, so a running MuMu
+    with another screen is only logged: the run scrolls instead, which is slower.
+    """
+    check = _set_screen(mumu, restart_mumu=False)
+    if check.status in (Status.OK, Status.FIXED):
+        logger.info("MuMu %d: %s", mumu.index, check.detail)
+    elif check.status is Status.FIXABLE:
+        logger.warning(
+            "MuMu %d is running with another screen than 540x1600 at 220 DPI;"
+            " shut it down so the next run sets it",
+            mumu.index,
+        )
+    else:
+        logger.warning("MuMu %d: %s", mumu.index, check.detail)
+    return check
+
+
+def ensure_wake_timers(run: Run = run_command) -> Check:
+    """Allow wake timers unless allowed already, so the scheduled task can wake the PC."""
+    check = check_wake_timers(run)
+    if check.status is Status.FIXABLE:
+        check = _allow_wake_timers(run)
+    if check.status in (Status.OK, Status.FIXED):
+        logger.info("%s", check.detail)
+    else:
+        logger.warning("%s", check.detail)
+    return check
 
 
 def _same(actual: str | None, wanted: str) -> bool:

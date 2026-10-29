@@ -179,16 +179,6 @@ def last_event_id(db: sqlite3.Connection) -> int:
     return db.execute("SELECT COALESCE(MAX(id), 0) FROM events").fetchone()[0]
 
 
-def last_setup(db: sqlite3.Connection) -> dict[str, Any] | None:
-    """Return when auto setup last ran and the items it left, or ``None`` if it never ran."""
-    row = db.execute(
-        "SELECT time, data FROM events WHERE kind = 'setup_finished' ORDER BY id DESC LIMIT 1"
-    ).fetchone()
-    if row is None:
-        return None
-    return {"checked_at": row["time"], "left": json.loads(row["data"])["left"]}
-
-
 def account_subdivisions(db: sqlite3.Connection) -> list[dict[str, Any]]:
     """Return the subdivision each MuMu instance's account last told, and when.
 

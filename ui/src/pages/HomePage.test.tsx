@@ -49,23 +49,23 @@ describe("HomePage status line", () => {
     expect(within(line).queryByRole("link")).not.toBeInTheDocument();
   });
 
-  it("counts auto setup that never ran as a setup task", async () => {
-    renderOverview(overview({ setup: null }));
-
-    expect(await statusLine()).toHaveTextContent("Còn 1 việc thiết lập, xem khung bên phải");
-  });
-
-  it("counts the steps not ticked and auto setup left, before anything else", async () => {
-    tickSteps({ mumu: true, app: false, login: true });
-    const status = overview({
-      setup: { checked_at: "2026-10-14T21:00:00.000", left: ["app_installed", "mumu_screen"] },
-    });
+  it("counts the steps not ticked, before anything else", async () => {
+    tickSteps({ mumu: true, app: false, login: false });
+    const status = overview({ wake_blocked: true });
     renderOverview({
       ...status,
       schedule: { ...status.schedule, enabled: false, dry_run_passed: false },
     });
 
     expect(await statusLine()).toHaveTextContent("Còn 2 việc thiết lập, xem khung bên phải");
+  });
+
+  it("says when Windows keeps the PC from waking", async () => {
+    renderOverview(overview({ wake_blocked: true }));
+
+    expect(await statusLine()).toHaveTextContent(
+      "Windows chưa cho máy tự thức dậy lúc 05:50 · tắt rồi bật lại Tự đặt",
+    );
   });
 
   it("asks for a dry run before the daily switch", async () => {
@@ -313,9 +313,7 @@ describe("HomePage live run", () => {
 
     expect(await screen.findByText("Đang thiết lập tự động")).toBeInTheDocument();
     const ticket = await screen.findByRole("region", { name: "Lần đặt tiếp theo" });
-    expect(
-      within(ticket).getByText("Chạy thử và Thiết lập tự động tạm khóa cho tới khi xong"),
-    ).toBeInTheDocument();
+    expect(within(ticket).getByText("Chạy thử tạm khóa cho tới khi xong")).toBeInTheDocument();
     expect(within(ticket).getByRole("button", { name: "Chạy thử ngay" })).toBeDisabled();
   });
 });

@@ -50,7 +50,7 @@ as the 06:00 logs show them. What is left:
 | Device | MuMu not running / frozen | Started automatically / a device command over 60 s ends the run (exit 3); no restart, no retry (by decision) |
 | Device | One of several MuMu instances fails or freezes | Only its own process ends; the others book on, and the main log names its exit code. Its slots are not moved to another instance (by decision) |
 | Device | ADB lost during a run | Not handled |
-| Device | Wrong MuMu resolution | Works but scrolls; no warning |
+| Device | Wrong MuMu resolution | Set by the run while MuMu is off; a running MuMu is logged (WARNING) and scrolls |
 | Device | PC woke late, clock drift | Runs at once if under 10 min late; NTP time on a counter Windows does not set |
 | Reporting | Every failure reported | Log file, history database, a Windows notification after every run; Telegram optional |
 

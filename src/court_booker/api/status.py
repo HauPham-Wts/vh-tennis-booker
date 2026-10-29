@@ -1,4 +1,4 @@
-"""The Overview: what runs now, the schedule, the last run and the last setup."""
+"""The Overview: what runs now, the schedule, the last run and the wake timers."""
 
 # No `from __future__ import annotations`: FastAPI and Pydantic read the annotations at run
 # time.
@@ -8,10 +8,11 @@ from typing import Any, Optional
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
-from court_booker import __version__, history_read
+from court_booker import __version__, device_setup, history_read
 from court_booker.api.context import AppContext, Context
 from court_booker.api.history import RunSummary
 from court_booker.api.schedule import ScheduleState, schedule_state
+from court_booker.device_setup import Status
 from court_booker.lock import RunLock
 
 router = APIRouter(prefix="/api", tags=["status"])
@@ -73,11 +74,15 @@ def runs_of(since: str, recent: Sequence[dict[str, Any]], own: int) -> list[int]
     return [first["id"], *(run["id"] for run in sorted(others, key=lambda run: run["device"]))]
 
 
-class SetupSummary(BaseModel):
-    """When auto setup last ran, and the items it left for the user."""
+def wake_blocked(enabled: bool, running: Optional[Running]) -> bool:
+    """Tell whether Windows keeps the daily task from waking the PC.
 
-    checked_at: str
-    left: list[str]
+    Asked only while the schedule is on and no run goes on (``powercfg`` costs a process);
+    a ``powercfg`` that cannot tell counts as not blocked.
+    """
+    if not enabled or running is not None:
+        return False
+    return device_setup.check_wake_timers().status is Status.FIXABLE
 
 
 class Overview(BaseModel):
@@ -87,24 +92,26 @@ class Overview(BaseModel):
     running: Optional[Running]
     schedule: ScheduleState
     last_run: Optional[RunSummary]
-    setup: Optional[SetupSummary]
-    """Empty until auto setup has run once."""
+    wake_blocked: bool
+    """The schedule is on, but Windows does not allow wake timers (switching it on allows
+    them; the power plan may have changed since)."""
 
 
 @router.get("/status", response_model=Overview)
 def read_status(context: Context, request: Request) -> Overview:
-    """Show what runs now, the schedule and next booking, the last run and the last setup."""
+    """Show what runs now, the schedule and next booking, the last run and the wake timers."""
     connection = history_read.open_read_only(context.data.database)
     try:
         recent = history_read.list_runs(connection, limit=RECENT_RUNS)
-        setup = history_read.last_setup(connection)
     finally:
         connection.close()
     last = recent[:1]
+    now = running(context, getattr(request.app.state, "dry_run", None), recent)
+    state = schedule_state(context)
     return Overview(
         version=__version__,
-        running=running(context, getattr(request.app.state, "dry_run", None), recent),
-        schedule=schedule_state(context),
+        running=now,
+        schedule=state,
         last_run=RunSummary(**last[0]) if last else None,
-        setup=SetupSummary(**setup) if setup else None,
+        wake_blocked=wake_blocked(state.enabled, now),
     )

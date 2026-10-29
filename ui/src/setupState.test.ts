@@ -1,39 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { autoLeft, setupDone, setupLeft } from "./setupState";
+import { setupDone, setupLeft } from "./setupState";
 import { overview } from "./test/overview";
 
 const ALL = { mumu: true, app: true, login: true };
 
-describe("autoLeft", () => {
-  it("keeps the items auto setup fixes, leaving out the user's own", () => {
-    const summary = {
-      checked_at: "2026-10-14T21:00:00.000",
-      left: ["app_installed", "wake_timers", "mumu_screen"],
-    };
-
-    expect(autoLeft(summary)).toEqual(["mumu_screen", "wake_timers"]);
-  });
-});
-
 describe("setupLeft", () => {
-  it("counts the steps not ticked and an auto setup that never ran", () => {
-    expect(setupLeft(overview({ setup: null }), { mumu: true, app: false, login: false })).toBe(3);
-  });
-
-  it("does not count an app auto setup could not see, once the user ticked it", () => {
-    const status = overview({
-      setup: { checked_at: "2026-10-14T21:00:00.000", left: ["app_installed"] },
-    });
-
-    expect(setupLeft(status, ALL)).toBe(0);
-  });
-
-  it("counts auto setup once, whatever it left", () => {
-    const status = overview({
-      setup: { checked_at: "2026-10-14T21:00:00.000", left: ["mumu_screen", "wake_timers"] },
-    });
-
-    expect(setupLeft(status, ALL)).toBe(1);
+  it("counts the steps not ticked", () => {
+    expect(setupLeft({ mumu: true, app: false, login: false })).toBe(2);
+    expect(setupLeft(ALL)).toBe(0);
   });
 });
 

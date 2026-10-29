@@ -12,6 +12,7 @@ from typing import Any
 from court_booker.adb import Adb, find_adb, resolve_device
 from court_booker.clock import NtpClock, wait_until
 from court_booker.config import DAYS_AHEAD, Config
+from court_booker.device_setup import find_mumu_manager, prepare_screen
 from court_booker.driver import PACKAGE as DRIVER_PACKAGE
 from court_booker.driver import connect_driver
 from court_booker.emulator import MuMu
@@ -95,12 +96,28 @@ class QuickTap:
         return getattr(self._device, name)
 
 
+def find_manager(configured: str) -> Path:
+    """Return MuMuManager.exe: the configured one, else one found where MuMu is installed.
+
+    The config is not rewritten (that would drop its comments); every run looks again.
+    """
+    found = find_mumu_manager(configured)
+    if found is None:
+        return Path(configured)  # starting MuMu fails with the configured path in the error
+    if found != Path(configured):
+        logger.info("MuMu found at %s; the config has %s", found, configured)
+    return found
+
+
 def connect_device(config: Config, driver: str = AUTO_DRIVER) -> Any:
     """Start the emulator if configured and return the device the run drives.
 
-    That is the driver (:mod:`court_booker.driver`), installed and started as needed, else
-    uiautomator2 when the driver does not start, whose taps skip its hold (:class:`QuickTap`);
-    ``driver`` can ask for one of them only. The device's ``driver`` attribute names the one
+    MuMu is found even when its configured path is wrong (:func:`find_manager`), and a
+    stopped MuMu gets the booking screen before it starts
+    (:func:`~court_booker.device_setup.prepare_screen`). The device is the driver
+    (:mod:`court_booker.driver`), installed and started as needed, else uiautomator2 when
+    the driver does not start, whose taps skip its hold (:class:`QuickTap`); ``driver`` can
+    ask for one of them only. The device's ``driver`` attribute names the one
     used, and ``close()`` ends it after the run. The connection and every command on the
     device are time-limited (:mod:`court_booker.watchdog`), so a frozen emulator ends the
     run instead of hanging it.
@@ -108,7 +125,8 @@ def connect_device(config: Config, driver: str = AUTO_DRIVER) -> Any:
     preferred = None
     extra_dirs = []
     if config.mumu_manager:
-        mumu = MuMu(Path(config.mumu_manager), config.mumu_index)
+        mumu = MuMu(find_manager(config.mumu_manager), config.mumu_index)
+        prepare_screen(mumu)
         mumu.ensure_started(config.boot_timeout)
         preferred = mumu.adb_serial()
         extra_dirs.append(mumu.manager.parent)

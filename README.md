@@ -162,13 +162,16 @@ log the clone in to another account, and add an `[[instances]]` table for it (ex
 
 ```bash
 court-booker setup                         # check MuMu, its screen, wake timers and the app
-court-booker setup --auto                  # fix what can be fixed
+court-booker setup --auto                  # fix by hand what the runs and schedule fix
 court-booker setup --auto --restart-mumu   # also restart a running MuMu to apply its screen
 ```
 
-Auto setup saves the MuMu folder to `config.toml`, sets MuMu's screen to 540x1600 at
-220 DPI (the whole slot list then fits without scrolling) and allows wake timers on mains
-and battery. The rest is up to you:
+Nothing here is needed before a run: each run finds MuMu when `mumu_manager` points
+elsewhere (without rewriting `config.toml`) and sets the screen of a stopped MuMu to
+540x1600 at 220 DPI before starting it (the whole slot list then fits without scrolling; a
+running MuMu with another screen is only logged). Switching the schedule on allows wake
+timers on mains and battery. `setup --auto` also saves the MuMu folder to `config.toml`.
+The rest is up to you:
 
 - Keep the app logged in inside MuMu.
 - Leave the PC on or in **Sleep**: a PC that is shut down cannot be woken.
@@ -219,7 +222,8 @@ The UI is one screen, without a menu:
   ("2/2"), then every slot booked or not and when it started (real bookings, dry runs on
   request); one click opens the reasons, the steps and the technical log.
 - **Thiết lập / Setup** beside it: the steps only you can do (install MuMu and the Vinhomes
-  app, log in), ticked by you; an auto setup for what the app can fix; a short guide. It
+  app, log in), ticked by you, and a short guide; MuMu's place and screen and waking the PC
+  need no step (the runs and the daily switch see to them). It
   opens first, with a count, while anything is left. The Windows notification switch sits on
   the ticket, beside the daily switch.
 

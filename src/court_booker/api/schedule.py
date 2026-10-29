@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from court_booker import history_read, schedule
+from court_booker import device_setup, history_read, schedule
 from court_booker.api.activity import record
 from court_booker.api.context import AppContext, Context
 from court_booker.api.errors import DryRunRequiredError
@@ -70,7 +70,8 @@ def switch_schedule(context: Context, switch: ScheduleSwitch) -> ScheduleState:
 
     Switching on needs a passed dry run (409 ``dry_run_required``) and a wake time before
     the start time (400 ``bad_request``). It installs the task again each time, so a new
-    wake time applies. The task runs the Python of this backend; in development, the
+    wake time applies, and allows wake timers; ``wake_blocked`` in the Overview tells when
+    Windows still keeps them off. The task runs the Python of this backend; in development, the
     runner folder keeps its task through ``tools/setup_runner.py`` instead.
     """
     state = schedule_state(context)
@@ -81,6 +82,7 @@ def switch_schedule(context: Context, switch: ScheduleSwitch) -> ScheduleState:
         if parse_time(config.wake_at, "wake_at") >= parse_time(config.start_at, "start_at"):
             raise RequestError(f"wake_at {config.wake_at} must be before {config.start_at}")
         schedule.install(context.config_path.resolve(), config.wake_at)
+        device_setup.ensure_wake_timers()
         record(
             context, EventKind.SCHEDULE_ENABLED, wake_at=config.wake_at, start_at=config.start_at
         )

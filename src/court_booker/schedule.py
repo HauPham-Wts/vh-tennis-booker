@@ -14,6 +14,7 @@ from xml.sax.saxutils import escape
 
 from court_booker.clock import parse_time
 from court_booker.config import load_config
+from court_booker.device_setup import ensure_wake_timers
 from court_booker.emulator import Run, run_command
 from court_booker.errors import CourtBookerError, RequestError, ScheduleError
 from court_booker.logging_setup import LOGGER_NAME, configure_logging
@@ -174,6 +175,7 @@ def main(argv: list[str]) -> int:
             logger.info(
                 "Task %r runs daily at %s and books at %s", TASK_NAME, wake_at, config.start_at
             )
+            ensure_wake_timers()
         elif args.action == "remove":
             remove()
             logger.info("Task %r removed", TASK_NAME)

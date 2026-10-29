@@ -203,20 +203,6 @@ def test_a_passed_dry_run_is_found(path, read, record_run):
     assert history_read.dry_run_passed(read())
 
 
-def test_the_last_setup_result_is_read(path, read):
-    assert history_read.last_setup(read()) is None
-    store = history.History(history.connect(path))
-    report = Reporter(store)
-    report(EventKind.SETUP_FINISHED, left=["wake_timers"], error=None)
-    report(EventKind.SETUP_FINISHED, left=[], error=None)
-    store.close()
-
-    last = history_read.last_setup(read())
-
-    assert last["left"] == []
-    assert last["checked_at"].startswith("20")
-
-
 def test_steps_after_a_step_come_oldest_first(path, read, record_run):
     assert history_read.last_event_id(read()) == 0
     record_run(path)

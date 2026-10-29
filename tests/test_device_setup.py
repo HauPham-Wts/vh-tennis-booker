@@ -1,4 +1,4 @@
-"""Tests for the device setup checks and auto setup, with fake tools."""
+"""Tests for the device setup checks, what runs and the schedule fix, and auto setup."""
 
 import subprocess
 import sys
@@ -404,3 +404,35 @@ def test_run_auto_setup_waits_for_the_scheduled_run(tmp_path):
             Reporter(MemorySink()),
             now=datetime(2026, 10, 14, 5, 50),
         )
+
+
+def test_a_run_sets_the_screen_of_a_stopped_mumu():
+    mumu = FakeMuMu(screen(540, 960, 240), started=False)
+
+    assert device_setup.prepare_screen(mumu).status is Status.FIXED
+    assert mumu.changed == [device_setup.SCREEN_SETTINGS]
+
+
+def test_a_run_leaves_a_running_mumu_as_it_is(caplog):
+    mumu = FakeMuMu(screen(540, 960, 240))
+
+    assert device_setup.prepare_screen(mumu).status is Status.FIXABLE
+    assert (mumu.changed, mumu.restarts) == ([], 0)
+    assert "running with another screen" in caplog.text
+
+
+def test_a_right_screen_is_not_written():
+    mumu = FakeMuMu(started=False)
+
+    assert device_setup.prepare_screen(mumu).status is Status.OK
+    assert mumu.changed == []
+
+
+def test_wake_timers_are_allowed_unless_allowed_already():
+    allowed = FakePowercfg()
+    assert device_setup.ensure_wake_timers(allowed.run).status is Status.OK
+    assert [call[0] for call in allowed.calls] == ["/query"]
+
+    blocked = FakePowercfg(ac=0, dc=0)
+    assert device_setup.ensure_wake_timers(blocked.run).status is Status.FIXED
+    assert (blocked.ac, blocked.dc) == (1, 1)

@@ -87,6 +87,17 @@ def test_install_rejects_wake_after_start(tmp_path, monkeypatch):
     assert schedule.main(["install", "--config", str(config), "--wake", "06:30"]) == 1
 
 
+def test_install_allows_wake_timers(tmp_path, monkeypatch):
+    config = tmp_path / "config.toml"
+    config.write_text('wake_at = "05:50"\nstart_at = "06:00"\n', encoding="utf-8")
+    calls = []
+    monkeypatch.setattr(schedule, "install", lambda *a, **k: calls.append("install"))
+    monkeypatch.setattr(schedule, "ensure_wake_timers", lambda: calls.append("wake"))
+
+    assert schedule.main(["install", "--config", str(config)]) == 0
+    assert calls == ["install", "wake"]
+
+
 def test_cli_dispatches_schedule(monkeypatch):
     import court_booker.cli as cli
 

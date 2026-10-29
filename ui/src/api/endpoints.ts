@@ -1,7 +1,6 @@
 import { call, client } from "./client";
 import type {
   AccountSubdivision,
-  AutoSetupRequest,
   DryRunStarted,
   Health,
   NotificationSettings,
@@ -10,7 +9,6 @@ import type {
   RunSummary,
   ScheduleState,
   Settings,
-  SetupItem,
   Step,
   paths,
 } from "./types";
@@ -71,11 +69,6 @@ export function getNotifications(): Promise<NotificationSettings> {
 /** Save the notification settings; they apply from the next run. */
 export function saveNotifications(settings: NotificationSettings): Promise<NotificationSettings> {
   return call(client.PUT("/api/notifications", { body: settings }));
-}
-
-/** Fix what auto setup can fix and return the checks again. */
-export function runAutoSetup(request: AutoSetupRequest): Promise<SetupItem[]> {
-  return call(client.POST("/api/setup/auto", { body: request }));
 }
 
 /** Switch the daily schedule on (needs a passed dry run) or off. */

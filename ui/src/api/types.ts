@@ -39,8 +39,6 @@ export type NotificationSettings = Schemas["NotificationSettings"];
 export type SetupItem = Schemas["SetupItem"];
 /** The state of one device setup item (the backend's `Status` enum). */
 export type SetupStatus = Schemas["Status"];
-export type SetupSummary = Schemas["SetupSummary"];
-export type AutoSetupRequest = Schemas["AutoSetupRequest"];
 
 export type DryRunStarted = Schemas["DryRunStarted"];
 export type Health = Schemas["Health"];

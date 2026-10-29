@@ -116,7 +116,7 @@ Details live in the docstrings; this page says where things are and what must st
   `events`, and the run's log lines. The first database error turns history off for the process.
   Schema changes only add columns, so an older runner still writes to a newer database.
 - `history_read.py`: read-only queries for the backend (runs, one run, events, the live feed's
-  `events_after`, `dry_run_passed`, `last_setup`, `account_subdivisions`: the subdivision each
+  `events_after`, `dry_run_passed`, `account_subdivisions`: the subdivision each
   MuMu instance last told); it migrates an older database first.
 
 ## Configuration and data folder
@@ -131,9 +131,14 @@ Details live in the docstrings; this page says where things are and what must st
   `booker.db`, `run.lock`, `logs/` and the app's `config.toml`. The CLI's config comes from
   `--config`; a relative `log_dir` resolves beside it.
 - `device_setup.py`: checks (MuMu installed, MuMu screen settings, wake timers, app installed)
-  and `auto_setup` for the fixable ones; `court-booker setup [--auto]` and the API share it.
-  The screen and the app are checked on every instance (`[[instances]]` too) as one item: the
-  worst status, each instance's detail ("MuMu 1: …"); auto setup sets each wrong screen.
+  and `auto_setup` for the fixable ones (`court-booker setup [--auto]`; `GET /api/setup` only
+  checks). The screen and the app are checked on every instance (`[[instances]]` too) as one
+  item: the worst status, each instance's detail ("MuMu 1: …"); auto setup sets each wrong
+  screen. Without a button: `runner.connect_device` finds MuMuManager.exe when the configured
+  path is wrong (`find_manager`, the config is not rewritten) and calls `prepare_screen`
+  before starting each instance (a stopped MuMu gets 540x1600 at 220 DPI; a running one with
+  another screen is only logged, never restarted before the start); `schedule install` and
+  `PUT /api/schedule` call `ensure_wake_timers` (`powercfg`).
 - `schedule.py`: the Windows task (`schtasks`) that wakes the PC at `wake_at` and runs the
   runner folder's Python.
 
@@ -149,13 +154,13 @@ values 422 `invalid_request`.
 | Route | Does |
 |---|---|
 | `GET /api/health` | Version; no device access |
-| `GET /api/status` | The Overview in one call: running run (with `runs`: the lock holder's run, then those of the instances it started), schedule, last run, setup; never calls MuMu |
+| `GET /api/status` | The Overview in one call: running run (with `runs`: the lock holder's run, then those of the instances it started), schedule, last run, `wake_blocked` (the schedule on but wake timers off: `powercfg`, asked only with no run going on); never calls MuMu |
 | `GET /api/runs`, `/api/runs/{id}`, `/api/runs/months` | Runs newest first (filters, paging by id or by days), one run with steps and log lines, months of real bookings |
 | `GET /api/events` | Activity steps newest first |
 | `GET`/`PUT /api/settings` | Booking settings without the hidden keys (`HIDDEN`: Telegram, the notification), with each `[[instances]]` entry in full; `PUT` validates, refuses added or removed instances, saves only on a change |
 | `GET`/`PUT /api/notifications`, `POST .../test` | The Windows notification's switch and language; a sample notification |
-| `GET /api/setup`, `POST /api/setup/auto` | Device checks; auto setup (quiet time and lock respected) |
-| `GET`/`PUT /api/schedule` | The task: state, times; switching on needs a passed dry run. Never switch it on from a development backend: the task would run the development Python |
+| `GET /api/setup` | Device checks; nothing is changed (auto setup is the command line's) |
+| `GET`/`PUT /api/schedule` | The task: state, times; switching on needs a passed dry run and allows wake timers. Never switch it on from a development backend: the task would run the development Python |
 | `POST /api/runs/dry-run` | Starts a dry run in its own process (refused in the quiet time or while a run holds the lock) |
 | `GET /api/accounts` | The subdivision each MuMu instance's account told last (`history_read.account_subdivisions`); one the catalog no longer lists is left out |
 | `WS /api/live` | Pushes each new step |
@@ -188,9 +193,8 @@ After a route, model or catalog change: `python tools/export_openapi.py` (writes
   or `LiveTicket` while a booking or a dry run goes on: one ticket per run of `running.runs`,
   named "MuMu N" when several instances book side by side) and `SidePanel` beside it, two tabs:
   `HistoryTab` (runs ten days at a time, real bookings unless dry runs are ticked, `?run=`
-  opens one run's slots, steps and log) and `SetupTab` (the user's ticks, auto setup, the
-  guide). The result notification's switch (`NotifySwitch`) sits on the ticket beside the
-  daily one, both with a short word ("Tự đặt", "Thông báo") and their full name for screen
+  opens one run's slots, steps and log) and `SetupTab` (the user's ticks and the guide).
+  The result notification's switch (`NotifySwitch`) sits on the ticket beside the daily one, both with a short word ("Tự đặt", "Thông báo") and their full name for screen
   readers. The header's status line (`components/StatusLine.tsx`)
   shows the run going on, else the one thing to do. `manualSteps.ts` keeps the user's ticks in
   `localStorage` (memory when storage fails); `setupState.ts` counts the setup tasks left and
