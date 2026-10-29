@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Overview } from "../../api/types";
 import { STORAGE_KEY } from "../../manualSteps";
@@ -27,19 +27,8 @@ function setupTab() {
   return screen.findByRole("tabpanel", { name: /^Thiết lập/ });
 }
 
-/** The bodies of the requests sent as `key` ("PUT /api/notifications"). */
-async function bodies(
-  fetch: ReturnType<typeof renderSetup>["fetch"],
-  key: string,
-): Promise<unknown[]> {
-  const sent = fetch.mock.calls
-    .map(([request]) => request)
-    .filter((request) => `${request.method} ${new URL(request.url).pathname}` === key);
-  return Promise.all(sent.map((request) => request.clone().json() as Promise<unknown>));
-}
-
 beforeEach(() => {
-  // "Today" is 15/10; auto setup last ran on 14/10 at 21:00.
+  // "Today" is 15/10.
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(2026, 9, 15, 10, 0));
 });
@@ -63,7 +52,7 @@ describe("SetupTab first use", () => {
     ).toEqual([
       "Làm các việc thiết lập bên dưới, một lần.",
       "Chọn môn, sân và khung giờ trên vé bên trái.",
-      'Bấm "Chạy thử ngay", đạt thì bật "Tự đặt mỗi sáng".',
+      'Bấm "Chạy thử ngay", đạt thì bật "Tự đặt".',
     ]);
   });
 
@@ -111,99 +100,24 @@ describe("SetupTab steps the user does", () => {
   });
 });
 
-describe("SetupTab auto setup", () => {
-  it("says all is right since its last run", async () => {
+describe("SetupTab without auto setup", () => {
+  it("has no button: the runs and the daily switch set up MuMu and waking", async () => {
     renderSetup();
 
     const tab = await setupTab();
-    expect(within(tab).getByText("✓ Cả 3 đã đúng · kiểm tra 14/10 lúc 21:00")).toBeInTheDocument();
-  });
-
-  it("says when it never ran", async () => {
-    renderSetup(overview({ setup: null }));
-
-    expect(within(await setupTab()).getByText("Chưa chạy lần nào")).toBeInTheDocument();
-  });
-
-  it("names what it left to fix, not what the user ticks", async () => {
-    renderSetup(
-      overview({
-        setup: {
-          checked_at: "2026-10-14T21:00:00.000",
-          left: ["app_installed", "wake_timers", "mumu_screen"],
-        },
-      }),
-    );
-
     expect(
-      within(await setupTab()).getByText("Cần sửa: màn hình MuMu, máy tự thức dậy"),
-    ).toBeInTheDocument();
-  });
-
-  it("runs, then asks before restarting MuMu for its screen", async () => {
-    const checks = [
-      { item: "mumu_installed", status: "ok", detail: "" },
-      { item: "mumu_screen", status: "fixable", detail: "MuMu is running" },
-      { item: "wake_timers", status: "ok", detail: "" },
-    ];
-    const { fetch } = renderSetup(overview(), { "POST /api/setup/auto": reply(checks) });
-    const tab = await setupTab();
-
-    fireEvent.click(within(tab).getByRole("button", { name: "Thiết lập tự động" }));
-    fireEvent.click(await within(tab).findByRole("button", { name: "Khởi động lại MuMu" }));
-
-    expect(
-      within(tab).getByText("MuMu đang mở nên chưa đổi được màn hình. Cần khởi động lại MuMu."),
-    ).toBeInTheDocument();
-    await waitFor(async () =>
-      expect(await bodies(fetch, "POST /api/setup/auto")).toEqual([
-        { restart_mumu: false },
-        { restart_mumu: true },
-      ]),
-    );
-  });
-
-  it("waits while a run holds the emulator", async () => {
-    renderSetup(
-      overview({ running: { trigger: "setup", pid: 4242, since: "10:00:00", runs: [] } }),
-    );
-
-    const tab = await setupTab();
-    expect(within(tab).getByRole("button", { name: "Thiết lập tự động" })).toBeDisabled();
-    expect(
-      within(tab).getByText("Chạy thử và Thiết lập tự động tạm khóa cho tới khi xong"),
-    ).toBeInTheDocument();
-  });
-
-  it("says why it could not run", async () => {
-    const held = reply({ error: "lock_held", detail: "Another run is in progress" }, 409);
-    renderSetup(overview(), { "POST /api/setup/auto": held });
-    const tab = await setupTab();
-
-    fireEvent.click(within(tab).getByRole("button", { name: "Thiết lập tự động" }));
-
-    expect(
-      await within(tab).findByText("Đang có một lần chạy khác. Hãy chờ nó xong rồi thử lại."),
-    ).toBeInTheDocument();
+      within(tab).queryByRole("button", { name: "Thiết lập tự động" }),
+    ).not.toBeInTheDocument();
+    expect(within(tab).queryByText("Court Booker làm thay bạn")).not.toBeInTheDocument();
   });
 });
 
-describe("SetupTab options and guide", () => {
-  it("switches the notification at once, in the UI's language", async () => {
-    const { fetch, replies } = renderSetup();
+describe("SetupTab guide", () => {
+  it("holds no notification switch: it is on the ticket", async () => {
+    renderSetup();
     const tab = await setupTab();
-    replies["PUT /api/notifications"] = reply({ enabled: false, language: "vi" });
-    const toggle = await within(tab).findByRole("switch", { name: "Thông báo kết quả" });
-    expect(toggle).toHaveAttribute("aria-checked", "true");
 
-    fireEvent.click(toggle);
-
-    await waitFor(async () =>
-      expect(await bodies(fetch, "PUT /api/notifications")).toEqual([
-        { enabled: false, language: "vi" },
-      ]),
-    );
-    expect(within(tab).queryByRole("button", { name: "Gửi thử" })).not.toBeInTheDocument();
+    expect(within(tab).queryByRole("switch")).not.toBeInTheDocument();
   });
 
   it("opens a guide row on a press", async () => {

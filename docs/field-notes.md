@@ -252,6 +252,8 @@ slots and the booked date and time read the same.
 
 - Screen: custom resolution **540x1600**, 220 DPI. In tablet mode `window_size()` reports the
   landscape size, so the screen size is read from the dump; no stored coordinates.
+  `MuMuManager setting` reads and writes it while the instance is off; a running instance
+  applies a new screen only after a restart, so each run sets it before starting MuMu.
 - A screen read (dump) costs 60-75 ms with uiautomator2, 13 ms with the driver (8-31 ms; parsing
   1.2 ms). A uiautomator2 `click(x, y)` holds the touch about 100 ms (151-165 ms a tap); touch
   down + up takes 83-91 ms and the app takes every such tap.

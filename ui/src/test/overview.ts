@@ -14,7 +14,7 @@ export function overview(fields: Partial<Overview> = {}): Overview {
       dry_run_passed: true,
     },
     last_run: null,
-    setup: { checked_at: "2026-10-14T21:00:00.000", left: [] },
+    wake_blocked: false,
     ...fields,
   };
 }

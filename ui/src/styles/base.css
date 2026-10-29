@@ -9,6 +9,36 @@ html {
   text-size-adjust: 100%;
 }
 
+/* Every scroll bar is thin, a rounded rule-coloured thumb on no track, without arrows: the
+   browser's own, wide and with arrows, ran over the rounded corners of the cards. Edge and
+   Chrome take the -webkit- rules, which the standard properties would override there. */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: var(--radius-pill);
+  background: var(--color-rule) padding-box;
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-rule) transparent;
+  }
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -78,7 +108,9 @@ svg {
   }
 }
 
-/* Text for screen readers only, such as a label of an icon-only control. */
+/* Text for screen readers only, such as a label of an icon-only control. Every scroll area
+   is `position: relative`: else this text, placed against the page, would grow the page to
+   where it sits in a long list. */
 .visually-hidden {
   position: absolute;
   width: 1px;

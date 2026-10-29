@@ -29,3 +29,26 @@ def client(app):
 
     with TestClient(app) as client:
         yield client
+
+
+@pytest.fixture(autouse=True)
+def wake_timers(monkeypatch):
+    """Keep ``powercfg`` out of the tests: wake timers are allowed; set ``status`` to change.
+
+    ``calls`` counts the times the schedule allowed them.
+    """
+    from court_booker import device_setup
+    from court_booker.device_setup import Check, Status
+
+    state = {"status": Status.OK, "calls": 0}
+
+    def check(run=None):
+        return Check(device_setup.WAKE_TIMERS, state["status"], "Wake timers")
+
+    def ensure(run=None):
+        state["calls"] += 1
+        return check()
+
+    monkeypatch.setattr(device_setup, "check_wake_timers", check)
+    monkeypatch.setattr(device_setup, "ensure_wake_timers", ensure)
+    return state

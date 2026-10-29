@@ -23,10 +23,10 @@ describe("API types", () => {
     }>();
   });
 
-  it("let the overview have no run, no last run and no setup yet", () => {
+  it("let the overview have no run and no last run yet", () => {
     expectTypeOf<Overview["running"]>().toBeNullable();
     expectTypeOf<Overview["last_run"]>().toEqualTypeOf<RunSummary | null>();
-    expectTypeOf<Overview["setup"]>().toBeNullable();
+    expectTypeOf<Overview["wake_blocked"]>().toEqualTypeOf<boolean>();
   });
 
   it("give a step its values as an object", () => {

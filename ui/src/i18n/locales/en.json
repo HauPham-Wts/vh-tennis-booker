@@ -22,7 +22,8 @@
       "status": {
         "setupLeft": "Setup: {{count}} left, see the panel on the right",
         "noDryRun": "No dry run passed yet · press Dry run now",
-        "scheduleOff": "Dry run passed · turn on Book every morning",
+        "scheduleOff": "Dry run passed · turn on Auto-book",
+        "wakeBlocked": "Windows does not let the PC wake at {{wake}} · turn Auto-book off and on",
         "ready": "Ready for {{time}} {{when}}"
       },
       "live": {
@@ -33,12 +34,16 @@
           "setup": "Auto setup in progress",
           "other": "A run is in progress"
         },
-        "locked": "Dry run and auto setup are locked until it ends"
+        "locked": "Dry run is locked until it ends"
       }
     },
     "ticket": {
       "title": "Next booking",
       "auto": "Book every morning",
+      "autoShort": "Auto-book",
+      "notifyShort": "Notify",
+      "notify": "Result notifications",
+      "notifyHint": "In the corner of the Windows screen, after every run",
       "on": "ON",
       "off": "OFF",
       "day": "Day",
@@ -46,7 +51,13 @@
       "offTitle": "Off",
       "offLine": "No booking {{when}}.",
       "instance": "Instance",
-      "instanceName": "MuMu {{index}}",
+      "instanceName": "Machine {{number}}",
+      "mumuName": "MuMu {{index}}",
+      "instanceLeft": "setup left",
+      "instanceOff": "off",
+      "use": "Use this machine",
+      "useLabel": "Book with machine {{number}} (MuMu {{index}})",
+      "useOff": "Machine {{number}} is off: runs leave MuMu {{index}} alone. Turn it on once MuMu {{index}} is logged in to another account; it takes machine 1's choices until you change them.",
       "subdivision": "Subdivision",
       "byAccount": "From the account",
       "sport": "Sport",
@@ -125,6 +136,8 @@
       },
       "manual": {
         "title": "Yours to do, once · tick when done",
+        "machine": "Machine {{number}} · MuMu {{index}}",
+        "shared": "for every machine",
         "mumu": {
           "title": "MuMu Player is installed",
           "hint": "Download it from mumuplayer.com and install it like any program."
@@ -136,28 +149,8 @@
         "login": {
           "title": "The Vinhomes app is logged in",
           "hint": "The resident account. Court Booker never reads the password."
-        }
-      },
-      "auto": {
-        "title": "Court Booker does the rest",
-        "what": "MuMu, its screen, waking the PC",
-        "never": "Not run yet",
-        "fix": "To fix: {{items}}",
-        "ok": "✓ All 3 right · checked {{date}} at {{time}}",
-        "items": {
-          "mumu_installed": "where MuMu is",
-          "mumu_screen": "MuMu's screen",
-          "wake_timers": "waking the PC"
         },
-        "run": "Auto setup",
-        "running": "Setting up…",
-        "restart": "MuMu is open, so its screen could not change yet. MuMu needs a restart.",
-        "restartButton": "Restart MuMu"
-      },
-      "options": {
-        "title": "Options",
-        "notify": "Result notifications",
-        "notifyHint": "In the corner of the Windows screen, after every run"
+        "off": "off, not counted in the setup"
       },
       "guide": {
         "title": "Guide",

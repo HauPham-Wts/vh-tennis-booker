@@ -31,6 +31,18 @@ describe("manual steps", () => {
     expect(manualDone()).toEqual({ mumu: false, app: false, login: true });
   });
 
+  it("keep the app and the login for each machine, MuMu for all", () => {
+    setManualDone("mumu", true);
+    setManualDone("app", true, "1");
+
+    expect(manualDone()).toEqual({ mumu: true, app: false, login: false });
+    expect(manualDone("1")).toEqual({ mumu: true, app: true, login: false });
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "") as { machines: unknown };
+    expect(stored.machines).toEqual({
+      "1": { mumu: true, app: true, login: false },
+    });
+  });
+
   it("tell the screens that show them", () => {
     const { result } = renderHook(() => useManualSteps());
 

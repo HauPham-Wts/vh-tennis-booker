@@ -12,8 +12,9 @@ to be awake. Unattended, scheduled, as fast as possible.
   `warm_up_seconds` before the start, so only the booking taps happen after 06:00. A real run
   that ran its rounds closes MuMu at the end.
 - More accounts book side by side: each other MuMu instance (`[[instances]]`) runs the same
-  run in its own process, with its own account, court and slots. Each books only its own
-  slots, so 4 hours take 2 slots on each of 2 instances.
+  run in its own process, with its own account, court and slots, switched on in the UI ("Máy 2",
+  "Dùng máy này"). Each books only its own slots, so 4 hours take 2 slots on each of 2
+  instances.
 - Out of scope: getting around any check of the app, and accessibility services, which the app
   refuses (field notes, "Accessibility agent"). In scope: the project's own instrumentation
   driver (UiAutomation, as uiautomator2 uses); the app books with it running.
@@ -50,7 +51,7 @@ as the 06:00 logs show them. What is left:
 | Device | MuMu not running / frozen | Started automatically / a device command over 60 s ends the run (exit 3); no restart, no retry (by decision) |
 | Device | One of several MuMu instances fails or freezes | Only its own process ends; the others book on, and the main log names its exit code. Its slots are not moved to another instance (by decision) |
 | Device | ADB lost during a run | Not handled |
-| Device | Wrong MuMu resolution | Works but scrolls; no warning |
+| Device | Wrong MuMu resolution | Set by the run while MuMu is off; a running MuMu is logged (WARNING) and scrolls |
 | Device | PC woke late, clock drift | Runs at once if under 10 min late; NTP time on a counter Windows does not set |
 | Reporting | Every failure reported | Log file, history database, a Windows notification after every run; Telegram optional |
 

@@ -1,21 +1,22 @@
 import { useTranslation } from "react-i18next";
-import { errorMessage } from "../../api/errors";
-import { useAutoSetup, useSaveNotifications } from "../../api/mutations";
-import { useNotifications, useOverview } from "../../api/queries";
+import { useOverview } from "../../api/queries";
 import type { Overview } from "../../api/types";
-import { Button } from "../../components/Button";
 import { QueryView } from "../../components/QueryView";
-import { Switch } from "../../components/Switch";
-import { DEFAULT_LANGUAGE, LANGUAGES } from "../../i18n";
-import { MANUAL_STEPS, setManualDone, useManualSteps } from "../../manualSteps";
-import { autoLeft, setupDone } from "../../setupState";
-import { useFormat } from "../../useFormat";
+import { type Machine, machineAt, useMachines } from "../../machines";
+import {
+  MANUAL_STEPS,
+  SHARED_STEPS,
+  setManualDone,
+  useManualSteps,
+  useManualTicks,
+} from "../../manualSteps";
+import { setupDone } from "../../setupState";
 import styles from "./SetupTab.module.css";
 
 /** The three steps of a first use; shown first until everything is set up. */
 function HowTo() {
   const { t } = useTranslation();
-  const names = { dryRun: t("pages.ticket.dryRun.button"), daily: t("pages.ticket.auto") };
+  const names = { dryRun: t("pages.ticket.dryRun.button"), daily: t("pages.ticket.autoShort") };
   return (
     <ol className={styles.howto}>
       {(["1", "2", "3"] as const).map((step) => (
@@ -25,15 +26,27 @@ function HowTo() {
   );
 }
 
-/** The steps only the user can do, ticked by the user; the app does not check them. */
-function ManualSteps() {
+/**
+ * The steps only the user can do, ticked by the user; the app does not check them. With
+ * several machines, the ticks are the shown machine's, MuMu's shared by all.
+ */
+function ManualSteps({ machine, several }: { machine: Machine; several: boolean }) {
   const { t } = useTranslation();
-  const done = useManualSteps();
+  const done = useManualSteps(machine.key);
   return (
     <section aria-labelledby="manual-title">
       <h3 id="manual-title" className={styles.heading}>
         {t("pages.setup.manual.title")}
       </h3>
+      {several && machine.mumuIndex !== null && (
+        <p className={styles.machine}>
+          {t("pages.setup.manual.machine", {
+            number: machine.place + 1,
+            index: machine.mumuIndex,
+          })}
+          {!machine.enabled && ` · ${t("pages.setup.manual.off")}`}
+        </p>
+      )}
       <ul className={styles.list}>
         {MANUAL_STEPS.map((step) => (
           <li key={step} className={styles.item}>
@@ -41,116 +54,19 @@ function ManualSteps() {
               <input
                 type="checkbox"
                 checked={done[step]}
-                onChange={(event) => setManualDone(step, event.target.checked)}
+                onChange={(event) => setManualDone(step, event.target.checked, machine.key)}
               />
               <span className={styles.text}>
-                <span className={styles.title}>{t(`pages.setup.manual.${step}.title`)}</span>
+                <span className={styles.title}>
+                  {t(`pages.setup.manual.${step}.title`)}
+                  {several && SHARED_STEPS.includes(step) && ` (${t("pages.setup.manual.shared")})`}
+                </span>
                 <span className={styles.hint}>{t(`pages.setup.manual.${step}.hint`)}</span>
               </span>
             </label>
           </li>
         ))}
       </ul>
-    </section>
-  );
-}
-
-/**
- * What Court Booker sets up itself, in one line from its last run, and the button that does
- * it again. A running MuMu applies a new screen only after a restart, so auto setup first
- * runs without one; if the screen is still left to fix, the user is asked before MuMu
- * restarts. Nothing here asks MuMu until the button is pressed.
- */
-function AutoSetup({ overview }: { overview: Overview }) {
-  const { t } = useTranslation();
-  const f = useFormat();
-  const auto = useAutoSetup();
-  const busy = overview.running !== null || auto.isPending;
-  const summary = overview.setup;
-  let state: { text: string; tone: "ok" | "todo" | "plain" };
-  if (summary === null) {
-    state = { text: t("pages.setup.auto.never"), tone: "plain" };
-  } else {
-    const left = autoLeft(summary);
-    state =
-      left.length > 0
-        ? {
-            text: t("pages.setup.auto.fix", {
-              items: left.map((item) => t(`pages.setup.auto.items.${item}`)).join(", "),
-            }),
-            tone: "todo",
-          }
-        : {
-            text: t("pages.setup.auto.ok", {
-              date: f.shortDate(summary.checked_at),
-              time: f.time(summary.checked_at),
-            }),
-            tone: "ok",
-          };
-  }
-  const restart =
-    auto.isSuccess &&
-    !auto.variables.restart_mumu &&
-    auto.data.some(({ item, status }) => item === "mumu_screen" && status === "fixable");
-  return (
-    <section aria-labelledby="auto-title">
-      <h3 id="auto-title" className={styles.heading}>
-        {t("pages.setup.auto.title")}
-      </h3>
-      <div className={styles.row}>
-        <span className={styles.text}>
-          <span className={styles.title}>{t("pages.setup.auto.what")}</span>
-          <span className={styles[state.tone]}>{state.text}</span>
-        </span>
-        <Button disabled={busy} onClick={() => auto.mutate({ restart_mumu: false })}>
-          {t(auto.isPending ? "pages.setup.auto.running" : "pages.setup.auto.run")}
-        </Button>
-      </div>
-      {restart && (
-        <div className={styles.restart}>
-          <p>{t("pages.setup.auto.restart")}</p>
-          <Button disabled={busy} onClick={() => auto.mutate({ restart_mumu: true })}>
-            {t("pages.setup.auto.restartButton")}
-          </Button>
-        </div>
-      )}
-      {auto.isError && <p className={styles.problem}>{errorMessage(t, auto.error)}</p>}
-      {overview.running !== null && !auto.isPending && (
-        <p className={styles.note}>{t("pages.overview.live.locked")}</p>
-      )}
-    </section>
-  );
-}
-
-/** The Windows notification after every run, as one switch saved at once. */
-function Options() {
-  const { t, i18n } = useTranslation();
-  const notifications = useNotifications();
-  const save = useSaveNotifications();
-  // The notification speaks the UI's language; the switch saves it along.
-  const language = LANGUAGES.find((known) => known === i18n.resolvedLanguage) ?? DEFAULT_LANGUAGE;
-  return (
-    <section aria-labelledby="options-title">
-      <h3 id="options-title" className={styles.heading}>
-        {t("pages.setup.options.title")}
-      </h3>
-      <div className={styles.row}>
-        <span className={styles.text}>
-          <span className={styles.title}>{t("pages.setup.options.notify")}</span>
-          <span className={styles.hint}>{t("pages.setup.options.notifyHint")}</span>
-        </span>
-        <QueryView query={notifications}>
-          {(settings) => (
-            <Switch
-              label={t("pages.setup.options.notify")}
-              checked={settings.enabled}
-              disabled={save.isPending}
-              onChange={(enabled) => save.mutate({ enabled, language })}
-            />
-          )}
-        </QueryView>
-      </div>
-      {save.isError && <p className={styles.problem}>{errorMessage(t, save.error)}</p>}
     </section>
   );
 }
@@ -201,18 +117,22 @@ function Guide({ overview, howto }: { overview: Overview; howto: boolean }) {
 }
 
 /**
- * The Setup tab: how to start while anything is left, the steps the user ticks, what Court
- * Booker sets up itself, the notification switch and the guide.
+ * The Setup tab: how to start while anything is left, the steps the user ticks and the
+ * guide; the notification switch is on the ticket. MuMu's place and screen and waking the
+ * PC need no step: the runs and the daily switch see to them. It shows the machine chosen
+ * on the ticket (`machine`, 0: the first).
  */
-export function SetupTab() {
+export function SetupTab({ machine }: { machine: number }) {
   const { t } = useTranslation();
   const overview = useOverview();
-  const manual = useManualSteps();
+  const ticks = useManualTicks();
+  const machines = useMachines();
+  const shown = machineAt(machines, machine);
   return (
     <div className={styles.tab}>
       <QueryView query={overview}>
         {(data) => {
-          const done = setupDone(data, manual);
+          const done = setupDone(data, ticks, machines);
           return (
             <>
               {!done && (
@@ -223,9 +143,7 @@ export function SetupTab() {
                   <HowTo />
                 </section>
               )}
-              <ManualSteps />
-              <AutoSetup overview={data} />
-              <Options />
+              <ManualSteps machine={shown} several={machines.length > 1} />
               <Guide overview={data} howto={done} />
             </>
           );

@@ -6,6 +6,39 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-10-29
+
+### Added
+- Tabs on top of the ticket ("Máy 1", "Máy 2") choose the machine the ticket and the Setup tab
+  show; each machine has its own app and login ticks, and a red mark tells a machine with
+  setup of its own left. "Máy 2" (MuMu 1) is always there: its "Dùng máy này" switch adds its
+  `[[instances]]` table (`PUT /api/instances/{mumu_index}`, taking machine 1's choices until
+  changed) or removes it; switched off it is pale and counts no setup.
+
+### Fixed
+- The ticket and the side panel keep their four rounded corners: the ticket's choices scroll
+  inside it, its dry run row staying at the foot, instead of the column scrolling past its
+  lower corners; the scroll bars are thin, rounded and arrowless, inside each card.
+- Opening the History no longer makes the whole page scroll over a large blank space: the
+  list's hidden screen reader text grew the page; every scroll area now holds its own.
+
+### Changed
+- Setup needs no button: each run finds MuMu when `mumu_manager` points elsewhere (without
+  rewriting `config.toml`) and sets the screen of a stopped MuMu (every instance) to
+  540x1600 at 220 DPI before starting it; a running MuMu with another screen is only logged.
+  Switching the schedule on (the daily switch, `schedule install`) allows wake timers, and
+  the status line says when Windows still blocks them. The Setup tab drops "Court Booker làm
+  thay bạn" and its "Thiết lập tự động" button; `court-booker setup [--auto]` stays.
+- The result notification's switch moves from the Setup tab to the ticket, beside the daily
+  switch on one row, both with a short word ("Tự đặt", "Thông báo"). The switches are smaller
+  (36 px, a 24 px knob) and the buttons as tall as the choices (44 px).
+- The slots on top of the ticket drop their order badges; the choices below number them.
+- The setup guide and the status line name the daily switch by its new word ("bật Tự đặt",
+  "turn on Auto-book"); README screenshots retaken.
+
+### Removed
+- `POST /api/setup/auto` and the Overview's `setup` field (replaced by `wake_blocked`).
+
 ## [0.17.0] - 2026-10-28
 
 ### Changed

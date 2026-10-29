@@ -3,16 +3,15 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  min-height: 50px;
+  min-height: var(--touch-target);
   padding: 0 var(--space-5);
   border-radius: var(--radius-button);
   font-family: var(--font-sans);
-  font-size: var(--text-body);
+  font-size: var(--text-control);
   cursor: pointer;
 }
 
 .primary {
-  padding: 0 var(--space-6);
   border: 0;
   background: var(--color-ink);
   color: var(--color-on-ink);
@@ -20,7 +19,7 @@
 }
 
 .secondary {
-  border: var(--border) solid var(--color-ink);
+  border: var(--border-hairline) solid var(--color-ink);
   background: transparent;
   color: var(--color-ink);
   font-weight: var(--weight-semibold);
@@ -31,9 +30,9 @@
 }
 
 .large {
-  min-height: 52px;
+  min-height: 48px;
   padding: 0 var(--space-6);
-  font-size: var(--text-lead);
+  font-size: var(--text-body);
   font-weight: var(--weight-bold);
 }
 

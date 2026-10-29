@@ -1,7 +1,8 @@
 import { type KeyboardEvent, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useOverview } from "../../api/queries";
-import { useManualSteps } from "../../manualSteps";
+import { useMachines } from "../../machines";
+import { useManualTicks } from "../../manualSteps";
 import { setupLeft } from "../../setupState";
 import { HistoryTab } from "./HistoryTab";
 import { SetupTab } from "./SetupTab";
@@ -15,15 +16,16 @@ const TABS: readonly PanelTab[] = ["history", "setup"];
  * The panel beside the ticket: the History and the Setup, one tab each. The Setup tab
  * counts the tasks left in red. Arrow keys move between the tabs, as in any tab list.
  */
-export function SidePanel({ initialTab }: { initialTab: PanelTab }) {
+export function SidePanel({ initialTab, machine }: { initialTab: PanelTab; machine: number }) {
   const { t } = useTranslation();
   const overview = useOverview();
-  const manual = useManualSteps();
+  const ticks = useManualTicks();
+  const machines = useMachines();
   const [tab, setTab] = useState(initialTab);
   // Kept here, so it survives opening a run, going back and changing tabs.
   const [withDry, setWithDry] = useState(false);
   const buttons = useRef<Partial<Record<PanelTab, HTMLButtonElement | null>>>({});
-  const left = overview.data === undefined ? 0 : setupLeft(overview.data, manual);
+  const left = overview.data === undefined ? 0 : setupLeft(ticks, machines);
 
   function onKeyDown(event: KeyboardEvent) {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
@@ -78,7 +80,11 @@ export function SidePanel({ initialTab }: { initialTab: PanelTab }) {
         aria-labelledby={`tab-${tab}`}
         className={styles.body}
       >
-        {tab === "history" ? <HistoryTab withDry={withDry} onWithDry={setWithDry} /> : <SetupTab />}
+        {tab === "history" ? (
+          <HistoryTab withDry={withDry} onWithDry={setWithDry} />
+        ) : (
+          <SetupTab machine={machine} />
+        )}
       </div>
     </section>
   );

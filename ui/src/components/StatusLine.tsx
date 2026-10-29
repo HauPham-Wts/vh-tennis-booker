@@ -1,7 +1,8 @@
 import { useTranslation } from "react-i18next";
 import type { Overview, Running } from "../api/types";
 import { localToday } from "../format";
-import { useManualSteps } from "../manualSteps";
+import { useMachines } from "../machines";
+import { useManualTicks } from "../manualSteps";
 import { setupLeft } from "../setupState";
 import { useFormat } from "../useFormat";
 import styles from "./StatusLine.module.css";
@@ -26,17 +27,19 @@ function RunningStatus({ running, startAt }: { running: Running; startAt: string
 /**
  * One line in the header on whether the next booking can happen, in this order: the run
  * going on; the setup tasks left (the Setup tab lists them); no dry run passed yet; the
- * daily switch off; else ready for the next start. The ticket holds what fixes the last two.
+ * daily switch off; Windows keeping the PC from waking; else ready for the next start. The
+ * ticket holds what fixes the last three (switching the schedule on allows waking).
  */
 export function StatusLine({ overview }: { overview: Overview }) {
   const { t } = useTranslation();
   const f = useFormat();
-  const manual = useManualSteps();
+  const ticks = useManualTicks();
+  const machines = useMachines();
   const { running, schedule } = overview;
   if (running !== null) {
     return <RunningStatus running={running} startAt={schedule.start_at} />;
   }
-  const left = setupLeft(overview, manual);
+  const left = setupLeft(ticks, machines);
   let words: string;
   let ready = false;
   if (left > 0) {
@@ -45,6 +48,8 @@ export function StatusLine({ overview }: { overview: Overview }) {
     words = t("pages.overview.status.noDryRun");
   } else if (!schedule.enabled) {
     words = t("pages.overview.status.scheduleOff");
+  } else if (overview.wake_blocked) {
+    words = t("pages.overview.status.wakeBlocked", { wake: schedule.wake_at });
   } else {
     ready = true;
     words = t("pages.overview.status.ready", {

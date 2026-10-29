@@ -1,4 +1,4 @@
-"""Record what the app itself does (settings saved, auto setup) in the activity log."""
+"""Record what the app itself does (settings saved, schedule switched) in the activity log."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import sqlite3
 from typing import Any
 
 from court_booker.api.context import AppContext
-from court_booker.events import EventKind, LogSink, MultiSink, Reporter
+from court_booker.events import EventKind, Reporter
 from court_booker.history import History, connect
 
 logger = logging.getLogger(__name__)
@@ -24,11 +24,6 @@ def open_store(context: AppContext) -> History | None:
     except (OSError, sqlite3.Error):
         logger.warning("History database unavailable; app events not recorded", exc_info=True)
         return None
-
-
-def reporter(store: History | None) -> Reporter:
-    """Report events to the debug log and, when open, to ``store``."""
-    return Reporter(LogSink() if store is None else MultiSink(LogSink(), store))
 
 
 def record(context: AppContext, kind: EventKind, **data: Any) -> None:

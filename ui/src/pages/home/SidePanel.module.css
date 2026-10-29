@@ -7,6 +7,9 @@
   border-radius: var(--radius-card);
   background: var(--color-paper);
   box-shadow: var(--shadow-card);
+  overflow: hidden;
+  /* The tabs scroll inside, their bars kept off the panel's lower corner. */
+  padding-bottom: var(--space-2);
 }
 
 .tabs {

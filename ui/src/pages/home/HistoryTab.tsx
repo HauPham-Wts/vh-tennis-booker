@@ -84,7 +84,7 @@ function StartedAt({ run }: { run: RunSummary }) {
       {f.shortDate(run.started_at)}
       {/* A run on schedule starts at the wake time, the same every day. */}
       {run.trigger === "scheduled" ? "" : ` ${f.time(run.started_at)}`}
-      {run.device ? ` · ${t("pages.ticket.instanceName", { index: run.device })}` : ""}
+      {run.device ? ` · ${t("pages.ticket.mumuName", { index: run.device })}` : ""}
     </span>
   );
 }

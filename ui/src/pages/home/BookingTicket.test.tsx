@@ -48,6 +48,7 @@ function renderTicket({
     "PUT /api/settings": reply(saved),
     "GET /api/runs": reply(runs),
     "GET /api/accounts": reply(accounts),
+    "GET /api/notifications": reply({ enabled: true, language: "vi" }),
     ...extra,
   };
   return { replies, ...renderApp(paths.overview, replies) };
@@ -96,15 +97,31 @@ describe("BookingTicket start", () => {
     renderTicket();
 
     const top = await ticket();
-    // The badge before each slot gives its booking order.
+    // The slots in booking order, without numbers: the choices below number them.
     await waitFor(() =>
-      expect(shown(top)).toEqual(["CN 18/10", "Tennis S6", "115:00–16:00216:00–17:00"]),
+      expect(shown(top)).toEqual(["CN 18/10", "Tennis S6", "15:00–16:0016:00–17:00"]),
     );
     expect(within(top).queryByText(/máy thức/)).toBeNull();
     const toggle = within(top).getByRole("switch", { name: "Tự đặt mỗi sáng" });
     expect(toggle).toHaveAttribute("aria-checked", "true");
     expect(toggle).toHaveTextContent("BẬT");
     expect(toggle).toBeEnabled();
+  });
+
+  it("switches the result notification at once, in the UI's language", async () => {
+    const { fetch, replies } = renderTicket();
+    const top = await ticket();
+    replies["PUT /api/notifications"] = reply({ enabled: false, language: "vi" });
+    const toggle = await within(top).findByRole("switch", { name: "Thông báo kết quả" });
+    expect(toggle).toHaveAttribute("aria-checked", "true");
+
+    fireEvent.click(toggle);
+
+    await waitFor(async () =>
+      expect(await bodies(fetch, "PUT /api/notifications")).toEqual([
+        { enabled: false, language: "vi" },
+      ]),
+    );
   });
 
   it("keeps the switch locked until a dry run has passed", async () => {
@@ -273,11 +290,36 @@ describe("BookingTicket choices", () => {
     expect(await bodies(fetch, "PUT /api/settings")).toEqual([badminton]);
   });
 
-  it("offers no instance choice for one MuMu instance", async () => {
-    renderTicket();
+  it("shows a second machine, off, without an instance, and switches it on", async () => {
+    const other = {
+      mumu_index: 1,
+      slots: ["15:00 - 16:00"],
+      subdivision: "",
+      sport: "tennis",
+      court: "S6 - Sân tennis",
+      venue_keyword: "Origami",
+    };
+    const { fetch, replies } = renderTicket();
+    const instances = await screen.findByRole("group", { name: "Máy" });
+    // Off: pale, and no setup of its own counted.
+    const second = within(instances).getByRole("button", { name: "Máy 2, đang tắt" });
 
-    await screen.findByRole("group", { name: "Sân" });
-    expect(screen.queryByRole("group", { name: "Máy" })).not.toBeInTheDocument();
+    fireEvent.click(second);
+
+    const use = screen.getByRole("switch", { name: "Đặt sân bằng máy 2 (MuMu 1)" });
+    expect(use).toHaveAttribute("aria-checked", "false");
+    expect(screen.queryByRole("group", { name: "Sân" })).not.toBeInTheDocument();
+    expect(screen.getByText(/^Máy 2 đang tắt: lượt chạy không dùng MuMu 1/)).toBeInTheDocument();
+
+    replies["PUT /api/instances/1"] = reply(settings({ instances: [other] }));
+    fireEvent.click(use);
+
+    expect(await screen.findByRole("group", { name: "Sân" })).toBeInTheDocument();
+    expect(await bodies(fetch, "PUT /api/instances/1")).toEqual([{ enabled: true }]);
+    expect(screen.getByRole("switch", { name: "Đặt sân bằng máy 2 (MuMu 1)" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
   });
 
   it("shows and saves the choices of each MuMu instance", async () => {
@@ -292,8 +334,8 @@ describe("BookingTicket choices", () => {
     const saved = settings({ instances: [other] });
     const { fetch, replies } = renderTicket({ saved });
     const instances = await screen.findByRole("group", { name: "Máy" });
-    const courts = screen.getByRole("group", { name: "Sân" });
-    expect(within(instances).getByRole("button", { name: "MuMu 0" })).toHaveAttribute(
+    let courts = screen.getByRole("group", { name: "Sân" });
+    expect(within(instances).getByRole("button", { name: /^Máy 1/ })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
@@ -302,15 +344,16 @@ describe("BookingTicket choices", () => {
       "true",
     );
 
-    fireEvent.click(within(instances).getByRole("button", { name: "MuMu 1" }));
+    fireEvent.click(within(instances).getByRole("button", { name: /^Máy 2/ }));
 
+    courts = screen.getByRole("group", { name: "Sân" }); // the choices of another machine
     expect(within(courts).getByRole("button", { name: "S9" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
     const slots = screen.getByRole("group", { name: /^Khung giờ/ });
     expect(within(slots).getByRole("button", { name: "20:00–21:00, lượt 1" })).toBeInTheDocument();
-    expect(shown(await ticket())).toEqual(["CN 18/10", "Tennis S9", "120:00–21:00"]);
+    expect(shown(await ticket())).toEqual(["CN 18/10", "Tennis S9", "20:00–21:00"]);
     const moved = { ...other, court: "S10 - Sân tennis" };
     replies["PUT /api/settings"] = reply({ ...saved, instances: [moved] });
 
@@ -324,6 +367,32 @@ describe("BookingTicket choices", () => {
     );
     // The first instance keeps its own court.
     expect(await bodies(fetch, "PUT /api/settings")).toEqual([{ ...saved, instances: [moved] }]);
+  });
+
+  it("shows the setup of the machine chosen, its ticks its own", async () => {
+    const other = {
+      mumu_index: 1,
+      slots: ["20:00 - 21:00"],
+      subdivision: "",
+      sport: "tennis",
+      court: "S9 - Sân tennis",
+      venue_keyword: "Origami",
+    };
+    renderTicket({ saved: settings({ instances: [other] }) });
+    const instances = await screen.findByRole("group", { name: "Máy" });
+    // Nothing ticked yet: each machine has its own steps left.
+    expect(
+      within(instances).getByRole("button", { name: /^Máy 2.*còn việc thiết lập$/ }),
+    ).toBeVisible();
+    const app = () => screen.getByRole("checkbox", { name: /Đã cài app Vinhomes/ });
+    expect(await screen.findByText("Máy 1 · MuMu 0")).toBeInTheDocument();
+    fireEvent.click(app());
+    expect(app()).toBeChecked();
+
+    fireEvent.click(within(instances).getByRole("button", { name: /^Máy 2/ }));
+
+    expect(await screen.findByText("Máy 2 · MuMu 1")).toBeInTheDocument();
+    expect(app()).not.toBeChecked();
   });
 
   it("takes no press while a save is on its way", async () => {

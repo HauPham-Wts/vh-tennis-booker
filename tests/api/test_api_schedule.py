@@ -86,13 +86,16 @@ def test_the_schedule_needs_a_passed_dry_run(client, context, task):
     assert task["calls"] == []
 
 
-def test_switching_on_installs_the_task_and_records_it(client, context, task, record_run):
+def test_switching_on_installs_the_task_and_records_it(
+    client, context, task, record_run, wake_timers
+):
     record_run(context.data.database, trigger="dry_run", status="ok")
 
     response = client.put("/api/schedule", json={"enabled": True})
 
     assert response.json()["enabled"] is True
     assert task["calls"] == [("install", context.config_path.resolve(), "05:50")]
+    assert wake_timers["calls"] == 1  # allowed, so the task can wake the PC
     assert schedule_steps(context) == [
         ("schedule_enabled", {"wake_at": "05:50", "start_at": "06:00"})
     ]

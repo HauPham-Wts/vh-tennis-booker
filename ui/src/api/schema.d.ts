@@ -135,6 +135,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/instances/{mumu_index}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Switch Instance
+         * @description Book with MuMu instance ``mumu_index`` beside the first, or stop.
+         *
+         *     On, it gets an ``[[instances]]`` table that takes every setting from the top of the
+         *     file until the app changes them; off, its table goes. No ``enabled`` key is written: a
+         *     runner of an older version refuses keys it does not know. Invalid settings (422)
+         *     leave the file as it was; the first machine's own instance is refused (400).
+         */
+        put: operations["switch_instance_api_instances__mumu_index__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/accounts": {
         parameters: {
             query?: never;
@@ -225,29 +250,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/setup/auto": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Run Auto Setup
-         * @description Fix every item auto setup can fix, holding the run lock, and record each item.
-         *
-         *     Refused (400 ``bad_request``) from the wake time to 5 minutes after the start time,
-         *     and (409 ``lock_held``) while a run holds the lock.
-         */
-        post: operations["run_auto_setup_api_setup_auto_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/schedule": {
         parameters: {
             query?: never;
@@ -266,7 +268,8 @@ export interface paths {
          *
          *     Switching on needs a passed dry run (409 ``dry_run_required``) and a wake time before
          *     the start time (400 ``bad_request``). It installs the task again each time, so a new
-         *     wake time applies. The task runs the Python of this backend; in development, the
+         *     wake time applies, and allows wake timers; ``wake_blocked`` in the Overview tells when
+         *     Windows still keeps them off. The task runs the Python of this backend; in development, the
          *     runner folder keeps its task through ``tools/setup_runner.py`` instead.
          */
         put: operations["switch_schedule_api_schedule_put"];
@@ -310,7 +313,7 @@ export interface paths {
         };
         /**
          * Read Status
-         * @description Show what runs now, the schedule and next booking, the last run and the last setup.
+         * @description Show what runs now, the schedule and next booking, the last run and the wake timers.
          */
         get: operations["read_status_api_status_get"];
         put?: never;
@@ -336,17 +339,6 @@ export interface components {
             subdivision: string;
             /** Seen At */
             seen_at: string;
-        };
-        /**
-         * AutoSetupRequest
-         * @description ``restart_mumu`` allows restarting a running MuMu to apply its new screen.
-         */
-        AutoSetupRequest: {
-            /**
-             * Restart Mumu
-             * @default false
-             */
-            restart_mumu: boolean;
         };
         /**
          * DryRunStarted
@@ -391,6 +383,14 @@ export interface components {
             court: string;
             /** Venue Keyword */
             venue_keyword: string;
+        };
+        /**
+         * InstanceSwitch
+         * @description Book with a MuMu instance, or not.
+         */
+        InstanceSwitch: {
+            /** Enabled */
+            enabled: boolean;
         };
         /**
          * LabelSettings
@@ -485,7 +485,8 @@ export interface components {
             running: components["schemas"]["Running"] | null;
             schedule: components["schemas"]["ScheduleState"];
             last_run: components["schemas"]["RunSummary"] | null;
-            setup: components["schemas"]["SetupSummary"] | null;
+            /** Wake Blocked */
+            wake_blocked: boolean;
         };
         /**
          * Problem
@@ -686,16 +687,6 @@ export interface components {
             status: components["schemas"]["Status"];
             /** Detail */
             detail: string;
-        };
-        /**
-         * SetupSummary
-         * @description When auto setup last ran, and the items it left for the user.
-         */
-        SetupSummary: {
-            /** Checked At */
-            checked_at: string;
-            /** Left */
-            left: string[];
         };
         /**
          * SlotResult
@@ -1038,6 +1029,50 @@ export interface operations {
             };
         };
     };
+    switch_instance_api_instances__mumu_index__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mumu_index: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstanceSwitch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Settings"];
+                };
+            };
+            /** @description Invalid request values, one line per value */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description An error with a stable code */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
     read_accounts_api_accounts_get: {
         parameters: {
             query?: never;
@@ -1200,48 +1235,6 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SetupItem"][];
-                };
-            };
-            /** @description Invalid request values, one line per value */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Problem"];
-                };
-            };
-            /** @description An error with a stable code */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Problem"];
-                };
-            };
-        };
-    };
-    run_auto_setup_api_setup_auto_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AutoSetupRequest"];
-            };
-        };
         responses: {
             /** @description Successful Response */
             200: {

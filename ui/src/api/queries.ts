@@ -34,7 +34,7 @@ export const SETTLING_POLL_MS = 2000;
 /**
  * Return how often to read the Overview again, or false. A run writes its first step a
  * moment after taking the lock and gives the lock back a moment after its last step, and
- * no step marks that moment; auto setup ends the same way. Only then is the Overview read
+ * no step marks that moment; auto setup (`court-booker setup --auto`) ends the same way. Only then is the Overview read
  * every 2 s, never while a booking goes on (the run is "running" then).
  */
 export function settlingInterval(overview: Overview | undefined): number | false {

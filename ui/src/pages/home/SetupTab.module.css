@@ -3,6 +3,7 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  position: relative; /* holds its hidden screen reader text, which would grow the page */
   padding: 0 var(--space-5) var(--space-4);
 }
 
@@ -75,55 +76,9 @@
   font-weight: var(--weight-bold);
 }
 
-.hint,
-.plain {
+.hint {
   color: var(--color-muted);
   font-size: var(--text-small);
-}
-
-.ok {
-  color: var(--color-stamp);
-  font-size: var(--text-small);
-}
-
-.todo {
-  color: var(--color-failed);
-  font-size: var(--text-small);
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: 9px 0 12px;
-  border-bottom: var(--border-hairline) dotted var(--color-rule);
-}
-
-.row > button {
-  flex: none;
-}
-
-.restart {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-2);
-  padding: 10px 0;
-  font-size: var(--text-data);
-}
-
-.problem {
-  padding-top: var(--space-2);
-  color: var(--color-failed);
-  font-size: var(--text-data);
-}
-
-.note {
-  padding-top: var(--space-2);
-  color: var(--color-muted);
-  font-family: var(--font-mono);
-  font-size: var(--text-label);
 }
 
 .summary {
@@ -172,4 +127,12 @@ details[open] > .summary::after {
 .answer dd {
   margin: 0;
   color: var(--color-muted);
+}
+
+/* Whose ticks these are, with several machines. */
+.machine {
+  margin-bottom: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
 }
