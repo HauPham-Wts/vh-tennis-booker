@@ -3,7 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 It is also the shared project guidance for Codex, whose entry point is `AGENTS.md`.
 
-Last updated: 2026-10-28.
+Last updated: 2026-10-30.
 
 ## Project
 
@@ -22,6 +22,7 @@ Read the matching doc before changing an area; these notes hold only the essenti
 | `docs/how-it-works.md` | How the flow reads the app (dumps, matching, navigation) |
 | `docs/specs/0.5.0-desktop-app.md` | Desktop app product decisions and the packaging plan (last) |
 | `CONTRIBUTING.md` | Setup, checks, branches, releasing, runner folder |
+| `docs/status/` | Current state, the next task, known issues (kept current each session) |
 
 Docs hold only what is true of the current code; history is in `CHANGELOG.md` and git.
 
@@ -72,7 +73,7 @@ npm run api:types                                    # src/api/schema.d.ts from 
 - Every change (a feature, a rule, a constraint, anything) updates everything related in the
   same branch, so all stays in sync: this file, the docs (architecture, field notes, roadmap,
   specs, README, CONTRIBUTING), `config.example.toml`, CHANGELOG, generated files, tests, the
-  UI texts in both languages and the session notes. Grep for the names touched first.
+  UI texts in both languages and the status notes. Grep for the names touched first.
 - To try the UI against a real backend, use a scratch folder:
   `COURT_BOOKER_HOME=<scratch>/data python -m court_booker serve --config <scratch>/config.toml`,
   then `npm run dev` (Vite forwards `/api` to 127.0.0.1:8765). Headless Edge `--dump-dom`
@@ -211,11 +212,9 @@ Utilities list. Details in `docs/field-notes.md`.
 
 - The released version is the newest section of `CHANGELOG.md`; what is left is in
   `docs/roadmap.md`.
-- Session notes live outside the repo, in Vietnamese, in `D:\VH-Booker\notes\`:
-  `progress.md` (current state: release, runner, open branches, last 06:00 run, decisions in
-  force), `next.md` (the plan of the next task) and `issues.md` (open bugs). Read
-  `progress.md` and `next.md` at the start of a session and keep all three short and current;
-  nothing else goes there. Local test tools are in `D:\VH-Booker\dev-tools\`.
-- A separate local branch, `feat/android-on-device`, holds an Android compatibility lab using
-  the instrumentation driver through Shizuku; it is not part of any release. Read that
-  branch's `android/mobile/README.md` when working on it.
+- Status notes live in `docs/status/`: `progress.md` (current state: release, runner, open
+  branches, last 06:00 runs, decisions in force), `next.md` (the plan of the next task) and
+  `known-issues.md` (open bugs, ideas ruled out). Read `progress.md` and `next.md` at the
+  start of a session and keep all three short and current; the repo is public, so no personal
+  data (accounts, apartment codes, the user's booking times). Local test tools are in
+  `D:\VH-Booker\dev-tools\`.
