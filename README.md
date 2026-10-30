@@ -285,7 +285,7 @@ src/court_booker/       booking engine and command line: emulator, ADB, flow, cl
 src/court_booker/api/   FastAPI backend of the web UI
 ui/                     web UI: React, TypeScript, Vite
 tests/                  Python tests with a fake device, ADB, clock and Task Scheduler
-tools/                  screen inspector, runner folder, OpenAPI export
+tools/                  screen inspector, runner folder, OpenAPI export, release
 docs/                   how it works, architecture, field notes, roadmap, desktop app spec
 ```
 
