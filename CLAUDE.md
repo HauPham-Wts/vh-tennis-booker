@@ -111,6 +111,12 @@ npm run api:types                                    # src/api/schema.d.ts from 
   merges PRs on GitHub: give a compare link (`compare/develop...<branch>`, or
   `compare/main...develop` for a release), title and description. `gh` is for reading
   GitHub state only.
+- Commits, pull request descriptions and comments carry no AI attribution. Author and
+  committer are `Pham Van Hau <haucaron@gmail.com>`, unsigned: set `user.name`,
+  `user.email` and `commit.gpgsign false` in this repository's Git config (a cloud
+  session's global config signs otherwise). No `Co-Authored-By`, `Claude-Session` or
+  "Generated with" lines; a tool may append one to a pull request description, so read it
+  back after creating the pull request and edit it out.
 - Write code only when the user asks for it.
 
 ## Code map

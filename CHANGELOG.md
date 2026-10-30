@@ -13,6 +13,8 @@ uses [Semantic Versioning](https://semver.org/).
   when it fails.
 
 ### Changed
+- CLAUDE.md: commits and pull requests carry no AI attribution (author Pham Van Hau,
+  unsigned, no attribution lines).
 - Releases come when the 06:00 run needs a change (about weekly otherwise); CHANGELOG
   entries are one short line per change; each fact has one home in the docs, and CLAUDE.md
   links to `architecture.md` and `field-notes.md` instead of restating them.
