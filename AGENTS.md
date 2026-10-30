@@ -9,7 +9,7 @@ instructions. Despite its name and opening reference to Claude Code, it is the s
 source for project context, commands, coding conventions, testing requirements, privacy,
 Git workflow, and environment details for both Claude Code and Codex.
 
-Read the documents relevant to the task and the local session notes referenced there.
+Read the documents relevant to the task and the status notes in `docs/status/`.
 Verify time-sensitive details such as the current release, branch, and runner version
 against current files and Git state before relying on them.
 

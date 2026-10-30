@@ -7,6 +7,8 @@ uses [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Changed
+- The status notes (current state, next task, known issues) move into the repo, in English,
+  as `docs/status/`; the local Android lab branch is gone, so CLAUDE.md no longer names it.
 - Ruff has one version, the one `pyproject.toml` pins (0.17.1): CI installs that pin instead
   of its own (0.16.10), pre-commit runs it (was 0.17.0), and a test fails when they differ.
 
