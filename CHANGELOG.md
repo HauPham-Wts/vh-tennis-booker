@@ -6,6 +6,10 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- The status notes (current state, next task, known issues) move into the repo, in English,
+  as `docs/status/`; the local Android lab branch is gone, so CLAUDE.md no longer names it.
+
 ## [0.18.1] - 2026-10-30
 
 ### Fixed
