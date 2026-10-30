@@ -6,6 +6,14 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.18.1] - 2026-10-30
+
+### Fixed
+- A date in the next month is picked: the day is tapped once the month switched to has slid
+  in (its day clickable), and again every 0.5 s while the calendar's "Chọn ngày dự kiến sử
+  dụng" prompt stays. At 06:00 on 30/10 the tap landed mid-slide, the app ignored it, and
+  the round waited 30 s for slots twice; the new `pick_date` label holds the prompt.
+
 ## [0.18.0] - 2026-10-29
 
 ### Added

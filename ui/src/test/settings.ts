@@ -34,6 +34,7 @@ export function settings(fields: Partial<Settings> = {}): Settings {
       confirm_page: "Xác nhận đăng ký",
       prev_month: "Tháng trước",
       next_month: "Tháng sau",
+      pick_date: "Chọn ngày dự kiến sử dụng",
       agree: "Tôi đồng ý",
       fully_booked: "Hết chỗ",
       venue_list: "Chọn phân khu",

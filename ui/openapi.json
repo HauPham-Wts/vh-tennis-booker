@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Court Booker",
-    "version": "0.18.0"
+    "version": "0.18.1"
   },
   "paths": {
     "/api/health": {
@@ -1134,6 +1134,10 @@
             "type": "string",
             "title": "Next Month"
           },
+          "pick_date": {
+            "type": "string",
+            "title": "Pick Date"
+          },
           "agree": {
             "type": "string",
             "title": "Agree"
@@ -1193,6 +1197,7 @@
           "confirm_page",
           "prev_month",
           "next_month",
+          "pick_date",
           "agree",
           "fully_booked",
           "venue_list",
