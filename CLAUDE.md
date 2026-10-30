@@ -89,9 +89,10 @@ npm run api:types                                    # src/api/schema.d.ts from 
   README's screenshots of this project's UI with made-up data, in `docs/img/` (English
   UI, 1280 wide, under 200 KB each).
 - All code, comments, logs, commits and docs in English; app labels stay in the app's
-  language (Vietnamese in the config, English built into `app_language.py`). Type hints,
-  short imperative docstrings, comments explain why, module loggers,
-  `BookingError` subclasses, named constants, Ruff line length 100.
+  language (Vietnamese in the config, English built into `app_language.py`). Docs are
+  written for a newcomer (CONTRIBUTING, "Writing"). Type hints, short imperative
+  docstrings, comments explain why, module loggers, `BookingError` subclasses, named
+  constants, Ruff line length 100.
 - Git: `develop` (protected) is the development line; `main` (protected) holds releases
   only, every commit on it tagged `vX.Y.Z`. `feat/`, `fix/`, `docs/`, `chore/` branches are
   cut from `develop` and PR'd into it (merge commit, never squash); a branch stacked on

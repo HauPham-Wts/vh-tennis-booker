@@ -5,19 +5,27 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Code style: Ruff](https://img.shields.io/badge/code%20style-ruff-261230)
 
-Books a court (tennis, or another sport: a multi-purpose court, volleyball, table tennis,
-basketball, football, pickleball, badminton, as the subdivision offers them; Origami and BS
-so far) the moment bookings open. The Vinhomes Resident app opens each day's
-courts at 06:00, and the popular slots are gone within seconds. This project books them
-while its owner sleeps: a Windows scheduled task wakes the PC, starts the MuMu Player
-emulator and taps through the app's own booking screens with Python and an Android
-instrumentation driver, with uiautomator2 as fallback. It uses no private API and does not
-modify the app.
+Books a sports court in the **Vinhomes Resident** app the moment bookings open, while its
+owner sleeps.
 
-It is a UI-automation case study built as a real product: a booking engine that has booked
-real courts at 06:00 since 2026-10-10, a local FastAPI backend and a web UI in React and
-TypeScript. Today it runs from the command line and, for the web UI, in a browser; a
-packaged desktop app with an installer is the last step before 1.0.0.
+**The problem.** The app opens each day's courts at 06:00, and the popular slots are gone
+within seconds. Booking by hand means being awake, and fast, every morning.
+
+**The approach.** A Windows scheduled task wakes the PC shortly before 06:00, starts the MuMu
+Player Android emulator and taps through the app's own booking screens, as a person would.
+Python reads each screen in one accessibility dump and finds every button by its label; a
+small Android instrumentation driver written for the project does the taps, with
+uiautomator2 as a fallback. It uses no private API and does not modify the app.
+
+**The result.** It has booked real courts at 06:00 since 2026-10-10. The first slot is booked
+6 to 7 seconds after the opening, most of that time spent waiting on the app's server. Beside
+the booking engine there is a local FastAPI backend and a React and TypeScript web UI, in
+Vietnamese and English, for the settings, the schedule and the history of every run.
+
+It books tennis and the other courts a subdivision offers (multi-purpose, volleyball, table
+tennis, basketball, football, pickleball, badminton), for the Origami and BS subdivisions so
+far. Today it runs from the command line and, for the web UI, in a browser; a packaged
+desktop app with an installer is the last step before 1.0.0.
 
 > [!IMPORTANT]
 > An educational, personal project, not affiliated with or endorsed by Vinhomes.
@@ -29,29 +37,21 @@ through, and each step as it happens; the History is beside it](docs/img/running
 
 ## Highlights
 
-- **Unattended at 06:00.** The daily task wakes the PC from sleep, starts MuMu, restarts the
-  app and waits on the utilities list. The run tells the time by NTP, on a counter Windows
-  does not set, and the first tap goes out 0.1 s after 06:00:00.
+- **Unattended and on time.** The PC wakes from sleep, and the run keeps NTP time on a
+  counter Windows does not set, so the first tap goes out 0.1 s after 06:00:00.
+- **One read per screen.** Each screen is one accessibility dump (about 13 ms) searched
+  locally, so waiting for a screen and finding its button cost the same single read.
 - **Reports only what the app showed.** A slot counts as booked only once the app shows its
-  ticket. A refusal fails the round with the app's own message, and a round that shows
-  neither within 30 s is reported as "outcome unknown", never as booked.
-- **Built for a slow app.** Each step taps as soon as its button appears, taps again every
-  2 s (3 s for "Xác nhận") while the app ignores it, and waits up to 30 s for a slow screen.
-  A frozen emulator ends the run after 60 s with a clear error instead of hanging until the
-  next morning; the app's quota notice ends it at once.
-- **More accounts side by side.** Each extra MuMu instance books with its own account and its
-  own court and slots, in a process of its own: all of them tap at 06:00 together, and
-  one that fails or freezes holds up no other.
-- **One read per screen.** A screen is read in a single accessibility dump (about 13 ms with
-  the driver, measured on MuMu) and every button is found in it locally; waiting for a screen
-  and finding its buttons is the same read. At the real 06:00 opening, the first slot has
-  been booked 6 to 7 s after 06:00.
-- **Local web UI and full history.** One screen that holds the booking settings, the
-  schedule, the history and the setup, in Vietnamese and English, over a FastAPI backend on 127.0.0.1. Every run, slot and step is
-  kept in SQLite (about 0.13 ms per write), beside a daily log of every screen read.
-- **Tested without a device.** The Python tests replace the emulator, ADB, the clock and
-  Task Scheduler with fakes, and the UI has component tests. CI runs Ruff, pytest on
-  Python 3.9 to 3.14, and the UI's type check, lint, tests and build.
+  ticket (the booking confirmation); otherwise the round fails with the app's own message,
+  or as "outcome unknown", never as booked.
+- **Built for a slow app and a fragile emulator.** A tap the app ignores is repeated, a slow
+  screen is awaited up to 30 s, and a frozen emulator ends the run after 60 s instead of
+  hanging until the next morning.
+- **Several accounts at once.** Each extra MuMu instance books with its own account, court
+  and slots, in a process of its own, so one that fails holds up no other.
+- **Tested without a device.** Fakes replace the emulator, ADB, the clock and Task
+  Scheduler; CI runs Ruff, pytest on Python 3.9 to 3.14, and the UI's checks, tests and
+  build.
 
 ## How it works
 
@@ -216,10 +216,11 @@ away.
 The UI is one screen, without a menu:
 
 - **The line at the top** says whether the next start is ready, or the one thing to do first.
-- **The ticket** on the left is the next booking in two parts: on top the daily switch (it
-  creates or removes the Windows task, once a dry run passed) and what is set, the play day,
-  court and slots; below, the subdivision, the sport, the court and up to two slots to choose,
-  saved on each press, and a dry run. During a run it shows the steps as they happen.
+- **The ticket** on the left, a card drawn like a ticket, is the next booking in two parts:
+  on top the daily switch (it creates or removes the Windows task, once a dry run passed)
+  and what is set, the play day, court and slots; below, the subdivision, the sport, the
+  court and up to two slots to choose, saved on each press, and a dry run. During a run it
+  shows the steps as they happen.
 - **Lịch sử / History** on the right: each run in two lines, its play day, court and count
   ("2/2"), then every slot booked or not and when it started (real bookings, dry runs on
   request); one click opens the reasons, the steps and the technical log.
