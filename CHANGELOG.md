@@ -6,6 +6,10 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- Ruff has one version, the one `pyproject.toml` pins (0.17.1): CI installs that pin instead
+  of its own (0.16.10), pre-commit runs it (was 0.17.0), and a test fails when they differ.
+
 ## [0.18.1] - 2026-10-30
 
 ### Fixed
