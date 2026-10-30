@@ -25,6 +25,8 @@ Read the matching doc before changing an area; these notes hold only the essenti
 | `docs/status/` | Current state, the next task, known issues (kept current each session) |
 
 Docs hold only what is true of the current code; history is in `CHANGELOG.md` and git.
+Each fact has one home, the doc above that holds its kind; other files link to it rather
+than restate it, so a change is made in one place.
 
 ## Commands
 
@@ -37,6 +39,7 @@ python -m pytest tests/test_flow.py -k slot          # single file / single test
 python -m ruff check . && python -m ruff format .    # CI runs `ruff format --check .`
 python -m court_booker --dry-run --verbose           # real run against the emulator
 python -m court_booker --at 06:00 --dry-run          # timed run
+python tools/release.py X.Y.Z                        # release commit on its branch (CONTRIBUTING)
 python tools/setup_runner.py vX.Y.Z --schedule       # runner folder + daily task (CONTRIBUTING)
 python -m court_booker schedule status               # task details (install, remove)
 python -m court_booker setup                         # device setup checks (--auto fixes)
@@ -70,10 +73,12 @@ npm run api:types                                    # src/api/schema.d.ts from 
 - After a backend route, model or `catalog.py` change: `python tools/export_openapi.py`
   (writes `ui/openapi.json` and `ui/src/catalog.json`), then `npm run api:types` (backend
   tests and CI fail until they match).
-- Every change (a feature, a rule, a constraint, anything) updates everything related in the
-  same branch, so all stays in sync: this file, the docs (architecture, field notes, roadmap,
-  specs, README, CONTRIBUTING), `config.example.toml`, CHANGELOG, generated files, tests, the
-  UI texts in both languages and the status notes. Grep for the names touched first.
+- Every change (a feature, a rule, a constraint, anything) updates, in the same branch,
+  every place that holds what it changes, so all stays in sync: the doc that is the fact's
+  home (this file for rules and commands, README for what a user does), `config.example.toml`,
+  CHANGELOG, generated files, tests, the UI texts in both languages and the status notes.
+  Grep for the names touched first; a fact found restated outside its home becomes a link
+  there instead of a second copy to update.
 - To try the UI against a real backend, use a scratch folder:
   `COURT_BOOKER_HOME=<scratch>/data python -m court_booker serve --config <scratch>/config.toml`,
   then `npm run dev` (Vite forwards `/api` to 127.0.0.1:8765). Headless Edge `--dump-dom`
@@ -92,10 +97,16 @@ npm run api:types                                    # src/api/schema.d.ts from 
   cut from `develop` and PR'd into it (merge commit, never squash); a branch stacked on
   another still targets `develop`, merged in order. Only finished, tested work is merged (a
   booking flow change: a real booking first), so `develop` can be released any time. A
-  release: a `chore/release-X.Y.Z` PR into `develop`, then a PR from `develop` into `main`,
-  whose merge commit is tagged `vX.Y.Z` (CONTRIBUTING, "Releasing"); an urgent fix takes the
-  same way. No `release/X.Y.Z` branches. Conventional Commits, Semantic Versioning,
-  CHANGELOG (Keep a Changelog; each PR adds its line under "Unreleased"). The user opens and
+  release (CONTRIBUTING, "Releasing") moves the 06:00 run to new code, so it is cut when that
+  run needs a change (the engine, or a config key the backend writes), at once for a fix it
+  needs, else about weekly: the UI and the backend run from the development folder.
+  `python tools/release.py X.Y.Z` on a clean, up-to-date `develop` commits on
+  `chore/release-X.Y.Z`; a PR into `develop`, then a PR from `develop` into `main`, whose
+  merge commit the `Tag` workflow tags `vX.Y.Z` (by hand only if it failed); an urgent fix
+  takes the same way. No `release/X.Y.Z` branches. Conventional Commits, Semantic
+  Versioning, CHANGELOG (Keep a Changelog; each PR adds its entries under "Unreleased", one
+  short entry per change a user or developer notices; small UI touches share one, without
+  sizes or colours). The user opens and
   merges PRs on GitHub: give a compare link (`compare/develop...<branch>`, or
   `compare/main...develop` for a release), title and description. `gh` is for reading
   GitHub state only.
@@ -103,40 +114,27 @@ npm run api:types                                    # src/api/schema.d.ts from 
 
 ## Code map
 
-`src/court_booker` (details in `docs/architecture.md`):
+`src/court_booker`; what each part does and keeps true is in `docs/architecture.md`:
 
-- `cli.py` run entry: overrides, log file, NTP offset, keep awake, run lock, exit codes
+- `cli.py` run entry (overrides, log file, NTP offset, keep awake, run lock), exit codes
   (`RequestError` 2, `DeviceError` 3, `AppNotReadyError` 4, `LockHeldError` 5, Ctrl+C 130).
-  Each `[[instances]]` table (another MuMu instance, own account and settings) gets its own
-  `--instance N` process with its own lock, log and history run; the main process starts
-  them after taking its lock and waits for them before releasing it.
-- `runner.py` connects the device (`emulator.py` MuMuManager, `adb.py`, the instrumentation
-  driver with uiautomator2 as fallback) and runs the rounds: prepare, warm up
-  `warm_up_seconds` before the start, one round per slot.
-  `watchdog.py` limits every device call to 60 s (a frozen MuMu ends the run, exit 3).
-- `driver.py` talks to the instrumentation in `android/`; `tools/build_driver.py` builds
-  the committed APK in `src/court_booker/assets/`. It finds labelled elements in the current
-  tree; coordinates distinguish duplicate labels and locate unlabelled elements. Its
-  protocol has a 10 s response timeout inside the watchdog's 60 s limit.
+  Each `[[instances]]` table (another MuMu instance and account) runs as its own
+  `--instance N` process.
+- `runner.py` connects the device (`emulator.py`, `adb.py`, `driver.py` with uiautomator2 as
+  fallback) and runs the rounds; `watchdog.py` limits every device call to 60 s.
+- `driver.py` talks to the instrumentation APK built from `android/` by
+  `tools/build_driver.py` (committed in `src/court_booker/assets/`).
 - `flow.py` `Booker`: the booking flow; device use only through `snapshot()`, `tap()`,
-  `tap_point()`, `press_back()`, `_scroll()`, each counted in `commands`. `prepare()` finds
-  the app's language on its first screen and the account's subdivision from the apartment
-  code on the home screen (`read_account`, no extra command; only the subdivision is logged
-  or stored). `screen.py` (one dump parsed into nodes, matched locally),
-  `app_language.py` (labels and calendar day labels per language: Vietnamese from the
-  config, English built in), `catalog.py` (subdivisions → sports → venues → courts, each
-  with its block, kind and number for the UI's label, the only copy; the UI gets it as
-  `ui/src/catalog.json` and words the kind per language), `geometry.py` and most of
-  `clock.py` are pure.
-- `lock.py` + `processes.py`: the run lock and the quiet time (no dry run or auto setup
-  from `wake_at` to start + 5 min).
-- `events.py` (event kinds are stable strings), `history.py` (`booker.db` writer, an event
-  sink), `history_read.py` (read-only queries for the app, e.g. each instance's last
-  account subdivision).
-- `config.py`, `paths.py` (data folder `%LOCALAPPDATA%\CourtBooker`, `COURT_BOOKER_HOME`),
-  `device_setup.py`, `schedule.py` (Task Scheduler), `power.py`, `notify.py`.
+  `tap_point()`, `press_back()`, `_scroll()`, each counted in `commands`. Pure:
+  `screen.py` (one dump, matched locally), `app_language.py` (labels per language),
+  `catalog.py` (subdivisions → sports → venues → courts, the only copy; the UI gets it as
+  `ui/src/catalog.json`), `geometry.py`, most of `clock.py`.
+- `lock.py` + `processes.py` (run lock, quiet time), `events.py` (event kinds are stable
+  strings), `history.py` + `history_read.py` (`booker.db`), `config.py`, `paths.py` (data
+  folder `%LOCALAPPDATA%\CourtBooker`, `COURT_BOOKER_HOME`), `device_setup.py`,
+  `schedule.py` (Task Scheduler), `power.py`, `notify.py`.
 - `api/`: FastAPI backend (`court-booker serve`, 127.0.0.1:8765); errors become `Problem`
-  JSON with an `error` code. `GET /api/accounts`: the subdivision each account told last.
+  JSON with an `error` code.
 
 `ui/src` (React 19, strict TypeScript, Vite): `pages/`, `components/`, `styles/` (tokens),
 `i18n/` (Vietnamese default, English), `api/` (generated types, client, React Query hooks,
@@ -161,28 +159,20 @@ Invariants that tests and reviews rely on:
 Flow: Home ("Tiện ích") → Utilities list ("Sân Tennis") → Calendar (date, slot,
 "Tiếp tục") → optional venue ("Chọn phân khu") → Court list → Booking details
 ("Tiếp tục") → Confirmation (consent checkbox, "Xác nhận") → Ticket; one Back returns to the
-Utilities list. Details in `docs/field-notes.md`.
+Utilities list. Details, labels and their dates are in `docs/field-notes.md`.
 
-- The app may be set to Vietnamese or English: the same screens with other labels
-  ("Utilities", "Tennis", "Next", "Confirm", "Booking details"; days as `21, Wednesday,
-  October 21, 2026`). Court names and the booked date and time read the same in both.
-- Each subdivision's account sees its own utilities, venues and courts (Origami and BS
-  surveyed). The home screen's apartment code tells the subdivision ("BS…" BS, "S…" Origami).
-  A single venue or court is passed by itself; BS lists two venues ("BE _ …", "BS _ …"), so
-  the run taps the court's venue from `catalog.py`; a full venue reads "Hết chỗ". Venue and
-  court names stay Vietnamese with the app in English.
 - Flutter exposes text via `content-desc`, not `text`, and builds lazily (off-screen
-  elements are absent from the dump).
-- MuMu runs at 540x1600, 220 DPI. Locate elements from the current dump (the consent
-  checkbox moves). The calendar's unlabelled month controls have configurable ratio
-  fallbacks, `next_month_xy` and `prev_month_xy`; these still need a real month-boundary test.
-- Success is the ticket's title showing after "Xác nhận"; a "Thông báo" dialog (closed
-  hours, quota of 2 slots a day and 8 a month, refused booking) fails the round, and the quota
-  one skips the rounds left. A frame without labels shows before either, so the confirmation
-  page going away proves nothing; neither within `timeout` fails the round as "Outcome
-  unknown".
-- MuMu can freeze (seen 2026-10-13); a device call then never returns, so the watchdog
-  ends the run after 60 s (no restart, no retry).
+  elements are absent from the dump). MuMu runs at 540x1600, 220 DPI. Locate elements from
+  the current dump, never from stored coordinates (the consent checkbox moves).
+- The app may be in Vietnamese or English, the same screens with other labels; court and
+  venue names stay Vietnamese in both. Each subdivision's account sees its own utilities,
+  venues and courts (`catalog.py`; Origami and BS surveyed).
+- Success is the ticket's title showing after "Xác nhận"; a "Thông báo" dialog fails the
+  round (the quota one, 2 slots a day and 8 a month, also skips the rounds left). A frame
+  without labels shows before either, so a page going away proves nothing; neither within
+  `timeout` fails the round as "Outcome unknown".
+- MuMu can freeze; a device call then never returns, so the watchdog ends the run after
+  60 s (no restart, no retry).
 
 ## Environment
 
@@ -190,7 +180,9 @@ Utilities list. Details in `docs/field-notes.md`.
   `Start-Process python` returns is not the pid in `run.lock`), Git.
 - CI (GitHub Actions): `lint` (ruff check + format), `test` (Python 3.9, 3.11, 3.12, 3.13,
   3.14), `driver` (build the Android sources with JDK 21 and SDK 35), and `ui` (Node 22:
-  `npm ci`, generated API type check, typecheck, lint, format check, test, build). Tooling:
+  `npm ci`, generated API type check, typecheck, lint, format check, test, build); the `Tag`
+  workflow tags each push to `main` with its version. Ruff's version is pinned once, in
+  `pyproject.toml` (CI reads it; pre-commit must match, a test checks). Tooling:
   pre-commit (ruff, basic hooks), `.editorconfig`, `.gitattributes` (LF), Dependabot, PR and
   issue templates.
 - Node.js 22.19, npm 10.9 for `ui/`. Node 22.22 would allow jsdom 30 and React Router 8,

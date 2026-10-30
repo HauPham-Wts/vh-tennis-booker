@@ -6,7 +6,16 @@ uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- `tools/release.py X.Y.Z` makes the release commit on its `chore/release-X.Y.Z` branch
+  after checking the version and the branch, and prints the pull requests to open.
+- The `Tag` workflow tags each push to `main` `vX.Y.Z` from its version; tags by hand only
+  when it fails.
+
 ### Changed
+- Releases come when the 06:00 run needs a change (about weekly otherwise); CHANGELOG
+  entries are one short line per change; each fact has one home in the docs, and CLAUDE.md
+  links to `architecture.md` and `field-notes.md` instead of restating them.
 - The status notes (current state, next task, known issues) move into the repo, in English,
   as `docs/status/`; the local Android lab branch is gone, so CLAUDE.md no longer names it.
 - Ruff has one version, the one `pyproject.toml` pins (0.17.1): CI installs that pin instead
