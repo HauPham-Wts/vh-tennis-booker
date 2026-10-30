@@ -92,6 +92,10 @@ about twice the slowest answer at 06:00: the ticket showed 0.66-1.6 s after the 
 gets a second tap."""
 _FIRST_DATE_WAIT = 1.5
 _NEXT_DATE_WAIT = 0.8
+_DATE_RETAP_AFTER = 0.5
+"""How long the calendar's prompt may stay after a day tap before the day is tapped again:
+the app ignored the tap. The prompt went 0.05 s after a tap the app took; a tap on a day of a
+month still sliding in only stopped the slide, and the prompt stayed (2026-10-30)."""
 _CHECKBOX_TIMEOUT = 0.8
 _SETTLE_TIMEOUT = 1.0
 _SWIPE_SECONDS = 0.25
@@ -162,6 +166,7 @@ class Booker:
         self.any_day = Match(pattern=language.any_day)
         self.prev_month = Match(desc=labels.prev_month)
         self.next_month = Match(contains=labels.next_month)
+        self.pick_date = Match(desc=labels.pick_date)
         self.continue_button = Match(desc=labels.continue_, clickable=True)
         self.venue_list = Match(desc=labels.venue_list)
         self.court_list = Match(desc=labels.court_list)
@@ -363,8 +368,8 @@ class Booker:
                 logger.info("Calendar opened after %d attempt(s)", attempt)
             self.report(EventKind.CALENDAR_OPENED, attempt=attempt)
             try:
-                self.select_date(screen, target)
-                return self.select_slot(slot)
+                screen = self.select_date(screen, target)
+                return self.select_slot(slot, screen)
             except ElementNotFoundError as exc:
                 if time.monotonic() >= deadline:
                     raise BookingNotOpenError(
@@ -550,8 +555,11 @@ class Booker:
 
     # Calendar screen --------------------------------------------------------
 
-    def select_date(self, screen: Screen, target: date) -> None:
-        """Tap ``target`` in the calendar shown on ``screen``, switching month if needed."""
+    def select_date(self, screen: Screen, target: date) -> Screen:
+        """Tap ``target`` in the calendar shown on ``screen``, switching month if needed.
+
+        Returns the screen read after the tap the app took.
+        """
         match = Match(pattern=self.language.day_pattern(target))
         target_month = month_index(target.year, target.month)
         current: Screen | None = screen
@@ -561,10 +569,10 @@ class Booker:
                 wait = 0  # a month shows only its own days: switch at once
             found = self.wait_for(self._finder(match), wait, current)
             if found is not None:
-                self.tap(found[0])
+                shown = self._tap_day(found[1], match, target)
                 logger.info("Selected date %s", target.isoformat())
                 self.report(EventKind.DATE_SELECTED, date=target.isoformat())
-                return
+                return shown
             first_day = self.last_screen.find(self.any_day)
             logger.debug(
                 "Date %s not shown; first day listed: %r",
@@ -577,18 +585,60 @@ class Booker:
             current = None
         raise ElementNotFoundError(f"Date {target.isoformat()} is not bookable")
 
-    def select_slot(self, slot: str) -> Screen:
+    def _tap_day(self, screen: Screen, match: Match, target: date) -> Screen:
+        """Tap the day ``match`` finds once it stands still, again while the app ignores it.
+
+        A month switched to slides in, and a tap on a day still sliding only stops the slide
+        (2026-10-30). The day is tapped again every :data:`_DATE_RETAP_AFTER` while the
+        calendar's prompt stays, up to ``timeout``. Returns the screen without the prompt.
+        """
+        deadline = time.monotonic() + self.config.timeout
+        taps = 0
+        while True:
+            node = self._still_day(screen, match)
+            if node is not None:
+                self.tap(node)
+                taps += 1
+            found = self.wait_for(self._day_taken, _retap_wait(deadline, _DATE_RETAP_AFTER))
+            if found is not None:
+                if taps > 1:
+                    logger.info("Date %s taken after %d taps", target.isoformat(), taps)
+                return found[1]
+            if time.monotonic() >= deadline:
+                raise ElementNotFoundError(
+                    f"Date {target.isoformat()} not taken after {taps} tap(s)"
+                )
+            logger.debug("Calendar prompt still shown after tap %d; tapping the day again", taps)
+            screen = self.last_screen
+
+    def _still_day(self, screen: Screen, match: Match) -> Node | None:
+        """Return the day ``match`` finds once it is clickable: it is not while it slides in.
+
+        After :data:`_SETTLE_TIMEOUT` the day is returned as it is; ``None`` if it is gone.
+        """
+        deadline = time.monotonic() + _SETTLE_TIMEOUT
+        while True:
+            node = screen.find(match)
+            if node is None or node.clickable or time.monotonic() >= deadline:
+                return node
+            time.sleep(_POLL_INTERVAL)
+            screen = self.snapshot()
+
+    def _day_taken(self, screen: Screen) -> bool | None:
+        """Tell whether the calendar's prompt is gone: the app took the day tap."""
+        return True if screen.find(self.pick_date) is None else None
+
+    def select_slot(self, slot: str, screen: Screen | None = None) -> Screen:
         """Tap ``slot`` once the list shows it, scrolling only while it is hidden.
 
-        The slot is tapped once "Tiếp tục" shows enabled too, or after the list was read
-        again for :data:`_CONTINUE_WAIT` with it disabled. Returns the screen read before
-        the tap.
+        ``screen``, if given, is checked first without reading the device again. The slot
+        is tapped once "Tiếp tục" shows enabled too, or after the list was read again for
+        :data:`_CONTINUE_WAIT` with it disabled. Returns the screen read before the tap.
         """
         match = Match(prefix=slot)
         button = self.labels.continue_
         deadline = time.monotonic() + self.config.timeout
         swipes = 0
-        screen: Screen | None = None
         disabled_since: float | None = None
         while True:
             remaining = max(0.0, deadline - time.monotonic())

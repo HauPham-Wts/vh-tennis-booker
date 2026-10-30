@@ -23,6 +23,7 @@ ENGLISH_LABELS = Labels(  # read from the app in English on 2026-10-20
     confirm_page="Confirm registration",
     prev_month="Previous month",  # not shown: the month buttons have no label in either language
     next_month="Next month",
+    pick_date="Select expected date of use",  # read on 2026-10-30
     agree="I have read",  # the caption reads "I have read, understood, and agree to "
     fully_booked="Full",
     venue_list="Select subdivision",  # read on 2026-10-23

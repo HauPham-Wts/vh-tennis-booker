@@ -51,6 +51,7 @@ confirm = "Xác nhận"
 confirm_page = "Xác nhận đăng ký"   # unused since 0.6.2
 prev_month = "Tháng trước"
 next_month = "Tháng sau"
+pick_date = "Chọn ngày dự kiến sử dụng"  # under the calendar until the day tap is taken
 agree = "Tôi đã hiểu"
 fully_booked = "Hết chỗ"
 venue_list = "Chọn phân khu"         # heading of the venues, when the app lists them
