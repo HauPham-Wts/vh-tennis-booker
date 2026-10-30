@@ -84,6 +84,10 @@ cd ui && npm run api:types       # writes ui/src/api/schema.d.ts
 - **Language:** code, comments, logs, commit messages and documentation are in English.
   Accessibility labels stay in the target app's language: Vietnamese in `config.toml`,
   English in `src/court_booker/app_language.py`. The booker detects the app's language.
+- **Writing:** write docs for someone new to the project: full sentences with their
+  articles, each term of the project explained where it first shows, lists rather than
+  long paragraphs, and the README's top as the problem, the approach and the result.
+  Apply it to what a change touches; nothing is rewritten for it alone.
 - **Style:** enforced by Ruff (line length 100). Public functions have type hints and a
   one-line docstring in the imperative mood. Comments explain *why*, not *what*. UI code
   is strict TypeScript, linted by ESLint and formatted by Prettier (also 100 columns).

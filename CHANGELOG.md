@@ -16,6 +16,8 @@ uses [Semantic Versioning](https://semver.org/).
 - Releases come when the 06:00 run needs a change (about weekly otherwise); CHANGELOG
   entries are one short line per change; each fact has one home in the docs, and CLAUDE.md
   links to `architecture.md` and `field-notes.md` instead of restating them.
+- The README opens with the problem, the approach and the result, and its highlights are
+  shorter; CONTRIBUTING asks docs to be written for someone new to the project.
 - Ruff has one version, the one `pyproject.toml` pins (0.17.1): CI installs that pin instead
   of its own (0.16.10), pre-commit runs it (was 0.17.0), and a test fails when they differ.
 
