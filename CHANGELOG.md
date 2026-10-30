@@ -18,6 +18,8 @@ uses [Semantic Versioning](https://semver.org/).
   links to `architecture.md` and `field-notes.md` instead of restating them.
 - The README opens with the problem, the approach and the result, and its highlights are
   shorter; CONTRIBUTING asks docs to be written for someone new to the project.
+- The status notes (current state, next task, known issues) move into the repo, in English,
+  as `docs/status/`; the local Android lab branch is gone, so CLAUDE.md no longer names it.
 - Ruff has one version, the one `pyproject.toml` pins (0.17.1): CI installs that pin instead
   of its own (0.16.10), pre-commit runs it (was 0.17.0), and a test fails when they differ.
 
