@@ -42,6 +42,7 @@ class LabelSettings(BaseModel):
     confirm_page: str
     prev_month: str
     next_month: str
+    pick_date: str
     agree: str
     fully_booked: str
     venue_list: str

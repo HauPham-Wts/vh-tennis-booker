@@ -73,7 +73,8 @@ Details live in the docstrings; this page says where things are and what must st
   Closed loop everywhere: act on what the read shows, never on a fixed delay alone.
 - Round: `open_slot` (utility → calendar; a notice in its place, such as the closed-hours one,
   is closed and the utility tapped again until `open_retry_seconds`; a date or slot not listed
-  yet reloads the calendar) → `select_date` → `select_slot` (tapped once "Tiếp tục" shows
+  yet reloads the calendar) → `select_date` (the day tapped once clickable, again every
+  0.5 s while the calendar's prompt stays) → `select_slot` (tapped once "Tiếp tục" shows
   enabled) → "Tiếp tục" → `_after_calendar` (court list, the venue page, the booking details
   page of a utility with a single court, or a notice, which fails the round at once) →
   `select_court` (or `check_single_court` when a page with one choice passed on to the

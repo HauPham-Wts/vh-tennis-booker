@@ -411,6 +411,8 @@ export interface components {
             prev_month: string;
             /** Next Month */
             next_month: string;
+            /** Pick Date */
+            pick_date: string;
             /** Agree */
             agree: string;
             /** Fully Booked */

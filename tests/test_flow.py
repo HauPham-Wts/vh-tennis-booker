@@ -1290,7 +1290,7 @@ def test_select_date_switches_to_next_month(caplog):
     booker.select_date(booker.snapshot(), date(2026, 11, 1))
 
     # October lists only its own days, so the month is switched without reading again.
-    assert app.ops == ["dump", ("click", "Tháng sau"), "dump", ("click", day_nov_1)]
+    assert app.ops == ["dump", ("click", "Tháng sau"), "dump", ("click", day_nov_1), "dump"]
     assert f"Date 2026-11-01 not shown; first day listed: {day_31!r}" in caplog.text
 
 
@@ -1315,6 +1315,68 @@ def test_select_date_waits_for_a_day_of_the_month_shown():
     assert app.taps == [day_27]
 
 
+def test_select_date_waits_for_a_sliding_day_to_stop():
+    # As read on 2026-10-30: a day of the month switched to is not clickable while it slides.
+    day_nov_1 = "1, Chủ Nhật, 1 tháng 11, 2026"
+    prompt = node("Chọn ngày dự kiến sử dụng", (59, 694, 414, 722), clickable=False)
+    app = FakeApp(
+        screens={
+            "sliding": [node(day_nov_1, (476, 287, 540, 344), clickable=False), prompt],
+            "november": [node(day_nov_1, (455, 287, 529, 344)), prompt],
+            "slots": [node(day_nov_1, (455, 287, 529, 344))],
+        },
+        taps_to={("november", day_nov_1): "slots"},
+        backs_to={},
+        screen="sliding",
+    )
+    app.go([("sliding", 0), ("november", 3)])
+    booker = Booker(app, Config())
+
+    shown = booker.select_date(booker.snapshot(), date(2026, 11, 1))
+
+    assert app.taps == [day_nov_1]
+    assert shown.find(booker.pick_date) is None
+
+
+def test_select_date_taps_the_day_again_while_the_prompt_stays(caplog):
+    day_27 = "27, Thứ Ba, 27 tháng 10, 2026"
+    prompt = node("Chọn ngày dự kiến sử dụng", (59, 694, 414, 722), clickable=False)
+    app = FakeApp(
+        screens={
+            "october": [node(day_27, (85, 518, 159, 575)), prompt],
+            "slots": [node(day_27, (85, 518, 159, 575))],
+        },
+        taps_to={("october", day_27): "slots"},
+        backs_to={},
+        screen="october",
+    )
+    app.swallow[day_27] = 1
+    booker = Booker(app, Config())
+    caplog.set_level(logging.INFO, logger="court_booker")
+
+    booker.select_date(booker.snapshot(), date(2026, 10, 27))
+
+    assert app.taps == [day_27, day_27]
+    assert "Date 2026-10-27 taken after 2 taps" in caplog.text
+
+
+def test_select_date_gives_up_when_no_tap_is_taken():
+    day_27 = "27, Thứ Ba, 27 tháng 10, 2026"
+    prompt = node("Chọn ngày dự kiến sử dụng", (59, 694, 414, 722), clickable=False)
+    app = FakeApp(
+        screens={"october": [node(day_27, (85, 518, 159, 575)), prompt]},
+        taps_to={},
+        backs_to={},
+        screen="october",
+    )
+    booker = Booker(app, Config(timeout=1))
+
+    with pytest.raises(ElementNotFoundError, match=r"not taken after \d+ tap\(s\)"):
+        booker.select_date(booker.snapshot(), date(2026, 10, 27))
+
+    assert len(app.taps) >= 2
+
+
 class OpeningBooker(Booker):
     """Booker whose screens are scripted: the slot opens on attempt ``opens_on``."""
 
@@ -1332,8 +1394,9 @@ class OpeningBooker(Booker):
     def select_date(self, screen, target):
         if self.entries < self.opens_on:
             raise ElementNotFoundError(f"Date {target.isoformat()} is not bookable")
+        return screen
 
-    def select_slot(self, slot):
+    def select_slot(self, slot, screen=None):
         if self.fully_booked:
             raise SlotUnavailableError(f"Slot {slot} is fully booked")
         return Screen([])

@@ -42,8 +42,14 @@ One Back from the ticket returns to the Utilities list, where the next round sta
   clickable node labelled "Tháng sau" at the same bounds: seen on the golf calendar, which
   books further ahead (2026-10-27); the flow finds it by that label first. `next_month_xy` and
   `prev_month_xy` tap their middles; the driver clicks the smallest clickable element at the
-  point, so a point right of x 469 is the next-month button. Switching to a month with
-  bookable days is unverified: first possible on 30/10 for 1/11.
+  point, so a point right of x 469 is the next-month button. The first real switch, on
+  30/10 for 1/11, worked (`›` found unlabelled, tapped at its middle).
+- Until a day is picked, "Chọn ngày dự kiến sử dụng" ("Select expected date of use") shows
+  under the calendar; a tap the app takes removes it within 0.05 s, and the slot list shows
+  about 0.8 s later (2026-10-30). The month switched to slides in for about 0.2 s, its days
+  moving and not clickable; a tap on a day then only stops the slide: the prompt stayed and no
+  slot showed for 30 s, twice in a row at 06:00 on 30/10. The flow taps a day once it is
+  clickable, and taps it again while the prompt stays.
 
 ## Court list moves under the tap
 

@@ -75,6 +75,9 @@ class Labels:
     so a config that sets it still loads."""
     prev_month: str = "Tháng trước"
     next_month: str = "Tháng sau"
+    pick_date: str = "Chọn ngày dự kiến sử dụng"
+    """Prompt under the calendar until a day is picked; it goes as soon as the app takes the
+    tap on the day."""
     agree: str = "Tôi đã hiểu"
     fully_booked: str = "Hết chỗ"
     venue_list: str = "Chọn phân khu"
