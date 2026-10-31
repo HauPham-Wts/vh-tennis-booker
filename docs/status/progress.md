@@ -8,8 +8,11 @@ Last updated: 2026-10-31.
 
 ## Release and runner
 
-- Released: **0.18.1** (tag `v0.18.1`, 2026-10-30). `develop` and `main` are at the release;
-  the `docs/status-notes` branch contains the status-note move and is not merged locally.
+- Released: **0.18.1** (tag `v0.18.1`, 2026-10-30). `develop` is ahead of `main` with
+  tooling and docs only (Ruff pin, `tools/release.py`, the `Tag` workflow, README: PRs
+  #220-#222), which the 06:00 run does not need; they go out with the next release.
+- The Android app is developed in `servedbyhau/v-court`, which ports this repo's booking
+  flow and driver; this repo is its behavior reference.
 - Runner folder: at `v0.18.1`, moved 2026-10-30 without a dry run (the user's call).
 - Daily task `\court-booker`: wakes the PC at 05:50 and books at 06:00 with the runner's
   `pythonw.exe`, the development `config.toml` and `logs/`. After any session that ran the

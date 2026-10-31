@@ -79,10 +79,15 @@ cd ui && npm run api:types       # writes ui/src/api/schema.d.ts
 - **Where things are:** [docs/architecture.md](docs/architecture.md) says what each module,
   route and UI part does; [docs/field-notes.md](docs/field-notes.md) holds the facts about the
   app and the emulator the code relies on. Update them with the code they describe, and keep
-  only what is true of the current code: history belongs in `CHANGELOG.md` and git.
+  only what is true of the current code: history belongs in `CHANGELOG.md` and git. Each fact
+  has one home; elsewhere, link to it rather than restate it, so a change is made once.
 - **Language:** code, comments, logs, commit messages and documentation are in English.
   Accessibility labels stay in the target app's language: Vietnamese in `config.toml`,
   English in `src/court_booker/app_language.py`. The booker detects the app's language.
+- **Writing:** write docs for someone new to the project: full sentences with their
+  articles, each term of the project explained where it first shows, lists rather than
+  long paragraphs, and the README's top as the problem, the approach and the result.
+  Apply it to what a change touches; nothing is rewritten for it alone.
 - **Style:** enforced by Ruff (line length 100). Public functions have type hints and a
   one-line docstring in the imperative mood. Comments explain *why*, not *what*. UI code
   is strict TypeScript, linted by ESLint and formatted by Prettier (also 100 columns).
@@ -99,8 +104,8 @@ cd ui && npm run api:types       # writes ui/src/api/schema.d.ts
 - **Branches:** `develop` is the development line; `main` holds releases only, so every
   commit on `main` is a released version with its `vX.Y.Z` tag. Work happens on
   `feat/<topic>`, `fix/<topic>` or `docs/<topic>` branches cut from `develop` and merged back
-  into it via pull request, one PR per branch; tooling and CI changes use `chore/<topic>` and
-  `ci/<topic>`. A branch that builds on another one still open is cut from it and also
+  into it via pull request, one PR per branch; tooling and CI changes use `chore/<topic>`.
+  A branch that builds on another one still open is cut from it and also
   targets `develop`; they are merged in order. Only finished and tested work is merged (a
   booking flow change is tested with a real booking first), so `develop` can be released at
   any time. Nothing reaches `main` but a release (below); an urgent fix takes the same way
@@ -108,21 +113,38 @@ cd ui && npm run api:types       # writes ui/src/api/schema.d.ts
 - **Merging:** use "Create a merge commit"; do not squash or rebase, so commits keep their
   identity across branches.
 - **Versioning:** [Semantic Versioning](https://semver.org/). Record changes in
-  `CHANGELOG.md` under "Unreleased" and move them to a version section when releasing.
+  `CHANGELOG.md` under "Unreleased" (the release tool moves them to a version section): one
+  short entry per change a user or developer notices, saying what changed for them; small UI
+  touches share one entry, without sizes or colours.
 - **Privacy:** never commit `config.toml`, UI dumps, or screenshots of the Vinhomes app or
   of real data. The README's screenshots in `docs/img/` show this project's UI with
   made-up data only.
 
 ## Releasing
 
-1. On `chore/release-X.Y.Z`, cut from `develop`, update `__version__` in
-   `src/court_booker/__init__.py` (`pyproject.toml` reads it from there), run
-   `python tools/export_openapi.py` (the schema carries the version), move the
-   "Unreleased" entries in `CHANGELOG.md` to a new version section, and commit with
-   `chore: release vX.Y.Z`. Open a pull request into `develop` and merge it.
+A release moves the daily 06:00 run to new code (the runner folder, below). The web UI and
+its backend run from the development folder, so their changes reach you without one. Cut a
+release when the 06:00 run needs a change: one to the engine (`src/court_booker` outside
+`api/`), or a config key the backend now writes, which an older runner refuses. A fix the
+06:00 run needs goes out at once as a patch; the rest waits for the next release, about once
+a week.
+
+1. On `develop`, clean and up to date with GitHub, run:
+   ```bash
+   python tools/release.py X.Y.Z          # add --push to push the branch too
+   ```
+   It refuses a version not after the current one, another branch, local changes, a
+   `develop` that differs from `origin/develop`, an existing branch or tag, and an empty
+   "Unreleased". Then, on a new `chore/release-X.Y.Z` branch, it sets `__version__` in
+   `src/court_booker/__init__.py` (`pyproject.toml` reads it from there), writes
+   `ui/openapi.json` (the schema carries the version), moves the "Unreleased" entries in
+   `CHANGELOG.md` to a new version section, commits `chore: release vX.Y.Z` and prints the
+   pull requests to open. Open the first into `develop` and merge it.
 2. Open a pull request from `develop` into `main`, titled `Release vX.Y.Z`, and merge it
    with a merge commit.
-3. Tag that merge commit on `main`:
+3. The `Tag` workflow (`.github/workflows/tag.yml`) tags that merge commit `vX.Y.Z`; it
+   fails when the tag already names another commit (the version was not bumped). Do not tag
+   by hand unless it failed; then:
    ```bash
    git switch main && git pull --ff-only
    git tag -a vX.Y.Z -m "vX.Y.Z" <merge-commit>

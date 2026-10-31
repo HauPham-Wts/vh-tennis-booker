@@ -1,0 +1,36 @@
+name: Tag
+
+# Every commit on main is a release (CONTRIBUTING, "Releasing"): tag it vX.Y.Z from the
+# version it carries, so a release needs no tag pushed by hand.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Tag the release
+        run: |
+          version=$(PYTHONPATH=src python3 -c "import court_booker; print(court_booker.__version__)")
+          test -n "$version"
+          tag="v$version"
+          if tagged=$(git rev-parse --quiet --verify "refs/tags/$tag^{commit}"); then
+            if [ "$tagged" = "$GITHUB_SHA" ]; then
+              echo "$tag tags this commit already"
+              exit 0
+            fi
+            echo "::error::$tag tags $tagged already: was the version bumped for this release?"
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "$tag" "$GITHUB_SHA"
+          git push origin "refs/tags/$tag"
+          echo "Tagged $GITHUB_SHA $tag"
