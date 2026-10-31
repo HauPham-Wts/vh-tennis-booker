@@ -4,18 +4,10 @@ Open bugs, by severity: **1** may cost the 06:00 run, **2** reports wrongly or t
 **3** UI or docs. Remove an issue once it is fixed and confirmed (`CHANGELOG.md` keeps the
 history). Ideas the user ruled out are listed last, so they are not proposed again.
 
-Last updated: 2026-10-30.
+Last updated: 2026-10-31.
 
-## Severity 1
-
-### K1: day tap in the next month (fixed in 0.18.1, awaiting a 06:00 run)
-
-- 2026-10-30, booking for 2026-11-01: the month switch worked, but the day was tapped while
-  the month still slid in (not clickable), so the app ignored it; the round waited 30 s for
-  slots twice and the later round found the slots full.
-- Fixed in 0.18.1 (#216): the day is tapped once clickable, and again every 0.5 s while the
-  calendar's prompt stays. A real booking through the month switch passed on 2026-10-30.
-- Left: confirm with the 06:00 run of 2026-10-31, then remove this entry.
+No confirmed open bugs. The next-month day tap was confirmed by the 2026-10-31 06:00 run
+(2/2 bookings).
 
 ## Unhandled situations
 
