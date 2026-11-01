@@ -49,7 +49,8 @@ One Back from the ticket returns to the Utilities list, where the next round sta
   about 0.8 s later (2026-10-30). The month switched to slides in for about 0.2 s, its days
   moving and not clickable; a tap on a day then only stops the slide: the prompt stayed and no
   slot showed for 30 s, twice in a row at 06:00 on 30/10. The flow taps a day once it is
-  clickable, and taps it again while the prompt stays.
+  clickable, and taps it again while the prompt stays. With that fix, a real run later on
+  30/10 booked two slots for 1/11, and the 31/10 06:00 run booked two for 2/11.
 
 ## Court list moves under the tap
 
@@ -220,6 +221,8 @@ survey.
 - The court's venue is not in the court's name in a way the code can rely on (BCX3 and CX2
   courts are both under "BS _"), so `catalog.py` lists each court under its venue, and the
   run taps that venue.
+- At 06:00 on 2026-11-01, the BS account selected "BS _ Sân tennis", tapped
+  "BCX3 - Sân tennis 01", and reached the ticket for each of two real bookings for 3/11.
 
 ## App in English
 
@@ -283,6 +286,9 @@ slots and the booked date and time read the same.
   from cold in 23-26 s, connected the driver in 4-5 s and were ready on the home screen in
   6 s, as one alone; both tapped the utility 0.06 s after the start, and both retapped through
   the closed-hours notice at the same pace (43-44 times in 5 s).
+- Two instances booked for real in parallel at 06:00 on 2026-11-01: Origami and BS each
+  reached two tickets for 3/11, with every round finishing within 5 s. The one-day BS
+  `[[instances]]` entry was removed at 07:05; the daily task still runs instance 0.
 
 ## Accessibility agent (refused by the app)
 

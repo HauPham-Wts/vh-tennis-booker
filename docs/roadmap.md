@@ -23,13 +23,12 @@ to be awake. Unattended, scheduled, as fast as possible.
 
 The 0.x versions go through four phases toward 1.0.0: (1) it runs, (2) it handles every
 situation, (3) it is fast, (4) it has a user-friendly UI. Releases 0.1.0 to 0.13.1 covered all
-four (CHANGELOG); 0.13.0 ended phase 3 with MuMu instances side by side. Failures are fixed
-as the 06:00 logs show them. What is left:
+four (CHANGELOG); 0.13.0 ended phase 3 with MuMu instances side by side, confirmed by a real
+two-instance run on 2026-11-01. Failures are fixed as the 06:00 logs show them. What is left:
 
 | Phase | Next | Scope |
 |---|---|---|
-| 1 Runs | Other subdivisions | Origami and BS are in `catalog.py` with every sport (Origami 0.15.0, each sport booked for real 2026-10-27; BS dry runs of tennis BE7, BCX3 01 and basketball BE7 01 in Vietnamese and English, 2026-10-28), the subdivision chosen on the ticket or told by the account; left: survey each other subdivision with `dev-tools/survey/walk.py` and add it to the catalog |
-| 3 Fast | Two instances booking for real at once | Each instance booked for real alone and both together in a dry run (2026-10-25); a real booking with both is due in November, when both accounts have slots left |
+| 1 Runs | Other subdivisions | Origami and BS are in `catalog.py` with every sport; BS tennis at BCX3 was booked for real on 2026-11-01. BE7 tennis and basketball have dry-run coverage; other BS courts have only the survey. Left: survey each other subdivision with `dev-tools/survey/walk.py` and add it to the catalog |
 | 4 UI | Desktop app, last before 1.0.0 | Tauri shell with a PyInstaller sidecar, installer, release automation; version number set when it starts ([spec](specs/0.5.0-desktop-app.md), "Packaging") |
 
 ## Situations
@@ -46,7 +45,7 @@ as the 06:00 logs show them. What is left:
 | Booking | Slot or court fully booked | Round fails; no fallback slot or court (by decision) |
 | Booking | Slot taken by someone else at "Xác nhận" | Round fails with the app's notice |
 | Booking | Booked court differs from the tapped one | The court list moves under the tap (field notes); the booking details page must name the configured court, another one is left with Back and the court tapped again |
-| Booking | Target date in the next month | Works: after the missed day tap at 06:00 on 30/10, 0.18.1 waits for a clickable day and repeats the tap while the calendar prompt stays; the 31/10 06:00 run booked both slots for 02/11 |
+| Booking | Target date in the next month | Works: after the missed day tap at 06:00 on 30/10, the fix booked two real slots for 01/11 later that day; the 31/10 06:00 run on 0.18.1 booked two slots for 02/11 |
 | Booking | Quota (2 slots a day, 8 a month per apartment) | Tracking is left to the user. The app's quota notice, after "Tiếp tục" or "Xác nhận", fails the round with "Booking quota used up" and skips the rounds left; the log and the notification say so (since 0.11.0). The 06:00 run books a new day, so there it means the month is used up |
 | Device | MuMu not running / frozen | Started automatically / a device command over 60 s ends the run (exit 3); no restart, no retry (by decision) |
 | Device | One of several MuMu instances fails or freezes | Only its own process ends; the others book on, and the main log names its exit code. Its slots are not moved to another instance (by decision) |

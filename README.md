@@ -17,10 +17,11 @@ Python reads each screen in one accessibility dump and finds every button by its
 small Android instrumentation driver written for the project does the taps, with
 uiautomator2 as a fallback. It uses no private API and does not modify the app.
 
-**The result.** It has booked real courts at 06:00 since 2026-10-10. The first slot is booked
-6 to 7 seconds after the opening, most of that time spent waiting on the app's server. Beside
-the booking engine there is a local FastAPI backend and a React and TypeScript web UI, in
-Vietnamese and English, for the settings, the schedule and the history of every run.
+**The result.** It has booked real courts at 06:00 since 2026-10-10. On 2026-11-01,
+two MuMu instances booked four slots in parallel, at Origami and BS; each first slot reached
+its ticket within five seconds. Beside the booking engine there is a local FastAPI backend
+and a React and TypeScript web UI, in Vietnamese and English, for the settings, the schedule
+and the history of every run.
 
 It books tennis and the other courts a subdivision offers (multi-purpose, volleyball, table
 tennis, basketball, football, pickleball, badminton), for the Origami and BS subdivisions so
