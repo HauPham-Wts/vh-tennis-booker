@@ -13,6 +13,8 @@ uses [Semantic Versioning](https://semver.org/).
   when it fails.
 
 ### Changed
+- The roadmap and field notes record real BS and two-instance bookings on 2026-11-01, and
+  successful next-month bookings for both dates opened on the last two days of October.
 - CLAUDE.md: commits and pull requests carry no AI attribution (author Pham Van Hau,
   unsigned, no attribution lines).
 - Releases come when the 06:00 run needs a change (about weekly otherwise); CHANGELOG

@@ -4,10 +4,10 @@ Open bugs, by severity: **1** may cost the 06:00 run, **2** reports wrongly or t
 **3** UI or docs. Remove an issue once it is fixed and confirmed (`CHANGELOG.md` keeps the
 history). Ideas the user ruled out are listed last, so they are not proposed again.
 
-Last updated: 2026-10-31.
+Last updated: 2026-11-01.
 
-No confirmed open bugs. The next-month day tap was confirmed by the 2026-10-31 06:00 run
-(2/2 bookings).
+No confirmed open bugs. The next-month day tap was confirmed by real bookings for 2026-11-01
+after the fix on 2026-10-30 and by the 2026-10-31 06:00 run for 2026-11-02.
 
 ## Unhandled situations
 

@@ -2,7 +2,7 @@
 
 The plan of the one task to do next; rewrite it when that task is done.
 
-Last updated: 2026-10-31.
+Last updated: 2026-11-01.
 
 ## Start of a session
 
@@ -14,6 +14,6 @@ Last updated: 2026-10-31.
 
 Not decided; ask the user to choose a priority. Candidates from the [roadmap](../roadmap.md):
 
-- Both instances booking for real at once (November).
+- Survey another subdivision when access to one is available.
 - Choosing days of the week.
 - Packaging the desktop app (last before 1.0.0).
